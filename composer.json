@@ -1,47 +1,53 @@
 {
-    "name": "vendor_slug/package_slug",
-    "description": ":package_description",
+    "name": "spatie/flare-client-php",
+    "description": "Send PHP errors to Flare",
     "keywords": [
-        ":vendor_name",
-        "package_slug"
+        "facade",
+        "flare",
+        "exception",
+        "reporting"
     ],
-    "homepage": "https://github.com/vendor_slug/package_slug",
+    "homepage": "https://github.com/spatie/flare-client-php",
     "license": "MIT",
-    "authors": [
-        {
-            "name": ":author_name",
-            "email": "author@domain.com",
-            "role": "Developer"
-        }
-    ],
     "require": {
-        "php": "^8.0"
+        "php": "^7.1|^8.0",
+        "spatie/ignition-contracts": "~1.0",
+        "illuminate/pipeline": "^5.5|^6.0|^7.0|^8.0",
+        "symfony/http-foundation": "^3.3|^4.1|^5.0",
+        "symfony/mime": "^3.4|^4.0|^5.1",
+        "symfony/var-dumper": "^3.4|^4.0|^5.0"
     },
     "require-dev": {
-        "friendsofphp/php-cs-fixer": "^2.17",
-        "phpunit/phpunit": "^9.5",
-        "spatie/ray": "^1.10",
-        "vimeo/psalm": "^4.3"
+        "dms/phpunit-arraysubset-asserts": "^0.3.0",
+        "friendsofphp/php-cs-fixer": "^2.14",
+        "phpunit/phpunit": "^7.5.16|^8.0|^9.0",
+        "spatie/phpunit-snapshot-assertions": "^2.0|^3.0|^4.0"
     },
     "autoload": {
         "psr-4": {
-            "VendorName\\Skeleton\\": "src"
-        }
+            "Spatie\\FlareClient\\": "src"
+        },
+        "files": [
+            "src/helpers.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
-            "VendorName\\Skeleton\\Tests\\": "tests"
+            "Spatie\\FlareClient\\Tests\\": "tests"
         }
     },
     "scripts": {
-        "psalm": "vendor/bin/psalm",
+        "format": "vendor/bin/php-cs-fixer fix --allow-risky=yes",
         "test": "vendor/bin/phpunit",
-        "test-coverage": "vendor/bin/phpunit --coverage-html coverage",
-        "format": "vendor/bin/php-cs-fixer fix --allow-risky=yes"
+        "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
+
     },
     "config": {
         "sort-packages": true
     },
-    "minimum-stability": "dev",
-    "prefer-stable": true
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0-dev"
+        }
+    }
 }

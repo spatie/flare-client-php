@@ -1,67 +1,36 @@
-# :package_description
+# Send PHP errors to Flare
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/vendor_slug/package_slug.svg?style=flat-square)](https://packagist.org/packages/vendor_slug/package_slug)
-[![GitHub Tests Action Status](https://img.shields.io/github/workflow/status/vendor_slug/package_slug/run-tests?label=tests)](https://github.com/vendor_slug/package_slug/actions?query=workflow%3ATests+branch%3Amaster)
-[![GitHub Code Style Action Status](https://img.shields.io/github/workflow/status/vendor_slug/package_slug/Check%20&%20fix%20styling?label=code%20style)](https://github.com/vendor_slug/package_slug/actions?query=workflow%3A"Check+%26+fix+styling"+branch%3Amaster)
-[![Total Downloads](https://img.shields.io/packagist/dt/vendor_slug/package_slug.svg?style=flat-square)](https://packagist.org/packages/vendor_slug/package_slug)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/spatie/flare-client-php.svg?style=flat-square)](https://packagist.org/packages/spatie/flare-client-php)
+![Tests](https://github.com/spatie/flare-client-php/workflows/Run%20tests/badge.svg)
+[![Total Downloads](https://img.shields.io/packagist/dt/spatie/flare-client-php.svg?style=flat-square)](https://packagist.org/packages/spatie/flare-client-php)
 
----
-This package can be used as to scaffold a Laravel package. Follow these steps to get started:
+This repository contains a PHP client to send PHP errors to [Flare](https://flareapp.io).
 
-1. Press the "Use template" button at the top of this repo to create a new repo with the contents of this skeleton
-2. Run "./configure.sh" to run a script that will replace all placeholders throughout all the files
-3. Have fun creating your package.
-4. If you need help creating a package, consider picking up our <a href="https://laravelpackage.training">Laravel Package Training</a> video course.
----
+![Screenshot of error in Flare](https://facade.github.io/flare-client-php/screenshot.png)
 
-This is where your description should go. Try and limit it to a paragraph or two. Consider adding a small example.
+## Documentation
 
-## Support us
-
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/:package_name.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/:package_name)
-
-We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
-
-We highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using. You'll find our address on [our contact page](https://spatie.be/about-us). We publish all received postcards on [our virtual postcard wall](https://spatie.be/open-source/postcards).
-
-## Installation
-
-You can install the package via composer:
-
-```bash
-composer require vendor_slug/package_slug
-```
-
-## Usage
-
-```php
-$skeleton = new VendorName\Skeleton();
-echo $skeleton->echoPhrase('Hello, VendorName!');
-```
-
-## Testing
-
-```bash
-composer test
-```
+You can find the documentation of this package at [the docs of Flare](https://flareapp.io/docs/general/projects).
 
 ## Changelog
 
 Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
 
+## Testing
+
+``` bash
+composer test
+```
+
 ## Contributing
 
-Please see [CONTRIBUTING](.github/CONTRIBUTING.md) for details.
+Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
 
-## Security Vulnerabilities
+## Security
 
-Please review [our security policy](../../security/policy) on how to report security vulnerabilities.
-
-## Credits
-
-- [:author_name](https://github.com/:author_username)
-- [All Contributors](../../contributors)
+If you discover any security related issues, please email support@flareapp.io instead of using the issue tracker.
 
 ## License
 
 The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+
