@@ -2,7 +2,7 @@
     "name": "spatie/flare-client-php",
     "description": "Send PHP errors to Flare",
     "keywords": [
-        "facade",
+        "spatie",
         "flare",
         "exception",
         "reporting"
