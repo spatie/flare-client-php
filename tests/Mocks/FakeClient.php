@@ -3,11 +3,10 @@
 namespace Spatie\FlareClient\Tests\Mocks;
 
 use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
+use Illuminate\Support\Arr;
 use Spatie\FlareClient\Http\Client;
 use Spatie\FlareClient\Http\Response;
-use Spatie\FlareClient\Tests\TestCase;
 use Spatie\FlareClient\Tests\TestClasses\Assert;
-use Illuminate\Support\Arr;
 
 class FakeClient extends Client
 {

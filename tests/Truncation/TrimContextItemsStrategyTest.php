@@ -2,10 +2,10 @@
 
 namespace Spatie\FlareClient\Tests\Truncation;
 
-use Spatie\FlareClient\Truncation\ReportTrimmer;
-use Spatie\FlareClient\Truncation\TrimContextItemsStrategy;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\TestCase;
+use Spatie\FlareClient\Truncation\ReportTrimmer;
+use Spatie\FlareClient\Truncation\TrimContextItemsStrategy;
 
 class TrimContextItemsStrategyTest extends TestCase
 {

@@ -2,9 +2,9 @@
 
 namespace Spatie\FlareClient\Tests\Truncation;
 
+use PHPUnit\Framework\TestCase;
 use Spatie\FlareClient\Truncation\ReportTrimmer;
 use Spatie\FlareClient\Truncation\TrimStringsStrategy;
-use PHPUnit\Framework\TestCase;
 
 class TrimStringsStrategyTest extends TestCase
 {
