@@ -4,13 +4,13 @@ namespace Spatie\FlareClient\Tests;
 
 use Error;
 use ErrorException;
+use PHPUnit\Framework\Exception;
 use Spatie\FlareClient\Api;
 use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Flare;
 use Spatie\FlareClient\Tests\Concerns\MatchesReportSnapshots;
 use Spatie\FlareClient\Tests\Mocks\FakeClient;
 use Spatie\FlareClient\Tests\TestClasses\ExceptionWithContext;
-use PHPUnit\Framework\Exception;
 use Throwable;
 
 class FlareTest extends TestCase
@@ -52,7 +52,6 @@ class FlareTest extends TestCase
 
         $this->flare->report($throwable);
     }
-
 
     /** @test */
     public function it_can_report_an_exception()

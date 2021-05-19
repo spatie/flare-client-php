@@ -15,7 +15,8 @@ use Throwable;
 
 class Report
 {
-    use UsesTime, HasContext;
+    use UsesTime;
+    use HasContext;
 
     /** @var \Spatie\FlareClient\Stacktrace\Stacktrace */
     private Stacktrace $stacktrace;

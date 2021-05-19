@@ -5,6 +5,8 @@ namespace Spatie\FlareClient;
 use Error;
 use ErrorException;
 use Exception;
+use Illuminate\Contracts\Container\Container;
+use Illuminate\Pipeline\Pipeline;
 use Spatie\FlareClient\Concerns\HasContext;
 use Spatie\FlareClient\Context\ContextContextDetector;
 use Spatie\FlareClient\Context\ContextDetectorInterface;
@@ -15,8 +17,6 @@ use Spatie\FlareClient\Http\Client;
 use Spatie\FlareClient\Middleware\AddGlows;
 use Spatie\FlareClient\Middleware\AnonymizeIp;
 use Spatie\FlareClient\Middleware\CensorRequestBodyFields;
-use Illuminate\Contracts\Container\Container;
-use Illuminate\Pipeline\Pipeline;
 use Throwable;
 
 class Flare

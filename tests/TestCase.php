@@ -2,10 +2,10 @@
 
 namespace Spatie\FlareClient\Tests;
 
+use PHPUnit\Framework\TestCase as BaseTestCase;
 use Spatie\FlareClient\Glows\Glow;
 use Spatie\FlareClient\Report;
 use Spatie\FlareClient\Tests\TestClasses\FakeTime;
-use PHPUnit\Framework\TestCase as BaseTestCase;
 
 class TestCase extends BaseTestCase
 {
