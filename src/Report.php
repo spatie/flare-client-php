@@ -10,7 +10,7 @@ use Spatie\FlareClient\Enums\GroupingTypes;
 use Spatie\FlareClient\Glows\Glow;
 use Spatie\FlareClient\Solutions\ReportSolution;
 use Spatie\FlareClient\Stacktrace\Stacktrace;
-use Facade\IgnitionContracts\Solution;
+use Spatie\IgnitionContracts\Solution;
 use Throwable;
 
 class Report
@@ -18,7 +18,7 @@ class Report
     use UsesTime, HasContext;
 
     /** @var \Spatie\FlareClient\Stacktrace\Stacktrace */
-    private $stacktrace;
+    private Stacktrace $stacktrace;
 
     /** @var string */
     private $exceptionClass;
