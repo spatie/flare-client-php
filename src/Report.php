@@ -2,17 +2,17 @@
 
 namespace Spatie\FlareClient;
 
+use Spatie\Backtrace\Backtrace;
+use Spatie\Backtrace\Frame as SpatieFrame;
 use Spatie\FlareClient\Concerns\HasContext;
 use Spatie\FlareClient\Concerns\UsesTime;
 use Spatie\FlareClient\Context\ContextInterface;
 use Spatie\FlareClient\Contracts\ProvidesFlareContext;
 use Spatie\FlareClient\Glows\Glow;
 use Spatie\FlareClient\Solutions\ReportSolution;
-use Spatie\Backtrace\Backtrace;
+use Spatie\Ignition\Exceptions\ViewException;
 use Spatie\IgnitionContracts\Solution;
 use Throwable;
-use Spatie\Backtrace\Frame as SpatieFrame;
-use Spatie\Ignition\Exceptions\ViewException;
 
 class Report
 {
@@ -266,7 +266,7 @@ class Report
     protected function stracktraceAsArray(): array
     {
         return array_map(
-            fn(SpatieFrame $frame) => Frame::fromSpatieFrame($frame)->toArray(),
+            fn (SpatieFrame $frame) => Frame::fromSpatieFrame($frame)->toArray(),
             $this->stacktrace->frames(),
         );
     }
