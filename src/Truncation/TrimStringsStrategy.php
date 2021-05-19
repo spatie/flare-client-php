@@ -4,7 +4,7 @@ namespace Spatie\FlareClient\Truncation;
 
 class TrimStringsStrategy extends AbstractTruncationStrategy
 {
-    public static function thresholds()
+    public static function thresholds(): array
     {
         return [1024, 512, 256];
     }

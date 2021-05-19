@@ -6,11 +6,9 @@ use RuntimeException;
 
 class Codesnippet
 {
-    /** @var int */
-    private $surroundingLine = 1;
+    protected int $surroundingLine = 1;
 
-    /** @var int */
-    private $snippetLineCount = 9;
+    protected int $snippetLineCount = 9;
 
     public function surroundingLine(int $surroundingLine): self
     {
@@ -56,7 +54,7 @@ class Codesnippet
         }
     }
 
-    private function getBounds($totalNumberOfLineInFile): array
+    protected function getBounds($totalNumberOfLineInFile): array
     {
         $startLine = max($this->surroundingLine - floor($this->snippetLineCount / 2), 1);
 

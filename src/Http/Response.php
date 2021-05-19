@@ -35,10 +35,7 @@ class Response
         return $this->body;
     }
 
-    /**
-     * @return bool
-     */
-    public function hasBody()
+    public function hasBody(): bool
     {
         return $this->body != false;
     }
@@ -51,13 +48,10 @@ class Response
         return $this->error;
     }
 
-    /**
-     * @return null|int
-     */
-    public function getHttpResponseCode()
+    public function getHttpResponseCode(): ?int
     {
         if (! isset($this->headers['http_code'])) {
-            return;
+            return null;
         }
 
         return (int) $this->headers['http_code'];

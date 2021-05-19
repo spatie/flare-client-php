@@ -4,7 +4,7 @@ namespace Spatie\FlareClient\Truncation;
 
 class TrimContextItemsStrategy extends AbstractTruncationStrategy
 {
-    public static function thresholds()
+    public static function thresholds(): array
     {
         return [100, 50, 25, 10];
     }

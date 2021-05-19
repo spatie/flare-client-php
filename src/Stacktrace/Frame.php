@@ -4,20 +4,15 @@ namespace Spatie\FlareClient\Stacktrace;
 
 class Frame
 {
-    /** @var string */
-    private $file;
+    protected string $file;
 
-    /** @var int */
-    private $lineNumber;
+    protected int $lineNumber;
 
-    /** @var string */
-    private $method;
+    protected ?string $method;
 
-    /** @var string */
-    private $class;
+    protected ?string $class;
 
-    /** @var bool */
-    private $isApplicationFrame;
+    protected bool $isApplicationFrame;
 
     public function __construct(
         string $file,

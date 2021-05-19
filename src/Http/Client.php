@@ -9,17 +9,13 @@ use Spatie\FlareClient\Http\Exceptions\NotFound;
 
 class Client
 {
-    /** @var null|string */
-    private $apiToken;
+    protected ?string $apiToken;
 
-    /** @var null|string */
-    private $apiSecret;
+    protected ?string $apiSecret;
 
-    /** @var string */
-    private $baseUrl;
+    protected ?string $baseUrl;
 
-    /** @var int */
-    private $timeout;
+    protected int $timeout;
 
     public function __construct(
         ?string $apiToken,
@@ -106,7 +102,7 @@ class Client
      *
      * @return array
      */
-    private function makeRequest(string $httpVerb, string $url, array $arguments = [])
+    protected function makeRequest(string $httpVerb, string $url, array $arguments = [])
     {
         $queryString = http_build_query([
             'key' => $this->apiToken,

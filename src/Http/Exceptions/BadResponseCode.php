@@ -7,11 +7,9 @@ use Spatie\FlareClient\Http\Response;
 
 class BadResponseCode extends Exception
 {
-    /** @var \Spatie\FlareClient\Http\Response */
-    public $response;
+    public Response $response;
 
-    /** @var array */
-    public $errors;
+    public array $errors = [];
 
     public static function createForResponse(Response $response)
     {

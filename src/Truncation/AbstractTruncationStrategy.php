@@ -4,8 +4,7 @@ namespace Spatie\FlareClient\Truncation;
 
 abstract class AbstractTruncationStrategy implements TruncationStrategy
 {
-    /** @var ReportTrimmer */
-    protected $reportTrimmer;
+    protected ReportTrimmer $reportTrimmer;
 
     public function __construct(ReportTrimmer $reportTrimmer)
     {

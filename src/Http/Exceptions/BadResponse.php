@@ -7,8 +7,7 @@ use Spatie\FlareClient\Http\Response;
 
 class BadResponse extends Exception
 {
-    /** @var \Spatie\FlareClient\Http\Response */
-    public $response;
+    public Response $response;
 
     public static function createForResponse(Response $response)
     {

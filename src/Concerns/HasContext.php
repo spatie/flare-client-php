@@ -4,23 +4,20 @@ namespace Spatie\FlareClient\Concerns;
 
 trait HasContext
 {
-    /** @var string|null */
-    private $messageLevel;
+    protected ?string $messageLevel = null;
 
-    /** @var string|null */
-    private $stage;
+    protected ?string $stage = null;
 
-    /** @var array */
-    private $userProvidedContext = [];
+    protected array $userProvidedContext = [];
 
-    public function stage(?string $stage)
+    public function stage(?string $stage): self
     {
         $this->stage = $stage;
 
         return $this;
     }
 
-    public function messageLevel(?string $messageLevel)
+    public function messageLevel(?string $messageLevel): self
     {
         $this->messageLevel = $messageLevel;
 
@@ -32,12 +29,12 @@ trait HasContext
         return $this->userProvidedContext[$groupName] ?? $default;
     }
 
-    public function context($key, $value)
+    public function context($key, $value): self
     {
         return $this->group('context', [$key => $value]);
     }
 
-    public function group(string $groupName, array $properties)
+    public function group(string $groupName, array $properties): self
     {
         $group = $this->userProvidedContext[$groupName] ?? [];
 

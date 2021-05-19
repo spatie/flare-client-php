@@ -6,7 +6,7 @@ class ReportTrimmer
 {
     protected static $maxPayloadSize = 524288;
 
-    protected $strategies = [
+    protected array $strategies = [
         TrimStringsStrategy::class,
         TrimContextItemsStrategy::class,
     ];

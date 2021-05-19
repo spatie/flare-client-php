@@ -11,8 +11,7 @@ use Throwable;
 
 class RequestContext implements ContextInterface
 {
-    /** @var \Symfony\Component\HttpFoundation\Request|null */
-    protected $request;
+    protected ?Request $request;
 
     public function __construct(Request $request = null)
     {
@@ -38,7 +37,7 @@ class RequestContext implements ContextInterface
         return $this->mapFiles($this->request->files->all());
     }
 
-    protected function mapFiles(array $files)
+    protected function mapFiles(array $files): array
     {
         return array_map(function ($file) {
             if (is_array($file)) {
@@ -80,11 +79,7 @@ class RequestContext implements ContextInterface
         return $session ? $this->getValidSessionData($session) : [];
     }
 
-    /**
-     * @param SessionInterface $session
-     * @return array
-     */
-    protected function getValidSessionData($session): array
+    protected function getValidSessionData(SessionInterface $session): array
     {
         try {
             json_encode($session->all());

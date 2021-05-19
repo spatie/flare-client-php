@@ -6,9 +6,9 @@ class Recorder
 {
     const GLOW_LIMIT = 30;
 
-    private $glows = [];
+    protected array $glows = [];
 
-    public function record(Glow $glow)
+    public function record(Glow $glow): void
     {
         $this->glows[] = $glow;
 
@@ -20,7 +20,7 @@ class Recorder
         return $this->glows;
     }
 
-    public function reset()
+    public function reset(): void
     {
         $this->glows = [];
     }

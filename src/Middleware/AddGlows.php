@@ -7,8 +7,7 @@ use Spatie\FlareClient\Report;
 
 class AddGlows
 {
-    /** @var Recorder */
-    private $recorder;
+    private Recorder $recorder;
 
     public function __construct(Recorder $recorder)
     {

@@ -9,27 +9,27 @@ class Glow
 {
     use UsesTime;
 
-    /** @var string */
-    private $name;
+    protected string $name;
 
-    /** @var array */
-    private $metaData;
+    protected array $metaData = [];
 
-    /** @var string */
-    private $messageLevel;
+    protected string $messageLevel;
 
-    /** @var float */
-    private $microtime;
+    protected float $microtime;
 
-    public function __construct(string $name, string $messageLevel = MessageLevels::INFO, array $metaData = [], ?float $microtime = null)
-    {
+    public function __construct(
+        string $name,
+        string $messageLevel = MessageLevels::INFO,
+        array $metaData = [],
+        ?float $microtime = null
+    ) {
         $this->name = $name;
         $this->messageLevel = $messageLevel;
         $this->metaData = $metaData;
         $this->microtime = $microtime ?? microtime(true);
     }
 
-    public function toArray()
+    public function toArray(): array
     {
         return [
             'time' => $this->getCurrentTime(),

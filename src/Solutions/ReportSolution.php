@@ -2,20 +2,19 @@
 
 namespace Spatie\FlareClient\Solutions;
 
-use Facade\IgnitionContracts\RunnableSolution;
-use Facade\IgnitionContracts\Solution as SolutionContract;
+use Spatie\IgnitionContracts\RunnableSolution;
+use Spatie\IgnitionContracts\Solution as SolutionContract;
 
 class ReportSolution
 {
-    /** @var SolutionContract */
-    protected $solution;
+    protected SolutionContract $solution;
 
     public function __construct(SolutionContract $solution)
     {
         $this->solution = $solution;
     }
 
-    public static function fromSolution(SolutionContract $solution)
+    public static function fromSolution(SolutionContract $solution): self
     {
         return new static($solution);
     }

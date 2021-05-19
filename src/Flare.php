@@ -2,6 +2,7 @@
 
 namespace Spatie\FlareClient;
 
+use Closure;
 use Error;
 use ErrorException;
 use Exception;
@@ -23,50 +24,43 @@ class Flare
 {
     use HasContext;
 
-    /** @var \Spatie\FlareClient\Http\Client */
-    protected $client;
+    protected Client $client;
 
-    /** @var \Spatie\FlareClient\Api */
-    protected $api;
+    protected Api $api;
 
-    /** @var array */
-    protected $middleware = [];
+    protected array $middleware = [];
 
-    /** @var \Spatie\FlareClient\Glows\Recorder */
-    protected $recorder;
+    protected Recorder $recorder;
 
-    /** @var string */
-    protected $applicationPath;
+    protected ?string $applicationPath = null;
 
-    /** @var \Illuminate\Contracts\Container\Container|null */
-    protected $container;
+    protected ?Container $container = null;
 
-    /** @var ContextDetectorInterface */
-    protected $contextDetector;
+    protected ContextDetectorInterface $contextDetector;
 
-    /** @var callable|null */
-    protected $previousExceptionHandler;
+    protected ?Closure $previousExceptionHandler= null;
 
-    /** @var callable|null */
-    protected $previousErrorHandler;
+    protected ?Closure $previousErrorHandler = null;
 
-    /** @var callable|null */
-    protected $determineVersionCallable;
+    protected ?Closure $determineVersionCallable = null;
 
-    /** @var int|null */
-    protected $reportErrorLevels;
+    protected ?int $reportErrorLevels = null;
 
-    /** @var callable|null */
-    protected $filterExceptionsCallable;
+    protected ?Closure $filterExceptionsCallable = null;
 
-    public static function register(string $apiKey, string $apiSecret = null, ContextDetectorInterface $contextDetector = null, Container $container = null)
+    public static function register(
+        string $apiKey,
+        string $apiSecret = null,
+        ContextDetectorInterface $contextDetector = null,
+        Container $container = null
+    ): self
     {
         $client = new Client($apiKey, $apiSecret);
 
         return new static($client, $contextDetector, $container);
     }
 
-    public function determineVersionUsing($determineVersionCallable)
+    public function determineVersionUsing(callable $determineVersionCallable)
     {
         $this->determineVersionCallable = $determineVersionCallable;
     }
@@ -81,10 +75,7 @@ class Flare
         $this->filterExceptionsCallable = $filterExceptionsCallable;
     }
 
-    /**
-     * @return null|string
-     */
-    public function version()
+    public function version(): ?string
     {
         if (! $this->determineVersionCallable) {
             return null;
@@ -93,8 +84,12 @@ class Flare
         return ($this->determineVersionCallable)();
     }
 
-    public function __construct(Client $client, ContextDetectorInterface $contextDetector = null, Container $container = null, array $middleware = [])
-    {
+    public function __construct(
+        Client $client,
+        ContextDetectorInterface $contextDetector = null,
+        Container $container = null,
+        array $middleware = []
+    ) {
         $this->client = $client;
         $this->recorder = new Recorder();
         $this->contextDetector = $contextDetector ?? new ContextContextDetector();
@@ -110,34 +105,35 @@ class Flare
         return $this->middleware;
     }
 
-    public function registerFlareHandlers()
+    public function registerFlareHandlers(): self
     {
         $this->registerExceptionHandler();
+
         $this->registerErrorHandler();
 
         return $this;
     }
 
-    public function registerExceptionHandler()
+    public function registerExceptionHandler(): self
     {
         $this->previousExceptionHandler = set_exception_handler([$this, 'handleException']);
 
         return $this;
     }
 
-    public function registerErrorHandler()
+    public function registerErrorHandler(): self
     {
         $this->previousErrorHandler = set_error_handler([$this, 'handleError']);
 
         return $this;
     }
 
-    private function registerDefaultMiddleware()
+    private function registerDefaultMiddleware(): self
     {
         return $this->registerMiddleware(new AddGlows($this->recorder));
     }
 
-    public function registerMiddleware($callable)
+    public function registerMiddleware($callable): self
     {
         $this->middleware[] = $callable;
 
@@ -157,7 +153,7 @@ class Flare
         $this->recorder->record(new Glow($name, $messageLevel, $metaData));
     }
 
-    public function handleException(Throwable $throwable)
+    public function handleException(Throwable $throwable): void
     {
         $this->report($throwable);
 
@@ -183,14 +179,14 @@ class Flare
         }
     }
 
-    public function applicationPath(string $applicationPath)
+    public function applicationPath(string $applicationPath): self
     {
         $this->applicationPath = $applicationPath;
 
         return $this;
     }
 
-    public function report(Throwable $throwable, callable $callback = null)
+    public function report(Throwable $throwable, callable $callback = null): void
     {
         if (! $this->shouldSendReport($throwable)) {
             return;
@@ -222,7 +218,7 @@ class Flare
         return true;
     }
 
-    public function reportMessage(string $message, string $logLevel, callable $callback = null)
+    public function reportMessage(string $message, string $logLevel, callable $callback = null): void
     {
         $report = $this->createReportFromMessage($message, $logLevel);
 
@@ -233,12 +229,12 @@ class Flare
         $this->sendReportToApi($report);
     }
 
-    public function sendTestReport(Throwable $throwable)
+    public function sendTestReport(Throwable $throwable): void
     {
         $this->api->sendTestReport($this->createReport($throwable));
     }
 
-    private function sendReportToApi(Report $report)
+    protected function sendReportToApi(Report $report): void
     {
         try {
             $this->api->report($report);
@@ -254,7 +250,7 @@ class Flare
         $this->recorder->reset();
     }
 
-    private function applyAdditionalParameters(Report $report)
+    protected function applyAdditionalParameters(Report $report): void
     {
         $report
             ->stage($this->stage)
@@ -263,14 +259,14 @@ class Flare
             ->userProvidedContext($this->userProvidedContext);
     }
 
-    public function anonymizeIp()
+    public function anonymizeIp(): self
     {
         $this->registerMiddleware(new AnonymizeIp());
 
         return $this;
     }
 
-    public function censorRequestBodyFields(array $fieldNames)
+    public function censorRequestBodyFields(array $fieldNames): self
     {
         $this->registerMiddleware(new CensorRequestBodyFields($fieldNames));
 

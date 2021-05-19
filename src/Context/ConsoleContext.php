@@ -4,8 +4,7 @@ namespace Spatie\FlareClient\Context;
 
 class ConsoleContext implements ContextInterface
 {
-    /** @var array */
-    private $arguments = [];
+    protected array $arguments = [];
 
     public function __construct(array $arguments = [])
     {

@@ -7,10 +7,9 @@ use Throwable;
 class Stacktrace
 {
     /** @var \Spatie\FlareClient\Stacktrace\Frame[] */
-    private $frames;
+    protected array $frames = [];
 
-    /** @var string */
-    private $applicationPath;
+    protected ?string $applicationPath = null;
 
     public static function createForThrowable(Throwable $throwable, ?string $applicationPath = null): self
     {
@@ -24,15 +23,20 @@ class Stacktrace
         return new static($backtrace, $applicationPath);
     }
 
-    public function __construct(array $backtrace, ?string $applicationPath = null, string $topmostFile = null, string $topmostLine = null)
-    {
+    public function __construct(
+        array $backtrace,
+        ?string $applicationPath = null,
+        string $topmostFile = null,
+        string $topmostLine = null
+    ) {
         $this->applicationPath = $applicationPath;
 
         $currentFile = $topmostFile;
+
         $currentLine = $topmostLine;
 
         foreach ($backtrace as $rawFrame) {
-            if (! $this->frameFromFlare($rawFrame) && ! $this->fileIgnored($currentFile)) {
+            if (! $this->frameFromFlare($rawFrame)) {
                 $this->frames[] = new Frame(
                     $currentFile,
                     $currentLine,
@@ -73,23 +77,6 @@ class Stacktrace
         return true;
     }
 
-    protected function fileIgnored(string $currentFile): bool
-    {
-        $currentFile = str_replace('\\', DIRECTORY_SEPARATOR, $currentFile);
-
-        $ignoredFiles = [
-            '/ignition/src/helpers.php',
-        ];
-
-        foreach ($ignoredFiles as $ignoredFile) {
-            if (strstr($currentFile, $ignoredFile) !== false) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     public function firstFrame(): Frame
     {
         return $this->frames[0];
@@ -97,9 +84,7 @@ class Stacktrace
 
     public function toArray(): array
     {
-        return array_map(function (Frame $frame) {
-            return $frame->toArray();
-        }, $this->frames);
+        return array_map(fn(Frame $frame) => $frame->toArray(), $this->frames);
     }
 
     public function firstApplicationFrame(): ?Frame

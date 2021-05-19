@@ -17,53 +17,35 @@ class Report
 {
     use UsesTime, HasContext;
 
-    /** @var \Spatie\FlareClient\Stacktrace\Stacktrace */
-    private Stacktrace $stacktrace;
+    protected Stacktrace $stacktrace;
 
-    /** @var string */
-    private $exceptionClass;
+    protected string $exceptionClass = '';
 
-    /** @var string */
-    private $message;
+    protected string $message = '';
 
-    /** @var array */
-    private $glows = [];
+    protected array $glows = [];
 
-    /** @var array */
-    private $solutions = [];
+    protected array $solutions = [];
 
-    /** @var ContextInterface */
-    private $context;
+    protected ContextInterface $context;
 
-    /** @var string */
-    private $applicationPath;
+    protected ?string $applicationPath = null;
 
-    /** @var ?string */
-    private $applicationVersion;
+    protected ?string $applicationVersion = null;
 
-    /** @var array */
-    private $userProvidedContext = [];
+    protected array $userProvidedContext = [];
 
-    /** @var array */
-    private $exceptionContext = [];
+    protected array $exceptionContext = [];
 
-    /** @var Throwable */
-    private $throwable;
+    protected Throwable $throwable;
 
-    /** @var string */
-    private $notifierName;
+    protected string $notifierName = 'Flare Client';
 
-    /** @var string */
-    private $languageVersion;
+    protected ?string $languageVersion = null;
 
-    /** @var string */
-    private $frameworkVersion;
+    protected ?string $frameworkVersion = null;
 
-    /** @var int */
-    private $openFrameIndex;
-
-    /** @var string */
-    private $groupBy ;
+    protected ?int $openFrameIndex = null;
 
     public static function createForThrowable(
         Throwable $throwable,
@@ -84,7 +66,7 @@ class Report
 
     protected static function getClassForThrowable(Throwable $throwable): string
     {
-        if ($throwable instanceof \Facade\Ignition\Exceptions\ViewException) {
+        if ($throwable instanceof \Spatie\Ignition\Exceptions\ViewException) {
             if ($previous = $throwable->getPrevious()) {
                 return get_class($previous);
             }
@@ -93,8 +75,12 @@ class Report
         return get_class($throwable);
     }
 
-    public static function createForMessage(string $message, string $logLevel, ContextInterface $context, ?string $applicationPath = null): self
-    {
+    public static function createForMessage(
+        string $message,
+        string $logLevel,
+        ContextInterface $context,
+        ?string $applicationPath = null
+    ): self {
         $stacktrace = Stacktrace::create($applicationPath);
 
         return (new static())
@@ -106,7 +92,7 @@ class Report
             ->openFrameIndex($stacktrace->firstApplicationFrameIndex());
     }
 
-    public function exceptionClass(string $exceptionClass)
+    public function exceptionClass(string $exceptionClass): self
     {
         $this->exceptionClass = $exceptionClass;
 
@@ -118,7 +104,7 @@ class Report
         return $this->exceptionClass;
     }
 
-    public function throwable(Throwable $throwable)
+    public function throwable(Throwable $throwable): self
     {
         $this->throwable = $throwable;
 
@@ -130,7 +116,7 @@ class Report
         return $this->throwable;
     }
 
-    public function message(string $message)
+    public function message(string $message): self
     {
         $this->message = $message;
 
@@ -154,42 +140,42 @@ class Report
         return $this->stacktrace;
     }
 
-    public function notifierName(string $notifierName)
+    public function notifierName(string $notifierName): self
     {
         $this->notifierName = $notifierName;
 
         return $this;
     }
 
-    public function languageVersion(string $languageVersion)
+    public function languageVersion(string $languageVersion): self
     {
         $this->languageVersion = $languageVersion;
 
         return $this;
     }
 
-    public function frameworkVersion(string $frameworkVersion)
+    public function frameworkVersion(string $frameworkVersion): self
     {
         $this->frameworkVersion = $frameworkVersion;
 
         return $this;
     }
 
-    public function useContext(ContextInterface $request)
+    public function useContext(ContextInterface $request): self
     {
         $this->context = $request;
 
         return $this;
     }
 
-    public function openFrameIndex(?int $index)
+    public function openFrameIndex(?int $index): self
     {
         $this->openFrameIndex = $index;
 
         return $this;
     }
 
-    public function setApplicationPath(?string $applicationPath)
+    public function setApplicationPath(?string $applicationPath): self
     {
         $this->applicationPath = $applicationPath;
 
@@ -201,7 +187,7 @@ class Report
         return $this->applicationPath;
     }
 
-    public function setApplicationVersion(?string $applicationVersion)
+    public function setApplicationVersion(?string $applicationVersion): self
     {
         $this->applicationVersion = $applicationVersion;
 
@@ -266,7 +252,7 @@ class Report
         return array_merge_recursive_distinct($context, $this->userProvidedContext);
     }
 
-    private function exceptionContext(Throwable $throwable)
+    protected function exceptionContext(Throwable $throwable): self
     {
         if ($throwable instanceof ProvidesFlareContext) {
             $this->exceptionContext = $throwable->context();
@@ -275,7 +261,7 @@ class Report
         return $this;
     }
 
-    public function toArray()
+    public function toArray(): array
     {
         return [
             'notifier' => $this->notifierName ?? 'Flare Client',
