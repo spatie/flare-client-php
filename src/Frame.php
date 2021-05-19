@@ -2,65 +2,42 @@
 
 namespace Spatie\FlareClient;
 
-use Spatie\FlareClient\Stacktrace\Codesnippet;
+use Spatie\Backtrace\Frame as SpatieFrame;
 
 class Frame
 {
-    /** @var string */
-    protected $file;
+    protected SpatieFrame $frame;
 
-    /** @var int */
-    protected $lineNumber;
+    public static function fromSpatieFrame(SpatieFrame $frame)
+    {
+        return new static($frame);
+    }
 
-    /** @var string */
-    protected $method;
-
-    /** @var string */
-    protected $class;
-
-    public function __construct(
-        string $file,
-        int $lineNumber,
-        string $method = null,
-        string $class = null
-    ) {
-        $this->file = $file;
-
-        $this->lineNumber = $lineNumber;
-
-        $this->method = $method;
-
-        $this->class = $class;
+    public function __construct(SpatieFrame $frame)
+    {
+        $this->frame = $frame;
     }
 
     public function toArray(): array
     {
-        $codeSnippet = (new Codesnippet())
-            ->snippetLineCount(9)
-            ->surroundingLine($this->lineNumber)
-            ->get($this->file);
+        $codeSnippet = $this->frame->getSnippet(9);
 
         return [
-            'line_number' => $this->lineNumber,
+            'line_number' => $this->frame->lineNumber,
             'method' => $this->getFullMethod(),
             'code_snippet' => $codeSnippet,
-            'file' => $this->file,
+            'file' => $this->frame->file,
         ];
     }
 
-    private function getFullMethod(): string
+    protected function getFullMethod(): string
     {
-        $method = $this->method;
+        $method = $this->frame->method;
 
-        if ($class = $this->class ?? false) {
+        if ($class = $this->frame->class->class ?? false) {
             $method = "{$class}::{$method}";
         }
 
         return $method;
-    }
-
-    public function getFile(): string
-    {
-        return $this->file;
     }
 }

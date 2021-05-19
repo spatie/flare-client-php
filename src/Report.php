@@ -6,19 +6,20 @@ use Spatie\FlareClient\Concerns\HasContext;
 use Spatie\FlareClient\Concerns\UsesTime;
 use Spatie\FlareClient\Context\ContextInterface;
 use Spatie\FlareClient\Contracts\ProvidesFlareContext;
-use Spatie\FlareClient\Enums\GroupingTypes;
 use Spatie\FlareClient\Glows\Glow;
 use Spatie\FlareClient\Solutions\ReportSolution;
-use Spatie\FlareClient\Stacktrace\Stacktrace;
+use Spatie\Backtrace\Backtrace;
 use Spatie\IgnitionContracts\Solution;
 use Throwable;
+use Spatie\Backtrace\Frame as SpatieFrame;
+use Spatie\Ignition\Exceptions\ViewException;
 
 class Report
 {
     use UsesTime;
     use HasContext;
 
-    protected Stacktrace $stacktrace;
+    protected Backtrace $stacktrace;
 
     protected string $exceptionClass = '';
 
@@ -60,14 +61,14 @@ class Report
             ->useContext($context)
             ->exceptionClass(self::getClassForThrowable($throwable))
             ->message($throwable->getMessage())
-            ->stackTrace(Stacktrace::createForThrowable($throwable, $applicationPath))
+            ->stackTrace(Backtrace::createForThrowable($throwable)->applicationPath($applicationPath ?? ''))
             ->exceptionContext($throwable)
             ->setApplicationVersion($version);
     }
 
     protected static function getClassForThrowable(Throwable $throwable): string
     {
-        if ($throwable instanceof \Spatie\Ignition\Exceptions\ViewException) {
+        if ($throwable instanceof ViewException) {
             if ($previous = $throwable->getPrevious()) {
                 return get_class($previous);
             }
@@ -82,7 +83,7 @@ class Report
         ContextInterface $context,
         ?string $applicationPath = null
     ): self {
-        $stacktrace = Stacktrace::create($applicationPath);
+        $stacktrace = Backtrace::create()->applicationPath($applicationPath ?? '');
 
         return (new static())
             ->setApplicationPath($applicationPath)
@@ -129,14 +130,14 @@ class Report
         return $this->message;
     }
 
-    public function stacktrace(Stacktrace $stacktrace)
+    public function stacktrace(Backtrace $stacktrace)
     {
         $this->stacktrace = $stacktrace;
 
         return $this;
     }
 
-    public function getStacktrace(): Stacktrace
+    public function getStacktrace(): Backtrace
     {
         return $this->stacktrace;
     }
@@ -262,6 +263,14 @@ class Report
         return $this;
     }
 
+    protected function stracktraceAsArray(): array
+    {
+        return array_map(
+            fn(SpatieFrame $frame) => Frame::fromSpatieFrame($frame)->toArray(),
+            $this->stacktrace->frames(),
+        );
+    }
+
     public function toArray(): array
     {
         return [
@@ -274,7 +283,7 @@ class Report
             'message' => $this->message,
             'glows' => $this->glows,
             'solutions' => $this->solutions,
-            'stacktrace' => $this->stacktrace->toArray(),
+            'stacktrace' => $this->stracktraceAsArray(),
             'context' => $this->allContext(),
             'stage' => $this->stage,
             'message_level' => $this->messageLevel,

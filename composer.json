@@ -11,11 +11,12 @@
     "license": "MIT",
     "require": {
         "php": "^7.4|^8.0",
-        "spatie/ignition-contracts": "~1.0",
         "illuminate/pipeline": "^8.0",
+        "spatie/backtrace": "^1.2",
+        "spatie/ignition-contracts": "^1.0.3",
         "symfony/http-foundation": "^5.0",
-        "symfony/mime": "^5.1",
-        "symfony/var-dumper": "^5.0"
+        "symfony/mime": "^5.2",
+        "symfony/var-dumper": "^5.2"
     },
     "require-dev": {
         "dms/phpunit-arraysubset-asserts": "^0.3.0",
