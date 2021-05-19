@@ -38,7 +38,7 @@ class Flare
 
     protected ContextDetectorInterface $contextDetector;
 
-    protected ?Closure $previousExceptionHandler= null;
+    protected ?Closure $previousExceptionHandler = null;
 
     protected ?Closure $previousErrorHandler = null;
 
@@ -53,8 +53,7 @@ class Flare
         string $apiSecret = null,
         ContextDetectorInterface $contextDetector = null,
         Container $container = null
-    ): self
-    {
+    ): self {
         $client = new Client($apiKey, $apiSecret);
 
         return new static($client, $contextDetector, $container);

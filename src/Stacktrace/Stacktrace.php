@@ -84,7 +84,7 @@ class Stacktrace
 
     public function toArray(): array
     {
-        return array_map(fn(Frame $frame) => $frame->toArray(), $this->frames);
+        return array_map(fn (Frame $frame) => $frame->toArray(), $this->frames);
     }
 
     public function firstApplicationFrame(): ?Frame
