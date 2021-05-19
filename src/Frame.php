@@ -20,7 +20,7 @@ class Frame
 
     public function toArray(): array
     {
-        $codeSnippet = $this->frame->getSnippet(9);
+        $codeSnippet = $this->frame->getSnippet(30);
 
         return [
             'line_number' => $this->frame->lineNumber,
