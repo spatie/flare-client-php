@@ -40,6 +40,20 @@ class Client
         $this->timeout = $timeout;
     }
 
+    public function setApiToken(string $apiToken): self
+    {
+        $this->apiToken = $apiToken;
+
+        return $this;
+    }
+
+    public function setApiSecret(string $apiSecret): self
+    {
+        $this->apiSecret = $apiSecret;
+
+        return $this;
+    }
+
     /**
      * @param string $url
      * @param array  $arguments

@@ -49,7 +49,7 @@ class Flare
     protected ?Closure $filterExceptionsCallable = null;
 
     public static function register(
-        string $apiKey,
+        string $apiKey = null,
         string $apiSecret = null,
         ContextDetectorInterface $contextDetector = null,
         Container $container = null
@@ -57,6 +57,20 @@ class Flare
         $client = new Client($apiKey, $apiSecret);
 
         return new static($client, $contextDetector, $container);
+    }
+
+    public function setApiToken(string $apiToken): self
+    {
+        $this->client->setApiToken($apiToken);
+
+        return $this;
+    }
+
+    public function setApiSecret(string $apiSecret): self
+    {
+        $this->client->setApiSecret($apiSecret);
+
+        return $this;
     }
 
     public function determineVersionUsing(callable $determineVersionCallable)
