@@ -118,6 +118,20 @@ class Flare
         return $this->middleware;
     }
 
+    public function setContextDectector(ContextDetectorInterface $contextDetector): self
+    {
+        $this->contextDetector = $contextDetector;
+
+        return $this;
+    }
+
+    public function setContainer(Container $container): self
+    {
+        $this->container = $container;
+
+        return $this;
+    }
+
     public function registerFlareHandlers(): self
     {
         $this->registerExceptionHandler();
