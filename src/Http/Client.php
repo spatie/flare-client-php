@@ -54,6 +54,13 @@ class Client
         return $this;
     }
 
+    public function setBaseUrl(string $baseUrl): self
+    {
+        $this->baseUrl = $baseUrl;
+
+        return $this;
+    }
+
     /**
      * @param string $url
      * @param array  $arguments

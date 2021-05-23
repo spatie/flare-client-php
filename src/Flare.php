@@ -48,7 +48,7 @@ class Flare
 
     protected ?Closure $filterExceptionsCallable = null;
 
-    public static function register(
+    public static function make(
         string $apiKey = null,
         string $apiSecret = null,
         ContextDetectorInterface $contextDetector = null,
@@ -69,6 +69,13 @@ class Flare
     public function setApiSecret(string $apiSecret): self
     {
         $this->client->setApiSecret($apiSecret);
+
+        return $this;
+    }
+
+    public function setBaseUrl(string $baseUrl): self
+    {
+        $this->client->setBaseUrl($baseUrl);
 
         return $this;
     }
