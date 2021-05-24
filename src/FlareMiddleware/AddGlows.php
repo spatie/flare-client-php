@@ -2,9 +2,6 @@
 
 namespace Spatie\FlareClient\FlareMiddleware;
 
-use Spatie\FlareClient\Glows\GlowRecorder;
-use Spatie\FlareClient\Report;
-
 namespace Spatie\FlareClient\FlareMiddleware;
 
 class AddGlows implements FlareMiddleware

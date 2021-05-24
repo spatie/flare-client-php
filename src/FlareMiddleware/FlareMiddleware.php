@@ -8,5 +8,4 @@ use Spatie\FlareClient\Report;
 interface FlareMiddleware
 {
     public function handle(Report $report, Closure $next);
-
 }

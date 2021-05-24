@@ -340,7 +340,7 @@ class Flare
     {
         $this->applyAdditionalParameters($report);
 
-        $middleware = array_map(function($singleMiddleware) {
+        $middleware = array_map(function ($singleMiddleware) {
             return is_string($singleMiddleware)
                 ? new $singleMiddleware
                 : $singleMiddleware;
@@ -349,7 +349,7 @@ class Flare
         $report = (new Pipeline())
             ->send($report)
             ->through($middleware)
-            ->then(fn($report) => $report);
+            ->then(fn ($report) => $report);
 
         return $report;
     }
