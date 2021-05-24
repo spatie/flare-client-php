@@ -48,6 +48,8 @@ class Flare
 
     protected ?Closure $filterExceptionsCallable = null;
 
+    protected ?string $stage = null;
+
     public static function make(
         string $apiKey = null,
         string $apiSecret = null,
@@ -76,6 +78,13 @@ class Flare
     public function setBaseUrl(string $baseUrl): self
     {
         $this->client->setBaseUrl($baseUrl);
+
+        return $this;
+    }
+
+    public function setStage(string $stage): self
+    {
+        $this->stage = $stage;
 
         return $this;
     }
