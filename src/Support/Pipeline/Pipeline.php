@@ -15,9 +15,8 @@ class Pipeline
 
     public function through(array $middleware)
     {
-        foreach($this->middleware as $singleMiddleware)
-        {
-           $this->handleMiddleware($singleMiddleware);
+        foreach ($this->middleware as $singleMiddleware) {
+            $this->handleMiddleware($singleMiddleware);
         }
 
         return $this->report;
