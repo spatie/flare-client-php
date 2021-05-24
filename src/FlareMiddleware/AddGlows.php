@@ -5,7 +5,9 @@ namespace Spatie\FlareClient\FlareMiddleware;
 use Spatie\FlareClient\Glows\GlowRecorder;
 use Spatie\FlareClient\Report;
 
-class AddGlows
+namespace Spatie\FlareClient\FlareMiddleware;
+
+class AddGlows implements FlareMiddleware
 {
     protected GlowRecorder $recorder;
 

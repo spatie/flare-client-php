@@ -34,8 +34,6 @@ class Flare
 
     protected ?string $applicationPath = null;
 
-    protected ?Container $container = null;
-
     protected ContextProviderDetector $contextDetector;
 
     protected ?Closure $previousExceptionHandler = null;
@@ -53,12 +51,11 @@ class Flare
     public static function make(
         string $apiKey = null,
         string $apiSecret = null,
-        ContextProviderDetector $contextDetector = null,
-        Container $container = null
+        ContextProviderDetector $contextDetector = null
     ): self {
         $client = new Client($apiKey, $apiSecret);
 
-        return new static($client, $contextDetector, $container);
+        return new static($client, $contextDetector);
     }
 
     public function setApiToken(string $apiToken): self
@@ -116,13 +113,11 @@ class Flare
     public function __construct(
         Client $client,
         ContextProviderDetector $contextDetector = null,
-        Container $container = null,
         array $middleware = []
     ) {
         $this->client = $client;
         $this->recorder = new GlowRecorder();
         $this->contextDetector = $contextDetector ?? new BaseContextProviderDetector();
-        $this->container = $container;
         $this->middleware = $middleware;
         $this->api = new Api($this->client);
 
@@ -345,12 +340,16 @@ class Flare
     {
         $this->applyAdditionalParameters($report);
 
-        $report = (new Pipeline($this->container))
+        $middleware = array_map(function($singleMiddleware) {
+            return is_string($singleMiddleware)
+                ? new $singleMiddleware
+                : $singleMiddleware;
+        }, $this->middleware);
+
+        $report = (new Pipeline())
             ->send($report)
-            ->through($this->middleware)
-            ->then(function ($report) {
-                return $report;
-            });
+            ->through($middleware)
+            ->then(fn($report) => $report);
 
         return $report;
     }

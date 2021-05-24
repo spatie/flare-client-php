@@ -4,7 +4,7 @@ namespace Spatie\FlareClient\FlareMiddleware;
 
 use Spatie\FlareClient\Report;
 
-class AnonymizeIp
+class AnonymizeIp implements FlareMiddleware
 {
     public function handle(Report $report, $next)
     {

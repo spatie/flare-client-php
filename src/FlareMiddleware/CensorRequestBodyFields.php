@@ -4,7 +4,7 @@ namespace Spatie\FlareClient\FlareMiddleware;
 
 use Spatie\FlareClient\Report;
 
-class CensorRequestBodyFields
+class CensorRequestBodyFields implements FlareMiddleware
 {
     protected array $fieldNames = [];
 
