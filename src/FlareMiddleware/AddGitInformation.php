@@ -9,8 +9,16 @@ use Symfony\Component\Process\Process;
 
 class AddGitInformation implements FlareMiddleware
 {
+    protected ?string $baseDir = null;
+
     public function handle(Report $report, Closure $next)
     {
+        $this->baseDir = $this->getGitBaseDirectory();
+
+        if (! $this->baseDir) {
+            $next($report);
+        }
+
         $report->group('git', [
             'hash' => $this->hash(),
             'message' => $this->message(),
@@ -22,36 +30,54 @@ class AddGitInformation implements FlareMiddleware
         return $next($report);
     }
 
-    public function hash(): ?string
+    protected function hash(): ?string
     {
         return $this->command("git log --pretty=format:'%H' -n 1");
     }
 
-    public function message(): ?string
+    protected function message(): ?string
     {
         return $this->command("git log --pretty=format:'%s' -n 1");
     }
 
-    public function tag(): ?string
+    protected function tag(): ?string
     {
         return $this->command('git describe --tags --abbrev=0');
     }
 
-    public function remote(): ?string
+    protected function remote(): ?string
     {
         return $this->command('git config --get remote.origin.url');
     }
 
-    public function isClean(): bool
+    protected function isClean(): bool
     {
         return empty($this->command('git status -s'));
     }
 
+    protected function getGitBaseDirectory(): ?string
+    {
+        /** @var Process $process */
+        $process = Process::fromShellCommandline("$(git rev-parse --show-toplevel)")->run();
+
+        $process->run();
+
+        if (! $process->isSuccessful()) {
+            return null;
+        }
+
+        $directory = trim($process->getOutput());
+
+        if (! file_exists($directory)) {
+            return null;
+        }
+
+        return $directory;
+    }
+
     protected function command($command)
     {
-        $process = (new ReflectionClass(Process::class))->hasMethod('fromShellCommandline')
-            ? Process::fromShellCommandline($command, base_path())
-            : new Process($command, base_path());
+        $process = Process::fromShellCommandline($command, $this->baseDir);
 
         $process->run();
 

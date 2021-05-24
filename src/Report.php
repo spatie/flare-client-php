@@ -10,7 +10,7 @@ use Spatie\FlareClient\Context\ContextProvider;
 use Spatie\FlareClient\Contracts\ProvidesFlareContext;
 use Spatie\FlareClient\Glows\Glow;
 use Spatie\FlareClient\Solutions\ReportSolution;
-use Spatie\Ignition\Exceptions\ViewException;
+use Spatie\LaravelIgnition\Exceptions\ViewException;
 use Spatie\IgnitionContracts\Solution;
 use Throwable;
 

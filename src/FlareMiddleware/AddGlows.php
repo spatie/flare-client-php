@@ -4,6 +4,10 @@ namespace Spatie\FlareClient\FlareMiddleware;
 
 namespace Spatie\FlareClient\FlareMiddleware;
 
+use Closure;
+use Spatie\FlareClient\Glows\GlowRecorder;
+use Spatie\FlareClient\Report;
+
 class AddGlows implements FlareMiddleware
 {
     protected GlowRecorder $recorder;
@@ -13,7 +17,7 @@ class AddGlows implements FlareMiddleware
         $this->recorder = $recorder;
     }
 
-    public function handle(Report $report, $next)
+    public function handle(Report $report, Closure $next)
     {
         foreach ($this->recorder->glows() as $glow) {
             $report->addGlow($glow);
