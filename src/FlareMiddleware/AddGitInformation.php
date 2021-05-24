@@ -3,7 +3,6 @@
 namespace Spatie\FlareClient\FlareMiddleware;
 
 use Closure;
-use ReflectionClass;
 use Spatie\FlareClient\Report;
 use Symfony\Component\Process\Process;
 
