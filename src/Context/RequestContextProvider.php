@@ -6,7 +6,6 @@ use BadMethodCallException;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Mime\Exception\InvalidArgumentException;
 use Throwable;
 

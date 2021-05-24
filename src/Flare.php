@@ -12,12 +12,12 @@ use Spatie\FlareClient\Concerns\HasContext;
 use Spatie\FlareClient\Context\BaseContextProviderDetector;
 use Spatie\FlareClient\Context\ContextProviderDetector;
 use Spatie\FlareClient\Enums\MessageLevels;
-use Spatie\FlareClient\Glows\Glow;
-use Spatie\FlareClient\Glows\GlowRecorder;
-use Spatie\FlareClient\Http\Client;
 use Spatie\FlareClient\FlareMiddleware\AddGlows;
 use Spatie\FlareClient\FlareMiddleware\AnonymizeIp;
 use Spatie\FlareClient\FlareMiddleware\CensorRequestBodyFields;
+use Spatie\FlareClient\Glows\Glow;
+use Spatie\FlareClient\Glows\GlowRecorder;
+use Spatie\FlareClient\Http\Client;
 use Throwable;
 
 class Flare
