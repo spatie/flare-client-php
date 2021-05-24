@@ -8,10 +8,10 @@ use Symfony\Component\VarDumper\Dumper\HtmlDumper;
 class View
 {
     /** @var string */
-    private $file;
+    protected $file;
 
     /** @var array */
-    private $data = [];
+    protected $data = [];
 
     public function __construct(string $file, array $data = [])
     {
@@ -24,7 +24,7 @@ class View
         return new static($file, $data);
     }
 
-    private function dumpViewData($variable): string
+    protected function dumpViewData($variable): string
     {
         $cloner = new VarCloner();
 

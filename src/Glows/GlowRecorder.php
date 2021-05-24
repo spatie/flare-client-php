@@ -2,7 +2,7 @@
 
 namespace Spatie\FlareClient\Glows;
 
-class Recorder
+class GlowRecorder
 {
     const GLOW_LIMIT = 30;
 

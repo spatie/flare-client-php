@@ -2,7 +2,7 @@
 
 namespace Spatie\FlareClient\Tests\Context;
 
-use Spatie\FlareClient\Context\ConsoleContext;
+use Spatie\FlareClient\Context\ConsoleContextProvider;
 use Spatie\FlareClient\Tests\TestCase;
 
 class ConsoleContextTest extends TestCase
@@ -16,7 +16,7 @@ class ConsoleContextTest extends TestCase
             'argument 3',
         ];
 
-        $context = new ConsoleContext($arguments);
+        $context = new ConsoleContextProvider($arguments);
 
         $this->assertEquals(['arguments' => $arguments], $context->toArray());
     }

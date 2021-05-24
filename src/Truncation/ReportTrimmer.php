@@ -4,7 +4,7 @@ namespace Spatie\FlareClient\Truncation;
 
 class ReportTrimmer
 {
-    protected static $maxPayloadSize = 524288;
+    protected static int $maxPayloadSize = 524288;
 
     protected array $strategies = [
         TrimStringsStrategy::class,

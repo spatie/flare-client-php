@@ -3,7 +3,7 @@
 namespace Spatie\FlareClient\Tests;
 
 use Exception;
-use Spatie\FlareClient\Context\ConsoleContext;
+use Spatie\FlareClient\Context\ConsoleContextProvider;
 use Spatie\FlareClient\Glows\Glow;
 use Spatie\FlareClient\Report;
 use Spatie\FlareClient\Tests\Concerns\MatchesReportSnapshots;
@@ -23,7 +23,7 @@ class ReportTest extends TestCase
     /** @test */
     public function it_can_create_a_report()
     {
-        $report = Report::createForThrowable(new Exception('this is an exception'), new ConsoleContext());
+        $report = Report::createForThrowable(new Exception('this is an exception'), new ConsoleContextProvider());
 
         $report = $report->toArray();
 
@@ -33,7 +33,7 @@ class ReportTest extends TestCase
     /** @test */
     public function it_can_create_a_report_for_a_string_message()
     {
-        $report = Report::createForMessage('this is a message', 'Log', new ConsoleContext());
+        $report = Report::createForMessage('this is a message', 'Log', new ConsoleContextProvider());
 
         $report = $report->toArray();
 
@@ -44,7 +44,7 @@ class ReportTest extends TestCase
     public function it_can_create_a_report_with_glows()
     {
         /** @var Report $report */
-        $report = Report::createForThrowable(new Exception('this is an exception'), new ConsoleContext());
+        $report = Report::createForThrowable(new Exception('this is an exception'), new ConsoleContextProvider());
 
         $report->addGlow(new Glow('Glow 1', 'info', ['meta' => 'data']));
 
@@ -57,7 +57,7 @@ class ReportTest extends TestCase
     public function it_can_create_a_report_with_meta_data()
     {
         /** @var Report $report */
-        $report = Report::createForThrowable(new Exception('this is an exception'), new ConsoleContext());
+        $report = Report::createForThrowable(new Exception('this is an exception'), new ConsoleContextProvider());
 
         $metadata = [
             'some' => 'data',

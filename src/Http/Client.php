@@ -194,7 +194,7 @@ class Client
         return new Response($headers, $body, $error);
     }
 
-    private function attachRequestPayload(&$curlHandle, array $data)
+    protected function attachRequestPayload(&$curlHandle, array $data)
     {
         $encoded = json_encode($data);
 
@@ -208,7 +208,7 @@ class Client
      *
      * @return resource
      */
-    private function getCurlHandle(string $fullUrl, array $headers = [])
+    protected function getCurlHandle(string $fullUrl, array $headers = [])
     {
         $curlHandle = curl_init();
 

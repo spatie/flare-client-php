@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Mime\Exception\InvalidArgumentException;
 use Throwable;
 
-class RequestContext implements ContextInterface
+class RequestContextProvider implements ContextProvider
 {
     protected ?Request $request;
 
@@ -29,7 +29,7 @@ class RequestContext implements ContextInterface
         ];
     }
 
-    private function getFiles(): array
+    protected function getFiles(): array
     {
         if (is_null($this->request->files)) {
             return [];
@@ -80,8 +80,12 @@ class RequestContext implements ContextInterface
         return $session ? $this->getValidSessionData($session) : [];
     }
 
-    protected function getValidSessionData(SessionInterface $session): array
+    protected function getValidSessionData($session): array
     {
+        if (! method_exists($session, 'all')) {
+            return [];
+        }
+
         try {
             json_encode($session->all());
         } catch (Throwable $e) {

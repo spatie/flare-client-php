@@ -3,7 +3,7 @@
 namespace Spatie\FlareClient\Tests\Glows;
 
 use Spatie\FlareClient\Glows\Glow;
-use Spatie\FlareClient\Glows\Recorder;
+use Spatie\FlareClient\Glows\GlowRecorder;
 use Spatie\FlareClient\Tests\TestCase;
 
 class RecorderTest extends TestCase
@@ -11,7 +11,7 @@ class RecorderTest extends TestCase
     /** @test */
     public function it_is_initially_empty()
     {
-        $recorder = new Recorder();
+        $recorder = new GlowRecorder();
 
         $this->assertCount(0, $recorder->glows());
     }
@@ -19,7 +19,7 @@ class RecorderTest extends TestCase
     /** @test */
     public function it_stores_glows()
     {
-        $recorder = new Recorder();
+        $recorder = new GlowRecorder();
 
         $glow = new Glow('Some name', 'info', [
             'some' => 'metadata',
@@ -35,7 +35,7 @@ class RecorderTest extends TestCase
     /** @test */
     public function it_does_not_store_more_than_the_max_defined_number_of_glows()
     {
-        $recorder = new Recorder();
+        $recorder = new GlowRecorder();
 
         $crumb1 = new Glow('One');
         $crumb2 = new Glow('Two');
@@ -48,7 +48,7 @@ class RecorderTest extends TestCase
         $recorder->record($crumb1);
         $recorder->record($crumb2);
 
-        $this->assertCount(Recorder::GLOW_LIMIT, $recorder->glows());
+        $this->assertCount(GlowRecorder::GLOW_LIMIT, $recorder->glows());
 
         $this->assertSame([
             $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1,

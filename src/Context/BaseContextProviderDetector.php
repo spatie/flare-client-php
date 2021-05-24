@@ -2,18 +2,18 @@
 
 namespace Spatie\FlareClient\Context;
 
-class ContextContextDetector implements ContextDetectorInterface
+class BaseContextProviderDetector implements ContextProviderDetector
 {
-    public function detectCurrentContext(): ContextInterface
+    public function detectCurrentContext(): ContextProvider
     {
         if ($this->runningInConsole()) {
-            return new ConsoleContext($_SERVER['argv'] ?? []);
+            return new ConsoleContextProvider($_SERVER['argv'] ?? []);
         }
 
-        return new RequestContext();
+        return new RequestContextProvider();
     }
 
-    private function runningInConsole(): bool
+    protected function runningInConsole(): bool
     {
         if (isset($_ENV['APP_RUNNING_IN_CONSOLE'])) {
             return $_ENV['APP_RUNNING_IN_CONSOLE'] === 'true';

@@ -2,7 +2,7 @@
 
 namespace Spatie\FlareClient\Context;
 
-class ConsoleContext implements ContextInterface
+class ConsoleContextProvider implements ContextProvider
 {
     protected array $arguments = [];
 

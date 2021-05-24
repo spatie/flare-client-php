@@ -2,7 +2,7 @@
 
 namespace Spatie\FlareClient\Tests\Context;
 
-use Spatie\FlareClient\Context\RequestContext;
+use Spatie\FlareClient\Context\RequestContextProvider;
 use Spatie\FlareClient\Tests\Concerns\MatchesCodeSnippetSnapshots;
 use Spatie\FlareClient\Tests\TestCase;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -49,7 +49,7 @@ class RequestContextTest extends TestCase
 
         $request = new Request($get, $post, $request, $cookies, $files, $server, $content);
 
-        $context = new RequestContext($request);
+        $context = new RequestContextProvider($request);
 
         $contextArray = $context->toArray();
 

@@ -2,7 +2,7 @@
 
 namespace Spatie\FlareClient\Context;
 
-interface ContextInterface
+interface ContextProvider
 {
     public function toArray(): array;
 }

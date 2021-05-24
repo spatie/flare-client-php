@@ -1,6 +1,6 @@
 <?php
 
-namespace Spatie\FlareClient\Middleware;
+namespace Spatie\FlareClient\FlareMiddleware;
 
 use Spatie\FlareClient\Report;
 

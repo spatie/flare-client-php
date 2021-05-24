@@ -6,7 +6,7 @@ use Spatie\Backtrace\Backtrace;
 use Spatie\Backtrace\Frame as SpatieFrame;
 use Spatie\FlareClient\Concerns\HasContext;
 use Spatie\FlareClient\Concerns\UsesTime;
-use Spatie\FlareClient\Context\ContextInterface;
+use Spatie\FlareClient\Context\ContextProvider;
 use Spatie\FlareClient\Contracts\ProvidesFlareContext;
 use Spatie\FlareClient\Glows\Glow;
 use Spatie\FlareClient\Solutions\ReportSolution;
@@ -29,7 +29,7 @@ class Report
 
     protected array $solutions = [];
 
-    protected ContextInterface $context;
+    protected ContextProvider $context;
 
     protected ?string $applicationPath = null;
 
@@ -51,7 +51,7 @@ class Report
 
     public static function createForThrowable(
         Throwable $throwable,
-        ContextInterface $context,
+        ContextProvider $context,
         ?string $applicationPath = null,
         ?string $version = null
     ): self {
@@ -80,7 +80,7 @@ class Report
     public static function createForMessage(
         string $message,
         string $logLevel,
-        ContextInterface $context,
+        ContextProvider $context,
         ?string $applicationPath = null
     ): self {
         $stacktrace = Backtrace::create()->applicationPath($applicationPath ?? '');
@@ -163,7 +163,7 @@ class Report
         return $this;
     }
 
-    public function useContext(ContextInterface $request): self
+    public function useContext(ContextProvider $request): self
     {
         $this->context = $request;
 

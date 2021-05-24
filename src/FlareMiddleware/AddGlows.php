@@ -1,15 +1,15 @@
 <?php
 
-namespace Spatie\FlareClient\Middleware;
+namespace Spatie\FlareClient\FlareMiddleware;
 
-use Spatie\FlareClient\Glows\Recorder;
+use Spatie\FlareClient\Glows\GlowRecorder;
 use Spatie\FlareClient\Report;
 
 class AddGlows
 {
-    private Recorder $recorder;
+    protected GlowRecorder $recorder;
 
-    public function __construct(Recorder $recorder)
+    public function __construct(GlowRecorder $recorder)
     {
         $this->recorder = $recorder;
     }

@@ -9,15 +9,15 @@ use Exception;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Pipeline\Pipeline;
 use Spatie\FlareClient\Concerns\HasContext;
-use Spatie\FlareClient\Context\ContextContextDetector;
-use Spatie\FlareClient\Context\ContextDetectorInterface;
+use Spatie\FlareClient\Context\BaseContextProviderDetector;
+use Spatie\FlareClient\Context\ContextProviderDetector;
 use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Glows\Glow;
-use Spatie\FlareClient\Glows\Recorder;
+use Spatie\FlareClient\Glows\GlowRecorder;
 use Spatie\FlareClient\Http\Client;
-use Spatie\FlareClient\Middleware\AddGlows;
-use Spatie\FlareClient\Middleware\AnonymizeIp;
-use Spatie\FlareClient\Middleware\CensorRequestBodyFields;
+use Spatie\FlareClient\FlareMiddleware\AddGlows;
+use Spatie\FlareClient\FlareMiddleware\AnonymizeIp;
+use Spatie\FlareClient\FlareMiddleware\CensorRequestBodyFields;
 use Throwable;
 
 class Flare
@@ -30,13 +30,13 @@ class Flare
 
     protected array $middleware = [];
 
-    protected Recorder $recorder;
+    protected GlowRecorder $recorder;
 
     protected ?string $applicationPath = null;
 
     protected ?Container $container = null;
 
-    protected ContextDetectorInterface $contextDetector;
+    protected ContextProviderDetector $contextDetector;
 
     protected ?Closure $previousExceptionHandler = null;
 
@@ -53,7 +53,7 @@ class Flare
     public static function make(
         string $apiKey = null,
         string $apiSecret = null,
-        ContextDetectorInterface $contextDetector = null,
+        ContextProviderDetector $contextDetector = null,
         Container $container = null
     ): self {
         $client = new Client($apiKey, $apiSecret);
@@ -115,13 +115,13 @@ class Flare
 
     public function __construct(
         Client $client,
-        ContextDetectorInterface $contextDetector = null,
+        ContextProviderDetector $contextDetector = null,
         Container $container = null,
         array $middleware = []
     ) {
         $this->client = $client;
-        $this->recorder = new Recorder();
-        $this->contextDetector = $contextDetector ?? new ContextContextDetector();
+        $this->recorder = new GlowRecorder();
+        $this->contextDetector = $contextDetector ?? new BaseContextProviderDetector();
         $this->container = $container;
         $this->middleware = $middleware;
         $this->api = new Api($this->client);
@@ -134,7 +134,7 @@ class Flare
         return $this->middleware;
     }
 
-    public function setContextDectector(ContextDetectorInterface $contextDetector): self
+    public function setContextDectector(ContextProviderDetector $contextDetector): self
     {
         $this->contextDetector = $contextDetector;
 
@@ -171,14 +171,14 @@ class Flare
         return $this;
     }
 
-    private function registerDefaultMiddleware(): self
+    protected function registerDefaultMiddleware(): self
     {
         return $this->registerMiddleware(new AddGlows($this->recorder));
     }
 
-    public function registerMiddleware($callable): self
+    public function registerMiddleware($middleware): self
     {
-        $this->middleware[] = $callable;
+        $this->middleware[] = $middleware;
 
         return $this;
     }
