@@ -290,6 +290,7 @@ class Flare
         $this->api->sendQueuedReports();
 
         $this->userProvidedContext = [];
+
         $this->recorder->reset();
     }
 
