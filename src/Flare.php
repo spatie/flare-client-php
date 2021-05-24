@@ -129,7 +129,7 @@ class Flare
         return $this->middleware;
     }
 
-    public function setContextDectector(ContextProviderDetector $contextDetector): self
+    public function setContextProviderDectector(ContextProviderDetector $contextDetector): self
     {
         $this->contextDetector = $contextDetector;
 

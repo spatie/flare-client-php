@@ -7,7 +7,7 @@ use ReflectionClass;
 use Spatie\FlareClient\Report;
 use Symfony\Component\Process\Process;
 
-class AddGitInformation implements FlareMiddleware
+class AddGitInformation
 {
     protected ?string $baseDir = null;
 
@@ -58,7 +58,7 @@ class AddGitInformation implements FlareMiddleware
     protected function getGitBaseDirectory(): ?string
     {
         /** @var Process $process */
-        $process = Process::fromShellCommandline("$(git rev-parse --show-toplevel)")->run();
+        $process = Process::fromShellCommandline("echo $(git rev-parse --show-toplevel)");
 
         $process->run();
 
