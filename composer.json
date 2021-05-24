@@ -16,6 +16,7 @@
         "spatie/ignition-contracts": "^1.0.3",
         "symfony/http-foundation": "^5.0",
         "symfony/mime": "^5.2",
+        "symfony/process": "^5.2",
         "symfony/var-dumper": "^5.2"
     },
     "require-dev": {
