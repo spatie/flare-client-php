@@ -3,6 +3,7 @@
 namespace Spatie\FlareClient\Context;
 
 use BadMethodCallException;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
@@ -50,7 +51,7 @@ class RequestContext implements ContextInterface
 
             try {
                 $fileSize = $file->getSize();
-            } catch (\RuntimeException $e) {
+            } catch (RuntimeException $e) {
                 $fileSize = 0;
             }
 
