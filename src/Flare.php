@@ -50,10 +50,9 @@ class Flare
 
     public static function make(
         string $apiKey = null,
-        string $apiSecret = null,
         ContextProviderDetector $contextDetector = null
     ): self {
-        $client = new Client($apiKey, $apiSecret);
+        $client = new Client($apiKey);
 
         return new static($client, $contextDetector);
     }
@@ -65,11 +64,9 @@ class Flare
         return $this;
     }
 
-    public function setApiSecret(string $apiSecret): self
+    public function apiTokenSet(): bool
     {
-        $this->client->setApiSecret($apiSecret);
-
-        return $this;
+        return $this->client->apiTokenSet();
     }
 
     public function setBaseUrl(string $baseUrl): self
@@ -82,6 +79,13 @@ class Flare
     public function setStage(string $stage): self
     {
         $this->stage = $stage;
+
+        return $this;
+    }
+
+    public function sendReportsImmediately(): self
+    {
+        $this->api->sendReportsImmediately();
 
         return $this;
     }

@@ -10,22 +10,17 @@ use Spatie\FlareClient\Http\Exceptions\NotFound;
 class Client
 {
     protected ?string $apiToken;
-
-    protected ?string $apiSecret;
-
+    
     protected ?string $baseUrl;
 
     protected int $timeout;
 
     public function __construct(
         ?string $apiToken,
-        ?string $apiSecret,
         string $baseUrl = 'https://reporting.flareapp.io/api',
         int $timeout = 10
     ) {
         $this->apiToken = $apiToken;
-
-        $this->apiSecret = $apiSecret;
 
         if (! $baseUrl) {
             throw MissingParameter::create('baseUrl');
@@ -46,12 +41,10 @@ class Client
 
         return $this;
     }
-
-    public function setApiSecret(string $apiSecret): self
+    
+    public function apiTokenSet(): bool
     {
-        $this->apiSecret = $apiSecret;
-
-        return $this;
+        return ! is_null($this->apiToken);
     }
 
     public function setBaseUrl(string $baseUrl): self
@@ -127,7 +120,6 @@ class Client
     {
         $queryString = http_build_query([
             'key' => $this->apiToken,
-            'secret' => $this->apiSecret,
         ]);
 
         $fullUrl = "{$this->baseUrl}/{$url}?{$queryString}";

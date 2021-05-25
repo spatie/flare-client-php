@@ -8,14 +8,11 @@ use Spatie\FlareClient\Truncation\ReportTrimmer;
 
 class Api
 {
-    /** @var \Spatie\FlareClient\Http\Client */
-    protected $client;
+    protected Client $client;
 
-    /** @var bool */
-    public static $sendInBatches = true;
+    protected bool $sendReportsImmediately = false;
 
-    /** @var array */
-    protected $queue = [];
+    protected array $queue = [];
 
     public function __construct(Client $client)
     {
@@ -24,19 +21,19 @@ class Api
         register_shutdown_function([$this, 'sendQueuedReports']);
     }
 
-    public static function sendReportsInBatches(bool $batchSending = true)
+    public function sendReportsImmediately(): self
     {
-        static::$sendInBatches = $batchSending;
+        $this->sendReportsImmediately = true;
+
+        return $this;
     }
 
     public function report(Report $report)
     {
         try {
-            if (static::$sendInBatches) {
-                $this->addReportToQueue($report);
-            } else {
-                $this->sendReportToApi($report);
-            }
+            $this->sendReportsImmediately()
+                ? $this->sendReportToApi($report)
+                : $this->addReportToQueue($report);
         } catch (Exception $e) {
             //
         }
@@ -52,7 +49,7 @@ class Api
         $this->queue[] = $report;
     }
 
-    public function sendQueuedReports()
+    public function sendQueuedReports(): void
     {
         try {
             foreach ($this->queue as $report) {
@@ -65,9 +62,11 @@ class Api
         }
     }
 
-    protected function sendReportToApi(Report $report)
+    protected function sendReportToApi(Report $report): void
     {
-        $this->client->post('reports', $this->truncateReport($report->toArray()));
+        $payload = $this->truncateReport($report->toArray());
+
+        $this->client->post('reports', $payload);
     }
 
     protected function truncateReport(array $payload): array
