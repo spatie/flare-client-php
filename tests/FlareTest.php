@@ -5,7 +5,6 @@ namespace Spatie\FlareClient\Tests;
 use Error;
 use ErrorException;
 use PHPUnit\Framework\Exception;
-use Spatie\FlareClient\Api;
 use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Flare;
 use Spatie\FlareClient\Tests\Concerns\MatchesReportSnapshots;
