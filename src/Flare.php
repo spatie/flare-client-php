@@ -13,7 +13,7 @@ use Spatie\FlareClient\Context\BaseContextProviderDetector;
 use Spatie\FlareClient\Context\ContextProviderDetector;
 use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\FlareMiddleware\AddGlows;
-use Spatie\FlareClient\FlareMiddleware\AnonymizeIp;
+use Spatie\FlareClient\FlareMiddleware\RemoveRequestIp;
 use Spatie\FlareClient\FlareMiddleware\CensorRequestBodyFields;
 use Spatie\FlareClient\Glows\Glow;
 use Spatie\FlareClient\Glows\GlowRecorder;
@@ -177,7 +177,12 @@ class Flare
 
     public function registerMiddleware($middleware): self
     {
-        $this->middleware[] = $middleware;
+        if (! is_array($middleware)) {
+            $middleware = [$middleware];
+        }
+
+
+        $this->middleware = array_merge($this->middleware, $middleware);
 
         return $this;
     }
@@ -304,7 +309,7 @@ class Flare
 
     public function anonymizeIp(): self
     {
-        $this->registerMiddleware(new AnonymizeIp());
+        $this->registerMiddleware(new RemoveRequestIp());
 
         return $this;
     }
@@ -343,7 +348,6 @@ class Flare
     protected function applyMiddlewareToReport(Report $report): Report
     {
         $this->applyAdditionalParameters($report);
-
         $middleware = array_map(function ($singleMiddleware) {
             return is_string($singleMiddleware)
                 ? new $singleMiddleware
@@ -354,7 +358,7 @@ class Flare
             ->send($report)
             ->through($middleware)
             ->then(fn ($report) => $report);
-
+        
         return $report;
     }
 }

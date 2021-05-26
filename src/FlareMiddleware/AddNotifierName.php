@@ -4,7 +4,7 @@ namespace Spatie\FlareClient\FlareMiddleware;
 
 use Spatie\FlareClient\Report;
 
-class SetNotifierName implements FlareMiddleware
+class AddNotifierName implements FlareMiddleware
 {
     public const NOTIFIER_NAME = 'PHP Client';
 
