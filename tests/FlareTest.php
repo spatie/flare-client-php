@@ -27,8 +27,6 @@ class FlareTest extends TestCase
     {
         parent::setUp();
 
-        Api::sendReportsInBatches(false);
-
         $this->fakeClient = new FakeClient();
 
         $this->flare = new Flare($this->fakeClient);
@@ -68,8 +66,6 @@ class FlareTest extends TestCase
     /** @test */
     public function it_can_reset_queued_exceptions()
     {
-        Api::sendReportsInBatches(true);
-
         $this->reportException();
 
         $this->flare->reset();
