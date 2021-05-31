@@ -10,13 +10,13 @@ use Spatie\FlareClient\Http\Exceptions\NotFound;
 class Client
 {
     protected ?string $apiToken;
-    
+
     protected ?string $baseUrl;
 
     protected int $timeout;
 
     public function __construct(
-        ?string $apiToken,
+        ?string $apiToken = null,
         string $baseUrl = 'https://reporting.flareapp.io/api',
         int $timeout = 10
     ) {
@@ -41,7 +41,7 @@ class Client
 
         return $this;
     }
-    
+
     public function apiTokenSet(): bool
     {
         return ! is_null($this->apiToken);
