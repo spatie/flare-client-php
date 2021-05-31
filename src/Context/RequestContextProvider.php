@@ -2,7 +2,6 @@
 
 namespace Spatie\FlareClient\Context;
 
-use BadMethodCallException;
 use Exception;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
