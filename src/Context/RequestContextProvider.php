@@ -3,6 +3,7 @@
 namespace Spatie\FlareClient\Context;
 
 use BadMethodCallException;
+use Exception;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
@@ -72,7 +73,7 @@ class RequestContextProvider implements ContextProvider
     {
         try {
             $session = $this->request->getSession();
-        } catch (BadMethodCallException $exception) {
+        } catch (Exception $exception) {
             $session = [];
         }
 
