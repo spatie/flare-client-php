@@ -44,7 +44,7 @@ class Client
 
     public function apiTokenSet(): bool
     {
-        return ! is_null($this->apiToken);
+        return ! empty($this->apiToken);
     }
 
     public function setBaseUrl(string $baseUrl): self

@@ -358,7 +358,7 @@ class Flare
             ->send($report)
             ->through($middleware)
             ->then(fn ($report) => $report);
-        
+
         return $report;
     }
 }
