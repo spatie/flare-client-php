@@ -39,7 +39,7 @@ class Report
 
     protected array $exceptionContext = [];
 
-    protected Throwable $throwable;
+    protected ?Throwable $throwable = null;
 
     protected string $notifierName = 'Flare Client';
 
