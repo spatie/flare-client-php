@@ -48,6 +48,8 @@ class Flare
 
     protected ?string $stage = null;
 
+    protected ?string $requestId = null;
+
     public static function make(
         string $apiKey = null,
         ContextProviderDetector $contextDetector = null
@@ -233,10 +235,10 @@ class Flare
         return $this;
     }
 
-    public function report(Throwable $throwable, callable $callback = null): void
+    public function report(Throwable $throwable, callable $callback = null): ?Report
     {
         if (! $this->shouldSendReport($throwable)) {
-            return;
+            return null;
         }
 
         $report = $this->createReport($throwable);
@@ -246,6 +248,8 @@ class Flare
         }
 
         $this->sendReportToApi($report);
+
+        return $report;
     }
 
     protected function shouldSendReport(Throwable $throwable): bool

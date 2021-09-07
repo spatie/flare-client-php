@@ -49,6 +49,10 @@ class Report
 
     protected ?int $openFrameIndex = null;
 
+    protected string $uuid;
+
+    public static ?string $fakeUuid = null;
+
     public static function createForThrowable(
         Throwable $throwable,
         ContextProvider $context,
@@ -92,6 +96,16 @@ class Report
             ->exceptionClass($logLevel)
             ->stacktrace($stacktrace)
             ->openFrameIndex($stacktrace->firstApplicationFrameIndex());
+    }
+
+    public function __construct()
+    {
+        $this->uuid = self::$fakeUuid ?? $this->generateUuid();
+    }
+
+    public function uuid(): string
+    {
+        return $this->uuid;
     }
 
     public function exceptionClass(string $exceptionClass): self
@@ -290,6 +304,25 @@ class Report
             'open_frame_index' => $this->openFrameIndex,
             'application_path' => $this->applicationPath,
             'application_version' => $this->applicationVersion,
+            'uuid' => $this->uuid,
         ];
+    }
+
+    /*
+     * Found on https://stackoverflow.com/questions/2040240/php-function-to-generate-v4-uuid/15875555#15875555
+     */
+    protected function generateUuid(): string
+    {
+        // Generate 16 bytes (128 bits) of random data or use the data passed into the function.
+        $data = $data ?? random_bytes(16);
+        assert(strlen($data) == 16);
+
+        // Set version to 0100
+        $data[6] = chr(ord($data[6]) & 0x0f | 0x40);
+        // Set bits 6-7 to 10
+        $data[8] = chr(ord($data[8]) & 0x3f | 0x80);
+
+        // Output the 36 character UUID.
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
     }
 }

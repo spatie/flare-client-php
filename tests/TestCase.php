@@ -9,6 +9,13 @@ use Spatie\FlareClient\Tests\TestClasses\FakeTime;
 
 class TestCase extends BaseTestCase
 {
+    public function setUp(): void
+    {
+        parent::setUp();
+
+        Report::$fakeUuid = 'fake-uuid';
+    }
+
     public static function makePathsRelative(string $text): string
     {
         return str_replace(dirname(__DIR__, 1), '', $text);
