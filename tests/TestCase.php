@@ -13,7 +13,7 @@ class TestCase extends BaseTestCase
     {
         parent::setUp();
 
-        Report::$fakeUuid = 'fake-uuid';
+        Report::$fakeTrackingUuid = 'fake-uuid';
     }
 
     public static function makePathsRelative(string $text): string

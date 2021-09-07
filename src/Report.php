@@ -49,9 +49,9 @@ class Report
 
     protected ?int $openFrameIndex = null;
 
-    protected string $uuid;
+    protected string $trackingUuid;
 
-    public static ?string $fakeUuid = null;
+    public static ?string $fakeTrackingUuid = null;
 
     public static function createForThrowable(
         Throwable $throwable,
@@ -100,12 +100,12 @@ class Report
 
     public function __construct()
     {
-        $this->uuid = self::$fakeUuid ?? $this->generateUuid();
+        $this->trackingUuid = self::$fakeTrackingUuid ?? $this->generateUuid();
     }
 
-    public function uuid(): string
+    public function trackingUuid(): string
     {
-        return $this->uuid;
+        return $this->trackingUuid;
     }
 
     public function exceptionClass(string $exceptionClass): self
@@ -304,7 +304,7 @@ class Report
             'open_frame_index' => $this->openFrameIndex,
             'application_path' => $this->applicationPath,
             'application_version' => $this->applicationVersion,
-            'uuid' => $this->uuid,
+            'tracking_uuid' => $this->trackingUuid,
         ];
     }
 

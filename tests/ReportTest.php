@@ -35,9 +35,9 @@ class ReportTest extends TestCase
     {
         $report = Report::createForThrowable(new Exception('this is an exception'), new ConsoleContextProvider());
 
-        $this->assertIsString($report->uuid());
+        $this->assertIsString($report->trackingUuid());
 
-        $this->assertIsString($report->toArray()['uuid']);
+        $this->assertIsString($report->toArray()['tracking_uuid']);
     }
 
     /** @test */
