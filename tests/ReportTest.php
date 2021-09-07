@@ -31,6 +31,17 @@ class ReportTest extends TestCase
     }
 
     /** @test */
+    public function it_will_generate_a_uuid()
+    {
+        $report = Report::createForThrowable(new Exception('this is an exception'), new ConsoleContextProvider());
+
+        $this->assertIsString($report->uuid());
+
+        $this->assertIsString($report->toArray()['uuid']);
+
+    }
+
+    /** @test */
     public function it_can_create_a_report_for_a_string_message()
     {
         $report = Report::createForMessage('this is a message', 'Log', new ConsoleContextProvider());

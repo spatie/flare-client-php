@@ -15,6 +15,7 @@ class ReportDriver extends YamlDriver
         $data = $this->emptyStacktrace($data);
         $data = $this->removePhpunitArguments($data);
         $data = $this->freezeLanguageVersion($data);
+        $data = $this->removeUuid($data);
 
         $yaml = parent::serialize($data);
 
@@ -27,6 +28,8 @@ class ReportDriver extends YamlDriver
         $actual = $this->emptyStacktrace($actual);
         $actual = $this->removePhpunitArguments($actual);
         $actual = $this->freezeLanguageVersion($actual);
+        $actual = $this->removeUuid($actual);
+
 
         if (is_array($actual)) {
             $actual = Yaml::dump($actual, PHP_INT_MAX);
@@ -65,6 +68,13 @@ class ReportDriver extends YamlDriver
     protected function freezeLanguageVersion(array $data): array
     {
         data_set($data, 'language_version', '7.3.2', true);
+
+        return $data;
+    }
+
+    protected function removeUuid(array $data): array
+    {
+        data_set($data, 'uuid', 'fake-uuid', true);
 
         return $data;
     }
