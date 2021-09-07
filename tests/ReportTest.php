@@ -38,7 +38,6 @@ class ReportTest extends TestCase
         $this->assertIsString($report->uuid());
 
         $this->assertIsString($report->toArray()['uuid']);
-
     }
 
     /** @test */
