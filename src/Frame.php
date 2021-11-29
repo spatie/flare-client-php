@@ -20,24 +20,14 @@ class Frame
 
     public function toArray(): array
     {
-        $codeSnippet = $this->frame->getSnippet(30);
-
         return [
-            'line_number' => $this->frame->lineNumber,
-            'method' => $this->getFullMethod(),
-            'code_snippet' => $codeSnippet,
             'file' => $this->frame->file,
+            'line_number' => $this->frame->lineNumber,
+            'arguments' => $this->frame->arguments,
+            'method' => $this->frame->method,
+            'class' => $this->frame->class,
+            'code_snippet' => $this->frame->getSnippet(30),
+            'application_frame' => $this->frame->applicationFrame,
         ];
-    }
-
-    protected function getFullMethod(): string
-    {
-        $method = $this->frame->method;
-
-        if ($class = $this->frame->class->class ?? false) {
-            $method = "{$class}::{$method}";
-        }
-
-        return $method;
     }
 }
