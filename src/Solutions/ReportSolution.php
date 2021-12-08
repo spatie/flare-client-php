@@ -2,8 +2,8 @@
 
 namespace Spatie\FlareClient\Solutions;
 
-use Spatie\IgnitionContracts\RunnableSolution;
-use Spatie\IgnitionContracts\Solution as SolutionContract;
+use Spatie\Ignition\Contracts\RunnableSolution;
+use Spatie\Ignition\Contracts\Solution as SolutionContract;
 
 class ReportSolution
 {

@@ -4,7 +4,7 @@ namespace Spatie\FlareClient\FlareMiddleware;
 
 use Closure;
 use Spatie\FlareClient\Report;
-use Spatie\IgnitionContracts\SolutionProviderRepository;
+use Spatie\Ignition\Contracts\SolutionProviderRepository;
 
 class AddSolutions implements FlareMiddleware
 {

@@ -13,11 +13,10 @@
         "php": "^7.4|^8.0",
         "illuminate/pipeline": "^8.0",
         "spatie/backtrace": "^1.2",
-        "spatie/ignition-contracts": "^0.0.1",
-        "symfony/http-foundation": "^5.0",
-        "symfony/mime": "^5.2",
-        "symfony/process": "^5.2",
-        "symfony/var-dumper": "^5.2"
+        "symfony/http-foundation": "^5.0|^6.0",
+        "symfony/mime": "^5.2|^6.0",
+        "symfony/process": "^5.2|^6.0",
+        "symfony/var-dumper": "^5.2|^6.0"
     },
     "require-dev": {
         "dms/phpunit-arraysubset-asserts": "^0.3.0",
