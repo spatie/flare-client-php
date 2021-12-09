@@ -53,7 +53,6 @@ class Report
 
     public static ?string $fakeTrackingUuid = null;
 
-
     public static function createForThrowable(
         Throwable $throwable,
         ContextProvider $context,
