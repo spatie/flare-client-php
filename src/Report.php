@@ -10,8 +10,6 @@ use Spatie\FlareClient\Context\ContextProvider;
 use Spatie\FlareClient\Contracts\ProvidesFlareContext;
 use Spatie\FlareClient\Glows\Glow;
 use Spatie\FlareClient\Solutions\ReportSolution;
-use Spatie\Ignition\Contracts\Solution;
-use Spatie\LaravelIgnition\Exceptions\ViewException;
 use Throwable;
 
 class Report
@@ -28,6 +26,8 @@ class Report
     protected array $glows = [];
 
     protected array $solutions = [];
+
+    public ?string $documentationLink = null;
 
     protected ContextProvider $context;
 
@@ -52,6 +52,7 @@ class Report
     protected string $trackingUuid;
 
     public static ?string $fakeTrackingUuid = null;
+
 
     public static function createForThrowable(
         Throwable $throwable,
@@ -236,25 +237,16 @@ class Report
         return $this;
     }
 
+    public function addDocumentationLink(string $documentationLink): self
+    {
+        $this->documentationLink = $documentationLink;
+
+        return $this;
+    }
+
     public function userProvidedContext(array $userProvidedContext)
     {
         $this->userProvidedContext = $userProvidedContext;
-
-        return $this;
-    }
-
-    /** @deprecated  */
-    public function groupByTopFrame()
-    {
-        $this->groupBy = GroupingTypes::TOP_FRAME;
-
-        return $this;
-    }
-
-    /** @deprecated  */
-    public function groupByException()
-    {
-        $this->groupBy = GroupingTypes::EXCEPTION;
 
         return $this;
     }
@@ -297,6 +289,7 @@ class Report
             'message' => $this->message,
             'glows' => $this->glows,
             'solutions' => $this->solutions,
+            'documentation_ink' => $this->documentationLink,
             'stacktrace' => $this->stracktraceAsArray(),
             'context' => $this->allContext(),
             'stage' => $this->stage,
