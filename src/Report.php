@@ -289,7 +289,7 @@ class Report
             'message' => $this->message,
             'glows' => $this->glows,
             'solutions' => $this->solutions,
-            'documentation_ink' => $this->documentationLink,
+            'documentation_link' => $this->documentationLink,
             'stacktrace' => $this->stracktraceAsArray(),
             'context' => $this->allContext(),
             'stage' => $this->stage,
