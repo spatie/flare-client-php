@@ -239,7 +239,7 @@ class Report
 
     public function addDocumentationLinks(array $documentationLinks): self
     {
-        $this->documentationLinks = $documentationLink;
+        $this->documentationLinks = $documentationLinks;
 
         return $this;
     }
