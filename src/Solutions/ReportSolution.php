@@ -16,9 +16,12 @@ class ReportSolution
 
     public static function fromSolution(SolutionContract $solution): self
     {
-        return new static($solution);
+        return new self($solution);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(): array
     {
         $isRunnable = ($this->solution instanceof RunnableSolution);
@@ -28,6 +31,7 @@ class ReportSolution
             'title' => $this->solution->getSolutionTitle(),
             'description' => $this->solution->getSolutionDescription(),
             'links' => $this->solution->getDocumentationLinks(),
+            /** @phpstan-ignore-next-line  */
             'action_description' => $isRunnable ? $this->solution->getSolutionActionDescription() : null,
             'is_runnable' => $isRunnable,
         ];

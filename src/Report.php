@@ -11,6 +11,7 @@ use Spatie\FlareClient\Contracts\ProvidesFlareContext;
 use Spatie\FlareClient\Glows\Glow;
 use Spatie\FlareClient\Solutions\ReportSolution;
 use Spatie\Ignition\Contracts\Solution;
+use Spatie\LaravelIgnition\Exceptions\ViewException;
 use Throwable;
 
 class Report
@@ -24,10 +25,13 @@ class Report
 
     protected string $message = '';
 
+    /** @var array<int, array<int, mixed>> */
     protected array $glows = [];
 
+    /** @var array<int, array<int|string, mixed>> */
     protected array $solutions = [];
 
+    /** @var array<int, string>  */
     public array $documentationLinks = [];
 
     protected ContextProvider $context;
@@ -36,8 +40,10 @@ class Report
 
     protected ?string $applicationVersion = null;
 
+    /** @var array<int|string, mixed> */
     protected array $userProvidedContext = [];
 
+    /** @var array<int|string, mixed> */
     protected array $exceptionContext = [];
 
     protected ?Throwable $throwable = null;
@@ -52,6 +58,8 @@ class Report
 
     protected string $trackingUuid;
 
+    protected ?View $view;
+
     public static ?string $fakeTrackingUuid = null;
 
     public static function createForThrowable(
@@ -60,7 +68,7 @@ class Report
         ?string $applicationPath = null,
         ?string $version = null
     ): self {
-        return (new static())
+        return (new self())
             ->setApplicationPath($applicationPath)
             ->throwable($throwable)
             ->useContext($context)
@@ -90,7 +98,7 @@ class Report
     ): self {
         $stacktrace = Backtrace::create()->applicationPath($applicationPath ?? '');
 
-        return (new static())
+        return (new self())
             ->setApplicationPath($applicationPath)
             ->message($message)
             ->useContext($context)
@@ -145,7 +153,7 @@ class Report
         return $this->message;
     }
 
-    public function stacktrace(Backtrace $stacktrace)
+    public function stacktrace(Backtrace $stacktrace): self
     {
         $this->stacktrace = $stacktrace;
 
@@ -216,27 +224,32 @@ class Report
         return $this->applicationVersion;
     }
 
-    public function view(?View $view)
+    public function view(?View $view): self
     {
         $this->view = $view;
 
         return $this;
     }
 
-    public function addGlow(Glow $glow)
+    public function addGlow(Glow $glow): self
     {
         $this->glows[] = $glow->toArray();
 
         return $this;
     }
 
-    public function addSolution(Solution $solution)
+    public function addSolution(Solution $solution): self
     {
         $this->solutions[] = ReportSolution::fromSolution($solution)->toArray();
 
         return $this;
     }
 
+    /**
+     * @param array<int, string> $documentationLinks
+     *
+     * @return $this
+     */
     public function addDocumentationLinks(array $documentationLinks): self
     {
         $this->documentationLinks = $documentationLinks;
@@ -244,13 +257,21 @@ class Report
         return $this;
     }
 
-    public function userProvidedContext(array $userProvidedContext)
+    /**
+     * @param array<int|string, mixed> $userProvidedContext
+     *
+     * @return $this
+     */
+    public function userProvidedContext(array $userProvidedContext): self
     {
         $this->userProvidedContext = $userProvidedContext;
 
         return $this;
     }
 
+    /**
+     * @return array<int|string, mixed>
+    */
     public function allContext(): array
     {
         $context = $this->context->toArray();
@@ -269,6 +290,9 @@ class Report
         return $this;
     }
 
+    /**
+     * @return array<int|string, mixed>
+     */
     protected function stracktraceAsArray(): array
     {
         return array_map(
@@ -277,6 +301,9 @@ class Report
         );
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(): array
     {
         return [
@@ -307,7 +334,7 @@ class Report
     protected function generateUuid(): string
     {
         // Generate 16 bytes (128 bits) of random data or use the data passed into the function.
-        $data = $data ?? random_bytes(16);
+        $data = random_bytes(16);
         assert(strlen($data) == 16);
 
         // Set version to 0100
