@@ -3,7 +3,6 @@
 namespace Spatie\FlareClient\Tests\TestClasses;
 
 use PHPUnit\Framework\Assert;
-use Spatie\FlareClient\Tests\TestCase;
 use Spatie\Snapshots\Drivers\YamlDriver;
 use Symfony\Component\Yaml\Yaml;
 

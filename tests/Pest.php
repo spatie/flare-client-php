@@ -4,7 +4,7 @@ use Spatie\FlareClient\Glows\Glow;
 use Spatie\FlareClient\Report;
 use Spatie\FlareClient\Tests\TestClasses\FakeTime;
 
-uses()->beforeEach(function() {
+uses()->beforeEach(function () {
     Report::$fakeTrackingUuid = 'fake-uuid';
 })->in(__DIR__);
 
