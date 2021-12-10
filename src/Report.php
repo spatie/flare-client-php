@@ -11,6 +11,7 @@ use Spatie\FlareClient\Contracts\ProvidesFlareContext;
 use Spatie\FlareClient\Glows\Glow;
 use Spatie\FlareClient\Solutions\ReportSolution;
 use Throwable;
+use Spatie\Ignition\Contracts\Solution;
 
 class Report
 {
@@ -27,7 +28,7 @@ class Report
 
     protected array $solutions = [];
 
-    public ?string $documentationLink = null;
+    public array $documentationLinks = [];
 
     protected ContextProvider $context;
 
@@ -236,9 +237,9 @@ class Report
         return $this;
     }
 
-    public function addDocumentationLink(string $documentationLink): self
+    public function addDocumentationLinks(array $documentationLinks): self
     {
-        $this->documentationLink = $documentationLink;
+        $this->documentationLinks = $documentationLink;
 
         return $this;
     }
@@ -288,7 +289,7 @@ class Report
             'message' => $this->message,
             'glows' => $this->glows,
             'solutions' => $this->solutions,
-            'documentation_link' => $this->documentationLink,
+            'documentation_links' => $this->documentationLinks,
             'stacktrace' => $this->stracktraceAsArray(),
             'context' => $this->allContext(),
             'stage' => $this->stage,
