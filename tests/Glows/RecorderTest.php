@@ -1,59 +1,50 @@
 <?php
 
-namespace Spatie\FlareClient\Tests\Glows;
-
 use Spatie\FlareClient\Glows\Glow;
 use Spatie\FlareClient\Glows\GlowRecorder;
 use Spatie\FlareClient\Tests\TestCase;
 
-class RecorderTest extends TestCase
-{
-    /** @test */
-    public function it_is_initially_empty()
-    {
-        $recorder = new GlowRecorder();
+uses(TestCase::class);
 
-        $this->assertCount(0, $recorder->glows());
-    }
+it('is initially empty', function () {
+    $recorder = new GlowRecorder();
 
-    /** @test */
-    public function it_stores_glows()
-    {
-        $recorder = new GlowRecorder();
+    $this->assertCount(0, $recorder->glows());
+});
 
-        $glow = new Glow('Some name', 'info', [
-            'some' => 'metadata',
-        ]);
+it('stores glows', function () {
+    $recorder = new GlowRecorder();
 
-        $recorder->record($glow);
+    $glow = new Glow('Some name', 'info', [
+        'some' => 'metadata',
+    ]);
 
-        $this->assertCount(1, $recorder->glows());
+    $recorder->record($glow);
 
-        $this->assertSame($glow, $recorder->glows()[0]);
-    }
+    $this->assertCount(1, $recorder->glows());
 
-    /** @test */
-    public function it_does_not_store_more_than_the_max_defined_number_of_glows()
-    {
-        $recorder = new GlowRecorder();
+    $this->assertSame($glow, $recorder->glows()[0]);
+});
 
-        $crumb1 = new Glow('One');
-        $crumb2 = new Glow('Two');
+it('does not store more than the max defined number of glows', function () {
+    $recorder = new GlowRecorder();
 
-        foreach (range(1, 40) as $i) {
-            $recorder->record($crumb1);
-        }
+    $crumb1 = new Glow('One');
+    $crumb2 = new Glow('Two');
 
-        $recorder->record($crumb2);
+    foreach (range(1, 40) as $i) {
         $recorder->record($crumb1);
-        $recorder->record($crumb2);
-
-        $this->assertCount(GlowRecorder::GLOW_LIMIT, $recorder->glows());
-
-        $this->assertSame([
-            $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1,
-            $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1,
-            $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb2, $crumb1, $crumb2,
-        ], $recorder->glows());
     }
-}
+
+    $recorder->record($crumb2);
+    $recorder->record($crumb1);
+    $recorder->record($crumb2);
+
+    $this->assertCount(GlowRecorder::GLOW_LIMIT, $recorder->glows());
+
+    $this->assertSame([
+        $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1,
+        $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1,
+        $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb2, $crumb1, $crumb2,
+    ], $recorder->glows());
+});

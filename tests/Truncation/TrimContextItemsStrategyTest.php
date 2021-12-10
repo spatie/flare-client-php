@@ -1,73 +1,62 @@
 <?php
 
-namespace Spatie\FlareClient\Tests\Truncation;
-
 use Illuminate\Support\Str;
-use PHPUnit\Framework\TestCase;
+
 use Spatie\FlareClient\Truncation\ReportTrimmer;
 use Spatie\FlareClient\Truncation\TrimContextItemsStrategy;
 
-class TrimContextItemsStrategyTest extends TestCase
-{
-    protected function setUp(): void
-    {
-        parent::setUp();
+beforeEach(function () {
+    ReportTrimmer::setMaxPayloadSize(52428);
+});
 
-        ReportTrimmer::setMaxPayloadSize(52428);
-    }
-
-    /** @test */
-    public function it_can_trim_long_context_items_in_payload()
-    {
-        foreach (TrimContextItemsStrategy::thresholds() as $threshold) {
-            [$payload, $expected] = $this->createLargePayload($threshold);
-
-            $strategy = new TrimContextItemsStrategy(new ReportTrimmer());
-            $this->assertSame($expected, $strategy->execute($payload));
-        }
-    }
-
-    /** @test */
-    public function it_does_not_trim_short_payloads()
-    {
-        $payload = [
-            'context' => [
-                'queries' => [
-                    1, 2, 3, 4,
-                ],
-            ],
-        ];
+it('can trim long context items in payload', function () {
+    foreach (TrimContextItemsStrategy::thresholds() as $threshold) {
+        [$payload, $expected] = createLargePayload($threshold);
 
         $strategy = new TrimContextItemsStrategy(new ReportTrimmer());
-
-        $trimmedPayload = $strategy->execute($payload);
-
-        $this->assertSame($payload, $trimmedPayload);
+        $this->assertSame($expected, $strategy->execute($payload));
     }
+});
 
-    protected function createLargePayload($threshold)
-    {
-        $payload = $expected = [
-            'context' => [
-                'queries' => [],
+it('does not trim short payloads', function () {
+    $payload = [
+        'context' => [
+            'queries' => [
+                1, 2, 3, 4,
             ],
-        ];
+        ],
+    ];
 
-        $contextKeys = [];
+    $strategy = new TrimContextItemsStrategy(new ReportTrimmer());
 
-        while (strlen(json_encode($payload)) < ReportTrimmer::getMaxPayloadSize()) {
-            $payloadItems = range(0, $threshold + 10);
+    $trimmedPayload = $strategy->execute($payload);
 
-            $contextKeys[] = $contextKey = Str::random();
+    $this->assertSame($payload, $trimmedPayload);
+});
 
-            $payload['context'][$contextKey][] = $payloadItems;
-            $expected['context'][$contextKey][] = array_slice($payloadItems, $threshold * -1, $threshold);
-        }
+// Helpers
+function createLargePayload($threshold)
+{
+    $payload = $expected = [
+        'context' => [
+            'queries' => [],
+        ],
+    ];
 
-        foreach ($contextKeys as $contextKey) {
-            $expected['context'][$contextKey] = array_slice($expected['context'][$contextKey], $threshold * -1, $threshold);
-        }
+    $contextKeys = [];
 
-        return [$payload, $expected];
+    while (strlen(json_encode($payload)) < ReportTrimmer::getMaxPayloadSize()) {
+        $payloadItems = range(0, $threshold + 10);
+
+        $contextKeys[] = $contextKey = Str::random();
+
+        $payload['context'][$contextKey][] = $payloadItems;
+        $expected['context'][$contextKey][] = array_slice($payloadItems, $threshold * -1, $threshold);
     }
+
+    foreach ($contextKeys as $contextKey) {
+        $expected['context'][$contextKey] = array_slice($expected['context'][$contextKey], $threshold * -1, $threshold);
+    }
+
+    return [$payload, $expected];
 }
