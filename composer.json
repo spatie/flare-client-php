@@ -23,10 +23,10 @@
         "phpstan/extension-installer": "^1.1",
         "phpstan/phpstan-deprecation-rules": "^1.0",
         "phpstan/phpstan-phpunit": "^1.0",
-        "phpunit/phpunit": "^9.5",
         "spatie/ignition": "dev-main",
         "spatie/laravel-ignition": "dev-main",
-        "spatie/phpunit-snapshot-assertions": "^4.0"
+        "spatie/phpunit-snapshot-assertions": "^4.0",
+        "pestphp/pest": "^1.20"
     },
     "autoload": {
         "psr-4": {
@@ -46,7 +46,6 @@
         "format": "vendor/bin/php-cs-fixer fix --allow-risky=yes",
         "test": "vendor/bin/phpunit",
         "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
-
     },
     "config": {
         "sort-packages": true
