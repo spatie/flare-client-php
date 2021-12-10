@@ -4,7 +4,6 @@ use Spatie\FlareClient\Glows\Glow;
 use Spatie\FlareClient\Glows\GlowRecorder;
 use Spatie\FlareClient\Tests\TestCase;
 
-uses(TestCase::class);
 
 it('is initially empty', function () {
     $recorder = new GlowRecorder();

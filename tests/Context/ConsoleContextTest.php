@@ -3,7 +3,6 @@
 use Spatie\FlareClient\Context\ConsoleContextProvider;
 use Spatie\FlareClient\Tests\TestCase;
 
-uses(TestCase::class);
 
 it('can return the context as an array', function () {
     $arguments = [

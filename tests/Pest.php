@@ -1,5 +1,10 @@
 <?php
 
+uses(\Spatie\FlareClient\Tests\TestCase::class)->in('Context', 'Glows');
+uses(\Spatie\FlareClient\Tests\Concerns\MatchesCodeSnippetSnapshots::class)->in('');
+uses(\TestCase::class)->in('');
+uses(\Spatie\FlareClient\Tests\Concerns\MatchesReportSnapshots::class)->in('');
+
 /*
 |--------------------------------------------------------------------------
 | Test Case

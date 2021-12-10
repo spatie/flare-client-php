@@ -6,7 +6,6 @@ use Spatie\FlareClient\Tests\TestCase;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 
-uses(TestCase::class);
 uses(MatchesCodeSnippetSnapshots::class);
 
 it('can return the context as an array', function () {
