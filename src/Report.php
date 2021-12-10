@@ -10,8 +10,8 @@ use Spatie\FlareClient\Context\ContextProvider;
 use Spatie\FlareClient\Contracts\ProvidesFlareContext;
 use Spatie\FlareClient\Glows\Glow;
 use Spatie\FlareClient\Solutions\ReportSolution;
-use Throwable;
 use Spatie\Ignition\Contracts\Solution;
+use Throwable;
 
 class Report
 {

@@ -35,7 +35,7 @@ class AddDocumentationLinks implements FlareMiddleware
     {
         $allLinks = [];
 
-        foreach($this->documentationLinkResolvers as $resolver) {
+        foreach ($this->documentationLinkResolvers as $resolver) {
             $resolvedLinks = $resolver($throwable);
 
             if (is_null($resolvedLinks)) {
@@ -46,7 +46,7 @@ class AddDocumentationLinks implements FlareMiddleware
                 $resolvedLinks = [$resolvedLinks];
             }
 
-            foreach($resolvedLinks as $link) {
+            foreach ($resolvedLinks as $link) {
                 $allLinks[] = $link;
             }
         }
