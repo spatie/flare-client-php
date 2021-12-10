@@ -2,7 +2,6 @@
 
 use Spatie\FlareClient\Context\RequestContextProvider;
 use Spatie\FlareClient\Tests\Concerns\MatchesCodeSnippetSnapshots;
-use Spatie\FlareClient\Tests\TestCase;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 
