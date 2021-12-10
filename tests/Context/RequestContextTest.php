@@ -1,58 +1,50 @@
 <?php
 
-namespace Spatie\FlareClient\Tests\Context;
-
 use Spatie\FlareClient\Context\RequestContextProvider;
 use Spatie\FlareClient\Tests\Concerns\MatchesCodeSnippetSnapshots;
-use Spatie\FlareClient\Tests\TestCase;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 
-class RequestContextTest extends TestCase
-{
-    use MatchesCodeSnippetSnapshots;
+uses(MatchesCodeSnippetSnapshots::class);
 
-    /** @test */
-    public function it_can_return_the_context_as_an_array()
-    {
-        $get = ['get-key-1' => 'get-value-1'];
+it('can return the context as an array', function () {
+    $get = ['get-key-1' => 'get-value-1'];
 
-        $post = ['post-key-1' => 'post-value-1'];
+    $post = ['post-key-1' => 'post-value-1'];
 
-        $request = [];
+    $request = [];
 
-        $cookies = ['cookie-key-1' => 'cookie-value-1'];
+    $cookies = ['cookie-key-1' => 'cookie-value-1'];
 
-        $files = [
-            'file-one' => new UploadedFile(
-                $this->getStubPath('file.txt'),
-                'file-name.txt',
-                'text/plain',
-                UPLOAD_ERR_OK
-            ),
-            'file-two' => new UploadedFile(
-                $this->getStubPath('file.txt'),
-                'file-name.txt',
-                'text/plain',
-                UPLOAD_ERR_OK
-            ),
-        ];
+    $files = [
+        'file-one' => new UploadedFile(
+            $this->getStubPath('file.txt'),
+            'file-name.txt',
+            'text/plain',
+            UPLOAD_ERR_OK
+        ),
+        'file-two' => new UploadedFile(
+            $this->getStubPath('file.txt'),
+            'file-name.txt',
+            'text/plain',
+            UPLOAD_ERR_OK
+        ),
+    ];
 
-        $server = [
-            'HTTP_HOST' => 'example.com',
-            'REMOTE_ADDR' => '1.2.3.4',
-            'SERVER_PORT' => '80',
-            'REQUEST_URI' => '/test',
-        ];
+    $server = [
+        'HTTP_HOST' => 'example.com',
+        'REMOTE_ADDR' => '1.2.3.4',
+        'SERVER_PORT' => '80',
+        'REQUEST_URI' => '/test',
+    ];
 
-        $content = 'my content';
+    $content = 'my content';
 
-        $request = new Request($get, $post, $request, $cookies, $files, $server, $content);
+    $request = new Request($get, $post, $request, $cookies, $files, $server, $content);
 
-        $context = new RequestContextProvider($request);
+    $context = new RequestContextProvider($request);
 
-        $contextArray = $context->toArray();
+    $contextArray = $context->toArray();
 
-        $this->assertMatchesCodeSnippetSnapshot($contextArray);
-    }
-}
+    $this->assertMatchesCodeSnippetSnapshot($contextArray);
+});

@@ -1,56 +1,48 @@
 <?php
 
-namespace Spatie\FlareClient\Tests\Truncation;
 
-use PHPUnit\Framework\TestCase;
 use Spatie\FlareClient\Truncation\ReportTrimmer;
 use Spatie\FlareClient\Truncation\TrimStringsStrategy;
 
-class TrimStringsStrategyTest extends TestCase
-{
-    /** @test */
-    public function it_can_trim_long_strings_in_payload()
-    {
-        foreach (TrimStringsStrategy::thresholds() as $threshold) {
-            [$payload, $expected] = $this->createLargePayload($threshold);
-
-            $strategy = new TrimStringsStrategy(new ReportTrimmer());
-            $this->assertSame($expected, $strategy->execute($payload));
-        }
-    }
-
-    /** @test */
-    public function it_does_not_trim_short_payloads()
-    {
-        $payload = [
-            'data' => [
-                'body' => 'short',
-                'nested' => [
-                    'message' => 'short',
-                ],
-            ],
-        ];
+it('can trim long strings in payload', function () {
+    foreach (TrimStringsStrategy::thresholds() as $threshold) {
+        [$payload, $expected] = createLargePayload($threshold);
 
         $strategy = new TrimStringsStrategy(new ReportTrimmer());
-
-        $trimmedPayload = $strategy->execute($payload);
-
-        $this->assertSame($payload, $trimmedPayload);
+        expect($strategy->execute($payload))->toBe($expected);
     }
+});
 
-    protected function createLargePayload($threshold)
-    {
-        $payload = $expected = [
-            'data' => [
-                'messages' => [],
+it('does not trim short payloads', function () {
+    $payload = [
+        'data' => [
+            'body' => 'short',
+            'nested' => [
+                'message' => 'short',
             ],
-        ];
+        ],
+    ];
 
-        while (strlen(json_encode($payload)) < ReportTrimmer::getMaxPayloadSize()) {
-            $payload['data']['messages'][] = str_repeat('A', $threshold + 10);
-            $expected['data']['messages'][] = str_repeat('A', $threshold);
-        }
+    $strategy = new TrimStringsStrategy(new ReportTrimmer());
 
-        return [$payload, $expected];
+    $trimmedPayload = $strategy->execute($payload);
+
+    expect($trimmedPayload)->toBe($payload);
+});
+
+// Helpers
+function createLargePayload($threshold)
+{
+    $payload = $expected = [
+        'data' => [
+            'messages' => [],
+        ],
+    ];
+
+    while (strlen(json_encode($payload)) < ReportTrimmer::getMaxPayloadSize()) {
+        $payload['data']['messages'][] = str_repeat('A', $threshold + 10);
+        $expected['data']['messages'][] = str_repeat('A', $threshold);
     }
+
+    return [$payload, $expected];
 }

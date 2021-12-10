@@ -9,7 +9,7 @@ use Spatie\FlareClient\Tests\TestClasses\FakeTime;
 
 class TestCase extends BaseTestCase
 {
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
