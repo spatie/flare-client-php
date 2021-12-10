@@ -14,7 +14,7 @@ it('can trim long context items in payload', function () {
         [$payload, $expected] = createLargePayload($threshold);
 
         $strategy = new TrimContextItemsStrategy(new ReportTrimmer());
-        $this->assertSame($expected, $strategy->execute($payload));
+        expect($strategy->execute($payload))->toBe($expected);
     }
 });
 
@@ -31,7 +31,7 @@ it('does not trim short payloads', function () {
 
     $trimmedPayload = $strategy->execute($payload);
 
-    $this->assertSame($payload, $trimmedPayload);
+    expect($trimmedPayload)->toBe($payload);
 });
 
 // Helpers

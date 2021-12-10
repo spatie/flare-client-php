@@ -24,9 +24,9 @@ it('can create a report', function () {
 it('will generate a uuid', function () {
     $report = Report::createForThrowable(new Exception('this is an exception'), new ConsoleContextProvider());
 
-    $this->assertIsString($report->trackingUuid());
+    expect($report->trackingUuid())->toBeString();
 
-    $this->assertIsString($report->toArray()['tracking_uuid']);
+    expect($report->toArray()['tracking_uuid'])->toBeString();
 });
 
 it('can create a report for a string message', function () {
@@ -59,5 +59,5 @@ it('can create a report with meta data', function () {
 
     $report->userProvidedContext(['meta' => $metadata]);
 
-    $this->assertEquals($metadata, $report->toArray()['context']['meta']);
+    expect($report->toArray()['context']['meta'])->toEqual($metadata);
 });

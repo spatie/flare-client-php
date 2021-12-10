@@ -9,7 +9,7 @@ uses(TestCase::class);
 it('is initially empty', function () {
     $recorder = new GlowRecorder();
 
-    $this->assertCount(0, $recorder->glows());
+    expect($recorder->glows())->toHaveCount(0);
 });
 
 it('stores glows', function () {
@@ -21,9 +21,9 @@ it('stores glows', function () {
 
     $recorder->record($glow);
 
-    $this->assertCount(1, $recorder->glows());
+    expect($recorder->glows())->toHaveCount(1);
 
-    $this->assertSame($glow, $recorder->glows()[0]);
+    expect($recorder->glows()[0])->toBe($glow);
 });
 
 it('does not store more than the max defined number of glows', function () {
@@ -40,7 +40,7 @@ it('does not store more than the max defined number of glows', function () {
     $recorder->record($crumb1);
     $recorder->record($crumb2);
 
-    $this->assertCount(GlowRecorder::GLOW_LIMIT, $recorder->glows());
+    expect($recorder->glows())->toHaveCount(GlowRecorder::GLOW_LIMIT);
 
     $this->assertSame([
         $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1,

@@ -126,9 +126,9 @@ it('can return groups', function () {
 
     $this->flare->group('custom group', ['my key' => 'my value']);
 
-    $this->assertSame(['key' => 'value'], $this->flare->getGroup());
-    $this->assertSame([], $this->flare->getGroup('foo'));
-    $this->assertSame(['my key' => 'my value'], $this->flare->getGroup('custom group'));
+    expect($this->flare->getGroup())->toBe(['key' => 'value']);
+    expect($this->flare->getGroup('foo'))->toBe([]);
+    expect($this->flare->getGroup('custom group'))->toBe(['my key' => 'my value']);
 });
 
 it('can merge groups', function () {
@@ -200,13 +200,13 @@ it('can add glows', function () {
 });
 
 test('a version callable can be set', function () {
-    $this->assertNull($this->flare->version());
+    expect($this->flare->version())->toBeNull();
 
     $this->flare->determineVersionUsing(function () {
         return '123';
     });
 
-    $this->assertEquals('123', $this->flare->version());
+    expect($this->flare->version())->toEqual('123');
 });
 
 it('will add the version to the report', function () {
@@ -214,7 +214,7 @@ it('will add the version to the report', function () {
 
     $payload = $this->fakeClient->getLastPayload();
 
-    $this->assertNull($payload['application_version']);
+    expect($payload['application_version'])->toBeNull();
 
     $this->flare->determineVersionUsing(function () {
         return '123';
@@ -224,7 +224,7 @@ it('will add the version to the report', function () {
 
     $payload = $this->fakeClient->getLastPayload();
 
-    $this->assertEquals('123', $payload['application_version']);
+    expect($payload['application_version'])->toEqual('123');
 });
 
 it('can filter exceptions being reported', function () {

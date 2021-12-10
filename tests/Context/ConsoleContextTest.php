@@ -14,5 +14,5 @@ it('can return the context as an array', function () {
 
     $context = new ConsoleContextProvider($arguments);
 
-    $this->assertEquals(['arguments' => $arguments], $context->toArray());
+    expect($context->toArray())->toEqual(['arguments' => $arguments]);
 });
