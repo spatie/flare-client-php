@@ -7,7 +7,6 @@ use Spatie\FlareClient\Tests\Concerns\MatchesReportSnapshots;
 use Spatie\FlareClient\Tests\Mocks\FakeClient;
 use Spatie\FlareClient\Tests\TestClasses\ExceptionWithContext;
 
-uses(TestCase::class);
 uses(MatchesReportSnapshots::class);
 
 beforeEach(function () {

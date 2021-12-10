@@ -6,7 +6,6 @@ use Spatie\FlareClient\Report;
 use Spatie\FlareClient\Tests\Concerns\MatchesReportSnapshots;
 use Spatie\FlareClient\Tests\TestClasses\FakeTime;
 
-uses(TestCase::class);
 uses(MatchesReportSnapshots::class);
 
 beforeEach(function () {

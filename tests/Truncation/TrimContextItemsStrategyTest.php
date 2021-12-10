@@ -11,7 +11,7 @@ beforeEach(function () {
 
 it('can trim long context items in payload', function () {
     foreach (TrimContextItemsStrategy::thresholds() as $threshold) {
-        [$payload, $expected] = createLargePayload($threshold);
+        [$payload, $expected] = createLargePayloadWithContext($threshold);
 
         $strategy = new TrimContextItemsStrategy(new ReportTrimmer());
         expect($strategy->execute($payload))->toBe($expected);
@@ -35,7 +35,7 @@ it('does not trim short payloads', function () {
 });
 
 // Helpers
-function createLargePayload($threshold)
+function createLargePayloadWithContext($threshold)
 {
     $payload = $expected = [
         'context' => [
