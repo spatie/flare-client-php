@@ -4,11 +4,19 @@ namespace Spatie\FlareClient\Truncation;
 
 class TrimContextItemsStrategy extends AbstractTruncationStrategy
 {
+    /**
+     * @return array<int, int>
+     */
     public static function thresholds(): array
     {
         return [100, 50, 25, 10];
     }
 
+    /**
+     * @param array<int|string, mixed> $payload
+     *
+     * @return array<int|string, mixed>
+     */
     public function execute(array $payload): array
     {
         foreach (static::thresholds() as $threshold) {
@@ -22,6 +30,12 @@ class TrimContextItemsStrategy extends AbstractTruncationStrategy
         return $payload;
     }
 
+    /**
+     * @param array<int|string, mixed> $contextItems
+     * @param int $threshold
+     *
+     * @return array<int|string, mixed>
+     */
     protected function iterateContextItems(array $contextItems, int $threshold): array
     {
         array_walk($contextItems, [$this, 'trimContextItems'], $threshold);
@@ -29,7 +43,7 @@ class TrimContextItemsStrategy extends AbstractTruncationStrategy
         return $contextItems;
     }
 
-    protected function trimContextItems(&$value, $key, int $threshold)
+    protected function trimContextItems(mixed &$value, mixed $key, int $threshold): mixed
     {
         if (is_array($value)) {
             if (count($value) > $threshold) {

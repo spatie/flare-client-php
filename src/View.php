@@ -7,24 +7,33 @@ use Symfony\Component\VarDumper\Dumper\HtmlDumper;
 
 class View
 {
-    /** @var string */
-    protected $file;
+    protected string $file;
 
-    /** @var array */
-    protected $data = [];
+    /** @var array<string, mixed> */
+    protected array $data = [];
 
+    /**
+     * @param string $file
+     * @param array<string, mixed> $data
+     */
     public function __construct(string $file, array $data = [])
     {
         $this->file = $file;
         $this->data = $data;
     }
 
+    /**
+     * @param string $file
+     * @param array<string, mixed> $data
+     *
+     * @return self
+     */
     public static function create(string $file, array $data = []): self
     {
-        return new static($file, $data);
+        return new self($file, $data);
     }
 
-    protected function dumpViewData($variable): string
+    protected function dumpViewData(mixed $variable): string
     {
         $cloner = new VarCloner();
 
@@ -33,15 +42,20 @@ class View
 
         $output = fopen('php://memory', 'r+b');
 
+        if (! $output) {
+            return '';
+        }
+
         $dumper->dump($cloner->cloneVar($variable)->withMaxDepth(1), $output, [
             'maxDepth' => 1,
             'maxStringLength' => 160,
         ]);
 
-        return stream_get_contents($output, -1, 0);
+        return (string)stream_get_contents($output, -1, 0);
     }
 
-    public function toArray()
+    /** @return array<string, mixed> */
+    public function toArray(): array
     {
         return [
             'file' => $this->file,
