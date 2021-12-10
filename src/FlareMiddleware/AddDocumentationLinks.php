@@ -51,6 +51,6 @@ class AddDocumentationLinks implements FlareMiddleware
             }
         }
 
-        return array_unique($allLinks);
+        return array_values(array_unique($allLinks));
     }
 }
