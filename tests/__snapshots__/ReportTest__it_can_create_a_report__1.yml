@@ -7,7 +7,7 @@ seen_at: 1546305825
 message: 'this is an exception'
 glows: {  }
 solutions: {  }
-documentation_ink: null
+documentation_links: {  }
 stacktrace: {  }
 context:
     arguments:

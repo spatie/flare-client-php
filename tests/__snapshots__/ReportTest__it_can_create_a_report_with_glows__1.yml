@@ -14,7 +14,7 @@ glows:
             meta: data
         microtime: 1234
 solutions: {  }
-documentation_ink: null
+documentation_links: {  }
 stacktrace: {  }
 context:
     arguments:

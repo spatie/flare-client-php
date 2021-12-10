@@ -7,7 +7,7 @@ seen_at: 1546346096
 message: 'This is a test'
 glows: {  }
 solutions: {  }
-documentation_ink: null
+documentation_links: {  }
 stacktrace: {  }
 context:
     arguments:
