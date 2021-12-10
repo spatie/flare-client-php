@@ -18,13 +18,13 @@ it('can return the context as an array', function () {
 
     $files = [
         'file-one' => new UploadedFile(
-            $this->getStubPath('file.txt'),
+            getStubPath('file.txt'),
             'file-name.txt',
             'text/plain',
             UPLOAD_ERR_OK
         ),
         'file-two' => new UploadedFile(
-            $this->getStubPath('file.txt'),
+            getStubPath('file.txt'),
             'file-name.txt',
             'text/plain',
             UPLOAD_ERR_OK

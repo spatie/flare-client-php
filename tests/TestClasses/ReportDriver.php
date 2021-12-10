@@ -19,7 +19,7 @@ class ReportDriver extends YamlDriver
 
         $yaml = parent::serialize($data);
 
-        return TestCase::makePathsRelative($yaml);
+        return makePathsRelative($yaml);
     }
 
     public function match($expected, $actual)
@@ -35,7 +35,7 @@ class ReportDriver extends YamlDriver
             $actual = Yaml::dump($actual, PHP_INT_MAX);
         }
 
-        $actual = TestCase::makePathsRelative($actual);
+        $actual = makePathsRelative($actual);
 
         Assert::assertEquals($expected, $actual);
     }

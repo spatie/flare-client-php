@@ -14,7 +14,7 @@ beforeEach(function () {
 
     $this->flare = new Flare($this->fakeClient);
 
-    $this->useTime('2019-01-01 12:34:56');
+    useTime('2019-01-01 12:34:56');
 });
 
 it('can report an exception', function () {

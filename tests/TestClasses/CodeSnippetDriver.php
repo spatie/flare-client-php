@@ -13,7 +13,7 @@ class CodeSnippetDriver extends YamlDriver
     {
         $yaml = parent::serialize($data);
 
-        return TestCase::makePathsRelative($yaml);
+        return makePathsRelative($yaml);
     }
 
     public function match($expected, $actual)
@@ -22,7 +22,7 @@ class CodeSnippetDriver extends YamlDriver
             $actual = Yaml::dump($actual, PHP_INT_MAX);
         }
 
-        $actual = TestCase::makePathsRelative($actual);
+        $actual = makePathsRelative($actual);
 
         Assert::assertEquals($expected, $actual);
     }
