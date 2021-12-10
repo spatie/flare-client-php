@@ -1,6 +1,5 @@
 <?php
 
-use Exception;
 use Spatie\FlareClient\Context\ConsoleContextProvider;
 use Spatie\FlareClient\Glows\Glow;
 use Spatie\FlareClient\Report;
