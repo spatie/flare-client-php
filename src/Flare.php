@@ -14,12 +14,12 @@ use Spatie\FlareClient\Context\ContextProviderDetector;
 use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\FlareMiddleware\AddGlows;
 use Spatie\FlareClient\FlareMiddleware\CensorRequestBodyFields;
+use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 use Spatie\FlareClient\FlareMiddleware\RemoveRequestIp;
 use Spatie\FlareClient\Glows\Glow;
 use Spatie\FlareClient\Glows\GlowRecorder;
 use Spatie\FlareClient\Http\Client;
 use Throwable;
-use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 
 class Flare
 {
@@ -40,15 +40,15 @@ class Flare
 
     protected ?Closure $previousExceptionHandler = null;
 
-    /** @var null|callable  */
+    /** @var null|callable */
     protected $previousErrorHandler = null;
 
-    /** @var null|callable  */
+    /** @var null|callable */
     protected $determineVersionCallable = null;
 
     protected ?int $reportErrorLevels = null;
 
-    /** @var null|callable  */
+    /** @var null|callable */
     protected $filterExceptionsCallable = null;
 
     protected ?string $stage = null;

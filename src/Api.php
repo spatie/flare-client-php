@@ -12,7 +12,7 @@ class Api
 
     protected bool $sendReportsImmediately = false;
 
-    /** @var array<int, Report>  */
+    /** @var array<int, Report> */
     protected array $queue = [];
 
     public function __construct(Client $client)
