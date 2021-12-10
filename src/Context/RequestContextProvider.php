@@ -18,6 +18,9 @@ class RequestContextProvider implements ContextProvider
         $this->request = $request ?? Request::createFromGlobals();
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getRequest(): array
     {
         return [
@@ -28,6 +31,9 @@ class RequestContextProvider implements ContextProvider
         ];
     }
 
+    /**
+     * @return array<int, mixed>
+     */
     protected function getFiles(): array
     {
         if (is_null($this->request->files)) {
@@ -37,6 +43,11 @@ class RequestContextProvider implements ContextProvider
         return $this->mapFiles($this->request->files->all());
     }
 
+    /**
+     * @param array<int, mixed> $files
+     *
+     * @return array<string, string>
+     */
     protected function mapFiles(array $files): array
     {
         return array_map(function ($file) {
@@ -68,6 +79,9 @@ class RequestContextProvider implements ContextProvider
         }, $files);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getSession(): array
     {
         try {
@@ -94,16 +108,25 @@ class RequestContextProvider implements ContextProvider
         return $session->all();
     }
 
+    /**
+     * @return array<int|string, mixed
+     */
     public function getCookies(): array
     {
         return $this->request->cookies->all();
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getHeaders(): array
     {
         return $this->request->headers->all();
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getRequestData(): array
     {
         return [
@@ -113,6 +136,7 @@ class RequestContextProvider implements ContextProvider
         ];
     }
 
+    /** @return array<string, mixed> */
     public function toArray(): array
     {
         return [

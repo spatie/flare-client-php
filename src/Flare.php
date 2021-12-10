@@ -19,6 +19,7 @@ use Spatie\FlareClient\Glows\Glow;
 use Spatie\FlareClient\Glows\GlowRecorder;
 use Spatie\FlareClient\Http\Client;
 use Throwable;
+use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 
 class Flare
 {
@@ -28,6 +29,7 @@ class Flare
 
     protected Api $api;
 
+    /** @var array<int, FlareMiddleware|class-string<FlareMiddleware>> */
     protected array $middleware = [];
 
     protected GlowRecorder $recorder;
@@ -38,17 +40,22 @@ class Flare
 
     protected ?Closure $previousExceptionHandler = null;
 
-    protected ?Closure $previousErrorHandler = null;
+    /** @var null|callable  */
+    protected $previousErrorHandler = null;
 
-    protected ?Closure $determineVersionCallable = null;
+    /** @var null|callable  */
+    protected $determineVersionCallable = null;
 
     protected ?int $reportErrorLevels = null;
 
-    protected ?Closure $filterExceptionsCallable = null;
+    /** @var null|callable  */
+    protected $filterExceptionsCallable = null;
 
     protected ?string $stage = null;
 
     protected ?string $requestId = null;
+
+    protected ?Container $container = null;
 
     public static function make(
         string $apiKey = null,
@@ -92,19 +99,25 @@ class Flare
         return $this;
     }
 
-    public function determineVersionUsing(callable $determineVersionCallable)
+    public function determineVersionUsing(callable $determineVersionCallable): self
     {
         $this->determineVersionCallable = $determineVersionCallable;
+
+        return $this;
     }
 
-    public function reportErrorLevels(int $reportErrorLevels)
+    public function reportErrorLevels(int $reportErrorLevels): self
     {
         $this->reportErrorLevels = $reportErrorLevels;
+
+        return $this;
     }
 
-    public function filterExceptionsUsing(callable $filterExceptionsCallable)
+    public function filterExceptionsUsing(callable $filterExceptionsCallable): self
     {
         $this->filterExceptionsCallable = $filterExceptionsCallable;
+
+        return $this;
     }
 
     public function version(): ?string
@@ -116,6 +129,11 @@ class Flare
         return ($this->determineVersionCallable)();
     }
 
+    /**
+     * @param \Spatie\FlareClient\Http\Client $client
+     * @param \Spatie\FlareClient\Context\ContextProviderDetector|null $contextDetector
+     * @param array<int, FlareMiddleware> $middleware
+     */
     public function __construct(
         Client $client,
         ContextProviderDetector $contextDetector = null,
@@ -130,6 +148,7 @@ class Flare
         $this->registerDefaultMiddleware();
     }
 
+    /** @return array<int, FlareMiddleware|class-string<FlareMiddleware>> */
     public function getMiddleware(): array
     {
         return $this->middleware;
@@ -160,6 +179,7 @@ class Flare
 
     public function registerExceptionHandler(): self
     {
+        /** @phpstan-ignore-next-line */
         $this->previousExceptionHandler = set_exception_handler([$this, 'handleException']);
 
         return $this;
@@ -177,6 +197,11 @@ class Flare
         return $this->registerMiddleware(new AddGlows($this->recorder));
     }
 
+    /**
+     * @param FlareMiddleware|array<FlareMiddleware>|class-string<FlareMiddleware> $middleware
+     *
+     * @return $this
+     */
     public function registerMiddleware($middleware): self
     {
         if (! is_array($middleware)) {
@@ -189,17 +214,29 @@ class Flare
         return $this;
     }
 
+    /**
+     * @return array<int,FlareMiddleware|class-string<FlareMiddleware>>
+     */
     public function getMiddlewares(): array
     {
         return $this->middleware;
     }
 
+    /**
+     * @param string $name
+     * @param string $messageLevel
+     * @param array<int, mixed> $metaData
+     *
+     * @return $this
+     */
     public function glow(
         string $name,
         string $messageLevel = MessageLevels::INFO,
         array $metaData = []
-    ) {
+    ): self {
         $this->recorder->record(new Glow($name, $messageLevel, $metaData));
+
+        return $this;
     }
 
     public function handleException(Throwable $throwable): void
@@ -211,7 +248,10 @@ class Flare
         }
     }
 
-    public function handleError($code, $message, $file = '', $line = 0)
+    /**
+     * @return mixed
+     */
+    public function handleError(mixed $code, string $message, string $file = '', int $line = 0)
     {
         $exception = new ErrorException($message, 0, $code, $file, $line);
 
@@ -255,15 +295,15 @@ class Flare
     protected function shouldSendReport(Throwable $throwable): bool
     {
         if ($this->reportErrorLevels && $throwable instanceof Error) {
-            return $this->reportErrorLevels & $throwable->getCode();
+            return (bool)($this->reportErrorLevels & $throwable->getCode());
         }
 
         if ($this->reportErrorLevels && $throwable instanceof ErrorException) {
-            return $this->reportErrorLevels & $throwable->getSeverity();
+            return (bool)($this->reportErrorLevels & $throwable->getSeverity());
         }
 
         if ($this->filterExceptionsCallable && $throwable instanceof Exception) {
-            return call_user_func($this->filterExceptionsCallable, $throwable);
+            return (bool)(call_user_func($this->filterExceptionsCallable, $throwable));
         }
 
         return true;
@@ -293,7 +333,7 @@ class Flare
         }
     }
 
-    public function reset()
+    public function reset(): void
     {
         $this->api->sendQueuedReports();
 
@@ -318,6 +358,11 @@ class Flare
         return $this;
     }
 
+    /**
+     * @param array<int, string> $fieldNames
+     *
+     * @return $this
+     */
     public function censorRequestBodyFields(array $fieldNames): self
     {
         $this->registerMiddleware(new CensorRequestBodyFields($fieldNames));

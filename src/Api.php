@@ -12,6 +12,7 @@ class Api
 
     protected bool $sendReportsImmediately = false;
 
+    /** @var array<int, Report>  */
     protected array $queue = [];
 
     public function __construct(Client $client)
@@ -28,9 +29,10 @@ class Api
         return $this;
     }
 
-    public function report(Report $report)
+    public function report(Report $report): void
     {
         try {
+            /** @phpstan-ignore-next-line */
             $this->sendReportsImmediately()
                 ? $this->sendReportToApi($report)
                 : $this->addReportToQueue($report);
@@ -39,14 +41,18 @@ class Api
         }
     }
 
-    public function sendTestReport(Report $report)
+    public function sendTestReport(Report $report): self
     {
         $this->sendReportToApi($report);
+
+        return $this;
     }
 
-    protected function addReportToQueue(Report $report)
+    protected function addReportToQueue(Report $report): self
     {
         $this->queue[] = $report;
+
+        return $this;
     }
 
     public function sendQueuedReports(): void
@@ -69,6 +75,11 @@ class Api
         $this->client->post('reports', $payload);
     }
 
+    /**
+     * @param array<int|string, mixed> $payload
+     *
+     * @return array<int|string, mixed>
+     */
     protected function truncateReport(array $payload): array
     {
         return (new ReportTrimmer())->trim($payload);

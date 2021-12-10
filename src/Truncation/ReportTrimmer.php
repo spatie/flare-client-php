@@ -13,7 +13,7 @@ class ReportTrimmer
     ];
 
     /**
-     * @param array<int, mixed> $payload
+     * @param array<int|string, mixed> $payload
      *
      * @return array<int|string, mixed>
      */

@@ -8,6 +8,8 @@ parameters:
     excludePaths:
         - src/Http/Client
         - src/FlareMiddleware
+        - src/Context/RequestContextProvider
+
 
     tmpDir: build/phpstan
     checkMissingIterableValueType: true

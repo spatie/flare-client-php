@@ -8,6 +8,9 @@ trait HasContext
 
     protected ?string $stage = null;
 
+    /**
+     * @var array<string, mixed>
+     */
     protected array $userProvidedContext = [];
 
     public function stage(?string $stage): self
@@ -24,16 +27,28 @@ trait HasContext
         return $this;
     }
 
+    /**
+     * @param string $groupName
+     * @param mixed $default
+     *
+     * @return array<int, mixed>
+     */
     public function getGroup(string $groupName = 'context', $default = []): array
     {
         return $this->userProvidedContext[$groupName] ?? $default;
     }
 
-    public function context($key, $value): self
+    public function context(string $key, mixed $value): self
     {
         return $this->group('context', [$key => $value]);
     }
 
+    /**
+     * @param string $groupName
+     * @param array<string, mixed> $properties
+     *
+     * @return $this
+     */
     public function group(string $groupName, array $properties): self
     {
         $group = $this->userProvidedContext[$groupName] ?? [];
