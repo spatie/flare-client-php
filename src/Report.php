@@ -31,7 +31,7 @@ class Report
     /** @var array<int, array<int|string, mixed>> */
     protected array $solutions = [];
 
-    /** @var array<int, string>  */
+    /** @var array<int, string> */
     public array $documentationLinks = [];
 
     protected ContextProvider $context;
