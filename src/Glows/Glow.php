@@ -11,12 +11,19 @@ class Glow
 
     protected string $name;
 
+    /** @var array<int, mixed> */
     protected array $metaData = [];
 
     protected string $messageLevel;
 
     protected float $microtime;
 
+    /**
+     * @param string $name
+     * @param string $messageLevel
+     * @param array<int, mixed>  $metaData
+     * @param float|null $microtime
+     */
     public function __construct(
         string $name,
         string $messageLevel = MessageLevels::INFO,
@@ -29,6 +36,9 @@ class Glow
         $this->microtime = $microtime ?? microtime(true);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(): array
     {
         return [

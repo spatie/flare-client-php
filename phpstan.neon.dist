@@ -5,6 +5,10 @@ parameters:
     level: 8
     paths:
         - src
+    excludePaths:
+        - src/Http/Client
+        - src/FlareMiddleware
+
     tmpDir: build/phpstan
     checkMissingIterableValueType: true
 

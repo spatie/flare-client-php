@@ -56,7 +56,7 @@ class Flare
     ): self {
         $client = new Client($apiKey);
 
-        return new static($client, $contextDetector);
+        return new self($client, $contextDetector);
     }
 
     public function setApiToken(string $apiToken): self

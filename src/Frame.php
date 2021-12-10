@@ -8,9 +8,9 @@ class Frame
 {
     protected SpatieFrame $frame;
 
-    public static function fromSpatieFrame(SpatieFrame $frame)
+    public static function fromSpatieFrame(SpatieFrame $frame): self
     {
-        return new static($frame);
+        return new self($frame);
     }
 
     public function __construct(SpatieFrame $frame)
@@ -18,6 +18,9 @@ class Frame
         $this->frame = $frame;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(): array
     {
         return [

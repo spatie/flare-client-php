@@ -9,9 +9,9 @@ class BadResponse extends Exception
 {
     public Response $response;
 
-    public static function createForResponse(Response $response)
+    public static function createForResponse(Response $response): self
     {
-        $exception = new static("Could not perform request because: {$response->getError()}");
+        $exception = new self("Could not perform request because: {$response->getError()}");
 
         $exception->response = $response;
 

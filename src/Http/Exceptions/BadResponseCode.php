@@ -9,11 +9,14 @@ class BadResponseCode extends Exception
 {
     public Response $response;
 
+    /**
+     * @var array<int, mixed>
+     */
     public array $errors = [];
 
-    public static function createForResponse(Response $response)
+    public static function createForResponse(Response $response): self
     {
-        $exception = new static(static::getMessageForResponse($response));
+        $exception = new self(static::getMessageForResponse($response));
 
         $exception->response = $response;
 
@@ -24,7 +27,7 @@ class BadResponseCode extends Exception
         return $exception;
     }
 
-    public static function getMessageForResponse(Response $response)
+    public static function getMessageForResponse(Response $response): string
     {
         return "Response code {$response->getHttpResponseCode()} returned";
     }

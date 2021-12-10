@@ -8,6 +8,6 @@ class MissingParameter extends Exception
 {
     public static function create(string $parameterName): self
     {
-        return new static("`$parameterName` is a required parameter");
+        return new self("`$parameterName` is a required parameter");
     }
 }
