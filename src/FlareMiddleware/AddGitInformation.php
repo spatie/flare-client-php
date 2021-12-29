@@ -15,7 +15,7 @@ class AddGitInformation
         $this->baseDir = $this->getGitBaseDirectory();
 
         if (! $this->baseDir) {
-            $next($report);
+            return $next($report);
         }
 
         $report->group('git', [
