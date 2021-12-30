@@ -31,22 +31,22 @@ class AddGitInformation
 
     protected function hash(): ?string
     {
-        return $this->command("git log --pretty=format:'%H' -n 1");
+        return $this->command("git log --pretty=format:'%H' -n 1") ?: null;
     }
 
     protected function message(): ?string
     {
-        return $this->command("git log --pretty=format:'%s' -n 1");
+        return $this->command("git log --pretty=format:'%s' -n 1") ?: null;
     }
 
     protected function tag(): ?string
     {
-        return $this->command('git describe --tags --abbrev=0');
+        return $this->command('git describe --tags --abbrev=0') ?: null;
     }
 
     protected function remote(): ?string
     {
-        return $this->command('git config --get remote.origin.url');
+        return $this->command('git config --get remote.origin.url') ?: null;
     }
 
     protected function isClean(): bool
