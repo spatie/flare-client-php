@@ -8,8 +8,6 @@ uses()->beforeEach(function () {
     Report::$fakeTrackingUuid = 'fake-uuid';
 })->in(__DIR__);
 
-
-
 function makePathsRelative(string $text): string
 {
     return str_replace(dirname(__DIR__, 1), '', $text);

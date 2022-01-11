@@ -10,7 +10,7 @@
     "homepage": "https://github.com/spatie/flare-client-php",
     "license": "MIT",
     "require": {
-        "php": "^7.4|^8.0",
+        "php": "^8.0",
         "illuminate/pipeline": "^8.0",
         "spatie/backtrace": "^1.2",
         "symfony/http-foundation": "^5.0|^6.0",
@@ -24,7 +24,6 @@
         "phpstan/phpstan-deprecation-rules": "^1.0",
         "phpstan/phpstan-phpunit": "^1.0",
         "spatie/ignition": "dev-main",
-        "spatie/laravel-ignition": "dev-main",
         "spatie/phpunit-snapshot-assertions": "^4.0",
         "pestphp/pest": "^1.20"
     },

@@ -11,7 +11,6 @@ use Spatie\FlareClient\Contracts\ProvidesFlareContext;
 use Spatie\FlareClient\Glows\Glow;
 use Spatie\FlareClient\Solutions\ReportSolution;
 use Spatie\Ignition\Contracts\Solution;
-use Spatie\LaravelIgnition\Exceptions\ViewException;
 use Throwable;
 
 class Report
@@ -81,7 +80,7 @@ class Report
 
     protected static function getClassForThrowable(Throwable $throwable): string
     {
-        if ($throwable instanceof ViewException) {
+        if ($throwable::class === 'Spatie\LaravelIgnition\Exceptions\ViewException') {
             if ($previous = $throwable->getPrevious()) {
                 return get_class($previous);
             }

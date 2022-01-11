@@ -18,7 +18,7 @@ it('can trim long context items in payload', function () {
     }
 });
 
-it('does not trim short payloads', function () {
+it('does not trim short context item payloads', function () {
     $payload = [
         'context' => [
             'queries' => [

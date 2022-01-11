@@ -2,7 +2,7 @@
 
 use Spatie\FlareClient\Context\ConsoleContextProvider;
 
-it('can return the context as an array', function () {
+it('can return the console context as an array', function () {
     $arguments = [
         'argument 1',
         'argument 2',

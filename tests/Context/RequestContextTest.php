@@ -7,7 +7,7 @@ use Symfony\Component\HttpFoundation\Request;
 
 uses(MatchesCodeSnippetSnapshots::class);
 
-it('can return the context as an array', function () {
+it('can return the request context as an array', function () {
     $get = ['get-key-1' => 'get-value-1'];
 
     $post = ['post-key-1' => 'post-value-1'];
