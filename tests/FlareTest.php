@@ -12,8 +12,6 @@ uses(MatchesReportSnapshots::class);
 beforeEach(function () {
     $this->fakeClient = new FakeClient();
 
-    dump('in beforeEach, setting flare instance');
-
     $this->flare = new Flare($this->fakeClient);
 
     useTime('2019-01-01 12:34:56');
