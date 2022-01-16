@@ -23,7 +23,6 @@
         "phpstan/extension-installer": "^1.1",
         "phpstan/phpstan-deprecation-rules": "^1.0",
         "phpstan/phpstan-phpunit": "^1.0",
-        "spatie/ignition": "dev-main",
         "spatie/phpunit-snapshot-assertions": "^4.0",
         "pestphp/pest": "^1.20"
     },
