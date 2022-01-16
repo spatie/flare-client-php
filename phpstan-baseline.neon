@@ -1,0 +1,42 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Parameter \\$solution of method Spatie\\\\FlareClient\\\\Report\\:\\:addSolution\\(\\) has invalid type Spatie\\\\Ignition\\\\Contracts\\\\Solution\\.$#"
+			count: 1
+			path: src/Report.php
+
+		-
+			message: "#^Call to method getDocumentationLinks\\(\\) on an unknown class Spatie\\\\Ignition\\\\Contracts\\\\Solution\\.$#"
+			count: 1
+			path: src/Solutions/ReportSolution.php
+
+		-
+			message: "#^Call to method getSolutionDescription\\(\\) on an unknown class Spatie\\\\Ignition\\\\Contracts\\\\Solution\\.$#"
+			count: 1
+			path: src/Solutions/ReportSolution.php
+
+		-
+			message: "#^Call to method getSolutionTitle\\(\\) on an unknown class Spatie\\\\Ignition\\\\Contracts\\\\Solution\\.$#"
+			count: 1
+			path: src/Solutions/ReportSolution.php
+
+		-
+			message: "#^Class Spatie\\\\Ignition\\\\Contracts\\\\RunnableSolution not found\\.$#"
+			count: 1
+			path: src/Solutions/ReportSolution.php
+
+		-
+			message: "#^Parameter \\$solution of method Spatie\\\\FlareClient\\\\Solutions\\\\ReportSolution\\:\\:__construct\\(\\) has invalid type Spatie\\\\Ignition\\\\Contracts\\\\Solution\\.$#"
+			count: 1
+			path: src/Solutions/ReportSolution.php
+
+		-
+			message: "#^Parameter \\$solution of method Spatie\\\\FlareClient\\\\Solutions\\\\ReportSolution\\:\\:fromSolution\\(\\) has invalid type Spatie\\\\Ignition\\\\Contracts\\\\Solution\\.$#"
+			count: 1
+			path: src/Solutions/ReportSolution.php
+
+		-
+			message: "#^Property Spatie\\\\FlareClient\\\\Solutions\\\\ReportSolution\\:\\:\\$solution has unknown class Spatie\\\\Ignition\\\\Contracts\\\\Solution as its type\\.$#"
+			count: 1
+			path: src/Solutions/ReportSolution.php
+
