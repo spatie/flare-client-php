@@ -1,7 +1,7 @@
 # Send PHP errors to Flare
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/spatie/flare-client-php.svg?style=flat-square)](https://packagist.org/packages/spatie/flare-client-php)
-![Tests](https://github.com/spatie/flare-client-php/workflows/Run%20tests/badge.svg)
+[![Run tests](https://github.com/spatie/flare-client-php/actions/workflows/run-tests.yml/badge.svg)](https://github.com/spatie/flare-client-php/actions/workflows/run-tests.yml)
 [![Total Downloads](https://img.shields.io/packagist/dt/spatie/flare-client-php.svg?style=flat-square)](https://packagist.org/packages/spatie/flare-client-php)
 
 This repository contains the PHP client to send errors and exceptions to [Flare](https://flareapp.io). The client can be installed using composer and works for PHP 8.0 and above.
