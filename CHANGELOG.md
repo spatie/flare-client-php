@@ -2,6 +2,10 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 1.0.2 - 2022-02-16
+
+- avoid crash git info middleware
+
 ## 1.0.1 - 2022-02-04
 
 - Add censor request headers middleware
