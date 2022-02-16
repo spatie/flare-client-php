@@ -28,7 +28,6 @@ class AddGitInformation
                 'isDirty' => ! $this->isClean(),
             ]);
         } catch (Exception $exception) {
-
         }
 
 
