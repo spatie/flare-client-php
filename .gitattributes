@@ -15,3 +15,6 @@
 /.circleci          export-ignore
 /.droneci           export-ignore
 /.styleci.yml       export-ignore
+.php_cs.php         export-ignore
+phpstan.neon.dist   export-ignore
+phpstan-baseline.neon export-ignore
