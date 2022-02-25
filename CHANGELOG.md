@@ -2,6 +2,19 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 1.0.3 - 2022-02-25
+
+## What's Changed
+
+- Remove `arguments` from stacktrace frames (unused in UI and causing issues, see https://github.com/spatie/ignition/issues/48)
+- Update .gitattributes by @PaolaRuby in https://github.com/spatie/flare-client-php/pull/4
+
+## New Contributors
+
+- @PaolaRuby made their first contribution in https://github.com/spatie/flare-client-php/pull/4
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/1.0.2...1.0.3
+
 ## 1.0.2 - 2022-02-16
 
 - avoid crash git info middleware
