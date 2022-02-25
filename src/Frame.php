@@ -18,15 +18,11 @@ class Frame
         $this->frame = $frame;
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     public function toArray(): array
     {
         return [
             'file' => $this->frame->file,
             'line_number' => $this->frame->lineNumber,
-            'arguments' => $this->frame->arguments,
             'method' => $this->frame->method,
             'class' => $this->frame->class,
             'code_snippet' => $this->frame->getSnippet(30),
