@@ -6,6 +6,7 @@ use Closure;
 use Exception;
 use Spatie\FlareClient\Report;
 use Symfony\Component\Process\Process;
+use Throwable;
 
 class AddGitInformation
 {
@@ -27,9 +28,8 @@ class AddGitInformation
                 'remote' => $this->remote(),
                 'isDirty' => ! $this->isClean(),
             ]);
-        } catch (Exception $exception) {
+        } catch (Throwable) {
         }
-
 
         return $next($report);
     }
