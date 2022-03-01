@@ -2,6 +2,12 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 1.0.5 - 2022-03-01
+
+- Fix exception when `stage` is `null`
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/1.0.4...1.0.5
+
 ## 1.0.4 - 2022-02-28
 
 ## What's Changed
