@@ -2,7 +2,6 @@
 
 namespace Spatie\FlareClient\Context;
 
-use Exception;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
