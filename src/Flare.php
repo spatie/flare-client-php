@@ -85,7 +85,7 @@ class Flare
         return $this;
     }
 
-    public function setStage(string $stage): self
+    public function setStage(?string $stage): self
     {
         $this->stage = $stage;
 
