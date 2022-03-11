@@ -27,6 +27,20 @@ it('can report an exception', function () {
     $this->assertMatchesReportSnapshot($report);
 });
 
+it('can report a initialised report instance', function () {
+    $throwable = new Exception('This is a test');
+
+    $report = $this->flare->createReport($throwable);
+
+    $this->flare->report($throwable, report: $report);
+
+    $this->fakeClient->assertRequestsSent(1);
+
+    $report = $this->fakeClient->getLastPayload();
+
+    $this->assertMatchesReportSnapshot($report);
+});
+
 it('can reset queued exceptions', function () {
     reportException();
 
