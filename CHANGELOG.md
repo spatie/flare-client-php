@@ -2,6 +2,12 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 1.1.0 - 2022-03-11
+
+- Allow passing an initialised `Report` instance to `report()` to Flare
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/1.0.5...1.1.0
+
 ## 1.0.5 - 2022-03-01
 
 - Fix exception when `stage` is `null`
