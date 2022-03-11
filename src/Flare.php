@@ -208,8 +208,7 @@ class Flare
             $middleware = [$middleware];
         }
 
-
-        $this->middleware = array_merge($this->middleware, $middleware);
+        $this->middleware = array_unique(array_merge($this->middleware, $middleware));
 
         return $this;
     }
