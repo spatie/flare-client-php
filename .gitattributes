@@ -12,6 +12,7 @@
 /.editorconfig      export-ignore
 /docs               export-ignore
 /CONTRIBUTING.md    export-ignore
+/CHANGELOG.md       export-ignore
 /.circleci          export-ignore
 /.droneci           export-ignore
 /.styleci.yml       export-ignore
