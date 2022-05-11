@@ -37,7 +37,7 @@ class Glow
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array{time: int, name: string, message_level: string, meta_data: array, microtime: float}
      */
     public function toArray(): array
     {

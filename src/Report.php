@@ -25,7 +25,7 @@ class Report
 
     protected string $message = '';
 
-    /** @var array<int, array<string, mixed>> */
+    /** @var array<int, array{time: int, name: string, message_level: string, meta_data: array, microtime: float}> */
     protected array $glows = [];
 
     /** @var array<int, array<int|string, mixed>> */
