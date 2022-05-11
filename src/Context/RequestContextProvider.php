@@ -54,7 +54,7 @@ class RequestContextProvider implements ContextProvider
                 return $this->mapFiles($file);
             }
 
-            if (! $file instanceof UploadedFile) {
+            if (!$file instanceof UploadedFile) {
                 return;
             }
 
@@ -94,7 +94,7 @@ class RequestContextProvider implements ContextProvider
 
     protected function getValidSessionData($session): array
     {
-        if (! method_exists($session, 'all')) {
+        if (!method_exists($session, 'all')) {
             return [];
         }
 
