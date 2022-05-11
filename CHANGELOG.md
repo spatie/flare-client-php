@@ -2,6 +2,19 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 1.1.1 - 2022-05-11
+
+## What's Changed
+
+- Flat map request headers for PSR request context (47302e83d1b212ebc682bd18d7c27b8027db6c4e)
+- Update .gitattributes by @angeljqv in https://github.com/spatie/flare-client-php/pull/6
+
+## New Contributors
+
+- @angeljqv made their first contribution in https://github.com/spatie/flare-client-php/pull/6
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/1.1.0...1.1.1
+
 ## 1.1.0 - 2022-03-11
 
 - Allow passing an initialised `Report` instance to `report()` to Flare
