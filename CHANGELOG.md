@@ -2,6 +2,12 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 1.2.0 - 2022-05-16
+
+- Add `php_version` as default `env` context
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/1.1.1...1.2.0
+
 ## 1.1.1 - 2022-05-11
 
 ## What's Changed
