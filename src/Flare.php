@@ -52,6 +52,9 @@ class Flare
     /** @var null|callable */
     protected $filterExceptionsCallable = null;
 
+    /** @var null|callable */
+    protected $filterReportsCallable = null;
+
     protected ?string $stage = null;
 
     protected ?string $requestId = null;
@@ -117,6 +120,13 @@ class Flare
     public function filterExceptionsUsing(callable $filterExceptionsCallable): self
     {
         $this->filterExceptionsCallable = $filterExceptionsCallable;
+
+        return $this;
+    }
+
+    public function filterReportsUsing(callable $filterReportsCallable): self
+    {
+        $this->filterReportsCallable = $filterReportsCallable;
 
         return $this;
     }
@@ -330,6 +340,12 @@ class Flare
 
     protected function sendReportToApi(Report $report): void
     {
+        if ($this->filterReportsCallable) {
+            if (! call_user_func($this->filterReportsCallable, $report)) {
+                return;
+            }
+        }
+
         try {
             $this->api->report($report);
         } catch (Exception $exception) {
