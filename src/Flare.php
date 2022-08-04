@@ -297,11 +297,11 @@ class Flare
 
     protected function shouldSendReport(Throwable $throwable): bool
     {
-        if ($this->reportErrorLevels && $throwable instanceof Error) {
+        if (isset($this->reportErrorLevels) && $throwable instanceof Error) {
             return (bool)($this->reportErrorLevels & $throwable->getCode());
         }
 
-        if ($this->reportErrorLevels && $throwable instanceof ErrorException) {
+        if (isset($this->reportErrorLevels) && $throwable instanceof ErrorException) {
             return (bool)($this->reportErrorLevels & $throwable->getSeverity());
         }
 
