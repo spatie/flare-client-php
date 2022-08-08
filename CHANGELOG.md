@@ -2,6 +2,19 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 1.3.0 - 2022-08-08
+
+### What's Changed
+
+- Allow `reportErrorLevels` to be 0 by @Jellyfrog in https://github.com/spatie/flare-client-php/pull/9
+- Add support for filtering reports before sending to Flare by @Jellyfrog in https://github.com/spatie/flare-client-php/pull/10
+
+### New Contributors
+
+- @Jellyfrog made their first contribution in https://github.com/spatie/flare-client-php/pull/9
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/1.2.0...1.3.0
+
 ## 1.2.0 - 2022-05-16
 
 - Add `php_version` as default `env` context
