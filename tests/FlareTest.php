@@ -202,13 +202,13 @@ it('can add glows', function () {
             'name' => 'my glow',
             'message_level' => 'info',
             'meta_data' => ['my key' => 'my value'],
-            'time' => 1546342496,
+            'time' => 1546346096,
         ],
         [
             'name' => 'another glow',
             'message_level' => 'error',
             'meta_data' => ['another key' => 'another value'],
-            'time' => 1546342496,
+            'time' => 1546346096,
         ],
     ], $glows);
 });
