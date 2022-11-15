@@ -13,6 +13,7 @@ beforeEach(function () {
     $this->fakeClient = new FakeClient();
 
     $this->flare = new Flare($this->fakeClient);
+    $this->flare->sendReportsImmediately();
 
     useTime('2019-01-01 12:34:56');
 });
@@ -201,13 +202,13 @@ it('can add glows', function () {
             'name' => 'my glow',
             'message_level' => 'info',
             'meta_data' => ['my key' => 'my value'],
-            'time' => 1546346096,
+            'time' => 1546342496,
         ],
         [
             'name' => 'another glow',
             'message_level' => 'error',
             'meta_data' => ['another key' => 'another value'],
-            'time' => 1546346096,
+            'time' => 1546342496,
         ],
     ], $glows);
 });
