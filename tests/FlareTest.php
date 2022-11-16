@@ -13,6 +13,7 @@ beforeEach(function () {
     $this->fakeClient = new FakeClient();
 
     $this->flare = new Flare($this->fakeClient);
+    $this->flare->sendReportsImmediately();
 
     useTime('2019-01-01 12:34:56');
 });
