@@ -2,6 +2,14 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 1.3.1 - 2022-11-16
+
+### What's Changed
+
+- Bug: Correct report sending logic by @Jellyfrog in https://github.com/spatie/flare-client-php/pull/11
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/1.3.0...1.3.1
+
 ## 1.3.0 - 2022-08-08
 
 ### What's Changed
