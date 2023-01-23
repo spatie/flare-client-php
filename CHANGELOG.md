@@ -2,6 +2,19 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 1.3.5 - 2023-01-23
+
+### What's Changed
+
+- Update composer.json by @driesvints in https://github.com/spatie/flare-client-php/pull/3
+- Prepare for Laravel 10 by @freekmurze in https://github.com/spatie/flare-client-php/pull/13
+
+### New Contributors
+
+- @driesvints made their first contribution in https://github.com/spatie/flare-client-php/pull/3
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/1.3.2...1.3.5
+
 ## 1.3.4 - 2023-01-23
 
 - prep for Laravel 10
