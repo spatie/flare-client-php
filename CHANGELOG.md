@@ -2,6 +2,22 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 1.3.4 - 2023-01-23
+
+- prep for Laravel 10
+
+## 1.3.3 - 2023-01-23
+
+- prepare for Laravel 10
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/1.3.2...1.3.3
+
+## 1.3.2 - 2022-12-26
+
+- reset glows
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/1.3.1...1.3.2
+
 ## 1.3.1 - 2022-11-16
 
 ### What's Changed
