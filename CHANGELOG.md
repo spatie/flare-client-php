@@ -2,6 +2,10 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 1.3.4 - 2023-01-23
+
+- prep for Laravel 10
+
 ## 1.3.3 - 2023-01-23
 
 - prepare for Laravel 10
