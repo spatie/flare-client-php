@@ -1,9 +1,29 @@
 parameters:
 	ignoreErrors:
 		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Frame\\:\\:toArray\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Frame.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Glows\\\\Glow\\:\\:toArray\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Glows/Glow.php
+
+		-
 			message: "#^Parameter \\$solution of method Spatie\\\\FlareClient\\\\Report\\:\\:addSolution\\(\\) has invalid type Spatie\\\\Ignition\\\\Contracts\\\\Solution\\.$#"
 			count: 1
 			path: src/Report.php
+
+		-
+			message: "#^Property Spatie\\\\FlareClient\\\\Report\\:\\:\\$glows type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Report.php
+
+		-
+			message: "#^Access to property \\$aiGenerated on an unknown class Spatie\\\\Ignition\\\\Contracts\\\\Solution\\.$#"
+			count: 1
+			path: src/Solutions/ReportSolution.php
 
 		-
 			message: "#^Call to method getDocumentationLinks\\(\\) on an unknown class Spatie\\\\Ignition\\\\Contracts\\\\Solution\\.$#"
