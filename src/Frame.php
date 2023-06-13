@@ -3,19 +3,25 @@
 namespace Spatie\FlareClient;
 
 use Spatie\Backtrace\Frame as SpatieFrame;
+use Spatie\FlareClient\Arguments\ReduceArgumentsAction;
+use Symfony\Component\VarDumper\Caster\ArgsStub;
+use Symfony\Component\VarDumper\Caster\CutStub;
 
 class Frame
 {
-    protected SpatieFrame $frame;
-
-    public static function fromSpatieFrame(SpatieFrame $frame): self
+    public static function fromSpatieFrame(
+        SpatieFrame $frame,
+        ?array $reducedArguments = null,
+    ): self
     {
-        return new self($frame);
+        return new self($frame, $reducedArguments);
     }
 
-    public function __construct(SpatieFrame $frame)
+    public function __construct(
+        protected SpatieFrame $frame,
+        protected ?array $reducedArguments = null,
+    )
     {
-        $this->frame = $frame;
     }
 
     public function toArray(): array
@@ -26,7 +32,9 @@ class Frame
             'method' => $this->frame->method,
             'class' => $this->frame->class,
             'code_snippet' => $this->frame->getSnippet(30),
+            'arguments' => $this->reducedArguments,
             'application_frame' => $this->frame->applicationFrame,
         ];
     }
+
 }

@@ -8,6 +8,7 @@ use ErrorException;
 use Exception;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Pipeline\Pipeline;
+use Spatie\FlareClient\Arguments\ArgumentReducers;
 use Spatie\FlareClient\Concerns\HasContext;
 use Spatie\FlareClient\Context\BaseContextProviderDetector;
 use Spatie\FlareClient\Context\ContextProviderDetector;
@@ -60,6 +61,10 @@ class Flare
     protected ?string $requestId = null;
 
     protected ?Container $container = null;
+
+    protected ?ArgumentReducers $argumentReducers = null;
+
+    protected bool $withStackFrameArguments = true;
 
     public static function make(
         string $apiKey = null,
@@ -131,6 +136,20 @@ class Flare
         return $this;
     }
 
+    public function argumentReducers(ArgumentReducers $argumentReducers): self
+    {
+        $this->argumentReducers = $argumentReducers;
+
+        return $this;
+    }
+
+    public function withoutStackFrameArguments(bool $withoutStackFrameArguments = true): self
+    {
+        $this->withStackFrameArguments = ! $withoutStackFrameArguments;
+
+        return $this;
+    }
+
     public function version(): ?string
     {
         if (! $this->determineVersionCallable) {
@@ -148,7 +167,7 @@ class Flare
     public function __construct(
         Client $client,
         ContextProviderDetector $contextDetector = null,
-        array $middleware = []
+        array $middleware = [],
     ) {
         $this->client = $client;
         $this->recorder = new GlowRecorder();
@@ -310,15 +329,15 @@ class Flare
     protected function shouldSendReport(Throwable $throwable): bool
     {
         if (isset($this->reportErrorLevels) && $throwable instanceof Error) {
-            return (bool)($this->reportErrorLevels & $throwable->getCode());
+            return (bool) ($this->reportErrorLevels & $throwable->getCode());
         }
 
         if (isset($this->reportErrorLevels) && $throwable instanceof ErrorException) {
-            return (bool)($this->reportErrorLevels & $throwable->getSeverity());
+            return (bool) ($this->reportErrorLevels & $throwable->getSeverity());
         }
 
         if ($this->filterExceptionsCallable && $throwable instanceof Exception) {
-            return (bool)(call_user_func($this->filterExceptionsCallable, $throwable));
+            return (bool) (call_user_func($this->filterExceptionsCallable, $throwable));
         }
 
         return true;
@@ -397,7 +416,9 @@ class Flare
             $throwable,
             $this->contextDetector->detectCurrentContext(),
             $this->applicationPath,
-            $this->version()
+            $this->version(),
+            $this->argumentReducers,
+            $this->withStackFrameArguments
         );
 
         return $this->applyMiddlewareToReport($report);
@@ -409,7 +430,9 @@ class Flare
             $message,
             $logLevel,
             $this->contextDetector->detectCurrentContext(),
-            $this->applicationPath
+            $this->applicationPath,
+            $this->argumentReducers,
+            $this->withStackFrameArguments
         );
 
         return $this->applyMiddlewareToReport($report);
