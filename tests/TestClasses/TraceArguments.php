@@ -115,8 +115,7 @@ class TraceArguments
         string $simple,
         DateTimeZone $object,
         int ...$variadic
-    ): Frame
-    {
+    ): Frame {
         return $this->getTraceFrame();
     }
 
