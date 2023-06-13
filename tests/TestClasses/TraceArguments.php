@@ -4,10 +4,8 @@ namespace Spatie\FlareClient\Tests\TestClasses;
 
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
-use Carbon\CarbonPeriod;
 use Carbon\CarbonTimeZone;
 use Closure;
-use DatePeriod;
 use DateTime;
 use DateTimeImmutable;
 use DateTimeZone;

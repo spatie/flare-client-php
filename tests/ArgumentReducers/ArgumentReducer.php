@@ -3,12 +3,10 @@
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonTimeZone;
-use Spatie\Backtrace\Backtrace;
 use Spatie\Backtrace\Frame;
 use Spatie\FlareClient\Arguments\ArgumentReducers;
 use Spatie\FlareClient\Arguments\ProvidedArgument;
 use Spatie\FlareClient\Arguments\ReduceArgumentsAction;
-use Spatie\FlareClient\Arguments\ReducedArgument;
 use Spatie\FlareClient\Tests\TestClasses\FakeIntBackedEnum;
 use Spatie\FlareClient\Tests\TestClasses\FakeStringBackedEnum;
 use Spatie\FlareClient\Tests\TestClasses\FakeUnitEnum;

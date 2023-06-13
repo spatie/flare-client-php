@@ -5,7 +5,6 @@ namespace Spatie\FlareClient\Arguments;
 use ReflectionParameter;
 use Spatie\FlareClient\Arguments\ReducedArgument\ReducedArgument;
 use Spatie\FlareClient\Arguments\ReducedArgument\TruncatedReducedArgument;
-use function _PHPStan_1f608dc6a\React\Promise\reduce;
 
 class ProvidedArgument
 {

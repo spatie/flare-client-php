@@ -2,11 +2,9 @@
 
 namespace Spatie\FlareClient\Arguments\Reducers;
 
-use Spatie\FlareClient\Arguments\ReducedArgument\ReducedArgumentContract;
 use Spatie\FlareClient\Arguments\ReducedArgument\ReducedArgument;
+use Spatie\FlareClient\Arguments\ReducedArgument\ReducedArgumentContract;
 use Spatie\FlareClient\Arguments\ReducedArgument\UnReducedArgument;
-use Spatie\FlareClient\Arguments\Reducers\ArgumentReducer;
-use UnitEnum;
 
 class DateTimeArgumentReducer implements ArgumentReducer
 {

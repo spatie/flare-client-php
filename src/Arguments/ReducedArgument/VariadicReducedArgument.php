@@ -2,8 +2,6 @@
 
 namespace Spatie\FlareClient\Arguments\ReducedArgument;
 
-use UnitEnum;
-
 class VariadicReducedArgument extends ReducedArgument
 {
     public function __construct(array $value)

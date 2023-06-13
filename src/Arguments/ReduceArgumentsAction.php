@@ -4,7 +4,6 @@ namespace Spatie\FlareClient\Arguments;
 
 use ReflectionParameter;
 use Spatie\Backtrace\Frame as SpatieFrame;
-use Spatie\FlareClient\Arguments\ReducedArgument\ReducedArgument;
 use Spatie\FlareClient\Arguments\ReducedArgument\VariadicReducedArgument;
 
 class ReduceArgumentsAction

@@ -2,17 +2,11 @@
 
 namespace Spatie\FlareClient\Arguments\Reducers;
 
-use Spatie\FlareClient\Arguments\Reducers\ArgumentReducer;
-use Spatie\FlareClient\Arguments\Reducers\BaseTypeArgumentReducer;
-use Spatie\FlareClient\Arguments\Reducers\ClosureArgumentReducer;
-use Spatie\FlareClient\Arguments\Reducers\EnumArgumentReducer;
-use Spatie\FlareClient\Arguments\Reducers\MinimalArrayArgumentReducer;
 use Spatie\FlareClient\Arguments\ReduceArgumentPayloadAction;
-use Spatie\FlareClient\Arguments\ReducedArgument\ReducedArgumentContract;
 use Spatie\FlareClient\Arguments\ReducedArgument\ReducedArgument;
+use Spatie\FlareClient\Arguments\ReducedArgument\ReducedArgumentContract;
 use Spatie\FlareClient\Arguments\ReducedArgument\TruncatedReducedArgument;
 use Spatie\FlareClient\Arguments\ReducedArgument\UnReducedArgument;
-use UnitEnum;
 
 class ArrayArgumentReducer implements ArgumentReducer
 {
