@@ -72,8 +72,8 @@ it('can reduce frames with arguments', function (
             ]
         ), [
             (new ProvidedArgument('array', reducedValue: [
-                'Europe/Brussels (DateTimeZone)',
-                'Europe/Amsterdam (DateTimeZone)',
+                'object (DateTimeZone)',
+                'object (DateTimeZone)',
             ]))->toArray(),
         ],
     ],
@@ -82,6 +82,25 @@ it('can reduce frames with arguments', function (
             array_fill(0, 100, 'a')
         ), [
             (new ProvidedArgument('array', truncated: true, reducedValue: array_fill(0, 25, 'a')))->toArray(),
+        ],
+    ],
+    yield 'with array of sub arrays which get reduced simply' => [
+        TraceArguments::create()->withArray(
+            [
+                'string',
+                new DateTimeZone('Europe/Brussels'),
+                [
+                    'string',
+                    new DateTimeZone('Europe/Brussels'),
+                    ['a', 'b', 'c'],
+                ],
+            ]
+        ), [
+            (new ProvidedArgument('array', reducedValue: [
+                'string',
+                'object (DateTimeZone)',
+                'array (size=3)',
+            ]))->toArray(),
         ],
     ],
     yield 'with defaults' => [
@@ -186,7 +205,35 @@ it('can reduce frames with arguments', function (
             (new ProvidedArgument('request', reducedValue: 'GET|https://spatie.be/flare (Symfony\Component\HttpFoundation\Request)'))->toArray(),
         ],
     ],
+    yield 'with sensitive parameter' => [
+        TraceArguments::create()->withSensitiveParameter('secret'),
+        [
+            (new ProvidedArgument(
+                'sensitive',
+                reducedValue: version_compare(PHP_VERSION, '8.2', '>=')
+                    ? 'object (SensitiveParameterValue)'
+                    : 'secret'
+            ))->toArray(),
+        ],
+    ],
 ]);
+
+it('will reduce values even when no reducers are specified', function () {
+    $frame = TraceArguments::create()->withCombination(
+        'string',
+        new DateTimeZone('Europe/Brussels'),
+        42,
+        69
+    );
+
+    $reduced = (new ReduceArgumentsAction(ArgumentReducers::create([])))->execute($frame);
+
+    expect($reduced)->toEqual([
+        (new ProvidedArgument('simple', reducedValue: 'string'))->toArray(),
+        (new ProvidedArgument('object', reducedValue: 'object (DateTimeZone)'))->toArray(),
+        (new ProvidedArgument('variadic', reducedValue: [42,69], isVariadic: true))->toArray(),
+    ]);
+});
 
 it('will transform an ProvidedArgument to array', function (
     ProvidedArgument $argument,

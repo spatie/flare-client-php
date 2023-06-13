@@ -13,6 +13,7 @@ class BaseTypeArgumentReducer implements ArgumentReducer
         if (is_int($argument)
             || is_float($argument)
             || is_bool($argument)
+            || is_string($argument)
             || $argument === null
         ) {
             return new ReducedArgument($argument);

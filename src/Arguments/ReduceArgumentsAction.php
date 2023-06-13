@@ -11,7 +11,7 @@ class ReduceArgumentsAction
     protected ReduceArgumentPayloadAction $reduceArgumentPayloadAction;
 
     public function __construct(
-        protected ?ArgumentReducers $argumentReducers,
+        protected ArgumentReducers $argumentReducers,
     ) {
         $this->reduceArgumentPayloadAction = new ReduceArgumentPayloadAction(
             $argumentReducers->argumentReducers
@@ -20,46 +20,50 @@ class ReduceArgumentsAction
 
     public function execute(SpatieFrame $frame): array
     {
-        if ($frame->arguments === null) {
+        try {
+            if ($frame->arguments === null) {
+                return [];
+            }
+
+            $parameters = $this->getParameters($frame);
+
+            if ($parameters === null) {
+                $arguments = [];
+
+                foreach ($frame->arguments as $index => $argument) {
+                    $arguments[$index] = ProvidedArgument::fromNonReflectableParameter($index)->setReducedArgument(
+                        $this->reduceArgumentPayloadAction->reduce($argument)
+                    );
+                }
+
+                return $arguments;
+            }
+
+            $arguments = array_map(
+                fn ($argument) => $this->reduceArgumentPayloadAction->reduce($argument),
+                $frame->arguments,
+            );
+
+            $argumentsCount = count($arguments);
+
+            foreach ($parameters as $index => $parameter) {
+                if ($index + 1 > $argumentsCount) {
+                    $parameter->defaultValueUsed();
+                } else {
+                    $parameter->setReducedArgument(
+                        $parameter->isVariadic
+                            ? new VariadicReducedArgument(array_slice($arguments, $index))
+                            : $arguments[$index]
+                    );
+                }
+
+                $parameters[$index] = $parameter->toArray();
+            }
+
+            return $parameters;
+        } catch (\Throwable $e) {
             return [];
         }
-
-        $parameters = $this->getParameters($frame);
-
-        if ($parameters === null) {
-            $arguments = [];
-
-            foreach ($frame->arguments as $index => $argument) {
-                $arguments[$index] = ProvidedArgument::fromNonReflectableParameter($index)->setReducedArgument(
-                    $this->reduceArgumentPayloadAction->reduce($argument)
-                );
-            }
-
-            return $arguments;
-        }
-
-        $arguments = array_map(
-            fn ($argument) => $this->reduceArgumentPayloadAction->reduce($argument),
-            $frame->arguments,
-        );
-
-        $argumentsCount = count($arguments);
-
-        foreach ($parameters as $index => $parameter) {
-            if ($index + 1 > $argumentsCount) {
-                $parameter->defaultValueUsed();
-            } else {
-                $parameter->setReducedArgument(
-                    $parameter->isVariadic
-                        ? new VariadicReducedArgument(array_slice($arguments, $index))
-                        : $arguments[$index]
-                );
-            }
-
-            $parameters[$index] = $parameter->toArray();
-        }
-
-        return $parameters;
     }
 
     /** @return null|Array<\Spatie\FlareClient\Arguments\ProvidedArgument> */

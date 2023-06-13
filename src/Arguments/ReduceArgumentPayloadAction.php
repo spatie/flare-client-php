@@ -13,6 +13,9 @@ use Spatie\FlareClient\Arguments\Reducers\SymphonyRequestArgumentReducer;
 
 class ReduceArgumentPayloadAction
 {
+    /**
+     * @param array<\Spatie\FlareClient\Arguments\Reducers\ArgumentReducer> $argumentReducers
+     */
     public function __construct(
         protected array $argumentReducers = []
     ) {
@@ -20,9 +23,7 @@ class ReduceArgumentPayloadAction
 
     public function reduce(mixed $argument): ReducedArgument
     {
-        $reducers = $this->reducers();
-
-        foreach ($reducers as $reducer) {
+        foreach ($this->argumentReducers as $reducer) {
             $reduced = $reducer->execute($argument);
 
             if ($reduced instanceof ReducedArgument) {
@@ -35,19 +36,5 @@ class ReduceArgumentPayloadAction
                 ? 'object ('.get_class($argument).')'
                 : $argument
         );
-    }
-
-    /** @return \Spatie\FlareClient\Arguments\Reducers\ArgumentReducer[] */
-    private function reducers(): array
-    {
-        return [
-            new BaseTypeArgumentReducer(),
-            new ArrayArgumentReducer(),
-            new EnumArgumentReducer(),
-            new ClosureArgumentReducer(),
-            new DateTimeArgumentReducer(),
-            new DateTimeZoneArgumentReducer(),
-            new SymphonyRequestArgumentReducer(),
-        ];
     }
 }

@@ -10,6 +10,7 @@ use DateTime;
 use DateTimeImmutable;
 use DateTimeZone;
 use Exception;
+use SensitiveParameter;
 use Spatie\Backtrace\Backtrace;
 use Spatie\Backtrace\Frame;
 use Symfony\Component\HttpFoundation\Request;
@@ -99,6 +100,22 @@ class TraceArguments
     }
 
     public function withSymfonyRequest(Request $request): Frame
+    {
+        return $this->getTraceFrame();
+    }
+
+    public function withSensitiveParameter(
+        #[SensitiveParameter]
+        string $sensitive,
+    ): Frame {
+        return $this->getTraceFrame();
+    }
+
+    public function withCombination(
+        string $simple,
+        DateTimeZone $object,
+        int ...$variadic
+    ): Frame
     {
         return $this->getTraceFrame();
     }

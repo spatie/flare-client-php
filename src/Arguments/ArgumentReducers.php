@@ -13,10 +13,13 @@ use Spatie\FlareClient\Arguments\Reducers\SymphonyRequestArgumentReducer;
 
 class ArgumentReducers
 {
+    /**
+     * @param array<ArgumentReducer|class-string<ArgumentReducer>> $argumentReducers
+     */
     public static function create(array $argumentReducers): self
     {
         return new self(array_map(
-            fn (string|ArgumentReducer $argumentReducer) => is_string($argumentReducer) ? new $argumentReducer() : $argumentReducer,
+            fn (string|ArgumentReducer $argumentReducer) => $argumentReducer instanceof ArgumentReducer ? $argumentReducer : new $argumentReducer(),
             $argumentReducers
         ));
     }
@@ -35,7 +38,7 @@ class ArgumentReducers
     }
 
     /**
-     * @param array<\Spatie\FlareClient\Arguments\Reducers\ArgumentReducer> $argumentReducers
+     * @param array<ArgumentReducer> $argumentReducers
      */
     protected function __construct(
         public array $argumentReducers = [],

@@ -11,11 +11,9 @@ class ClosureArgumentReducer implements ArgumentReducer
 {
     public function execute(mixed $argument): ReducedArgumentContract
     {
-        if (! is_callable($argument)) {
+        if (! $argument instanceof \Closure) {
             return new UnReducedArgument();
         }
-
-        // @todo since we have arguments, we can output them?
 
         $reflection = new ReflectionFunction($argument);
 
