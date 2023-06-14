@@ -38,9 +38,6 @@ it('can reduce frames with arguments', function (
             floatNan: 10,
             floatInfinity: INF,
             null: null,
-            unitEnum: FakeUnitEnum::A,
-            stringBackedEnum: FakeStringBackedEnum::A,
-            intBackedEnum: FakeIntBackedEnum::A,
         ), [
             (new ProvidedArgument('true', reducedValue: true))->toArray(),
             (new ProvidedArgument('false', reducedValue: false))->toArray(),
@@ -52,9 +49,6 @@ it('can reduce frames with arguments', function (
             (new ProvidedArgument('floatNan', reducedValue: 10))->toArray(),
             (new ProvidedArgument('floatInfinity', reducedValue: INF))->toArray(),
             (new ProvidedArgument('null', reducedValue: null))->toArray(),
-            (new ProvidedArgument('unitEnum', reducedValue: FakeUnitEnum::class.'::A'))->toArray(),
-            (new ProvidedArgument('stringBackedEnum', reducedValue: FakeStringBackedEnum::class.'::A'))->toArray(),
-            (new ProvidedArgument('intBackedEnum', reducedValue: FakeIntBackedEnum::class.'::A'))->toArray(),
         ],
     ],
     yield 'with array of simple values' => [
@@ -218,6 +212,22 @@ it('can reduce frames with arguments', function (
     ],
 ]);
 
+it('will reduce values with enums', function (){
+    $frame = TraceArguments::create()->withEnums(
+        unitEnum: FakeUnitEnum::A,
+        stringBackedEnum: FakeStringBackedEnum::A,
+        intBackedEnum: FakeIntBackedEnum::A,
+    );
+
+    $reduced = (new ReduceArgumentsAction(ArgumentReducers::default()))->execute($frame);
+
+    expect($reduced)->toEqual([
+        (new ProvidedArgument('unitEnum', reducedValue: FakeUnitEnum::class.'::A'))->toArray(),
+        (new ProvidedArgument('stringBackedEnum', reducedValue: FakeStringBackedEnum::class.'::A'))->toArray(),
+        (new ProvidedArgument('intBackedEnum', reducedValue: FakeIntBackedEnum::class.'::A'))->toArray(),
+    ]);
+})->skip(version_compare(PHP_VERSION, '8.1', '<'), 'PHP too old');
+
 it('will reduce values even when no reducers are specified', function () {
     $frame = TraceArguments::create()->withCombination(
         'string',
@@ -231,7 +241,7 @@ it('will reduce values even when no reducers are specified', function () {
     expect($reduced)->toEqual([
         (new ProvidedArgument('simple', reducedValue: 'string'))->toArray(),
         (new ProvidedArgument('object', reducedValue: 'object (DateTimeZone)'))->toArray(),
-        (new ProvidedArgument('variadic', reducedValue: [42,69], isVariadic: true))->toArray(),
+        (new ProvidedArgument('variadic', reducedValue: [42, 69], isVariadic: true))->toArray(),
     ]);
 });
 

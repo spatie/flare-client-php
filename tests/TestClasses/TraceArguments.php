@@ -43,10 +43,16 @@ class TraceArguments
         float $floatNan,
         float $floatInfinity,
         ?string $null,
+    ): Frame {
+        return $this->getTraceFrame();
+    }
+
+    public function withEnums(
         FakeUnitEnum $unitEnum,
         FakeStringBackedEnum $stringBackedEnum,
         FakeIntBackedEnum $intBackedEnum,
-    ): Frame {
+    ): Frame
+    {
         return $this->getTraceFrame();
     }
 
