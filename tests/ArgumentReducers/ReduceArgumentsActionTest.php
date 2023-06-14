@@ -250,7 +250,7 @@ it('can reduce frames with arguments', function (
             new ProvidedArgument('1', reducedValue: ['d', 'e', 'f'], originalType: 'array'),
             new ProvidedArgument('2', reducedValue: ['x', 'y', 'z'], originalType: 'array'),
         ],
-    ]
+    ],
 ]);
 
 it('will reduce values with enums', function () {
@@ -286,7 +286,7 @@ it('will reduce values even when no reducers are specified', function () {
     ]);
 });
 
-it('will reduce with not enough arguments provided', function (){
+it('will reduce with not enough arguments provided', function () {
     $frame = TraceArguments::create()->withNotEnoughArgumentsProvided();
 
     $reduced = (new ReduceArgumentsAction(ArgumentReducers::default()))->execute($frame);
