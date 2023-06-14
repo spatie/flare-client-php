@@ -14,6 +14,9 @@ class MinimalArrayArgumentReducer implements ArgumentReducer
             return new UnReducedArgument();
         }
 
-        return new ReducedArgument('array (size='.count($argument).')');
+        return new ReducedArgument(
+            'array (size='.count($argument).')',
+            'array'
+        );
     }
 }

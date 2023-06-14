@@ -19,10 +19,11 @@ class ClosureArgumentReducer implements ArgumentReducer
 
         if ($reflection->getFileName() && $reflection->getStartLine() && $reflection->getEndLine()) {
             return new ReducedArgument(
-                "{$reflection->name}({$reflection->getFileName()}:{$reflection->getStartLine()}-{$reflection->getEndLine()})"
+                "{$reflection->name}({$reflection->getFileName()}:{$reflection->getStartLine()}-{$reflection->getEndLine()})",
+                'Closure'
             );
         }
 
-        return new ReducedArgument("{$reflection->name}");
+        return new ReducedArgument("{$reflection->name}", 'Closure');
     }
 }

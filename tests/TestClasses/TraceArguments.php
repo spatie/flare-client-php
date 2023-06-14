@@ -13,7 +13,9 @@ use Exception;
 use SensitiveParameter;
 use Spatie\Backtrace\Backtrace;
 use Spatie\Backtrace\Frame;
+use stdClass;
 use Symfony\Component\HttpFoundation\Request;
+use Throwable;
 
 class TraceArguments
 {
@@ -122,6 +124,31 @@ class TraceArguments
         int ...$variadic
     ): Frame {
         return $this->getTraceFrame();
+    }
+
+    public function withCalledClosure(): Frame
+    {
+        $closure = fn(
+            $simple,
+            $object,
+            ...$variadic
+        ) => $this->getTraceFrame();
+
+        return $closure('string', new DateTimeZone('Europe/Brussels'), 42, 69);
+    }
+
+    public function withStdClass(stdClass $class): Frame
+    {
+        return $this->getTraceFrame();
+    }
+
+    public function withNotEnoughArgumentsProvided(): Frame
+    {
+        try {
+            $this->withCombination('provided');
+        }catch (Throwable $exception) {
+            return Backtrace::createForThrowable($exception)->withArguments()->frames()[0];
+        }
     }
 
     public function exception(

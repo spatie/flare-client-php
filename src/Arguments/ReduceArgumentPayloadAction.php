@@ -6,17 +6,14 @@ use Spatie\FlareClient\Arguments\ReducedArgument\ReducedArgument;
 
 class ReduceArgumentPayloadAction
 {
-    /**
-     * @param array<\Spatie\FlareClient\Arguments\Reducers\ArgumentReducer> $argumentReducers
-     */
     public function __construct(
-        protected array $argumentReducers = []
+        protected ArgumentReducers $argumentReducers
     ) {
     }
 
     public function reduce(mixed $argument): ReducedArgument
     {
-        foreach ($this->argumentReducers as $reducer) {
+        foreach ($this->argumentReducers->argumentReducers as $reducer) {
             $reduced = $reducer->execute($argument);
 
             if ($reduced instanceof ReducedArgument) {
@@ -24,10 +21,11 @@ class ReduceArgumentPayloadAction
             }
         }
 
+        $type = gettype($argument);
+
         return new ReducedArgument(
-            gettype($argument) === 'object'
-                ? 'object ('.get_class($argument).')'
-                : $argument
+            $type === 'object' ? 'object ('.get_class($argument).')' : $argument,
+            get_debug_type($argument),
         );
     }
 }

@@ -15,6 +15,9 @@ class EnumArgumentReducer implements ArgumentReducer
             return new UnReducedArgument();
         }
 
-        return new ReducedArgument($argument::class.'::'.$argument->name);
+        return new ReducedArgument(
+            $argument::class.'::'.$argument->name,
+            get_class($argument),
+        );
     }
 }

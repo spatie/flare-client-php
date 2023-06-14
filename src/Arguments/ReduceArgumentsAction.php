@@ -2,6 +2,7 @@
 
 namespace Spatie\FlareClient\Arguments;
 
+use ReflectionFunction;
 use ReflectionParameter;
 use Spatie\Backtrace\Frame as SpatieFrame;
 use Spatie\FlareClient\Arguments\ReducedArgument\VariadicReducedArgument;
@@ -13,9 +14,7 @@ class ReduceArgumentsAction
     public function __construct(
         protected ArgumentReducers $argumentReducers,
     ) {
-        $this->reduceArgumentPayloadAction = new ReduceArgumentPayloadAction(
-            $argumentReducers->argumentReducers
-        );
+        $this->reduceArgumentPayloadAction = new ReduceArgumentPayloadAction($argumentReducers);
     }
 
     public function execute(SpatieFrame $frame): array
@@ -31,9 +30,9 @@ class ReduceArgumentsAction
                 $arguments = [];
 
                 foreach ($frame->arguments as $index => $argument) {
-                    $arguments[$index] = ProvidedArgument::fromNonReflectableParameter($index)->setReducedArgument(
-                        $this->reduceArgumentPayloadAction->reduce($argument)
-                    );
+                    $arguments[$index] = ProvidedArgument::fromNonReflectableParameter($index)
+                        ->setReducedArgument($this->reduceArgumentPayloadAction->reduce($argument))
+                        ->toArray();
                 }
 
                 return $arguments;
@@ -45,19 +44,28 @@ class ReduceArgumentsAction
             );
 
             $argumentsCount = count($arguments);
+            $hasVariadicParameter = false;
 
             foreach ($parameters as $index => $parameter) {
                 if ($index + 1 > $argumentsCount) {
                     $parameter->defaultValueUsed();
+                } else if ($parameter->isVariadic) {
+                    $parameter->setReducedArgument(new VariadicReducedArgument(array_slice($arguments, $index)));
+
+                    $hasVariadicParameter = true;
                 } else {
-                    $parameter->setReducedArgument(
-                        $parameter->isVariadic
-                            ? new VariadicReducedArgument(array_slice($arguments, $index))
-                            : $arguments[$index]
-                    );
+                    $parameter->setReducedArgument($arguments[$index]);
                 }
 
                 $parameters[$index] = $parameter->toArray();
+            }
+
+            if ($this->moreArgumentsProvidedThanParameters($arguments, $parameters, $hasVariadicParameter)) {
+                for ($i = count($parameters); $i < count($arguments); $i++) {
+                    $parameters[$i] = ProvidedArgument::fromNonReflectableParameter(count($parameters))
+                        ->setReducedArgument($arguments[$i])
+                        ->toArray();
+                }
             }
 
             return $parameters;
@@ -73,7 +81,7 @@ class ReduceArgumentsAction
             $reflection = null !== $frame->class
                 ? new \ReflectionMethod($frame->class, $frame->method)
                 : new \ReflectionFunction($frame->method);
-        } catch (\ReflectionException) {
+        } catch (\ReflectionException $e) {
             return null;
         }
 
@@ -81,5 +89,13 @@ class ReduceArgumentsAction
             fn (ReflectionParameter $reflectionParameter) => ProvidedArgument::fromReflectionParameter($reflectionParameter),
             $reflection->getParameters(),
         );
+    }
+
+    protected function moreArgumentsProvidedThanParameters(
+        array &$arguments,
+        array &$parameters,
+        bool $hasVariadicParameter,
+    ): bool {
+        return count($arguments) > count($parameters) && ! $hasVariadicParameter;
     }
 }

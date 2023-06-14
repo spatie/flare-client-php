@@ -25,9 +25,6 @@ class ProvidedArgument
         return new self(
             (string) $index,
             false,
-            false,
-            false,
-            false
         );
     }
 
@@ -40,6 +37,7 @@ class ProvidedArgument
         public bool $defaultValueUsed = false,
         public bool $truncated = false,
         public mixed $reducedValue = null,
+        public ?string $originalType = null,
     ) {
         if ($this->isVariadic) {
             $this->defaultValue = [];
@@ -50,6 +48,7 @@ class ProvidedArgument
         ReducedArgument $reducedArgument
     ): self {
         $this->reducedValue = $reducedArgument->value;
+        $this->originalType = $reducedArgument->originalType;
 
         if ($reducedArgument instanceof TruncatedReducedArgument) {
             $this->truncated = true;
@@ -61,6 +60,7 @@ class ProvidedArgument
     public function defaultValueUsed(): self
     {
         $this->defaultValueUsed = true;
+        $this->originalType = get_debug_type($this->defaultValue);
 
         return $this;
     }
@@ -72,6 +72,7 @@ class ProvidedArgument
             'value' => $this->defaultValueUsed
                 ? $this->defaultValue
                 : $this->reducedValue,
+            'original_type' => $this->originalType,
             'passed_by_reference' => $this->passedByReference,
             'is_variadic' => $this->isVariadic,
             'truncated' => $this->truncated,

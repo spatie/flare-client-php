@@ -16,7 +16,7 @@ class BaseTypeArgumentReducer implements ArgumentReducer
             || is_string($argument)
             || $argument === null
         ) {
-            return new ReducedArgument($argument);
+            return new ReducedArgument($argument, get_debug_type($argument));
         }
 
         return new UnReducedArgument();

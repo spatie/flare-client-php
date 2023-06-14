@@ -14,6 +14,9 @@ class DateTimeZoneArgumentReducer implements ArgumentReducer
             return new UnReducedArgument();
         }
 
-        return new ReducedArgument("{$argument->getName()} (" . $argument::class . ')');
+        return new ReducedArgument(
+            "{$argument->getName()} (" . $argument::class . ')',
+            get_class($argument),
+        );
     }
 }

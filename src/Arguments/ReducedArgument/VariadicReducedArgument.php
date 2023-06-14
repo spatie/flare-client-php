@@ -14,6 +14,6 @@ class VariadicReducedArgument extends ReducedArgument
             $value[$key] = $item->value;
         }
 
-        parent::__construct($value);
+        parent::__construct($value, 'array');
     }
 }

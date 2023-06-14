@@ -15,7 +15,8 @@ class DateTimeArgumentReducer implements ArgumentReducer
         }
 
         return new ReducedArgument(
-            $argument->format('d M Y H:i:s p') . ' ('. $argument::class.')'
+            $argument->format('d M Y H:i:s p') . ' ('. $argument::class.')',
+            get_class($argument),
         );
     }
 }

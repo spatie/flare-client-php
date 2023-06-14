@@ -2,6 +2,7 @@
 
 namespace Spatie\FlareClient\Arguments\Reducers;
 
+use Spatie\FlareClient\Arguments\ArgumentReducers;
 use Spatie\FlareClient\Arguments\ReduceArgumentPayloadAction;
 use Spatie\FlareClient\Arguments\ReducedArgument\ReducedArgument;
 use Spatie\FlareClient\Arguments\ReducedArgument\ReducedArgumentContract;
@@ -16,15 +17,10 @@ class ArrayArgumentReducer implements ArgumentReducer
 
     public function __construct()
     {
-        $this->reduceArgumentPayloadAction = new ReduceArgumentPayloadAction([
-            new BaseTypeArgumentReducer(),
-            new MinimalArrayArgumentReducer(),
-            new EnumArgumentReducer(),
-            new ClosureArgumentReducer(),
-        ]);
+        $this->reduceArgumentPayloadAction = new ReduceArgumentPayloadAction(ArgumentReducers::minimal());
     }
 
-    public function execute(mixed $argument): ReducedArgumentContract
+    public function execute(mixed $argument): ReducedArgument|UnReducedArgument
     {
         if (! is_array($argument)) {
             return new UnReducedArgument();
@@ -35,9 +31,12 @@ class ArrayArgumentReducer implements ArgumentReducer
         }
 
         if (count($argument) > $this->maxArraySize) {
-            return new TruncatedReducedArgument(array_slice($argument, 0, $this->maxArraySize));
+            return new TruncatedReducedArgument(
+                array_slice($argument, 0, $this->maxArraySize),
+                'array'
+            );
         }
 
-        return new ReducedArgument($argument);
+        return new ReducedArgument($argument, 'array');
     }
 }

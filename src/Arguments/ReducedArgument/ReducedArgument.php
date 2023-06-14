@@ -8,6 +8,7 @@ class ReducedArgument implements ReducedArgumentContract
 {
     public function __construct(
         public string|array|int|float|bool|null|UnitEnum $value,
+        public string $originalType,
     ) {
     }
 }

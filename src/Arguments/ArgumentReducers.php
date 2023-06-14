@@ -9,6 +9,8 @@ use Spatie\FlareClient\Arguments\Reducers\ClosureArgumentReducer;
 use Spatie\FlareClient\Arguments\Reducers\DateTimeArgumentReducer;
 use Spatie\FlareClient\Arguments\Reducers\DateTimeZoneArgumentReducer;
 use Spatie\FlareClient\Arguments\Reducers\EnumArgumentReducer;
+use Spatie\FlareClient\Arguments\Reducers\MinimalArrayArgumentReducer;
+use Spatie\FlareClient\Arguments\Reducers\StdClassArgumentReducer;
 use Spatie\FlareClient\Arguments\Reducers\SymphonyRequestArgumentReducer;
 
 class ArgumentReducers
@@ -29,11 +31,22 @@ class ArgumentReducers
         return new self([
             new BaseTypeArgumentReducer(),
             new ArrayArgumentReducer(),
+            new StdClassArgumentReducer(),
             new EnumArgumentReducer(),
             new ClosureArgumentReducer(),
             new DateTimeArgumentReducer(),
             new DateTimeZoneArgumentReducer(),
             new SymphonyRequestArgumentReducer(),
+        ]);
+    }
+
+    public static function minimal(): self
+    {
+        return new self([
+            new BaseTypeArgumentReducer(),
+            new MinimalArrayArgumentReducer(),
+            new EnumArgumentReducer(),
+            new ClosureArgumentReducer(),
         ]);
     }
 
