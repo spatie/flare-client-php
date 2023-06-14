@@ -212,7 +212,7 @@ it('can reduce frames with arguments', function (
     ],
 ]);
 
-it('will reduce values with enums', function (){
+it('will reduce values with enums', function () {
     $frame = TraceArguments::create()->withEnums(
         unitEnum: FakeUnitEnum::A,
         stringBackedEnum: FakeStringBackedEnum::A,

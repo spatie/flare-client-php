@@ -51,8 +51,7 @@ class TraceArguments
         FakeUnitEnum $unitEnum,
         FakeStringBackedEnum $stringBackedEnum,
         FakeIntBackedEnum $intBackedEnum,
-    ): Frame
-    {
+    ): Frame {
         return $this->getTraceFrame();
     }
 
