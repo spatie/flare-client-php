@@ -293,6 +293,8 @@ it('can filter error exceptions based on their severity', function () {
 });
 
 it('will add arguments to a stack trace by default', function () {
+    ini_set('zend.exception_ignore_args', 0); // Enabled on GH actions
+
     $exception = TraceArguments::create()->exception(
         'a message',
         new DateTime('2020-05-16 14:00:00', new DateTimeZone('Europe/Brussels'))
@@ -319,12 +321,27 @@ it('will add arguments to a stack trace by default', function () {
 });
 
 it('is possible to disable stack frame arguments', function () {
+    ini_set('zend.exception_ignore_args', 0); // Enabled on GH actions
+
     $exception = TraceArguments::create()->exception(
         'a message',
         new DateTime('2020-05-16 14:00:00', new DateTimeZone('Europe/Brussels'))
     );
 
     $this->flare->withoutStackFrameArguments()->report($exception);
+
+    $this->fakeClient->assertLastRequestHas('stacktrace.0.arguments', null);
+});
+
+it('is possible to disable stack frame arguments with zend.exception_ignore_args', function () {
+    ini_set('zend.exception_ignore_args', 1);
+
+    $exception = TraceArguments::create()->exception(
+        'a message',
+        new DateTime('2020-05-16 14:00:00', new DateTimeZone('Europe/Brussels'))
+    );
+
+    $this->flare->report($exception);
 
     $this->fakeClient->assertLastRequestHas('stacktrace.0.arguments', null);
 });
