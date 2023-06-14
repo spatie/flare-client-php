@@ -16,7 +16,8 @@
         "symfony/http-foundation": "^5.0|^6.0",
         "symfony/mime": "^5.2|^6.0",
         "symfony/process": "^5.2|^6.0",
-        "symfony/var-dumper": "^5.2|^6.0"
+        "symfony/var-dumper": "^5.2|^6.0",
+        "nesbot/carbon": "^2.62.1"
     },
     "require-dev": {
         "dms/phpunit-arraysubset-asserts": "^0.3.0",
