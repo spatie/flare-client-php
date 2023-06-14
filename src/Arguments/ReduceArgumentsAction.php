@@ -2,7 +2,6 @@
 
 namespace Spatie\FlareClient\Arguments;
 
-use ReflectionFunction;
 use ReflectionParameter;
 use Spatie\Backtrace\Frame as SpatieFrame;
 use Spatie\FlareClient\Arguments\ReducedArgument\VariadicReducedArgument;
@@ -49,7 +48,7 @@ class ReduceArgumentsAction
             foreach ($parameters as $index => $parameter) {
                 if ($index + 1 > $argumentsCount) {
                     $parameter->defaultValueUsed();
-                } else if ($parameter->isVariadic) {
+                } elseif ($parameter->isVariadic) {
                     $parameter->setReducedArgument(new VariadicReducedArgument(array_slice($arguments, $index)));
 
                     $hasVariadicParameter = true;

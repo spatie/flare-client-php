@@ -237,7 +237,8 @@ it('can reduce frames with arguments', function (
                     'simple' => 'string',
                     'complex' => 'object (DateTimeZone)',
                 ],
-                originalType: stdClass::class),
+                originalType: stdClass::class
+            ),
         ],
     ],
     yield 'with too many arguments provided' => [
@@ -254,8 +255,8 @@ it('can reduce frames with arguments', function (
             new ProvidedArgument('simple', reducedValue: 'provided', originalType: 'string'),
             new ProvidedArgument('object', reducedValue: null, originalType: 'null'),
             new ProvidedArgument('variadic', isVariadic: true, reducedValue: [], originalType: 'array'),
-        ]
-    ]
+        ],
+    ],
 ]);
 
 it('will reduce values with enums', function () {

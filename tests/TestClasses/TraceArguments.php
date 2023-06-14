@@ -128,7 +128,7 @@ class TraceArguments
 
     public function withCalledClosure(): Frame
     {
-        $closure = fn(
+        $closure = fn (
             $simple,
             $object,
             ...$variadic
@@ -146,7 +146,7 @@ class TraceArguments
     {
         try {
             $this->withCombination('provided');
-        }catch (Throwable $exception) {
+        } catch (Throwable $exception) {
             return Backtrace::createForThrowable($exception)->withArguments()->frames()[0];
         }
     }
