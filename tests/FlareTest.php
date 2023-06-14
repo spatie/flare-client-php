@@ -309,7 +309,7 @@ it('will add arguments to a stack trace by default', function () {
             "passed_by_reference" => false,
             "is_variadic" => false,
             "truncated" => false,
-            'original_type' => 'string'
+            'original_type' => 'string',
         ],
         [
             "name" => "dateTime",
@@ -317,7 +317,7 @@ it('will add arguments to a stack trace by default', function () {
             "passed_by_reference" => false,
             "is_variadic" => false,
             "truncated" => false,
-            'original_type' => DateTime::class
+            'original_type' => DateTime::class,
         ],
     ]);
 });
