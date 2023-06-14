@@ -17,7 +17,7 @@ parameters:
 
 		-
 			message: "#^Cannot call method setReducedArgument\\(\\) on array\\|Spatie\\\\FlareClient\\\\Arguments\\\\ProvidedArgument\\.$#"
-			count: 1
+			count: 2
 			path: src/Arguments/ReduceArgumentsAction.php
 
 		-
@@ -27,6 +27,16 @@ parameters:
 
 		-
 			message: "#^Method Spatie\\\\FlareClient\\\\Arguments\\\\ReduceArgumentsAction\\:\\:execute\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Arguments/ReduceArgumentsAction.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Arguments\\\\ReduceArgumentsAction\\:\\:moreArgumentsProvidedThanParameters\\(\\) has parameter \\$arguments with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Arguments/ReduceArgumentsAction.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Arguments\\\\ReduceArgumentsAction\\:\\:moreArgumentsProvidedThanParameters\\(\\) has parameter \\$parameters with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Arguments/ReduceArgumentsAction.php
 

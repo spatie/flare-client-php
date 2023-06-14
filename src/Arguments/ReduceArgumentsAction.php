@@ -91,8 +91,8 @@ class ReduceArgumentsAction
     }
 
     protected function moreArgumentsProvidedThanParameters(
-        array &$arguments,
-        array &$parameters,
+        array $arguments,
+        array $parameters,
         bool $hasVariadicParameter,
     ): bool {
         return count($arguments) > count($parameters) && ! $hasVariadicParameter;

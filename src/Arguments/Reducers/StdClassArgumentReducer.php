@@ -7,7 +7,7 @@ use Spatie\FlareClient\Arguments\ReducedArgument\ReducedArgumentContract;
 use Spatie\FlareClient\Arguments\ReducedArgument\UnReducedArgument;
 use stdClass;
 
-class StdClassArgumentReducer
+class StdClassArgumentReducer implements ArgumentReducer
 {
     private ArrayArgumentReducer $arrayArgumentReducer;
 

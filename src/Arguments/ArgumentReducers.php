@@ -51,7 +51,7 @@ class ArgumentReducers
     }
 
     /**
-     * @param array<ArgumentReducer> $argumentReducers
+     * @param array<int, ArgumentReducer> $argumentReducers
      */
     protected function __construct(
         public array $argumentReducers = [],

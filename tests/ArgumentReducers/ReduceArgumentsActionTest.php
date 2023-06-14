@@ -17,6 +17,8 @@ it('can reduce frames with arguments', function (
     Frame $frame,
     array $expected,
 ) {
+    ini_set('zend.exception_ignore_args', 0); // Enabled on GH actions
+
     $reduced = (new ReduceArgumentsAction(ArgumentReducers::default()))->execute($frame);
 
     expect($reduced)->toEqual(array_map(
