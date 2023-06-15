@@ -62,7 +62,7 @@ class Flare
 
     protected ?Container $container = null;
 
-    protected ?ArgumentReducers $argumentReducers = null;
+    protected ?array $argumentReducers = null;
 
     protected bool $withStackFrameArguments = true;
 
@@ -136,7 +136,7 @@ class Flare
         return $this;
     }
 
-    public function argumentReducers(ArgumentReducers $argumentReducers): self
+    public function argumentReducers(array $argumentReducers): self
     {
         $this->argumentReducers = $argumentReducers;
 

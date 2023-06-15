@@ -290,7 +290,7 @@ it('will reduce values even when no reducers are specified', function () {
 
     expect($reduced)->toEqual([
         (new ProvidedArgument('simple', reducedValue: 'string', originalType: 'string'))->toArray(),
-        (new ProvidedArgument('object', reducedValue: 'object (DateTimeZone)', originalType: DateTimeZone::class))->toArray(),
+        (new ProvidedArgument('object', reducedValue: 'object', originalType: DateTimeZone::class))->toArray(),
         (new ProvidedArgument('variadic', isVariadic: true, reducedValue: [42, 69], originalType: 'array'))->toArray(),
     ]);
 });

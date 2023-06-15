@@ -11,7 +11,7 @@ class MinimalArrayArgumentReducer implements ArgumentReducer
     public function execute(mixed $argument): ReducedArgumentContract
     {
         if(! is_array($argument)) {
-            return new UnReducedArgument();
+            return UnReducedArgument::create();
         }
 
         return new ReducedArgument(

@@ -313,7 +313,7 @@ it('will add arguments to a stack trace by default', function () {
         ],
         [
             "name" => "dateTime",
-            "value" => '16 May 2020 14:00:00 +02:00 (DateTime)',
+            "value" => '16 May 2020 14:00:00 +02:00',
             "passed_by_reference" => false,
             "is_variadic" => false,
             "truncated" => false,

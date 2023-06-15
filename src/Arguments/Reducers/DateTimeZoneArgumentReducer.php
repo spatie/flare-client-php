@@ -11,7 +11,7 @@ class DateTimeZoneArgumentReducer implements ArgumentReducer
     public function execute(mixed $argument): ReducedArgumentContract
     {
         if (! $argument instanceof \DateTimeZone) {
-            return new UnReducedArgument();
+            return UnReducedArgument::create();
         }
 
         return new ReducedArgument(

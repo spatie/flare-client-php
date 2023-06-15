@@ -12,7 +12,7 @@ class ClosureArgumentReducer implements ArgumentReducer
     public function execute(mixed $argument): ReducedArgumentContract
     {
         if (! $argument instanceof \Closure) {
-            return new UnReducedArgument();
+            return UnReducedArgument::create();
         }
 
         $reflection = new ReflectionFunction($argument);

@@ -12,7 +12,7 @@ class StringableArgumentReducer implements ArgumentReducer
     public function execute(mixed $argument): ReducedArgumentContract
     {
         if (! $argument instanceof Stringable) {
-            return new UnReducedArgument();
+            return UnReducedArgument::create();
         }
 
         return new ReducedArgument(

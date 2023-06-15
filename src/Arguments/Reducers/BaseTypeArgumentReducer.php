@@ -19,6 +19,6 @@ class BaseTypeArgumentReducer implements ArgumentReducer
             return new ReducedArgument($argument, get_debug_type($argument));
         }
 
-        return new UnReducedArgument();
+        return UnReducedArgument::create();
     }
 }

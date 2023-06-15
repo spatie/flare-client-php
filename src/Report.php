@@ -64,7 +64,8 @@ class Report
 
     public static ?string $fakeTrackingUuid = null;
 
-    protected ?ArgumentReducers $argumentReducers = null;
+    /** @var array<class-string<\Spatie\FlareClient\Arguments\Reducers\ArgumentReducer>>|null  */
+    protected ?array $argumentReducers = null;
 
     protected bool $withStackTraceArguments = true;
 
@@ -73,7 +74,7 @@ class Report
         ContextProvider $context,
         ?string $applicationPath = null,
         ?string $version = null,
-        ?ArgumentReducers $argumentReducers = null,
+        ?array $argumentReducers = null,
         bool $withStackTraceArguments = true,
     ): self {
         $stacktrace = Backtrace::createForThrowable($throwable)
@@ -111,7 +112,7 @@ class Report
         string $logLevel,
         ContextProvider $context,
         ?string $applicationPath = null,
-        ?ArgumentReducers $argumentReducers = null,
+        ?array $argumentReducers = null,
         bool $withStackTraceArguments = true,
     ): self {
         $stacktrace = Backtrace::create()
@@ -246,7 +247,7 @@ class Report
         return $this->applicationVersion;
     }
 
-    public function argumentReducers(?ArgumentReducers $argumentReducers): self
+    public function argumentReducers(?array $argumentReducers): self
     {
         $this->argumentReducers = $argumentReducers;
 
@@ -332,7 +333,9 @@ class Report
     protected function stracktraceAsArray(): array
     {
         $reduceArgumentsAction = new ReduceArgumentsAction(
-            $this->argumentReducers ?? ArgumentReducers::default()
+            $this->argumentReducers !== null
+                ? ArgumentReducers::create($this->argumentReducers)
+                : ArgumentReducers::default()
         );
 
         return array_map(

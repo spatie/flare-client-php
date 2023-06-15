@@ -5,10 +5,11 @@ namespace Spatie\FlareClient\Arguments\Reducers;
 use Spatie\FlareClient\Arguments\ArgumentReducers;
 use Spatie\FlareClient\Arguments\ReduceArgumentPayloadAction;
 use Spatie\FlareClient\Arguments\ReducedArgument\ReducedArgument;
+use Spatie\FlareClient\Arguments\ReducedArgument\ReducedArgumentContract;
 use Spatie\FlareClient\Arguments\ReducedArgument\TruncatedReducedArgument;
 use Spatie\FlareClient\Arguments\ReducedArgument\UnReducedArgument;
 
-class ArrayArgumentReducer implements ArgumentReducer
+class ArrayArgumentReducer implements ReducedArgumentContract
 {
     protected int $maxArraySize = 25;
 
@@ -19,12 +20,17 @@ class ArrayArgumentReducer implements ArgumentReducer
         $this->reduceArgumentPayloadAction = new ReduceArgumentPayloadAction(ArgumentReducers::minimal());
     }
 
-    public function execute(mixed $argument): ReducedArgument|UnReducedArgument
+    public function execute(mixed $argument): ReducedArgumentContract
     {
         if (! is_array($argument)) {
-            return new UnReducedArgument();
+            return UnReducedArgument::create();
         }
 
+        return $this->reduceArgument($argument, 'array');
+    }
+
+    protected function reduceArgument(array $argument, string $originalType): ReducedArgument|TruncatedReducedArgument
+    {
         foreach ($argument as $key => $value) {
             $argument[$key] = $this->reduceArgumentPayloadAction->reduce(
                 $value,
@@ -39,6 +45,6 @@ class ArrayArgumentReducer implements ArgumentReducer
             );
         }
 
-        return new ReducedArgument($argument, 'array');
+        return new ReducedArgument($argument, $originalType);
     }
 }
