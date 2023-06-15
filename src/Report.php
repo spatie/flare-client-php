@@ -64,7 +64,7 @@ class Report
 
     public static ?string $fakeTrackingUuid = null;
 
-    /** @var array<class-string<\Spatie\FlareClient\Arguments\Reducers\ArgumentReducer>>|null  */
+    /** @var array<class-string<\Spatie\FlareClient\Arguments\Reducers\ArgumentReducer>>|null */
     protected ?array $argumentReducers = null;
 
     protected bool $withStackTraceArguments = true;

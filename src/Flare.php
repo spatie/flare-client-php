@@ -8,7 +8,6 @@ use ErrorException;
 use Exception;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Pipeline\Pipeline;
-use Spatie\FlareClient\Arguments\ArgumentReducers;
 use Spatie\FlareClient\Concerns\HasContext;
 use Spatie\FlareClient\Context\BaseContextProviderDetector;
 use Spatie\FlareClient\Context\ContextProviderDetector;
