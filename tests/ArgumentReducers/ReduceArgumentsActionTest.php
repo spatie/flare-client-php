@@ -3,6 +3,8 @@
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonTimeZone;
+use Illuminate\Support\Str;
+use Illuminate\Support\Stringable;
 use Spatie\Backtrace\Frame;
 use Spatie\FlareClient\Arguments\ArgumentReducers;
 use Spatie\FlareClient\Arguments\ProvidedArgument;
@@ -172,7 +174,7 @@ it('can reduce frames with arguments', function (
         TraceArguments::create()->withClosure(
             fn () => 'Hello World'
         ), [
-            new ProvidedArgument('closure', reducedValue: '{closure}('.__FILE__.':'.__LINE__ - 2 .'-'.__LINE__ - 1 .')', originalType: 'Closure'),
+            new ProvidedArgument('closure', reducedValue: __FILE__.':'.__LINE__ - 2 .'-'.__LINE__ - 1, originalType: 'Closure'),
         ],
     ],
     yield 'with date' => [
@@ -182,10 +184,10 @@ it('can reduce frames with arguments', function (
             new Carbon('2020-05-16 14:00:00', new DateTimeZone('Europe/Brussels')),
             new CarbonImmutable('2020-05-16 14:00:00', new DateTimeZone('Europe/Brussels')),
         ), [
-            new ProvidedArgument('dateTime', reducedValue: '16 May 2020 14:00:00 +02:00 (DateTime)', originalType: DateTime::class),
-            new ProvidedArgument('dateTimeImmutable', reducedValue: '16 May 2020 14:00:00 +02:00 (DateTimeImmutable)', originalType: DateTimeImmutable::class),
-            new ProvidedArgument('carbon', reducedValue: '16 May 2020 14:00:00 +02:00 (Carbon\Carbon)', originalType: Carbon::class),
-            new ProvidedArgument('carbonImmutable', reducedValue: '16 May 2020 14:00:00 +02:00 (Carbon\CarbonImmutable)', originalType: CarbonImmutable::class),
+            new ProvidedArgument('dateTime', reducedValue: '16 May 2020 14:00:00 +02:00', originalType: DateTime::class),
+            new ProvidedArgument('dateTimeImmutable', reducedValue: '16 May 2020 14:00:00 +02:00', originalType: DateTimeImmutable::class),
+            new ProvidedArgument('carbon', reducedValue: '16 May 2020 14:00:00 +02:00', originalType: Carbon::class),
+            new ProvidedArgument('carbonImmutable', reducedValue: '16 May 2020 14:00:00 +02:00', originalType: CarbonImmutable::class),
         ],
     ],
     yield 'with timezone' => [
@@ -193,15 +195,15 @@ it('can reduce frames with arguments', function (
             new DateTimeZone('Europe/Brussels'),
             new CarbonTimeZone('Europe/Brussels'),
         ), [
-            new ProvidedArgument('dateTimeZone', reducedValue: 'Europe/Brussels (DateTimeZone)', originalType: DateTimeZone::class),
-            new ProvidedArgument('carbonTimeZone', reducedValue: 'Europe/Brussels (Carbon\CarbonTimeZone)', originalType: CarbonTimeZone::class),
+            new ProvidedArgument('dateTimeZone', reducedValue: 'Europe/Brussels', originalType: DateTimeZone::class),
+            new ProvidedArgument('carbonTimeZone', reducedValue: 'Europe/Brussels', originalType: CarbonTimeZone::class),
         ],
     ],
     yield 'with Symfony Request' => [
         TraceArguments::create()->withSymfonyRequest(
             Request::create('https://spatie.be/flare'),
         ), [
-            new ProvidedArgument('request', reducedValue: 'GET|https://spatie.be/flare (Symfony\Component\HttpFoundation\Request)', originalType: Request::class),
+            new ProvidedArgument('request', reducedValue: 'GET|https://spatie.be/flare', originalType: Request::class),
         ],
     ],
     yield 'with sensitive parameter' => [
@@ -221,7 +223,7 @@ it('can reduce frames with arguments', function (
     yield 'with called closure (no reflection possible)' => [
         TraceArguments::create()->withCalledClosure(), [
             new ProvidedArgument('0', reducedValue: 'string', originalType: 'string'),
-            new ProvidedArgument('1', reducedValue: 'Europe/Brussels (DateTimeZone)', originalType: DateTimeZone::class),
+            new ProvidedArgument('1', reducedValue: 'Europe/Brussels', originalType: DateTimeZone::class),
             new ProvidedArgument('2', reducedValue: 42, originalType: 'int'),
             new ProvidedArgument('3', reducedValue: 69, originalType: 'int'),
         ],
@@ -241,6 +243,13 @@ it('can reduce frames with arguments', function (
                 ],
                 originalType: stdClass::class
             ),
+        ],
+    ],
+    yield 'with stringable' => [
+        TraceArguments::create()->withStringable(
+            Str::of('Hello world')
+        ), [
+            new ProvidedArgument('stringable', reducedValue: 'Hello world', originalType: Stringable::class),
         ],
     ],
     yield 'with too many arguments provided' => [

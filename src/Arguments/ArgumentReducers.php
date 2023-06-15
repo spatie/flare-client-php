@@ -11,6 +11,7 @@ use Spatie\FlareClient\Arguments\Reducers\DateTimeZoneArgumentReducer;
 use Spatie\FlareClient\Arguments\Reducers\EnumArgumentReducer;
 use Spatie\FlareClient\Arguments\Reducers\MinimalArrayArgumentReducer;
 use Spatie\FlareClient\Arguments\Reducers\StdClassArgumentReducer;
+use Spatie\FlareClient\Arguments\Reducers\StringableArgumentReducer;
 use Spatie\FlareClient\Arguments\Reducers\SymphonyRequestArgumentReducer;
 
 class ArgumentReducers
@@ -37,6 +38,7 @@ class ArgumentReducers
             new DateTimeArgumentReducer(),
             new DateTimeZoneArgumentReducer(),
             new SymphonyRequestArgumentReducer(),
+            new StringableArgumentReducer(),
         ]);
     }
 

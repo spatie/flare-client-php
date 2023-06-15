@@ -26,7 +26,10 @@ class ArrayArgumentReducer implements ArgumentReducer
         }
 
         foreach ($argument as $key => $value) {
-            $argument[$key] = $this->reduceArgumentPayloadAction->reduce($value)->value;
+            $argument[$key] = $this->reduceArgumentPayloadAction->reduce(
+                $value,
+                includeObjectType: true
+            )->value;
         }
 
         if (count($argument) > $this->maxArraySize) {

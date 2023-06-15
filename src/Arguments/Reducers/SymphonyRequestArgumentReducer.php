@@ -16,7 +16,7 @@ class SymphonyRequestArgumentReducer implements ArgumentReducer
         }
 
         return new ReducedArgument(
-            "{$argument->getMethod()}|{$argument->getUri()} (" . $argument::class . ')',
+            "{$argument->getMethod()}|{$argument->getUri()}",
             get_class($argument),
         );
     }

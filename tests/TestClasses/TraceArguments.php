@@ -10,6 +10,7 @@ use DateTime;
 use DateTimeImmutable;
 use DateTimeZone;
 use Exception;
+use Illuminate\Support\Stringable;
 use SensitiveParameter;
 use Spatie\Backtrace\Backtrace;
 use Spatie\Backtrace\Frame;
@@ -149,6 +150,12 @@ class TraceArguments
         } catch (Throwable $exception) {
             return Backtrace::createForThrowable($exception)->withArguments()->frames()[0];
         }
+    }
+
+    public function withStringable(
+        Stringable $stringable,
+    ): Frame {
+        return $this->getTraceFrame();
     }
 
     public function exception(

@@ -11,7 +11,7 @@ class ReduceArgumentPayloadAction
     ) {
     }
 
-    public function reduce(mixed $argument): ReducedArgument
+    public function reduce(mixed $argument, bool $includeObjectType = false): ReducedArgument
     {
         foreach ($this->argumentReducers->argumentReducers as $reducer) {
             $reduced = $reducer->execute($argument);
@@ -21,10 +21,19 @@ class ReduceArgumentPayloadAction
             }
         }
 
-        $type = gettype($argument);
+        if (gettype($argument) === 'object' && $includeObjectType) {
+            return new ReducedArgument(
+                'object ('.get_class($argument).')',
+                get_debug_type($argument),
+            );
+        }
+
+        if (gettype($argument) === 'object') {
+            return new ReducedArgument('object', get_debug_type($argument),);
+        }
 
         return new ReducedArgument(
-            $type === 'object' ? 'object ('.get_class($argument).')' : $argument,
+            $argument,
             get_debug_type($argument),
         );
     }
