@@ -59,4 +59,3 @@ parameters:
 			message: "#^Property Spatie\\\\FlareClient\\\\Solutions\\\\ReportSolution\\:\\:\\$solution has unknown class Spatie\\\\Ignition\\\\Contracts\\\\Solution as its type\\.$#"
 			count: 1
 			path: src/Solutions/ReportSolution.php
-

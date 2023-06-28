@@ -6,6 +6,7 @@ use Spatie\FlareClient\Flare;
 use Spatie\FlareClient\Tests\Concerns\MatchesReportSnapshots;
 use Spatie\FlareClient\Tests\Mocks\FakeClient;
 use Spatie\FlareClient\Tests\TestClasses\ExceptionWithContext;
+use Spatie\FlareClient\Tests\TestClasses\TraceArguments;
 
 uses(MatchesReportSnapshots::class);
 
@@ -289,6 +290,62 @@ it('can filter error exceptions based on their severity', function () {
     $this->flare->report(new ErrorException('test', 0, E_WARNING));
 
     $this->fakeClient->assertRequestsSent(3);
+});
+
+it('will add arguments to a stack trace by default', function () {
+    ini_set('zend.exception_ignore_args', 0); // Enabled on GH actions
+
+    $exception = TraceArguments::create()->exception(
+        'a message',
+        new DateTime('2020-05-16 14:00:00', new DateTimeZone('Europe/Brussels'))
+    );
+
+    $this->flare->report($exception);
+
+    $this->fakeClient->assertLastRequestHas('stacktrace.1.arguments', [
+        [
+            "name" => "string",
+            "value" => "a message",
+            "passed_by_reference" => false,
+            "is_variadic" => false,
+            "truncated" => false,
+            'original_type' => 'string',
+        ],
+        [
+            "name" => "dateTime",
+            "value" => '16 May 2020 14:00:00 Europe/Brussels',
+            "passed_by_reference" => false,
+            "is_variadic" => false,
+            "truncated" => false,
+            'original_type' => DateTime::class,
+        ],
+    ]);
+});
+
+it('is possible to disable stack frame arguments', function () {
+    ini_set('zend.exception_ignore_args', 0); // Enabled on GH actions
+
+    $exception = TraceArguments::create()->exception(
+        'a message',
+        new DateTime('2020-05-16 14:00:00', new DateTimeZone('Europe/Brussels'))
+    );
+
+    $this->flare->withStackFrameArguments(false)->report($exception);
+
+    $this->fakeClient->assertLastRequestHas('stacktrace.0.arguments', null);
+});
+
+it('is possible to disable stack frame arguments with zend.exception_ignore_args', function () {
+    ini_set('zend.exception_ignore_args', 1);
+
+    $exception = TraceArguments::create()->exception(
+        'a message',
+        new DateTime('2020-05-16 14:00:00', new DateTimeZone('Europe/Brussels'))
+    );
+
+    $this->flare->report($exception);
+
+    $this->fakeClient->assertLastRequestHas('stacktrace.0.arguments', null);
 });
 
 // Helpers
