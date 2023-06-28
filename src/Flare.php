@@ -63,7 +63,7 @@ class Flare
 
     protected ?Container $container = null;
 
-    /** @var array<class-string<ArgumentReducer>|ArgumentReducer>|ArgumentReducers|null  */
+    /** @var array<class-string<ArgumentReducer>|ArgumentReducer>|ArgumentReducers|null */
     protected null|array|ArgumentReducers $argumentReducers = null;
 
     protected bool $withStackFrameArguments = true;
