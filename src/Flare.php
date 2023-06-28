@@ -8,6 +8,8 @@ use ErrorException;
 use Exception;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Pipeline\Pipeline;
+use Spatie\Backtrace\Arguments\ArgumentReducers;
+use Spatie\Backtrace\Arguments\Reducers\ArgumentReducer;
 use Spatie\FlareClient\Concerns\HasContext;
 use Spatie\FlareClient\Context\BaseContextProviderDetector;
 use Spatie\FlareClient\Context\ContextProviderDetector;
@@ -61,7 +63,8 @@ class Flare
 
     protected ?Container $container = null;
 
-    protected ?array $argumentReducers = null;
+    /** @var array<class-string<ArgumentReducer>|ArgumentReducer>|ArgumentReducers|null  */
+    protected null|array|ArgumentReducers $argumentReducers = null;
 
     protected bool $withStackFrameArguments = true;
 
@@ -135,7 +138,8 @@ class Flare
         return $this;
     }
 
-    public function argumentReducers(array $argumentReducers): self
+    /** @param array<class-string<ArgumentReducer>|ArgumentReducer>|ArgumentReducers|null $argumentReducers */
+    public function argumentReducers(null|array|ArgumentReducers $argumentReducers): self
     {
         $this->argumentReducers = $argumentReducers;
 

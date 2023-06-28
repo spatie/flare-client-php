@@ -2,6 +2,8 @@
 
 namespace Spatie\FlareClient;
 
+use Spatie\Backtrace\Arguments\ArgumentReducers;
+use Spatie\Backtrace\Arguments\Reducers\ArgumentReducer;
 use Spatie\Backtrace\Backtrace;
 use Spatie\Backtrace\Frame as SpatieFrame;
 use Spatie\FlareClient\Concerns\HasContext;
@@ -62,12 +64,13 @@ class Report
 
     public static ?string $fakeTrackingUuid = null;
 
+    /** @param array<class-string<ArgumentReducer>|ArgumentReducer>|ArgumentReducers|null $argumentReducers */
     public static function createForThrowable(
         Throwable $throwable,
         ContextProvider $context,
         ?string $applicationPath = null,
         ?string $version = null,
-        ?array $argumentReducers = null,
+        null|array|ArgumentReducers $argumentReducers = null,
         bool $withStackTraceArguments = true,
     ): self {
         $stacktrace = Backtrace::createForThrowable($throwable)
@@ -99,12 +102,13 @@ class Report
         return get_class($throwable);
     }
 
+    /** @param array<class-string<ArgumentReducer>|ArgumentReducer>|ArgumentReducers|null $argumentReducers */
     public static function createForMessage(
         string $message,
         string $logLevel,
         ContextProvider $context,
         ?string $applicationPath = null,
-        ?array $argumentReducers = null,
+        null|array|ArgumentReducers $argumentReducers = null,
         bool $withStackTraceArguments = true,
     ): self {
         $stacktrace = Backtrace::create()

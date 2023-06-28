@@ -1,76 +1,6 @@
 parameters:
 	ignoreErrors:
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Arguments\\\\ProvidedArgument\\:\\:toArray\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Arguments/ProvidedArgument.php
-
-		-
-			message: "#^Cannot access property \\$isVariadic on array\\|Spatie\\\\FlareClient\\\\Arguments\\\\ProvidedArgument\\.$#"
-			count: 1
-			path: src/Arguments/ReduceArgumentsAction.php
-
-		-
-			message: "#^Cannot call method defaultValueUsed\\(\\) on array\\|Spatie\\\\FlareClient\\\\Arguments\\\\ProvidedArgument\\.$#"
-			count: 1
-			path: src/Arguments/ReduceArgumentsAction.php
-
-		-
-			message: "#^Cannot call method setReducedArgument\\(\\) on array\\|Spatie\\\\FlareClient\\\\Arguments\\\\ProvidedArgument\\.$#"
-			count: 2
-			path: src/Arguments/ReduceArgumentsAction.php
-
-		-
-			message: "#^Cannot call method toArray\\(\\) on array\\|Spatie\\\\FlareClient\\\\Arguments\\\\ProvidedArgument\\.$#"
-			count: 1
-			path: src/Arguments/ReduceArgumentsAction.php
-
-		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Arguments\\\\ReduceArgumentsAction\\:\\:execute\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Arguments/ReduceArgumentsAction.php
-
-		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Arguments\\\\ReduceArgumentsAction\\:\\:moreArgumentsProvidedThanParameters\\(\\) has parameter \\$arguments with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Arguments/ReduceArgumentsAction.php
-
-		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Arguments\\\\ReduceArgumentsAction\\:\\:moreArgumentsProvidedThanParameters\\(\\) has parameter \\$parameters with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Arguments/ReduceArgumentsAction.php
-
-		-
-			message: "#^Parameter \\#1 \\$function of class ReflectionFunction constructor expects Closure\\|string, string\\|null given\\.$#"
-			count: 1
-			path: src/Arguments/ReduceArgumentsAction.php
-
-		-
-			message: "#^Parameter \\#2 \\$method of class ReflectionMethod constructor expects string, string\\|null given\\.$#"
-			count: 1
-			path: src/Arguments/ReduceArgumentsAction.php
-
-		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Arguments\\\\ReducedArgument\\\\ReducedArgument\\:\\:__construct\\(\\) has parameter \\$value with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Arguments/ReducedArgument/ReducedArgument.php
-
-		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Arguments\\\\ReducedArgument\\\\VariadicReducedArgument\\:\\:__construct\\(\\) has parameter \\$value with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Arguments/ReducedArgument/VariadicReducedArgument.php
-
-		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Frame\\:\\:__construct\\(\\) has parameter \\$reducedArguments with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Frame.php
-
-		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Frame\\:\\:fromSpatieFrame\\(\\) has parameter \\$reducedArguments with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Frame.php
-
-		-
 			message: "#^Method Spatie\\\\FlareClient\\\\Frame\\:\\:toArray\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Frame.php
@@ -129,4 +59,3 @@ parameters:
 			message: "#^Property Spatie\\\\FlareClient\\\\Solutions\\\\ReportSolution\\:\\:\\$solution has unknown class Spatie\\\\Ignition\\\\Contracts\\\\Solution as its type\\.$#"
 			count: 1
 			path: src/Solutions/ReportSolution.php
-
