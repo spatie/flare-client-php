@@ -4,8 +4,6 @@ namespace Spatie\FlareClient;
 
 use Spatie\Backtrace\Backtrace;
 use Spatie\Backtrace\Frame as SpatieFrame;
-use Spatie\FlareClient\Arguments\ArgumentReducers;
-use Spatie\FlareClient\Arguments\ReduceArgumentsAction;
 use Spatie\FlareClient\Concerns\HasContext;
 use Spatie\FlareClient\Concerns\UsesTime;
 use Spatie\FlareClient\Context\ContextProvider;
@@ -64,11 +62,6 @@ class Report
 
     public static ?string $fakeTrackingUuid = null;
 
-    /** @var array<class-string<\Spatie\FlareClient\Arguments\Reducers\ArgumentReducer>>|null */
-    protected ?array $argumentReducers = null;
-
-    protected bool $withStackTraceArguments = true;
-
     public static function createForThrowable(
         Throwable $throwable,
         ContextProvider $context,
@@ -79,6 +72,7 @@ class Report
     ): self {
         $stacktrace = Backtrace::createForThrowable($throwable)
             ->withArguments($withStackTraceArguments)
+            ->reduceArguments($argumentReducers)
             ->applicationPath($applicationPath ?? '');
 
         return (new self())
@@ -88,8 +82,6 @@ class Report
             ->exceptionClass(self::getClassForThrowable($throwable))
             ->message($throwable->getMessage())
             ->stackTrace($stacktrace)
-            ->argumentReducers($argumentReducers)
-            ->withStackTraceArguments($withStackTraceArguments)
             ->exceptionContext($throwable)
             ->setApplicationVersion($version);
     }
@@ -117,6 +109,7 @@ class Report
     ): self {
         $stacktrace = Backtrace::create()
             ->withArguments($withStackTraceArguments)
+            ->reduceArguments($argumentReducers)
             ->applicationPath($applicationPath ?? '');
 
         return (new self())
@@ -125,8 +118,6 @@ class Report
             ->useContext($context)
             ->exceptionClass($logLevel)
             ->stacktrace($stacktrace)
-            ->argumentReducers($argumentReducers)
-            ->withStackTraceArguments($withStackTraceArguments)
             ->openFrameIndex($stacktrace->firstApplicationFrameIndex());
     }
 
@@ -247,20 +238,6 @@ class Report
         return $this->applicationVersion;
     }
 
-    public function argumentReducers(?array $argumentReducers): self
-    {
-        $this->argumentReducers = $argumentReducers;
-
-        return $this;
-    }
-
-    public function withStackTraceArguments(bool $withStackTraceArguments = true): self
-    {
-        $this->withStackTraceArguments = $withStackTraceArguments;
-
-        return $this;
-    }
-
     public function view(?View $view): self
     {
         $this->view = $view;
@@ -332,17 +309,8 @@ class Report
      */
     protected function stracktraceAsArray(): array
     {
-        $reduceArgumentsAction = new ReduceArgumentsAction(
-            $this->argumentReducers !== null
-                ? ArgumentReducers::create($this->argumentReducers)
-                : ArgumentReducers::default()
-        );
-
         return array_map(
-            fn (SpatieFrame $frame) => Frame::fromSpatieFrame(
-                $frame,
-                $this->withStackTraceArguments ? $reduceArgumentsAction->execute($frame) : null
-            )->toArray(),
+            fn (SpatieFrame $frame) => Frame::fromSpatieFrame($frame)->toArray(),
             $this->stacktrace->frames(),
         );
     }

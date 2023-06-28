@@ -302,7 +302,7 @@ it('will add arguments to a stack trace by default', function () {
 
     $this->flare->report($exception);
 
-    $this->fakeClient->assertLastRequestHas('stacktrace.0.arguments', [
+    $this->fakeClient->assertLastRequestHas('stacktrace.1.arguments', [
         [
             "name" => "string",
             "value" => "a message",
@@ -313,7 +313,7 @@ it('will add arguments to a stack trace by default', function () {
         ],
         [
             "name" => "dateTime",
-            "value" => '16 May 2020 14:00:00 +02:00',
+            "value" => '16 May 2020 14:00:00 Europe/Brussels',
             "passed_by_reference" => false,
             "is_variadic" => false,
             "truncated" => false,
@@ -330,7 +330,7 @@ it('is possible to disable stack frame arguments', function () {
         new DateTime('2020-05-16 14:00:00', new DateTimeZone('Europe/Brussels'))
     );
 
-    $this->flare->withoutStackFrameArguments()->report($exception);
+    $this->flare->withStackFrameArguments(false)->report($exception);
 
     $this->fakeClient->assertLastRequestHas('stacktrace.0.arguments', null);
 });

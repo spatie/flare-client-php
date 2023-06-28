@@ -8,14 +8,12 @@ class Frame
 {
     public static function fromSpatieFrame(
         SpatieFrame $frame,
-        ?array $reducedArguments = null,
     ): self {
-        return new self($frame, $reducedArguments);
+        return new self($frame);
     }
 
     public function __construct(
         protected SpatieFrame $frame,
-        protected ?array $reducedArguments = null,
     ) {
     }
 
@@ -27,7 +25,7 @@ class Frame
             'method' => $this->frame->method,
             'class' => $this->frame->class,
             'code_snippet' => $this->frame->getSnippet(30),
-            'arguments' => $this->reducedArguments,
+            'arguments' => $this->frame->arguments,
             'application_frame' => $this->frame->applicationFrame,
         ];
     }

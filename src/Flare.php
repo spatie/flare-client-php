@@ -142,9 +142,9 @@ class Flare
         return $this;
     }
 
-    public function withoutStackFrameArguments(bool $withoutStackFrameArguments = true): self
+    public function withStackFrameArguments(bool $withStackFrameArguments = true): self
     {
-        $this->withStackFrameArguments = ! $withoutStackFrameArguments;
+        $this->withStackFrameArguments = $withStackFrameArguments;
 
         return $this;
     }
