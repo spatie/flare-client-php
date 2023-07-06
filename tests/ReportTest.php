@@ -4,6 +4,7 @@ use Spatie\FlareClient\Context\ConsoleContextProvider;
 use Spatie\FlareClient\Glows\Glow;
 use Spatie\FlareClient\Report;
 use Spatie\FlareClient\Tests\Concerns\MatchesReportSnapshots;
+use Spatie\FlareClient\Tests\TestClasses\FakeErrorHandler;
 use Spatie\FlareClient\Tests\TestClasses\FakeTime;
 
 uses(MatchesReportSnapshots::class);
@@ -59,4 +60,18 @@ it('can create a report with meta data', function () {
     $report->userProvidedContext(['meta' => $metadata]);
 
     expect($report->toArray()['context']['meta'])->toEqual($metadata);
+});
+
+it('can create a report with error exception and will cleanup the stack trace', function () {
+    FakeErrorHandler::setup(function (ErrorException $exception){
+        $stacktrace = Report::createForThrowable($exception, new ConsoleContextProvider())
+            ->toArray()
+            ['stacktrace'];
+
+        expect($stacktrace[0]['file'])->toBe(__FILE__);
+        expect($stacktrace[0]['arguments'])->toBeNull();
+        expect($stacktrace[0]['method'])->toBe(__METHOD__);
+    });
+
+    $test->doSomething; // We expect this to fail!
 });
