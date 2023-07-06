@@ -2,6 +2,10 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 1.4.1 - 2023-07-06
+
+- Add better support for error exceptions
+
 ## 1.4.0 - 2023-06-28
 
 - Add support for stack trace arguments
