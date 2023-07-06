@@ -63,7 +63,7 @@ it('can create a report with meta data', function () {
 });
 
 it('can create a report with error exception and will cleanup the stack trace', function () {
-    FakeErrorHandler::setup(function (ErrorException $exception){
+    FakeErrorHandler::setup(function (ErrorException $exception) {
         $stacktrace = Report::createForThrowable($exception, new ConsoleContextProvider())
             ->toArray()
             ['stacktrace'];
