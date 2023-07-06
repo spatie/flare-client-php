@@ -323,15 +323,13 @@ class Report
     /**
      * @param array<SpatieFrame> $frames
      *
-     * @return array
+     * @return array<SpatieFrame>
      */
     protected function cleanupStackTraceForError(array $frames): array
     {
-        if (get_class($this->throwable) !== ErrorException::class) {
+        if ($this->throwable !== null || get_class($this->throwable) !== ErrorException::class) {
             return $frames;
         }
-
-        $this->throwable->getFile();
 
         $firstErrorFrameIndex = null;
 
