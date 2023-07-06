@@ -327,7 +327,7 @@ class Report
      */
     protected function cleanupStackTraceForError(array $frames): array
     {
-        if ($this->throwable !== null || get_class($this->throwable) !== ErrorException::class) {
+        if ($this->throwable === null || get_class($this->throwable) !== ErrorException::class) {
             return $frames;
         }
 
