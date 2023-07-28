@@ -2,7 +2,6 @@
 
 namespace Spatie\FlareClient;
 
-use Closure;
 use Error;
 use ErrorException;
 use Exception;
