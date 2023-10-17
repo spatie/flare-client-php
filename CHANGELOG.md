@@ -2,6 +2,18 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 1.4.3 - 2023-10-17
+
+### What's Changed
+
+- [1.x] Tests against PHP 8.3 and adds Symfony 7 support by @nunomaduro in https://github.com/spatie/flare-client-php/pull/19
+
+### New Contributors
+
+- @nunomaduro made their first contribution in https://github.com/spatie/flare-client-php/pull/19
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/1.4.2...1.4.3
+
 ## 1.4.2 - 2023-07-28
 
 - Loosen type for previous exception handler
