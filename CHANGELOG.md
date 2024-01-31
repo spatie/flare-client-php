@@ -2,6 +2,18 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 1.4.4 - 2024-01-31
+
+### What's Changed
+
+* Drop Carbon dependency from composer.json by @jnoordsij in https://github.com/spatie/flare-client-php/pull/23
+
+### New Contributors
+
+* @jnoordsij made their first contribution in https://github.com/spatie/flare-client-php/pull/23
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/1.4.3...1.4.4
+
 ## 1.4.3 - 2023-10-17
 
 ### What's Changed
