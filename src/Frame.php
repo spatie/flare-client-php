@@ -20,7 +20,7 @@ class Frame
     public function toArray(): array
     {
         return [
-            'file' => $this->frame->file,
+            'file' => ltrim($this->frame->file, '/'),,
             'line_number' => $this->frame->lineNumber,
             'method' => $this->frame->method,
             'class' => $this->frame->class,
