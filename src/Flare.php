@@ -40,6 +40,7 @@ class Flare
 
     protected ContextProviderDetector $contextDetector;
 
+    /** @var null|callable */
     protected $previousExceptionHandler = null;
 
     /** @var null|callable */
@@ -211,7 +212,6 @@ class Flare
 
     public function registerExceptionHandler(): self
     {
-        /** @phpstan-ignore-next-line */
         $this->previousExceptionHandler = set_exception_handler([$this, 'handleException']);
 
         return $this;
@@ -277,7 +277,8 @@ class Flare
     {
         $this->report($throwable);
 
-        if ($this->previousExceptionHandler && is_callable($this->previousExceptionHandler)) {
+        if ($this->previousExceptionHandler
+            && is_callable($this->previousExceptionHandler)) {
             call_user_func($this->previousExceptionHandler, $throwable);
         }
     }
