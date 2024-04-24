@@ -348,6 +348,17 @@ it('is possible to disable stack frame arguments with zend.exception_ignore_args
     $this->fakeClient->assertLastRequestHas('stacktrace.0.arguments', null);
 });
 
+
+it('can handle an out of memory exception', function () {
+    exec("php -r \"require 'vendor/autoload.php'; Spatie\FlareClient\Tests\TestClasses\OutOfMemory::execute();\"", $output, $return);
+
+    if (! str_contains($output[1], 'Allowed memory size of')) {
+        test()->fails('Out of memory exception was not thrown');
+    }
+
+    $this->fakeClient->assertRequestsSent(1);
+});
+
 // Helpers
 function reportException()
 {
@@ -361,4 +372,11 @@ function reportError(int $code)
     $throwable = new Error('This is a test', $code);
 
     test()->flare->report($throwable);
+}
+
+function consumeMemory(int $size): void
+{
+    str_repeat('0', $size);
+
+    consumeMemory($size);
 }
