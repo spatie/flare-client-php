@@ -68,6 +68,8 @@ class Flare
 
     protected bool $withStackFrameArguments = true;
 
+    protected static ?string $memoryReserve = null;
+
     public static function make(
         string $apiKey = null,
         ContextProviderDetector $contextDetector = null
@@ -75,6 +77,19 @@ class Flare
         $client = new Client($apiKey);
 
         return new self($client, $contextDetector);
+    }
+
+    protected function handleFatalError(): void
+    {
+        self::$memoryReserve = null;
+
+        $error = error_get_last(); // @todo returns null when running from a test file
+
+        if ($error !== null && $error['type'] === E_ERROR) {
+            ini_set('memory_limit', '-1'); // @todo perhaps something else as -1 is better
+
+            $this->handleError($error['type'], $error['message'], $error['file'], $error['line']);
+        }
     }
 
     public function setApiToken(string $apiToken): self
@@ -179,6 +194,10 @@ class Flare
         $this->api = new Api($this->client);
 
         $this->registerDefaultMiddleware();
+
+        self::$memoryReserve = str_repeat('0', 10 * 1024 * 1024);
+
+        register_shutdown_function(fn () => $this->handleFatalError());
     }
 
     /** @return array<int, FlareMiddleware|class-string<FlareMiddleware>> */
