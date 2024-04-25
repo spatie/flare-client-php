@@ -10,6 +10,7 @@ use Illuminate\Pipeline\Pipeline;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\Backtrace\Arguments\Reducers\ArgumentReducer;
 use Spatie\FlareClient\Concerns\HasContext;
+use Spatie\FlareClient\Concerns\RegistersExceptionHandlers;
 use Spatie\FlareClient\Context\BaseContextProviderDetector;
 use Spatie\FlareClient\Context\ContextProviderDetector;
 use Spatie\FlareClient\Enums\MessageLevels;
@@ -26,6 +27,7 @@ use Throwable;
 class Flare
 {
     use HasContext;
+    use RegistersExceptionHandlers;
 
     protected Client $client;
 
@@ -39,12 +41,6 @@ class Flare
     protected ?string $applicationPath = null;
 
     protected ContextProviderDetector $contextDetector;
-
-    /** @var null|callable */
-    protected $previousExceptionHandler = null;
-
-    /** @var null|callable */
-    protected $previousErrorHandler = null;
 
     /** @var null|callable */
     protected $determineVersionCallable = null;
@@ -68,8 +64,6 @@ class Flare
 
     protected bool $withStackFrameArguments = true;
 
-    protected static ?string $memoryReserve = null;
-
     public static function make(
         string $apiKey = null,
         ContextProviderDetector $contextDetector = null
@@ -77,19 +71,6 @@ class Flare
         $client = new Client($apiKey);
 
         return new self($client, $contextDetector);
-    }
-
-    protected function handleFatalError(): void
-    {
-        self::$memoryReserve = null;
-
-        $error = error_get_last(); // @todo returns null when running from a test file
-
-        if ($error !== null && $error['type'] === E_ERROR) {
-            ini_set('memory_limit', '-1'); // @todo perhaps something else as -1 is better
-
-            $this->handleError($error['type'], $error['message'], $error['file'], $error['line']);
-        }
     }
 
     public function setApiToken(string $apiToken): self
@@ -196,8 +177,6 @@ class Flare
         $this->registerDefaultMiddleware();
 
         self::$memoryReserve = str_repeat('0', 10 * 1024 * 1024);
-
-        register_shutdown_function(fn () => $this->handleFatalError());
     }
 
     /** @return array<int, FlareMiddleware|class-string<FlareMiddleware>> */
@@ -216,29 +195,6 @@ class Flare
     public function setContainer(Container $container): self
     {
         $this->container = $container;
-
-        return $this;
-    }
-
-    public function registerFlareHandlers(): self
-    {
-        $this->registerExceptionHandler();
-
-        $this->registerErrorHandler();
-
-        return $this;
-    }
-
-    public function registerExceptionHandler(): self
-    {
-        $this->previousExceptionHandler = set_exception_handler([$this, 'handleException']);
-
-        return $this;
-    }
-
-    public function registerErrorHandler(): self
-    {
-        $this->previousErrorHandler = set_error_handler([$this, 'handleError']);
 
         return $this;
     }
@@ -290,36 +246,6 @@ class Flare
         $this->recorder->record(new Glow($name, $messageLevel, $metaData));
 
         return $this;
-    }
-
-    public function handleException(Throwable $throwable): void
-    {
-        $this->report($throwable);
-
-        if ($this->previousExceptionHandler
-            && is_callable($this->previousExceptionHandler)) {
-            call_user_func($this->previousExceptionHandler, $throwable);
-        }
-    }
-
-    /**
-     * @return mixed
-     */
-    public function handleError(mixed $code, string $message, string $file = '', int $line = 0)
-    {
-        $exception = new ErrorException($message, 0, $code, $file, $line);
-
-        $this->report($exception);
-
-        if ($this->previousErrorHandler) {
-            return call_user_func(
-                $this->previousErrorHandler,
-                $message,
-                $code,
-                $file,
-                $line
-            );
-        }
     }
 
     public function applicationPath(string $applicationPath): self
