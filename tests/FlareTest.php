@@ -348,6 +348,18 @@ it('is possible to disable stack frame arguments with zend.exception_ignore_args
     $this->fakeClient->assertLastRequestHas('stacktrace.0.arguments', null);
 });
 
+it('can report a handled error', function () {
+    $throwable = new Exception('This is a test');
+
+    $this->flare->report($throwable, handled: true);
+
+    $this->fakeClient->assertRequestsSent(1);
+
+    $report = $this->fakeClient->getLastPayload();
+
+    expect($report['handled'])->toBeTrue();
+});
+
 // Helpers
 function reportException()
 {

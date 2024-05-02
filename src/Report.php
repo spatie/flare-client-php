@@ -65,6 +65,8 @@ class Report
 
     public static ?string $fakeTrackingUuid = null;
 
+    protected ?bool $handled = null;
+
     /** @param array<class-string<ArgumentReducer>|ArgumentReducer>|ArgumentReducers|null $argumentReducers */
     public static function createForThrowable(
         Throwable $throwable,
@@ -300,6 +302,13 @@ class Report
         return array_merge_recursive_distinct($context, $this->userProvidedContext);
     }
 
+    public function handled(?bool $handled = true): self
+    {
+        $this->handled = $handled;
+
+        return $this;
+    }
+
     protected function exceptionContext(Throwable $throwable): self
     {
         if ($throwable instanceof ProvidesFlareContext) {
@@ -376,6 +385,7 @@ class Report
             'application_path' => $this->applicationPath,
             'application_version' => $this->applicationVersion,
             'tracking_uuid' => $this->trackingUuid,
+            'handled' => $this->handled,
         ];
     }
 

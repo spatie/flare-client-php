@@ -309,13 +309,17 @@ class Flare
         return $this;
     }
 
-    public function report(Throwable $throwable, callable $callback = null, Report $report = null): ?Report
+    public function report(Throwable $throwable, callable $callback = null, Report $report = null, ?bool $handled = null): ?Report
     {
         if (! $this->shouldSendReport($throwable)) {
             return null;
         }
 
         $report ??= $this->createReport($throwable);
+
+        if ($handled) {
+            $report->handled();
+        }
 
         if (! is_null($callback)) {
             call_user_func($callback, $report);
@@ -326,6 +330,11 @@ class Flare
         $this->sendReportToApi($report);
 
         return $report;
+    }
+
+    public function reportHandled(Throwable $throwable): ?Report
+    {
+        return $this->report($throwable, null, null, true);
     }
 
     protected function shouldSendReport(Throwable $throwable): bool
@@ -448,6 +457,7 @@ class Flare
                 ? new $singleMiddleware
                 : $singleMiddleware;
         }, $this->middleware);
+
 
         $report = (new Pipeline())
             ->send($report)
