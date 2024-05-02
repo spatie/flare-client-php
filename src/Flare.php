@@ -176,7 +176,7 @@ class Flare
 
         $this->registerDefaultMiddleware();
 
-        self::$memoryReserve = str_repeat('0', 10 * 1024 * 1024);
+        $this->bootstrap();
     }
 
     /** @return array<int, FlareMiddleware|class-string<FlareMiddleware>> */

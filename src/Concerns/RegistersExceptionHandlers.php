@@ -9,13 +9,22 @@ use Throwable;
 /** @mixin Flare */
 trait RegistersExceptionHandlers
 {
+    public static ?string $reservedMemory = null;
+
     /** @var null|callable */
     protected $previousExceptionHandler = null;
 
     /** @var null|callable */
     protected $previousErrorHandler = null;
 
-    protected static ?string $memoryReserve = null;
+    public function bootstrap(): void
+    {
+        static::$reservedMemory = str_repeat('0', 10 * 1024 * 1024);
+
+        error_reporting(-1);
+
+        $this->registerFlareHandlers();
+    }
 
     public function registerFlareHandlers(): self
     {
@@ -61,11 +70,10 @@ trait RegistersExceptionHandlers
         }
     }
 
-    /**
-     * @return mixed
-     */
     public function handleError(mixed $code, string $message, string $file = '', int $line = 0)
     {
+        static::$reservedMemory = null;
+
         $exception = new ErrorException($message, 0, $code, $file, $line);
 
         $this->report($exception);
@@ -83,12 +91,12 @@ trait RegistersExceptionHandlers
 
     protected function handleShutdown(): void
     {
-        self::$memoryReserve = null;
+        self::$reservedMemory = null;
 
         $error = error_get_last(); // @todo returns null when running from a test file
 
         if ($error !== null && $error['type'] === E_ERROR) {
-            ini_set('memory_limit', '-1'); // @todo perhaps something else as -1 is better
+            ini_set('memory_limit', '-1');
 
             $this->handleError($error['type'], $error['message'], $error['file'], $error['line']);
         }
