@@ -1,6 +1,16 @@
 parameters:
 	ignoreErrors:
 		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:handleError\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Flare.php
+
+		-
+			message: "#^Parameter \\#1 \\$callback of function set_error_handler expects \\(callable\\(int, string, string, int\\)\\: bool\\)\\|null, Closure\\(mixed, mixed, mixed\\=, mixed\\=\\)\\: void given\\.$#"
+			count: 1
+			path: src/Flare.php
+
+		-
 			message: "#^Method Spatie\\\\FlareClient\\\\Frame\\:\\:toArray\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Frame.php
