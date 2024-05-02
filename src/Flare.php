@@ -40,7 +40,7 @@ class Flare
 
     protected ContextProviderDetector $contextDetector;
 
-    protected $previousExceptionHandler = null;
+    protected mixed $previousExceptionHandler = null;
 
     /** @var null|callable */
     protected $previousErrorHandler = null;
@@ -211,7 +211,6 @@ class Flare
 
     public function registerExceptionHandler(): self
     {
-        /** @phpstan-ignore-next-line */
         $this->previousExceptionHandler = set_exception_handler([$this, 'handleException']);
 
         return $this;
