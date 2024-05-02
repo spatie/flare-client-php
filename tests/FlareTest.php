@@ -351,7 +351,7 @@ it('is possible to disable stack frame arguments with zend.exception_ignore_args
 it('can report a handled error', function () {
     $throwable = new Exception('This is a test');
 
-    $this->flare->report($throwable, handled: true);
+    $this->flare->reportHandled($throwable);
 
     $this->fakeClient->assertRequestsSent(1);
 
