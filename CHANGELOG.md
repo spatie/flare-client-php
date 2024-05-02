@@ -2,6 +2,14 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 1.5.0 - 2024-05-02
+
+### What's Changed
+
+* Add support for handling errors by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/26
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/1.4.4...1.5.0
+
 ## 1.4.4 - 2024-01-31
 
 ### What's Changed
