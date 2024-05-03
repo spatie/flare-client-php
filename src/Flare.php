@@ -216,9 +216,11 @@ class Flare
         return $this;
     }
 
-    public function registerErrorHandler(int $errorLevels = E_ALL | E_STRICT): self
+    public function registerErrorHandler(?int $errorLevels = null): self
     {
-        $this->previousErrorHandler = set_error_handler([$this, 'handleError'], $errorLevels);
+        $this->previousErrorHandler = $errorLevels
+            ? set_error_handler([$this, 'handleError'], $errorLevels)
+            : set_error_handler([$this, 'handleError']);
 
         return $this;
     }
