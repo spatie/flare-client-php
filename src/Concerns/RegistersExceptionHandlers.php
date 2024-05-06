@@ -19,7 +19,7 @@ trait RegistersExceptionHandlers
 
     public function bootstrap(): void
     {
-        static::$reservedMemory = str_repeat('0', 10 * 1024 * 1024);
+        static::$reservedMemory = str_repeat('0', 10 * 32 * 1024); // 32 KB
 
         error_reporting(-1);
 
