@@ -295,8 +295,8 @@ class Flare
         if ($this->previousErrorHandler) {
             return call_user_func(
                 $this->previousErrorHandler,
-                $message,
                 $code,
+                $message,
                 $file,
                 $line
             );
