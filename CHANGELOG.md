@@ -2,6 +2,18 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 1.6.0 - 2024-05-22
+
+### What's Changed
+
+* Fix incorrect argument order when calling previous error handler by @RasmusStahl in https://github.com/spatie/flare-client-php/pull/28
+
+### New Contributors
+
+* @RasmusStahl made their first contribution in https://github.com/spatie/flare-client-php/pull/28
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/1.5.1...1.6.0
+
 ## 1.5.1 - 2024-05-03
 
 ### What's Changed
