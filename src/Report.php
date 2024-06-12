@@ -7,14 +7,16 @@ use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\Backtrace\Arguments\Reducers\ArgumentReducer;
 use Spatie\Backtrace\Backtrace;
 use Spatie\Backtrace\Frame as SpatieFrame;
+use Spatie\ErrorSolutions\Contracts\Solution;
 use Spatie\FlareClient\Concerns\HasContext;
 use Spatie\FlareClient\Concerns\UsesTime;
 use Spatie\FlareClient\Context\ContextProvider;
 use Spatie\FlareClient\Contracts\ProvidesFlareContext;
 use Spatie\FlareClient\Glows\Glow;
 use Spatie\FlareClient\Solutions\ReportSolution;
-use Spatie\Ignition\Contracts\Solution;
-use Spatie\LaravelIgnition\Exceptions\ViewException;
+use Spatie\Ignition\Contracts\Solution as IgnitionSolution;
+use Spatie\LaravelFlare\Exceptions\ViewException;
+use Spatie\LaravelIgnition\Exceptions\ViewException as IgnitionViewException;
 use Throwable;
 
 class Report
@@ -95,7 +97,7 @@ class Report
     protected static function getClassForThrowable(Throwable $throwable): string
     {
         /** @phpstan-ignore-next-line */
-        if ($throwable::class === ViewException::class) {
+        if ($throwable::class === IgnitionViewException::class || $throwable::class === ViewException::class) {
             /** @phpstan-ignore-next-line */
             if ($previous = $throwable->getPrevious()) {
                 return get_class($previous);
@@ -259,7 +261,7 @@ class Report
         return $this;
     }
 
-    public function addSolution(Solution $solution): self
+    public function addSolution(Solution|IgnitionSolution $solution): self
     {
         $this->solutions[] = ReportSolution::fromSolution($solution)->toArray();
 
