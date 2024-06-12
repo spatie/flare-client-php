@@ -7,16 +7,16 @@ use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\Backtrace\Arguments\Reducers\ArgumentReducer;
 use Spatie\Backtrace\Backtrace;
 use Spatie\Backtrace\Frame as SpatieFrame;
+use Spatie\ErrorSolutions\Contracts\Solution;
 use Spatie\FlareClient\Concerns\HasContext;
 use Spatie\FlareClient\Concerns\UsesTime;
 use Spatie\FlareClient\Context\ContextProvider;
 use Spatie\FlareClient\Contracts\ProvidesFlareContext;
 use Spatie\FlareClient\Glows\Glow;
 use Spatie\FlareClient\Solutions\ReportSolution;
-use Spatie\ErrorSolutions\Contracts\Solution;
 use Spatie\Ignition\Contracts\Solution as IgnitionSolution;
-use Spatie\LaravelIgnition\Exceptions\ViewException as IgnitionViewException;
 use Spatie\LaravelFlare\Exceptions\ViewException;
+use Spatie\LaravelIgnition\Exceptions\ViewException as IgnitionViewException;
 use Throwable;
 
 class Report
