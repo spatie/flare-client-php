@@ -2,6 +2,14 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 1.7.0 - 2024-06-12
+
+### What's Changed
+
+* Refactor solutions by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/30
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/1.6.0...1.7.0
+
 ## 1.6.0 - 2024-05-22
 
 ### What's Changed
