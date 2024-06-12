@@ -12,7 +12,7 @@
     "require": {
         "php": "^8.0",
         "illuminate/pipeline": "^8.0|^9.0|^10.0|^11.0",
-        "spatie/backtrace": "^1.5.2",
+        "spatie/backtrace": "^1.6.1",
         "symfony/http-foundation": "^5.2|^6.0|^7.0",
         "symfony/mime": "^5.2|^6.0|^7.0",
         "symfony/process": "^5.2|^6.0|^7.0",
