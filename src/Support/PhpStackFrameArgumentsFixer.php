@@ -10,7 +10,7 @@ class PhpStackFrameArgumentsFixer
             return;
         }
 
-        ini_set('zend.exception_ignore_args', false);
+        ini_set('zend.exception_ignore_args', '0');
     }
 
     protected function isCurrentlyIgnoringStackFrameArguments(): bool
