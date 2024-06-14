@@ -2,10 +2,12 @@
 
 use Spatie\FlareClient\Context\ConsoleContextProvider;
 use Spatie\FlareClient\Glows\Glow;
+use Spatie\FlareClient\Performance\Support\Timer;
 use Spatie\FlareClient\Report;
 use Spatie\FlareClient\Tests\Concerns\MatchesReportSnapshots;
 use Spatie\FlareClient\Tests\TestClasses\FakeErrorHandler;
 use Spatie\FlareClient\Tests\TestClasses\FakeTime;
+use Spatie\FlareClient\Time\SystemTime;
 
 uses(MatchesReportSnapshots::class);
 

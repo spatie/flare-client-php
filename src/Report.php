@@ -372,7 +372,7 @@ class Report
             'framework_version' => $this->frameworkVersion,
             'language_version' => $this->languageVersion ?? phpversion(),
             'exception_class' => $this->exceptionClass,
-            'seen_at' => $this->getCurrentTime(),
+            'seen_at' => $this::getCurrentTime(),
             'message' => $this->message,
             'glows' => $this->glows,
             'solutions' => $this->solutions,

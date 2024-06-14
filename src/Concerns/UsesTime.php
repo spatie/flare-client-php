@@ -14,7 +14,7 @@ trait UsesTime
         self::$time = $time;
     }
 
-    public function getCurrentTime(): int
+    protected static function getCurrentTime(): int
     {
         $time = self::$time ?? new SystemTime();
 

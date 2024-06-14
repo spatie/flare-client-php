@@ -42,7 +42,7 @@ class Glow
     public function toArray(): array
     {
         return [
-            'time' => $this->getCurrentTime(),
+            'time' => $this::getCurrentTime(),
             'name' => $this->name,
             'message_level' => $this->messageLevel,
             'meta_data' => $this->metaData,
