@@ -9,6 +9,7 @@ use Spatie\FlareClient\Performance\Exporters\JsonExporter;
 use Spatie\FlareClient\Performance\Resources\Resource;
 use Spatie\FlareClient\Performance\Scopes\Scope;
 use Spatie\FlareClient\Performance\Spans\Span;
+use Spatie\FlareClient\Performance\Support\BackTracer;
 use Spatie\FlareClient\Performance\Support\TraceId;
 
 class Tracer
@@ -24,12 +25,21 @@ class Tracer
 
     public SamplingType $samplingType = SamplingType::Waiting;
 
+    public readonly Resource $resource;
+
+    public readonly Scope $scope;
+
     public function __construct(
         protected Client $client,
         protected JsonExporter $exporter,
-        protected Resource $resource,
-        protected Scope $scope,
+        public readonly BackTracer $backTracer
     ) {
+        $this->resource = Resource::build(
+            config('app.name'),
+            config('app.version'),
+        )->host();
+
+        $this->scope = Scope::build();
     }
 
     public function send(): void
@@ -48,6 +58,11 @@ class Tracer
         $this->samplingType = SamplingType::Off;
     }
 
+    public function isSamping(): bool
+    {
+        return $this->samplingType === SamplingType::Sampling;
+    }
+
     public function startTrace(): void
     {
         if ($this->currentTraceId) {
@@ -58,7 +73,7 @@ class Tracer
         $this->samplingType = SamplingType::Sampling;
     }
 
-    public function endTrace(): void
+    public function endCurrentTrace(): void
     {
         $this->currentTraceId = null;
         $this->samplingType = SamplingType::Waiting;

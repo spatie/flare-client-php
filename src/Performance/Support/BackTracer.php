@@ -22,7 +22,7 @@ class BackTracer
 
     public function firstApplicationFrame(int $limit = null): ?Frame
     {
-        // TODO: backtrace package seems broken and marks all frames as application frames
+        // When the backtrace package is symlinked, this code isn't working as it should
         foreach ($this->frames($limit) as $frame) {
             if ($frame->applicationFrame) {
                 return $frame;
@@ -30,27 +30,5 @@ class BackTracer
         }
 
         return null;
-    }
-
-    public function getOriginAttributes(): ?array
-    {
-        $frame = $this->firstApplicationFrame(25);
-
-        if(! $frame) {
-            return null;
-        }
-
-        $function = match (true){
-            $frame->class && $frame->method => "{$frame->class}::{$frame->method}",
-            $frame->method => $frame->method,
-            $frame->class => $frame->class,
-            default => 'unknown',
-        };
-
-        return [
-            'code.filepath' => $frame->file,
-            'code.lineno' => $frame->lineNumber,
-            'code.function' => $function,
-        ];
     }
 }

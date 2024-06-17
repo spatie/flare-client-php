@@ -5,7 +5,6 @@ namespace Spatie\FlareClient\Performance\Spans;
 use Spatie\FlareClient\Concerns\UsesTime;
 use Spatie\FlareClient\Performance\Concerns\HasAttributes;
 use Spatie\FlareClient\Performance\Support\SpanId;
-use Spatie\FlareClient\Performance\Support\Timer;
 
 class Span
 {
@@ -18,14 +17,14 @@ class Span
      */
     protected function __construct(
         public string $traceId,
-        public string $id,
+        public string $spanId,
         public ?string $parentSpanId,
         public string $name,
         public int $startUs,
         public ?int $endUs,
-        array $attributes,
-        public array $events,
-        public int $droppedEventsCount,
+        array $attributes = [],
+        public array $events = [],
+        public int $droppedEventsCount = 0,
     ) {
         $this->setAttributes($attributes);
     }

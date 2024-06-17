@@ -2,8 +2,10 @@
 
 namespace Spatie\FlareClient\Performance\Enums;
 
-enum SpanType: string
+use Spatie\FlareClient\Contracts\FlareSpanType;
+
+enum SpanType: string implements FlareSpanType
 {
-    case PhpRequest = 'php_request';
-    case PhpQuery = 'php_query';
+    case Request = 'php_request';
+    case Query = 'php_query';
 }
