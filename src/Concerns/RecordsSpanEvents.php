@@ -37,7 +37,7 @@ trait RecordsSpanEvents
     /**
      * @param T $spanEvent
      */
-    protected function persistSpanEvent(mixed $spanEvent)
+    protected function persistSpanEvent(mixed $spanEvent): void
     {
         if ($this->shouldTraceSpanEvents()) {
             $span = $this->tracer->currentSpan();

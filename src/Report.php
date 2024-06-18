@@ -12,7 +12,7 @@ use Spatie\FlareClient\Concerns\HasContext;
 use Spatie\FlareClient\Concerns\UsesTime;
 use Spatie\FlareClient\Context\ContextProvider;
 use Spatie\FlareClient\Contracts\ProvidesFlareContext;
-use Spatie\FlareClient\Glows\Glow;
+use Spatie\FlareClient\Recorders\GlowRecorder\GlowSpanEvent;
 use Spatie\FlareClient\Solutions\ReportSolution;
 use Spatie\Ignition\Contracts\Solution as IgnitionSolution;
 use Spatie\LaravelFlare\Exceptions\ViewException;
@@ -254,9 +254,9 @@ class Report
         return $this;
     }
 
-    public function addGlow(Glow $glow): self
+    public function setGlows(array $glows): self
     {
-        $this->glows[] = $glow->toArray();
+        $this->glows = $glows;
 
         return $this;
     }
@@ -374,7 +374,7 @@ class Report
             'framework_version' => $this->frameworkVersion,
             'language_version' => $this->languageVersion ?? phpversion(),
             'exception_class' => $this->exceptionClass,
-            'seen_at' => $this::getCurrentTime(),
+            'seen_at' => (int) ($this::getCurrentTime() / 1000), // Old flare format doesn't use microseconds,
             'message' => $this->message,
             'glows' => $this->glows,
             'solutions' => $this->solutions,

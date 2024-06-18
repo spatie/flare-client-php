@@ -7,4 +7,5 @@ use Spatie\FlareClient\Contracts\FlareSpanEventType;
 enum SpanEventType: string implements FlareSpanEventType
 {
     case Log = 'php_log';
+    case Glow = 'php_glow';
 }

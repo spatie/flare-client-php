@@ -18,9 +18,14 @@ use Spatie\FlareClient\FlareMiddleware\AddGlows;
 use Spatie\FlareClient\FlareMiddleware\CensorRequestBodyFields;
 use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 use Spatie\FlareClient\FlareMiddleware\RemoveRequestIp;
-use Spatie\FlareClient\Glows\Glow;
-use Spatie\FlareClient\Glows\GlowRecorder;
 use Spatie\FlareClient\Http\Client;
+use Spatie\FlareClient\Performance\Exporters\JsonExporter;
+use Spatie\FlareClient\Performance\Resources\Resource;
+use Spatie\FlareClient\Performance\Scopes\Scope;
+use Spatie\FlareClient\Performance\Support\BackTracer;
+use Spatie\FlareClient\Performance\Tracer;
+use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
+use Spatie\FlareClient\Recorders\GlowRecorder\GlowSpanEvent;
 use Spatie\FlareClient\Support\PhpStackFrameArgumentsFixer;
 use Throwable;
 
@@ -28,14 +33,12 @@ class Flare
 {
     use HasContext;
 
-    protected Client $client;
-
     protected Api $api;
 
     /** @var array<int, FlareMiddleware|class-string<FlareMiddleware>> */
     protected array $middleware = [];
 
-    protected GlowRecorder $recorder;
+    protected GlowRecorder $glowRecorder;
 
     protected ?string $applicationPath = null;
 
@@ -67,6 +70,25 @@ class Flare
     protected null|array|ArgumentReducers $argumentReducers = null;
 
     protected bool $withStackFrameArguments = true;
+
+    public static function make(
+        string $apiKey,
+        string $applicationName = 'My Flare application',
+        string $applicationVersion = '1.0.0',
+        ?Client $client = null,
+        ?Tracer $tracer = null,
+    ): self {
+        $client ??= new Client($apiKey);
+        $tracer ??= new Tracer(
+            client: $client,
+            exporter: new JsonExporter(),
+            backTracer: new BackTracer(),
+            resource: Resource::build($applicationName, $applicationVersion)->host(),
+            scope: Scope::build()
+        );
+
+        return new self($client, $tracer);
+    }
 
     public function setApiToken(string $apiToken): self
     {
@@ -160,17 +182,15 @@ class Flare
     }
 
     /**
-     * @param \Spatie\FlareClient\Http\Client $client
-     * @param \Spatie\FlareClient\Context\ContextProviderDetector|null $contextDetector
      * @param array<int, FlareMiddleware> $middleware
      */
     public function __construct(
-        Client $client,
+        public readonly Client $client,
+        public readonly Tracer $tracer,
         ContextProviderDetector $contextDetector = null,
         array $middleware = [],
     ) {
-        $this->client = $client;
-        $this->recorder = new GlowRecorder();
+        $this->glowRecorder = new GlowRecorder($this->tracer);
         $this->contextDetector = $contextDetector ?? new BaseContextProviderDetector();
         $this->middleware = $middleware;
         $this->api = new Api($this->client);
@@ -226,7 +246,7 @@ class Flare
     protected function registerDefaultMiddleware(): self
     {
         return $this->registerMiddleware([
-            new AddGlows($this->recorder),
+            new AddGlows($this->glowRecorder),
             new AddEnvironmentInformation(),
         ]);
     }
@@ -267,7 +287,7 @@ class Flare
         string $messageLevel = MessageLevels::INFO,
         array $metaData = []
     ): self {
-        $this->recorder->record(new Glow($name, $messageLevel, $metaData));
+        $this->glowRecorder->record(new GlowSpanEvent($name, $messageLevel, $metaData));
 
         return $this;
     }
@@ -324,7 +344,7 @@ class Flare
             call_user_func($callback, $report);
         }
 
-        $this->recorder->reset();
+        $this->glowRecorder->reset();
 
         $this->sendReportToApi($report);
 
@@ -389,7 +409,7 @@ class Flare
 
         $this->userProvidedContext = [];
 
-        $this->recorder->reset();
+        $this->glowRecorder->reset();
     }
 
     protected function applyAdditionalParameters(Report $report): void

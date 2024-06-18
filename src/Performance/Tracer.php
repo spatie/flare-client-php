@@ -25,21 +25,13 @@ class Tracer
 
     public SamplingType $samplingType = SamplingType::Waiting;
 
-    public readonly Resource $resource;
-
-    public readonly Scope $scope;
-
     public function __construct(
-        protected Client $client,
-        protected JsonExporter $exporter,
-        public readonly BackTracer $backTracer
+        protected readonly Client $client,
+        protected readonly JsonExporter $exporter,
+        public readonly BackTracer $backTracer,
+        public readonly Resource $resource,
+        public readonly Scope $scope,
     ) {
-        $this->resource = Resource::build(
-            config('app.name'),
-            config('app.version'),
-        )->host();
-
-        $this->scope = Scope::build();
     }
 
     public function send(): void

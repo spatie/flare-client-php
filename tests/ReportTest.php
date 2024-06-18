@@ -1,8 +1,8 @@
 <?php
 
 use Spatie\FlareClient\Context\ConsoleContextProvider;
-use Spatie\FlareClient\Glows\Glow;
 use Spatie\FlareClient\Performance\Support\Timer;
+use Spatie\FlareClient\Recorders\GlowRecorder\GlowSpanEvent;
 use Spatie\FlareClient\Report;
 use Spatie\FlareClient\Tests\Concerns\MatchesReportSnapshots;
 use Spatie\FlareClient\Tests\TestClasses\FakeErrorHandler;
@@ -38,16 +38,6 @@ it('can create a report for a string message', function () {
     $this->assertMatchesReportSnapshot($report);
 });
 
-it('can create a report with glows', function () {
-    /** @var Report $report */
-    $report = Report::createForThrowable(new Exception('this is an exception'), new ConsoleContextProvider());
-
-    $report->addGlow(new Glow('Glow 1', 'info', ['meta' => 'data']));
-
-    $report = $report->toArray();
-
-    $this->assertMatchesReportSnapshot($report);
-});
 
 it('can create a report with meta data', function () {
     /** @var Report $report */

@@ -3,6 +3,11 @@
 use PHPUnit\Framework\Exception;
 use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Flare;
+use Spatie\FlareClient\Performance\Exporters\JsonExporter;
+use Spatie\FlareClient\Performance\Resources\Resource;
+use Spatie\FlareClient\Performance\Scopes\Scope;
+use Spatie\FlareClient\Performance\Support\BackTracer;
+use Spatie\FlareClient\Performance\Tracer;
 use Spatie\FlareClient\Tests\Concerns\MatchesReportSnapshots;
 use Spatie\FlareClient\Tests\Mocks\FakeClient;
 use Spatie\FlareClient\Tests\TestClasses\ExceptionWithContext;
@@ -13,7 +18,18 @@ uses(MatchesReportSnapshots::class);
 beforeEach(function () {
     $this->fakeClient = new FakeClient();
 
-    $this->flare = new Flare($this->fakeClient);
+    $this->flare = Flare::make(
+        apiKey: 'fake-api-key',
+        client: $this->fakeClient,
+        tracer: new Tracer(
+            client: $this->fakeClient,
+            exporter: new JsonExporter(),
+            backTracer: new BackTracer(),
+            resource: Resource::build('app', '1.0.0')->host(),
+            scope: Scope::build()
+        )
+    );
+
     $this->flare->sendReportsImmediately();
 
     useTime('2019-01-01 12:34:56');

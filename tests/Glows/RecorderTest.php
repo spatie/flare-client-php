@@ -1,47 +1,78 @@
 <?php
 
-use Spatie\FlareClient\Glows\Glow;
-use Spatie\FlareClient\Glows\GlowRecorder;
+use Spatie\FlareClient\Flare;
+use Spatie\FlareClient\Performance\Enums\SpanEventType;
+use Spatie\FlareClient\Performance\Spans\Span;
+use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
+use Spatie\FlareClient\Recorders\GlowRecorder\GlowSpanEvent;
+
+beforeEach(function () {
+    $this->tracer = Flare::make('API-KEY')->tracer;
+
+    useTime('2019-01-01 12:34:56');
+});
 
 it('is initially empty', function () {
-    $recorder = new GlowRecorder();
+    $recorder = new GlowRecorder($this->tracer);
 
-    expect($recorder->glows())->toHaveCount(0);
+    expect($recorder->getGlows())->toHaveCount(0);
 });
 
 it('stores glows', function () {
-    $recorder = new GlowRecorder();
+    $recorder = new GlowRecorder($this->tracer);
 
-    $glow = new Glow('Some name', 'info', [
+    $glow = new GlowSpanEvent('Some name', 'info', [
         'some' => 'metadata',
     ]);
 
     $recorder->record($glow);
 
-    expect($recorder->glows())->toHaveCount(1);
+    $glows = $recorder->getGlows();
 
-    expect($recorder->glows()[0])->toBe($glow);
+    expect($glows)->toHaveCount(1);
+
+    expect($glows[0])
+        ->toBeArray()
+        ->toHaveCount(5)
+        ->toHaveKey('time', 1546346096)
+        ->toHaveKey('name', 'Some name')
+        ->toHaveKey('message_level', 'info')
+        ->toHaveKey('meta_data', ['some' => 'metadata'])
+        ->toHaveKey('microtime', 1546346096);
 });
 
 it('does not store more than the max defined number of glows', function () {
-    $recorder = new GlowRecorder();
-
-    $crumb1 = new Glow('One');
-    $crumb2 = new Glow('Two');
+    $recorder = new GlowRecorder($this->tracer, maxGlows: 35);
 
     foreach (range(1, 40) as $i) {
-        $recorder->record($crumb1);
+        $recorder->record(new GlowSpanEvent('Glow '.$i));
     }
 
-    $recorder->record($crumb2);
-    $recorder->record($crumb1);
-    $recorder->record($crumb2);
+    expect($recorder->getGlows())->toHaveCount(35);
+});
 
-    expect($recorder->glows())->toHaveCount(GlowRecorder::GLOW_LIMIT);
+it('can trace glows', function () {
+    $recorder = new GlowRecorder($this->tracer, traceGlows: true);
 
-    $this->assertSame([
-        $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1,
-        $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1,
-        $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb1, $crumb2, $crumb1, $crumb2,
-    ], $recorder->glows());
+    $this->tracer->startTrace();
+    $this->tracer->addSpan($span = Span::build($this->tracer->currentTraceId(), 'Parent Span'), makeCurrent: true);
+
+    $glow = new GlowSpanEvent('Some name', 'info', [
+        'some' => 'metadata',
+    ]);
+
+    $recorder->record($glow);
+
+    expect($span->events)->toHaveCount(1);
+    expect($span->events->current())
+        ->toBeInstanceOf(GlowSpanEvent::class)
+        ->name->toBe('Glow - Some name')
+        ->timeUs->toBe(1546346096000);
+
+    expect($span->events->current()->attributes)
+        ->toHaveCount(4)
+        ->toHaveKey('flare.span_event_type', SpanEventType::Glow)
+        ->toHaveKey('glow.name', 'Some name')
+        ->toHaveKey('glow.level', 'info')
+        ->toHaveKey('glow.context', ['some' => 'metadata']);
 });

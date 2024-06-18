@@ -1,8 +1,8 @@
 <?php
 
-use Spatie\FlareClient\Glows\Glow;
 use Spatie\FlareClient\Performance\Spans\Span;
 use Spatie\FlareClient\Performance\Tracer;
+use Spatie\FlareClient\Recorders\GlowRecorder\GlowSpanEvent;
 use Spatie\FlareClient\Report;
 use Spatie\FlareClient\Tests\TestClasses\FakeTime;
 
@@ -20,7 +20,7 @@ function useTime(string $dateTime, string $format = 'Y-m-d H:i:s')
     $fakeTime = new FakeTime($dateTime, $format);
 
     Report::useTime($fakeTime);
-    Glow::useTime($fakeTime);
+    GlowSpanEvent::useTime($fakeTime);
     Tracer::useTime($fakeTime);
     Span::useTime($fakeTime);
 }
