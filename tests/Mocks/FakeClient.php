@@ -12,31 +12,50 @@ class FakeClient extends Client
 {
     use ArraySubsetAsserts;
 
-    protected $requests = [];
+    static self $self;
 
-    public function __construct($apiToken = null, $apiSecret = null)
+    /** @var array<int, array{verb: string, fullUrl: string, headers: array<string, string>, arguments: array<string, mixed>}>  */
+    protected array $requests = [];
+
+    public static function setup(): self
     {
-        parent::__construct($apiToken ?? uniqid(), $apiSecret ?? uniqid());
+        if(!isset(static::$self)) {
+            return static::$self;
+        }
+
+        return static::$self = new self();
     }
 
-    public function makeCurlRequest(string $httpVerb, string $fullUrl, array $headers = [], array $arguments = []): Response
+    public function __construct(string $apiToken = null)
     {
-        $this->requests[] = compact('httpVerb', 'fullUrl', 'headers', 'arguments');
-
-        return new Response([], 'my response', '');
+        parent::__construct($apiToken ?? uniqid());
     }
 
-    public function assertRequestsSent(int $expectedCount)
+    /**
+     * @param array<string, mixed> $arguments
+     */
+    public function post(string $url, array $arguments = []): array
+    {
+        $this->requests[] = [
+            'verb' => 'POST',
+            'fullUrl' => "{$this->baseUrl}/{$url}",
+            'headers' => ['X-API-KEY' => $this->apiToken],
+            'arguments' => $arguments,
+        ];
+
+        return [];
+    }
+
+    public function assertRequestsSent(int $expectedCount): void
     {
         Assert::assertCount($expectedCount, $this->requests);
     }
 
-    public function assertLastRequestHas($key, $expectedContent = null)
+    public function assertLastRequestHas(string $key, mixed $expectedContent = null): void
     {
         Assert::assertGreaterThan(0, count($this->requests), 'There were no requests sent');
 
         $lastPayload = Arr::last($this->requests)['arguments'];
-
 
         Assert::assertTrue(Arr::has($lastPayload, $key), 'The last payload doesnt have the expected key. ');
 
@@ -49,7 +68,7 @@ class FakeClient extends Client
         Assert::assertEquals($expectedContent, $actualContent);
     }
 
-    public function assertLastRequestContains($key, $expectedContent = null)
+    public function assertLastRequestContains(string $key, mixed $expectedContent = null): void
     {
         Assert::assertGreaterThan(0, count($this->requests), 'There were no requests sent');
 
@@ -66,6 +85,7 @@ class FakeClient extends Client
         self::assertArraySubset($expectedContent, $actualContent);
     }
 
+    /** @return array<string, mixed>|null */
     public function getLastPayload(): ?array
     {
         return Arr::last($this->requests)['arguments'];

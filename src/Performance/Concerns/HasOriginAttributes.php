@@ -16,7 +16,7 @@ trait HasOriginAttributes
             default => 'unknown',
         };
 
-        $this->setAttributes([
+        $this->addAttributes([
             'code.filepath' => $frame->file,
             'code.lineno' => $frame->lineNumber,
             'code.function' => $function,

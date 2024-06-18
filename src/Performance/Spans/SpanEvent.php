@@ -2,10 +2,12 @@
 
 namespace Spatie\FlareClient\Performance\Spans;
 
+use Spatie\FlareClient\Concerns\UsesTime;
 use Spatie\FlareClient\Performance\Concerns\HasAttributes;
 
 class SpanEvent
 {
+    use UsesTime;
     use HasAttributes;
 
     /**
@@ -24,12 +26,12 @@ class SpanEvent
      */
     public static function build(
         string $name,
-        int $timeUs,
+        ?int $timeUs = null,
         array $attributes = [],
     ): self {
         return new self(
             name: $name,
-            timeUs: $timeUs,
+            timeUs: $timeUs ?? self::getCurrentTime(),
             attributes: $attributes,
         );
     }

@@ -68,15 +68,6 @@ class Flare
 
     protected bool $withStackFrameArguments = true;
 
-    public static function make(
-        string $apiKey = null,
-        ContextProviderDetector $contextDetector = null
-    ): self {
-        $client = new Client($apiKey);
-
-        return new self($client, $contextDetector);
-    }
-
     public function setApiToken(string $apiToken): self
     {
         $this->client->setApiToken($apiToken);

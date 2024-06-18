@@ -42,6 +42,16 @@ class QuerySpan extends Span
         );
     }
 
+    public function toOriginalFlareFormat(): array
+    {
+        return [
+            'sql' => $this->sql,
+            'time' => (int) ($this->duration / 1000),
+            'bindings' => $this->bindings,
+            'microtime' => (int) ($this->endUs / 1000),
+        ];
+    }
+
     protected function collectAttributes(): array
     {
         return [

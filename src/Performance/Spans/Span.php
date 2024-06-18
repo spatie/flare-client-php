@@ -5,15 +5,18 @@ namespace Spatie\FlareClient\Performance\Spans;
 use Spatie\FlareClient\Concerns\UsesTime;
 use Spatie\FlareClient\Performance\Concerns\HasAttributes;
 use Spatie\FlareClient\Performance\Support\SpanId;
+use SplObjectStorage;
 
 class Span
 {
     use HasAttributes;
     use UsesTime;
 
+    /** @var SplObjectStorage<SpanEvent> */
+    public SplObjectStorage $events;
+
     /**
      * @param array<string, mixed> $attributes
-     * @param array<SpanEvent> $events
      */
     protected function __construct(
         public string $traceId,
@@ -23,9 +26,9 @@ class Span
         public int $startUs,
         public ?int $endUs,
         array $attributes = [],
-        public array $events = [],
         public int $droppedEventsCount = 0,
     ) {
+        $this->events = new SplObjectStorage();
         $this->setAttributes($attributes);
     }
 
@@ -54,22 +57,27 @@ class Span
             default => [self::getCurrentTime(), null],
         };
 
-        return new self(
+        $span = new self(
             traceId: $traceId,
-            id: $id,
+            spanId: $id,
             parentSpanId: $parentId,
             name: $name,
             startUs: $startUs,
             endUs: $endUs,
             attributes: $attributes,
-            events: $events,
             droppedEventsCount: 0,
         );
+
+        $span->addEvent(...$events);
+
+        return $span;
     }
 
     public function addEvent(SpanEvent ...$events): self
     {
-        array_push($this->events, ...$events);
+        foreach ($events as $event) {
+            $this->events->attach($event);
+        }
 
         return $this;
     }
@@ -92,14 +100,14 @@ class Span
     {
         return [
             'traceId' => $this->traceId,
-            'spanId' => $this->id,
+            'spanId' => $this->spanId,
             'parentSpanId' => $this->parentSpanId,
             'name' => $this->name,
             'startTimeUnixNano' => $this->startUs * 1000,
             'endTimeUnixNano' => $this->endUs * 1000,
             'attributes' => $this->attributesToArray(),
             'droppedAttributesCount' => $this->droppedAttributesCount,
-            'events' => array_map(fn (SpanEvent $event) => $event->toArray(), $this->events),
+            'events' => array_map(fn (SpanEvent $event) => $event->toArray(), iterator_to_array($this->events)),
             'droppedEventsCount' => $this->droppedEventsCount,
         ];
     }

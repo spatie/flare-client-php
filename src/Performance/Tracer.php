@@ -101,10 +101,10 @@ class Tracer
 
     public function addSpan(Span $span, bool $makeCurrent = false): Span
     {
-        $this->traces[$span->traceId][$span->id] = $span;
+        $this->traces[$span->traceId][$span->spanId] = $span;
 
         if ($makeCurrent) {
-            $this->setCurrentSpanId($span->id);
+            $this->setCurrentSpanId($span->spanId);
         }
 
         return $span;
