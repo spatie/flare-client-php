@@ -8,36 +8,19 @@ use Spatie\FlareClient\Senders\Sender;
 
 class Client
 {
-    protected ?string $apiToken;
-
-    protected ?string $baseUrl;
-
-    protected int $timeout;
-
-    protected $lastRequest = null;
-
-    protected Sender $sender;
-
     public function __construct(
-        ?string $apiToken = null,
-        string $baseUrl = 'https://reporting.flareapp.io/api',
-        int $timeout = 10,
-        ?Sender $sender = null
+        protected ?string $apiToken = null,
+        protected string $baseUrl = 'https://reporting.flareapp.io/api',
+        protected int $timeout = 10,
+        protected Sender $sender = new CurlSender()
     ) {
-        $this->apiToken = $apiToken;
-
         if (! $baseUrl) {
             throw MissingParameter::create('baseUrl');
         }
 
-        $this->baseUrl = $baseUrl;
-
         if (! $timeout) {
             throw MissingParameter::create('timeout');
         }
-
-        $this->timeout = $timeout;
-        $this->sender = $sender ?? new CurlSender();
     }
 
     public function setApiToken(string $apiToken): self

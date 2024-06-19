@@ -13,6 +13,7 @@ use Spatie\FlareClient\Concerns\HasContext;
 use Spatie\FlareClient\Context\BaseContextProviderDetector;
 use Spatie\FlareClient\Context\ContextProviderDetector;
 use Spatie\FlareClient\Enums\MessageLevels;
+use Spatie\FlareClient\FlareMiddleware\AddDumps;
 use Spatie\FlareClient\FlareMiddleware\AddEnvironmentInformation;
 use Spatie\FlareClient\FlareMiddleware\AddGlows;
 use Spatie\FlareClient\FlareMiddleware\CensorRequestBodyFields;
@@ -24,6 +25,7 @@ use Spatie\FlareClient\Performance\Resources\Resource;
 use Spatie\FlareClient\Performance\Scopes\Scope;
 use Spatie\FlareClient\Performance\Support\BackTracer;
 use Spatie\FlareClient\Performance\Tracer;
+use Spatie\FlareClient\Recorders\DumpRecorder\DumpRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowSpanEvent;
 use Spatie\FlareClient\Support\PhpStackFrameArgumentsFixer;
@@ -38,7 +40,9 @@ class Flare
     /** @var array<int, FlareMiddleware|class-string<FlareMiddleware>> */
     protected array $middleware = [];
 
-    protected GlowRecorder $glowRecorder;
+    protected ?GlowRecorder $glowRecorder;
+
+    protected ?DumpRecorder $dumpRecorder;
 
     protected ?string $applicationPath = null;
 
@@ -77,7 +81,14 @@ class Flare
         string $applicationVersion = '1.0.0',
         ?Client $client = null,
         ?Tracer $tracer = null,
+        bool $recordDumps = true,
+        bool $recordGlows = true,
     ): self {
+        // TODO: this should probably become some kind of factory pattern
+        // we could also create some kind of config object which would
+        // also solve the issues we're having with the Laravel
+        // config
+
         $client ??= new Client($apiKey);
         $tracer ??= new Tracer(
             client: $client,
@@ -87,7 +98,17 @@ class Flare
             scope: Scope::build()
         );
 
-        return new self($client, $tracer);
+        $flare = new self($client, $tracer);
+
+        if ($recordDumps) {
+            $flare->setDumpRecorder(new DumpRecorder($tracer));
+        }
+
+        if ($recordGlows) {
+            $flare->setGlowRecorder(new GlowRecorder($tracer));
+        }
+
+        return $flare;
     }
 
     public function setApiToken(string $apiToken): self
@@ -191,6 +212,7 @@ class Flare
         array $middleware = [],
     ) {
         $this->glowRecorder = new GlowRecorder($this->tracer);
+        $this->dumpRecorder = new DumpRecorder($this->tracer);
         $this->contextDetector = $contextDetector ?? new BaseContextProviderDetector();
         $this->middleware = $middleware;
         $this->api = new Api($this->client);
@@ -214,6 +236,20 @@ class Flare
     public function setContainer(Container $container): self
     {
         $this->container = $container;
+
+        return $this;
+    }
+
+    public function setGlowRecorder(GlowRecorder $recorder): self
+    {
+        $this->glowRecorder = $recorder;
+
+        return $this;
+    }
+
+    public function setDumpRecorder(DumpRecorder $recorder): self
+    {
+        $this->dumpRecorder = $recorder;
 
         return $this;
     }
@@ -245,10 +281,17 @@ class Flare
 
     protected function registerDefaultMiddleware(): self
     {
-        return $this->registerMiddleware([
-            new AddGlows($this->glowRecorder),
-            new AddEnvironmentInformation(),
-        ]);
+        if ($this->dumpRecorder) {
+            $this->registerMiddleware(new AddDumps($this->dumpRecorder));
+        }
+
+        if ($this->glowRecorder) {
+            $this->registerMiddleware(new AddGlows($this->glowRecorder));
+        }
+
+        $this->registerMiddleware(new AddEnvironmentInformation());
+
+        return $this;
     }
 
     /**
@@ -287,6 +330,10 @@ class Flare
         string $messageLevel = MessageLevels::INFO,
         array $metaData = []
     ): self {
+        if ($this->glowRecorder === null) {
+            return $this;
+        }
+
         $this->glowRecorder->record(new GlowSpanEvent($name, $messageLevel, $metaData));
 
         return $this;
@@ -345,6 +392,7 @@ class Flare
         }
 
         $this->glowRecorder->reset();
+        $this->dumpRecorder->reset();
 
         $this->sendReportToApi($report);
 
@@ -410,6 +458,7 @@ class Flare
         $this->userProvidedContext = [];
 
         $this->glowRecorder->reset();
+        $this->dumpRecorder->reset();
     }
 
     protected function applyAdditionalParameters(Report $report): void
