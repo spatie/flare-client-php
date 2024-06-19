@@ -6,11 +6,16 @@ use Spatie\FlareClient\Report;
 
 class CensorRequestHeaders implements FlareMiddleware
 {
-    protected array $headers = [];
-
-    public function __construct(array $headers)
-    {
-        $this->headers = $headers;
+    public function __construct(
+        protected array $headers = [
+            'API-KEY',
+            'Authorization',
+            'Cookie',
+            'Set-Cookie',
+            'X-CSRF-TOKEN',
+            'X-XSRF-TOKEN',
+        ]
+    ) {
     }
 
     public function handle(Report $report, $next)

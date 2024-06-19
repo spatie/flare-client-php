@@ -4,7 +4,6 @@ namespace Spatie\FlareClient\Concerns;
 
 use Spatie\FlareClient\Performance\Spans\SpanEvent;
 use Spatie\FlareClient\Performance\Tracer;
-use SplObjectStorage;
 
 /**
  * @template T of SpanEvent
@@ -12,26 +11,21 @@ use SplObjectStorage;
  */
 trait RecordsSpanEvents
 {
-    /** @var SplObjectStorage<T, string> */
-    protected SplObjectStorage $spanEvents;
+    /** @var array<T> */
+    protected array $spanEvents = [];
 
     protected ?int $maxEntries = null;
 
     protected bool $traceSpanEvents = true;
 
-    protected function initializeStorage(): void
-    {
-        $this->spanEvents = new SplObjectStorage();
-    }
-
-    public function getSpanEvents(): SplObjectStorage
+    public function getSpanEvents(): array
     {
         return $this->spanEvents;
     }
 
     public function reset(): void
     {
-        $this->spanEvents = new SplObjectStorage();
+        $this->spanEvents = [];
     }
 
     /**
@@ -43,10 +37,9 @@ trait RecordsSpanEvents
             $span = $this->tracer->currentSpan();
 
             $span->addEvent($spanEvent);
-            $this->spanEvents->attach($spanEvent, $span->spanId);
-        } else {
-            $this->spanEvents->attach($spanEvent, '');
         }
+
+        $this->spanEvents[] = $spanEvent;
 
         if ($this->maxEntries && count($this->spanEvents) > $this->maxEntries) {
             $this->removeOldestSpanEvent();
@@ -63,25 +56,6 @@ trait RecordsSpanEvents
 
     protected function removeOldestSpanEvent(): void
     {
-        $this->spanEvents->rewind();
-
-        if (! $this->spanEvents->valid()) {
-            return;
-        }
-
-        $spanEvent = $this->spanEvents->current();
-        $spanId = $this->spanEvents->getInfo();
-
-        $this->spanEvents->detach($spanEvent);
-
-        if (! $this->shouldTraceSpanEvents()) {
-            return;
-        }
-
-        $span = $this->tracer->traces[$this->tracer->currentTraceId()][$spanId] ?? null;
-
-        if ($span) {
-            $span->events->detach($spanEvent);
-        }
+        array_shift($this->spanEvents);
     }
 }

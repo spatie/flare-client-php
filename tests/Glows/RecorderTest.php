@@ -13,13 +13,13 @@ beforeEach(function () {
 });
 
 it('is initially empty', function () {
-    $recorder = new GlowRecorder($this->tracer);
+    $recorder = new GlowRecorder($this->tracer, maxGlows: 30, traceGlows: false);
 
     expect($recorder->getGlows())->toHaveCount(0);
 });
 
 it('stores glows', function () {
-    $recorder = new GlowRecorder($this->tracer);
+    $recorder = new GlowRecorder($this->tracer, maxGlows: 30, traceGlows: false);
 
     $glow = new GlowSpanEvent('Some name', 'info', [
         'some' => 'metadata',
@@ -42,7 +42,7 @@ it('stores glows', function () {
 });
 
 it('does not store more than the max defined number of glows', function () {
-    $recorder = new GlowRecorder($this->tracer, maxGlows: 35);
+    $recorder = new GlowRecorder($this->tracer, maxGlows: 35, traceGlows: false);
 
     foreach (range(1, 40) as $i) {
         $recorder->record(new GlowSpanEvent('Glow '.$i));
@@ -52,7 +52,7 @@ it('does not store more than the max defined number of glows', function () {
 });
 
 it('can trace glows', function () {
-    $recorder = new GlowRecorder($this->tracer, traceGlows: true);
+    $recorder = new GlowRecorder($this->tracer, maxGlows: 35, traceGlows: true);
 
     $this->tracer->startTrace();
     $this->tracer->addSpan($span = Span::build($this->tracer->currentTraceId(), 'Parent Span'), makeCurrent: true);
@@ -64,12 +64,15 @@ it('can trace glows', function () {
     $recorder->record($glow);
 
     expect($span->events)->toHaveCount(1);
-    expect($span->events->current())
+
+    $glow = $span->events->getIterator()->key();
+
+    expect($glow)
         ->toBeInstanceOf(GlowSpanEvent::class)
         ->name->toBe('Glow - Some name')
         ->timeUs->toBe(1546346096000);
 
-    expect($span->events->current()->attributes)
+    expect($glow->attributes)
         ->toHaveCount(4)
         ->toHaveKey('flare.span_event_type', SpanEventType::Glow)
         ->toHaveKey('glow.name', 'Some name')

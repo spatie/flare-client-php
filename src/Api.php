@@ -8,25 +8,14 @@ use Spatie\FlareClient\Truncation\ReportTrimmer;
 
 class Api
 {
-    protected Client $client;
-
-    protected bool $sendReportsImmediately = false;
-
     /** @var array<int, Report> */
     protected array $queue = [];
 
-    public function __construct(Client $client)
-    {
-        $this->client = $client;
-
+    public function __construct(
+        protected Client $client,
+        protected bool $sendReportsImmediately = false,
+    ) {
         register_shutdown_function([$this, 'sendQueuedReports']);
-    }
-
-    public function sendReportsImmediately(): self
-    {
-        $this->sendReportsImmediately = true;
-
-        return $this;
     }
 
     public function report(Report $report): void

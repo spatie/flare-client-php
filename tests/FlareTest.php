@@ -3,11 +3,7 @@
 use PHPUnit\Framework\Exception;
 use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Flare;
-use Spatie\FlareClient\Performance\Exporters\JsonExporter;
-use Spatie\FlareClient\Performance\Resources\Resource;
-use Spatie\FlareClient\Performance\Scopes\Scope;
-use Spatie\FlareClient\Performance\Support\BackTracer;
-use Spatie\FlareClient\Performance\Tracer;
+use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Tests\Concerns\MatchesReportSnapshots;
 use Spatie\FlareClient\Tests\Mocks\FakeClient;
 use Spatie\FlareClient\Tests\TestClasses\ExceptionWithContext;
@@ -16,26 +12,12 @@ use Spatie\FlareClient\Tests\TestClasses\TraceArguments;
 uses(MatchesReportSnapshots::class);
 
 beforeEach(function () {
-    $this->fakeClient = new FakeClient();
-
-    $this->flare = Flare::make(
-        apiKey: 'fake-api-key',
-        client: $this->fakeClient,
-        tracer: new Tracer(
-            client: $this->fakeClient,
-            exporter: new JsonExporter(),
-            backTracer: new BackTracer(),
-            resource: Resource::build('app', '1.0.0')->host(),
-            scope: Scope::build()
-        )
-    );
-
-    $this->flare->sendReportsImmediately();
-
     useTime('2019-01-01 12:34:56');
 });
 
 it('can report an exception', function () {
+    setupFlare();
+
     reportException();
 
     $this->fakeClient->assertRequestsSent(1);
@@ -46,6 +28,8 @@ it('can report an exception', function () {
 });
 
 it('can report a initialised report instance', function () {
+    setupFlare();
+
     $throwable = new Exception('This is a test');
 
     $report = $this->flare->createReport($throwable);
@@ -60,6 +44,8 @@ it('can report a initialised report instance', function () {
 });
 
 it('can reset queued exceptions', function () {
+    setupFlare();
+
     reportException();
 
     $this->flare->reset();
@@ -72,6 +58,8 @@ it('can reset queued exceptions', function () {
 });
 
 it('can add user provided context', function () {
+    setupFlare();
+
     $this->flare->context('my key', 'my value');
 
     reportException();
@@ -82,6 +70,8 @@ it('can add user provided context', function () {
 });
 
 test('callbacks can modify the report', function () {
+    setupFlare();
+
     $this->flare->context('my key', 'my value');
     $this->flare->stage('production');
     $this->flare->messageLevel('info');
@@ -102,11 +92,11 @@ test('callbacks can modify the report', function () {
 });
 
 it('can censor request data', function () {
+    setupFlare(fn(FlareConfig $config) => $config->censorRequestBodyFields(['user', 'password']));
+
     $_ENV['FLARE_FAKE_WEB_REQUEST'] = true;
     $_POST['user'] = 'john@example.com';
     $_POST['password'] = 'secret';
-
-    $this->flare->censorRequestBodyFields(['user', 'password']);
 
     reportException();
 
@@ -117,6 +107,8 @@ it('can censor request data', function () {
 });
 
 it('can merge user provided context', function () {
+    setupFlare();
+
     $this->flare->context('my key', 'my value');
 
     $this->flare->context('another key', 'another value');
@@ -130,6 +122,8 @@ it('can merge user provided context', function () {
 });
 
 it('can add custom exception context', function () {
+    setupFlare();
+
     $this->flare->context('my key', 'my value');
 
     $throwable = new ExceptionWithContext('This is a test');
@@ -143,6 +137,8 @@ it('can add custom exception context', function () {
 });
 
 it('can add a group', function () {
+    setupFlare();
+
     $this->flare->group('custom group', ['my key' => 'my value']);
 
     reportException();
@@ -153,6 +149,8 @@ it('can add a group', function () {
 });
 
 it('can return groups', function () {
+    setupFlare();
+
     $this->flare->context('key', 'value');
 
     $this->flare->group('custom group', ['my key' => 'my value']);
@@ -163,6 +161,8 @@ it('can return groups', function () {
 });
 
 it('can merge groups', function () {
+    setupFlare();
+
     $this->flare->group('custom group', ['my key' => 'my value']);
 
     $this->flare->group('custom group', ['another key' => 'another value']);
@@ -176,7 +176,7 @@ it('can merge groups', function () {
 });
 
 it('can set stages', function () {
-    $this->flare->stage('production');
+    setupFlare(fn(FlareConfig $config) => $config->applicationStage('production'));
 
     reportException();
 
@@ -184,6 +184,8 @@ it('can set stages', function () {
 });
 
 it('can set message levels', function () {
+    setupFlare();
+
     $this->flare->messageLevel('info');
 
     reportException();
@@ -192,6 +194,8 @@ it('can set message levels', function () {
 });
 
 it('can add glows', function () {
+    setupFlare(fn(FlareConfig $config) => $config->withGlows());
+
     $this->flare->glow(
         'my glow',
         MessageLevels::INFO,
@@ -230,26 +234,20 @@ it('can add glows', function () {
     ], $glows);
 });
 
-test('a version callable can be set', function () {
-    expect($this->flare->version())->toBeNull();
+test('a version is by default null', function () {
+    setupFlare();
 
-    $this->flare->determineVersionUsing(function () {
-        return '123';
-    });
-
-    expect($this->flare->version())->toEqual('123');
-});
-
-it('will add the version to the report', function () {
     reportException();
 
     $payload = $this->fakeClient->getLastPayload();
 
     expect($payload['application_version'])->toBeNull();
+});
 
-    $this->flare->determineVersionUsing(function () {
+it('will add the version to the report', function () {
+    setupFlare(fn(FlareConfig $config) => $config->applicationVersion(function () {
         return '123';
-    });
+    }));
 
     reportException();
 
@@ -259,57 +257,42 @@ it('will add the version to the report', function () {
 });
 
 it('can filter exceptions being reported', function () {
+    setupFlare(fn(FlareConfig $config) => $config->filterExceptionsUsing(fn (Throwable $exception) => false));
+
+    reportException();
+
+    $this->fakeClient->assertRequestsSent(0);
+});
+
+it('can filter exceptions being reported and allow them', function () {
+    setupFlare(fn(FlareConfig $config) => $config->filterExceptionsUsing(fn (Throwable $exception) => true));
+
     reportException();
 
     $this->fakeClient->assertRequestsSent(1);
-
-    $this->flare->filterExceptionsUsing(function (Throwable $exception) {
-        return false;
-    });
-
-    reportException();
-
-    $this->fakeClient->assertRequestsSent(1);
-
-    $this->flare->filterExceptionsUsing(function (Throwable $exception) {
-        return true;
-    });
-
-    reportException();
-
-    $this->fakeClient->assertRequestsSent(2);
 });
 
 it('can filter errors based on their level', function () {
-    reportError(E_NOTICE);
-    reportError(E_WARNING);
-
-    $this->fakeClient->assertRequestsSent(2);
-
-    $this->flare->reportErrorLevels(E_ALL & ~E_NOTICE);
+    setupFlare(fn(FlareConfig $config) => $config->reportErrorLevels(E_ALL & ~E_NOTICE));
 
     reportError(E_NOTICE);
     reportError(E_WARNING);
 
-    $this->fakeClient->assertRequestsSent(3);
+    $this->fakeClient->assertRequestsSent(1);
 });
 
 it('can filter error exceptions based on their severity', function () {
-    $this->flare->report(new ErrorException('test', 0, E_NOTICE));
-    $this->flare->report(new ErrorException('test', 0, E_WARNING));
-
-    $this->fakeClient->assertRequestsSent(2);
-
-    $this->flare->reportErrorLevels(E_ALL & ~E_NOTICE);
+    setupFlare(fn(FlareConfig $config) => $config->reportErrorLevels(E_ALL & ~E_NOTICE));
 
     $this->flare->report(new ErrorException('test', 0, E_NOTICE));
     $this->flare->report(new ErrorException('test', 0, E_WARNING));
 
-    $this->fakeClient->assertRequestsSent(3);
+    $this->fakeClient->assertRequestsSent(1);
 });
 
 it('will add arguments to a stack trace by default', function () {
-    ini_set('zend.exception_ignore_args', 0); // Enabled on GH actions
+    // Todo: add some default argument reducers in the config
+    setupFlare();
 
     $exception = TraceArguments::create()->exception(
         'a message',
@@ -341,18 +324,22 @@ it('will add arguments to a stack trace by default', function () {
 it('is possible to disable stack frame arguments', function () {
     ini_set('zend.exception_ignore_args', 0); // Enabled on GH actions
 
+    setupFlare(fn(FlareConfig $config) => $config->withStackFrameArguments(false));
+
     $exception = TraceArguments::create()->exception(
         'a message',
         new DateTime('2020-05-16 14:00:00', new DateTimeZone('Europe/Brussels'))
     );
 
-    $this->flare->withStackFrameArguments(false)->report($exception);
+    $this->flare->report($exception);
 
     $this->fakeClient->assertLastRequestHas('stacktrace.0.arguments', null);
 });
 
 it('is possible to disable stack frame arguments with zend.exception_ignore_args', function () {
     ini_set('zend.exception_ignore_args', 1);
+
+    setupFlare(fn(FlareConfig $config) => $config->withStackFrameArguments(false));
 
     $exception = TraceArguments::create()->exception(
         'a message',
@@ -365,6 +352,8 @@ it('is possible to disable stack frame arguments with zend.exception_ignore_args
 });
 
 it('can report a handled error', function () {
+    setupFlare();
+
     $throwable = new Exception('This is a test');
 
     $this->flare->reportHandled($throwable);
@@ -375,6 +364,34 @@ it('can report a handled error', function () {
 
     expect($report['handled'])->toBeTrue();
 });
+
+/**
+ * @param ?Closure(FlareConfig):void $closure
+ */
+function setupFlare(
+    ?Closure $closure = null,
+    bool $sendReportsImmediately = true,
+    bool $useFakeClient = true
+): Flare {
+    $client = null;
+
+    if($useFakeClient){
+        $client = new FakeClient();
+        test()->fakeClient = $client;
+    }
+
+    $config = new FlareConfig(
+        apiToken: 'fake-api-key',
+        sendReportsImmediately: $sendReportsImmediately,
+        client: $client
+    );
+
+    if($closure){
+        $closure($config);
+    }
+
+    return test()->flare = Flare::makeFromConfig($config);
+}
 
 // Helpers
 function reportException()

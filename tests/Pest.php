@@ -4,10 +4,13 @@ use Spatie\FlareClient\Performance\Spans\Span;
 use Spatie\FlareClient\Performance\Tracer;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowSpanEvent;
 use Spatie\FlareClient\Report;
+use Spatie\FlareClient\Support\Container;
 use Spatie\FlareClient\Tests\TestClasses\FakeTime;
 
 uses()->beforeEach(function () {
     Report::$fakeTrackingUuid = 'fake-uuid';
+
+    Container::instance()->reset();
 })->in(__DIR__);
 
 function makePathsRelative(string $text): string

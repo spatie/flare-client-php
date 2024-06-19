@@ -3,18 +3,14 @@
 namespace Spatie\FlareClient\FlareMiddleware;
 
 use Closure;
+use Psr\Container\ContainerInterface;
 use Spatie\ErrorSolutions\Contracts\SolutionProviderRepository;
 use Spatie\FlareClient\Report;
-use Spatie\Ignition\Contracts\SolutionProviderRepository as IgnitionSolutionProviderRepository;
+use Spatie\FlareClient\Support\Container;
 
-class AddSolutions implements FlareMiddleware
+class AddSolutions implements FlareMiddleware, ContainerAwareFlareMiddleware
 {
-    protected SolutionProviderRepository|IgnitionSolutionProviderRepository $solutionProviderRepository;
-
-    public function __construct(SolutionProviderRepository|IgnitionSolutionProviderRepository $solutionProviderRepository)
-    {
-        $this->solutionProviderRepository = $solutionProviderRepository;
-    }
+    protected SolutionProviderRepository $solutionProviderRepository;
 
     public function handle(Report $report, Closure $next)
     {
@@ -27,5 +23,15 @@ class AddSolutions implements FlareMiddleware
         }
 
         return $next($report);
+    }
+
+    public function register(ContainerInterface|Container $container): void
+    {
+
+    }
+
+    public function boot(ContainerInterface|Container $container): void
+    {
+        $this->solutionProviderRepository = $container->get(SolutionProviderRepository::class);
     }
 }

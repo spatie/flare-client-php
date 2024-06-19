@@ -12,13 +12,11 @@ class GlowRecorder
 
     public function __construct(
         protected Tracer $tracer,
-        ?int $maxGlows = 30,
-        bool $traceGlows = false,
+        ?int $maxGlows,
+        bool $traceGlows,
     ) {
         $this->maxEntries = $maxGlows;
         $this->traceSpanEvents = $traceGlows;
-
-        $this->initializeStorage();
     }
 
     /** @var array<int, GlowSpanEvent> */

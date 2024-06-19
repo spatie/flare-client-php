@@ -22,11 +22,12 @@ class DumpRecorder
 
     public function __construct(
         protected Tracer $tracer,
-        protected ?int $maxDumps = 300,
-        protected bool $traceDumps = false,
-        protected bool $traceDumpOrigins = false,
+        ?int $maxDumps,
+        bool $traceDumps,
+        protected bool $traceDumpOrigins,
     ) {
-        $this->initializeStorage();
+        $this->maxEntries = $maxDumps;
+        $this->traceSpanEvents = $traceDumps;
     }
 
     public function start(): self

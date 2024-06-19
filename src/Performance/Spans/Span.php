@@ -5,15 +5,18 @@ namespace Spatie\FlareClient\Performance\Spans;
 use Spatie\FlareClient\Concerns\UsesTime;
 use Spatie\FlareClient\Performance\Concerns\HasAttributes;
 use Spatie\FlareClient\Performance\Support\SpanId;
-use SplObjectStorage;
+use WeakMap;
 
 class Span
 {
     use HasAttributes;
     use UsesTime;
 
-    /** @var SplObjectStorage<SpanEvent> */
-    public SplObjectStorage $events;
+    /** @var WeakMap<SpanEvent, null> */
+    public WeakMap $events;
+
+    /** @var array<SpanEvent> */
+    protected array $eventsStore = [];
 
     /**
      * @param array<string, mixed> $attributes
@@ -28,7 +31,7 @@ class Span
         array $attributes = [],
         public int $droppedEventsCount = 0,
     ) {
-        $this->events = new SplObjectStorage();
+        $this->events = new WeakMap();
         $this->setAttributes($attributes);
     }
 
@@ -76,7 +79,18 @@ class Span
     public function addEvent(SpanEvent ...$events): self
     {
         foreach ($events as $event) {
-            $this->events->attach($event);
+            $this->eventsStore[] = $event;
+        }
+
+        $this->addRecordedEvent(...$events);
+
+        return $this;
+    }
+
+    public function addRecordedEvent(SpanEvent ...$events): self
+    {
+        foreach ($events as $event) {
+            $this->events[$event] = null;
         }
 
         return $this;
@@ -98,6 +112,12 @@ class Span
 
     public function toArray(): array
     {
+        $events = [];
+
+        foreach ($this->events as $event => $nothing) {
+            $events[] = $event->toArray();
+        }
+
         return [
             'traceId' => $this->traceId,
             'spanId' => $this->spanId,
@@ -107,7 +127,7 @@ class Span
             'endTimeUnixNano' => $this->endUs * 1000,
             'attributes' => $this->attributesToArray(),
             'droppedAttributesCount' => $this->droppedAttributesCount,
-            'events' => array_map(fn (SpanEvent $event) => $event->toArray(), iterator_to_array($this->events)),
+            'events' => $events,
             'droppedEventsCount' => $this->droppedEventsCount,
         ];
     }
