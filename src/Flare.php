@@ -13,12 +13,11 @@ use Spatie\Backtrace\Arguments\Reducers\ArgumentReducer;
 use Spatie\FlareClient\Concerns\HasContext;
 use Spatie\FlareClient\Context\ContextProviderDetector;
 use Spatie\FlareClient\Enums\MessageLevels;
-use Spatie\FlareClient\FlareMiddleware\ContainerAwareFlareMiddleware;
+use Spatie\FlareClient\FlareMiddleware\AddGlows;
 use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
+use Spatie\FlareClient\FlareMiddleware\RecordingMiddleware;
 use Spatie\FlareClient\Http\Client;
 use Spatie\FlareClient\Performance\Tracer;
-use Spatie\FlareClient\Recorders\DumpRecorder\DumpRecorder;
-use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowSpanEvent;
 use Spatie\FlareClient\Support\Container;
 use Throwable;
@@ -55,12 +54,6 @@ class Flare
         protected bool $withStackFrameArguments,
     ) {
         $this->stage = $stage;
-
-        foreach ($this->middleware as $singleMiddleware) {
-            if ($singleMiddleware instanceof ContainerAwareFlareMiddleware) {
-                $singleMiddleware->boot($container);
-            }
-        }
     }
 
     public static function make(
@@ -75,9 +68,11 @@ class Flare
     {
         $container = Container::instance();
 
-        (new FlareProvider())->register($config, $container);
+        $provider = new FlareProvider($config, $container);
 
-        return $container->get(Flare::class);
+        $provider->register();
+
+        return $provider->boot();
     }
 
     public function registerFlareHandlers(): self
@@ -117,11 +112,14 @@ class Flare
         string $messageLevel = MessageLevels::INFO,
         array $metaData = []
     ): self {
-        if (! $this->container->has(GlowRecorder::class)) {
+        /** @var AddGlows|null $middleware */
+        $middleware = $this->middleware[AddGlows::class] ?? null;
+
+        if ($middleware === null) {
             return $this;
         }
 
-        $this->container->get(GlowRecorder::class)->record(new GlowSpanEvent($name, $messageLevel, $metaData));
+        $middleware->getRecorder()->record(new GlowSpanEvent($name, $messageLevel, $metaData));
 
         return $this;
     }
@@ -296,14 +294,10 @@ class Flare
 
     protected function resetRecorders(): void
     {
-        // TODO: this should be done in the middleware or we need to solve this in the container?
-        // probably also dependent on Laravel implementation
-        if ($this->container->has(GlowRecorder::class)) {
-            $this->container->get(GlowRecorder::class)->reset();
-        }
-
-        if ($this->container->has(DumpRecorder::class)) {
-            $this->container->get(DumpRecorder::class)->reset();
+        foreach ($this->middleware as $middleware) {
+            if ($middleware instanceof RecordingMiddleware) {
+                $middleware->getRecorder()->reset();
+            }
         }
     }
 }

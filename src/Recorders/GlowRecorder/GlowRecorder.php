@@ -3,9 +3,10 @@
 namespace Spatie\FlareClient\Recorders\GlowRecorder;
 
 use Spatie\FlareClient\Concerns\RecordsSpanEvents;
+use Spatie\FlareClient\Contracts\Recorder;
 use Spatie\FlareClient\Performance\Tracer;
 
-class GlowRecorder
+class GlowRecorder implements Recorder
 {
     /**  @use RecordsSpanEvents<GlowSpanEvent> */
     use RecordsSpanEvents;
@@ -19,8 +20,10 @@ class GlowRecorder
         $this->traceSpanEvents = $traceGlows;
     }
 
-    /** @var array<int, GlowSpanEvent> */
-    protected array $glows = [];
+    public function start(): void
+    {
+        $this->spanEvents = [];
+    }
 
     public function record(GlowSpanEvent $glow): void
     {

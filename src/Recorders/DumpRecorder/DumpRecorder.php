@@ -6,12 +6,13 @@ use ReflectionMethod;
 use ReflectionProperty;
 use Spatie\Backtrace\Frame;
 use Spatie\FlareClient\Concerns\RecordsSpanEvents;
+use Spatie\FlareClient\Contracts\Recorder;
 use Spatie\FlareClient\Performance\Concerns\HasOriginAttributes;
 use Spatie\FlareClient\Performance\Tracer;
 use Symfony\Component\VarDumper\Cloner\Data;
 use Symfony\Component\VarDumper\VarDumper;
 
-class DumpRecorder
+class DumpRecorder implements Recorder
 {
     use HasOriginAttributes;
 
@@ -30,7 +31,7 @@ class DumpRecorder
         $this->traceSpanEvents = $traceDumps;
     }
 
-    public function start(): self
+    public function start(): void
     {
         $multiDumpHandler = new MultiDumpHandler();
 
@@ -42,8 +43,6 @@ class DumpRecorder
         $multiDumpHandler->addHandler(fn ($var) => (new DumpHandler($this))->dump($var));
 
         static::$multiDumpHandler = $multiDumpHandler;
-
-        return $this;
     }
 
     public function record(Data $data): void

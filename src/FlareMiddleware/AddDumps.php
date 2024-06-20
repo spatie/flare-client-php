@@ -4,12 +4,15 @@ namespace Spatie\FlareClient\FlareMiddleware;
 
 use Closure;
 use Psr\Container\ContainerInterface;
+use Spatie\FlareClient\Contracts\Recorder;
 use Spatie\FlareClient\Performance\Tracer;
 use Spatie\FlareClient\Recorders\DumpRecorder\DumpRecorder;
 use Spatie\FlareClient\Report;
-use Spatie\FlareClient\Support\Container;
 
-class AddDumps implements FlareMiddleware, ContainerAwareFlareMiddleware
+/**
+ * @implements RecordingMiddleware<DumpRecorder>
+ */
+class AddDumps implements FlareMiddleware, RecordingMiddleware
 {
     protected DumpRecorder $dumpRecorder;
 
@@ -27,18 +30,22 @@ class AddDumps implements FlareMiddleware, ContainerAwareFlareMiddleware
         return $next($report);
     }
 
-    public function register(Container|ContainerInterface $container): void
+    public function setupRecording(Closure $setup): void
     {
-        $container->singleton(DumpRecorder::class, fn () => new DumpRecorder(
-            $container->get(Tracer::class),
-            $this->maxDumps,
-            $this->traceDumps,
-            $this->traceDumpOrigins,
-        ));
+        $setup(
+            DumpRecorder::class,
+            fn (ContainerInterface $container) => new DumpRecorder(
+                $container->get(Tracer::class),
+                $this->maxDumps,
+                $this->traceDumps,
+                $this->traceDumpOrigins,
+            ),
+            fn (DumpRecorder $recorder) => $this->dumpRecorder = $recorder,
+        );
     }
 
-    public function boot(Container|ContainerInterface $container): void
+    public function getRecorder(): Recorder
     {
-        $this->dumpRecorder = $container->get(DumpRecorder::class);
+        return $this->dumpRecorder;
     }
 }

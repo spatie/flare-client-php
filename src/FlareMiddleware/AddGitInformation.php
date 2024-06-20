@@ -7,7 +7,7 @@ use Spatie\FlareClient\Report;
 use Symfony\Component\Process\Process;
 use Throwable;
 
-class AddGitInformation
+class AddGitInformation implements FlareMiddleware
 {
     protected ?string $baseDir = null;
 

@@ -8,6 +8,7 @@ use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\Backtrace\Arguments\Reducers\ArgumentReducer;
 use Spatie\ErrorSolutions\Contracts\HasSolutionsForThrowable;
 use Spatie\ErrorSolutions\SolutionProviderRepository;
+use Spatie\FlareClient\Context\BaseContextProviderDetector;
 use Spatie\FlareClient\Context\ContextProviderDetector;
 use Spatie\FlareClient\FlareMiddleware\AddDumps;
 use Spatie\FlareClient\FlareMiddleware\AddEnvironmentInformation;
@@ -26,8 +27,7 @@ use Spatie\FlareClient\Senders\Sender;
 class FlareConfig
 {
     /**
-     * @param array<FlareMiddleware> $middleware
-     * @param array<class-string> $recorders
+     * @param array<class-string<FlareMiddleware>, FlareMiddleware> $middleware
      * @param class-string<ContextProviderDetector>|null $contextProviderDetector
      * @param array<class-string<ArgumentReducer>|ArgumentReducer>|ArgumentReducers|null $argumentReducers
      * @param class-string<Sender> $sender
@@ -40,9 +40,8 @@ class FlareConfig
         public int $timeout = 10,
         public bool $sendReportsImmediately = false,
         public array $middleware = [],
-        public array $recorders = [],
         public ?string $applicationPath = null,
-        public ?string $contextProviderDetector = null,
+        public ?string $contextProviderDetector = BaseContextProviderDetector::class,
         public ?int $reportErrorLevels = null,
         public ?Closure $filterExceptionsCallable = null,
         public ?Closure $filterReportsCallable = null,
@@ -57,7 +56,7 @@ class FlareConfig
         public array $solutionsProviders = [],
         public ?Client $client = null,
     ) {
-        $this->withNotifierName();
+        $this->addNotifierName();
     }
 
     public static function make(string $apiToken): self
@@ -68,68 +67,68 @@ class FlareConfig
     public static function makeDefault(string $apiToken): self
     {
         return (new self($apiToken))
-            ->withDumps()
-            ->withEnvironmentInfo()
-            ->withGitInfo()
-            ->withGlows()
-            ->withSolutions()
+            ->addDumps()
+            ->addEnvironmentInfo()
+            ->addGitInfo()
+            ->addGlows()
+            ->addSolutions()
             ->censorRequestBodyFields()
             ->censorRequestHeaders()
             ->removeRequestIp()
-            ->withStackFrameArguments()
+            ->addStackFrameArguments()
             ->setArgumentReducers(ArgumentReducers::default());
     }
 
-    public function withDumps(
+    public function addDumps(
         int $maxDumps = 300,
         bool $traceDumps = false,
         bool $traceDumpOrigins = false
     ): self {
-        $this->middleware[] = new AddDumps($maxDumps, $traceDumps, $traceDumpOrigins);
+        $this->middleware(new AddDumps($maxDumps, $traceDumps, $traceDumpOrigins));
 
         return $this;
     }
 
-    public function withEnvironmentInfo(): self
+    public function addEnvironmentInfo(): self
     {
-        $this->middleware[] = new AddEnvironmentInformation();
+        $this->middleware(new AddEnvironmentInformation());
 
         return $this;
     }
 
-    public function withGitInfo(): self
+    public function addGitInfo(): self
     {
-        $this->middleware[] = new AddGitInformation();
+        $this->middleware(new AddGitInformation());
 
         return $this;
     }
 
-    public function withGlows(
+    public function addGlows(
         int $maxGlows = 30,
         bool $traceGlows = false
     ): self {
-        $this->middleware[] = new AddGlows($maxGlows, $traceGlows);
+        $this->middleware(new AddGlows($maxGlows, $traceGlows));
 
         return $this;
     }
 
-    public function withNotifierName(): self
+    public function addNotifierName(): self
     {
-        $this->middleware[] = new AddNotifierName();
+        $this->middleware(new AddNotifierName());
 
         return $this;
     }
 
-    public function withSolutions(): self
+    public function addSolutions(): self
     {
-        $this->middleware[] = new AddSolutions();
+        $this->middleware(new AddSolutions());
 
         return $this;
     }
 
     public function censorRequestBodyFields(array $fieldNames = ['password', 'password_confirmation']): self
     {
-        $this->middleware[] = new CensorRequestBodyFields($fieldNames);
+        $this->middleware(new CensorRequestBodyFields($fieldNames));
 
         return $this;
     }
@@ -144,14 +143,14 @@ class FlareConfig
             'X-XSRF-TOKEN',
         ]
     ): self {
-        $this->middleware[] = new CensorRequestHeaders($headers);
+        $this->middleware(new CensorRequestHeaders($headers));
 
         return $this;
     }
 
     public function removeRequestIp(): self
     {
-        $this->middleware[] = new RemoveRequestIp();
+        $this->middleware(new RemoveRequestIp());
 
         return $this;
     }
@@ -186,7 +185,7 @@ class FlareConfig
         return $this;
     }
 
-    public function withStackFrameArguments(bool $withStackFrameArguments = true, bool $forcePHPIniSetting = true): self
+    public function addStackFrameArguments(bool $withStackFrameArguments = true, bool $forcePHPIniSetting = true): self
     {
         $this->withStackFrameArguments = $withStackFrameArguments;
         $this->forcePHPStackFrameArgumentsIniSetting = $forcePHPIniSetting;
@@ -214,7 +213,7 @@ class FlareConfig
     /**
      * @param array<class-string<ArgumentReducer>|ArgumentReducer> $argumentReducer
      */
-    public function withArgumentReducer(
+    public function usingArgumentReducer(
         string|ArgumentReducer ...$argumentReducer
     ): self {
         if ($this->argumentReducers === null) {
@@ -228,6 +227,13 @@ class FlareConfig
         foreach ($argumentReducer as $reducer) {
             $this->argumentReducers[] = $reducer;
         }
+
+        return $this;
+    }
+
+    public function middleware(FlareMiddleware $middleware): self
+    {
+        $this->middleware[$middleware::class] = $middleware;
 
         return $this;
     }

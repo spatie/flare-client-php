@@ -6,20 +6,22 @@ namespace Spatie\FlareClient\FlareMiddleware;
 
 use Closure;
 use Psr\Container\ContainerInterface;
+use Spatie\FlareClient\Contracts\Recorder;
 use Spatie\FlareClient\Performance\Tracer;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
 use Spatie\FlareClient\Report;
-use Spatie\FlareClient\Support\Container;
 
-class AddGlows implements FlareMiddleware, ContainerAwareFlareMiddleware
+/**
+ * @implements RecordingMiddleware<GlowRecorder>
+ */
+class AddGlows implements FlareMiddleware, RecordingMiddleware
 {
     protected GlowRecorder $recorder;
 
     public function __construct(
         protected ?int $maxGlows = 30,
         protected bool $traceGlows = false
-    )
-    {
+    ) {
     }
 
     public function handle(Report $report, Closure $next)
@@ -29,17 +31,21 @@ class AddGlows implements FlareMiddleware, ContainerAwareFlareMiddleware
         return $next($report);
     }
 
-    public function register(ContainerInterface|Container $container): void
+    public function setupRecording(Closure $setup): void
     {
-        $container->singleton(GlowRecorder::class, fn() => new GlowRecorder(
-            $container->get(Tracer::class),
-            $this->maxGlows,
-            $this->traceGlows
-        ));
+        $setup(
+            GlowRecorder::class,
+            fn (ContainerInterface $container) => new GlowRecorder(
+                $container->get(Tracer::class),
+                $this->maxGlows,
+                $this->traceGlows
+            ),
+            fn(GlowRecorder $recorder) => $this->recorder = $recorder
+        );
     }
 
-    public function boot(ContainerInterface|Container $container): void
+    public function getRecorder(): Recorder
     {
-        $this->recorder = $container->get(GlowRecorder::class);
+        return $this->recorder;
     }
 }

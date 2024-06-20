@@ -195,7 +195,7 @@ it('can set message levels', function () {
 });
 
 it('can add glows', function () {
-    setupFlare(fn(FlareConfig $config) => $config->withGlows());
+    setupFlare(fn(FlareConfig $config) => $config->addGlows());
 
     $this->flare->glow(
         'my glow',
@@ -325,7 +325,7 @@ it('will add arguments to a stack trace by default', function () {
 it('is possible to disable stack frame arguments', function () {
     ini_set('zend.exception_ignore_args', 0); // Enabled on GH actions
 
-    setupFlare(fn(FlareConfig $config) => $config->withStackFrameArguments(false));
+    setupFlare(fn(FlareConfig $config) => $config->addStackFrameArguments(false));
 
     $exception = TraceArguments::create()->exception(
         'a message',
@@ -340,7 +340,7 @@ it('is possible to disable stack frame arguments', function () {
 it('is possible to disable stack frame arguments with zend.exception_ignore_args', function () {
     ini_set('zend.exception_ignore_args', 1);
 
-    setupFlare(fn(FlareConfig $config) => $config->withStackFrameArguments(false));
+    setupFlare(fn(FlareConfig $config) => $config->addStackFrameArguments(false));
 
     $exception = TraceArguments::create()->exception(
         'a message',
