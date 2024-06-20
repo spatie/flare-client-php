@@ -1,6 +1,7 @@
 <?php
 
 use PHPUnit\Framework\Exception;
+use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Flare;
 use Spatie\FlareClient\FlareConfig;
@@ -292,7 +293,7 @@ it('can filter error exceptions based on their severity', function () {
 
 it('will add arguments to a stack trace by default', function () {
     // Todo: add some default argument reducers in the config
-    setupFlare();
+    setupFlare(fn(FlareConfig $config) => $config->setArgumentReducers(ArgumentReducers::default()));
 
     $exception = TraceArguments::create()->exception(
         'a message',

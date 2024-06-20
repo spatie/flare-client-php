@@ -66,9 +66,9 @@ class Flare
     public static function make(
         string $apiToken,
     ): self {
-        $config = new FlareConfig(apiToken: $apiToken);
-
-        return self::makeFromConfig($config);
+        return self::makeFromConfig(
+            FlareConfig::makeDefault($apiToken)
+        );
     }
 
     public static function makeFromConfig(FlareConfig $config): self

@@ -65,6 +65,21 @@ class FlareConfig
         return new self($apiToken);
     }
 
+    public static function makeDefault(string $apiToken): self
+    {
+        return (new self($apiToken))
+            ->withDumps()
+            ->withEnvironmentInfo()
+            ->withGitInfo()
+            ->withGlows()
+            ->withSolutions()
+            ->censorRequestBodyFields()
+            ->censorRequestHeaders()
+            ->removeRequestIp()
+            ->withStackFrameArguments()
+            ->setArgumentReducers(ArgumentReducers::default());
+    }
+
     public function withDumps(
         int $maxDumps = 300,
         bool $traceDumps = false,
@@ -196,17 +211,30 @@ class FlareConfig
         return $this;
     }
 
-    public function withDefaultMiddleware(): self
+    /**
+     * @param array<class-string<ArgumentReducer>|ArgumentReducer> $argumentReducer
+     */
+    public function withArgumentReducer(
+        string|ArgumentReducer ...$argumentReducer
+    ): self {
+        if ($this->argumentReducers === null) {
+            $this->argumentReducers = [];
+        }
+
+        if (! is_array($this->argumentReducers)) {
+            throw new Exception('Argument reducers already set');
+        }
+
+        foreach ($argumentReducer as $reducer) {
+            $this->argumentReducers[] = $reducer;
+        }
+
+        return $this;
+    }
+
+    public function setArgumentReducers(ArgumentReducers $argumentReducers): self
     {
-        $this
-            ->withDumps()
-            ->withEnvironmentInfo()
-            ->withGitInfo()
-            ->withGlows()
-            ->withSolutions()
-            ->censorRequestBodyFields()
-            ->censorRequestHeaders()
-            ->removeRequestIp();
+        $this->argumentReducers = $argumentReducers;
 
         return $this;
     }
