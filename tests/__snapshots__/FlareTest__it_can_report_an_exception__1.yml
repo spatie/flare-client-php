@@ -1,17 +1,18 @@
-notifier: 'flare-client-php'
+notifier: flare-client-php
 language: PHP
 framework_version: null
 language_version: 7.3.2
 exception_class: PHPUnit\Framework\Exception
 seen_at: 1546346096000
 message: 'This is a test'
-glows: {  }
 solutions: {  }
-documentation_links: {  }
 stacktrace: {  }
 stage: null
-message_level: null
 open_frame_index: null
 application_path: null
 application_version: null
 tracking_uuid: fake-uuid
+handled: null
+attributes: {  }
+spans: {  }
+span_events: {  }

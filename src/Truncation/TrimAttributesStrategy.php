@@ -2,7 +2,7 @@
 
 namespace Spatie\FlareClient\Truncation;
 
-class TrimContextItemsStrategy extends AbstractTruncationStrategy
+class TrimAttributesStrategy extends AbstractTruncationStrategy
 {
     /**
      * @return array<int, int>
@@ -24,33 +24,33 @@ class TrimContextItemsStrategy extends AbstractTruncationStrategy
                 break;
             }
 
-            $payload['context'] = $this->iterateContextItems($payload['context'], $threshold);
+            $payload['attributes'] = $this->iterateAttributes($payload['attributes'], $threshold);
         }
 
         return $payload;
     }
 
     /**
-     * @param array<int|string, mixed> $contextItems
+     * @param array<int|string, mixed> $attributes
      * @param int $threshold
      *
      * @return array<int|string, mixed>
      */
-    protected function iterateContextItems(array $contextItems, int $threshold): array
+    protected function iterateAttributes(array $attributes, int $threshold): array
     {
-        array_walk($contextItems, [$this, 'trimContextItems'], $threshold);
+        array_walk($attributes, [$this, 'trimAttributes'], $threshold);
 
-        return $contextItems;
+        return $attributes;
     }
 
-    protected function trimContextItems(mixed &$value, mixed $key, int $threshold): mixed
+    protected function trimAttributes(mixed &$value, mixed $key, int $threshold): mixed
     {
         if (is_array($value)) {
             if (count($value) > $threshold) {
                 $value = array_slice($value, $threshold * -1, $threshold);
             }
 
-            array_walk($value, [$this, 'trimContextItems'], $threshold);
+            array_walk($value, [$this, 'trimAttributes'], $threshold);
         }
 
         return $value;

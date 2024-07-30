@@ -1,21 +1,18 @@
-notifier: 'Flare Client'
+notifier: flare-client-php
 language: PHP
 framework_version: null
 language_version: 7.3.2
 exception_class: Log
-seen_at: 1546305825
+seen_at: 1546305825000
 message: 'this is a message'
-glows: {  }
 solutions: {  }
-documentation_links: {  }
 stacktrace: {  }
-context:
-    arguments:
-        - '[phpunit arguments removed]'
 stage: null
-message_level: null
 open_frame_index: 0
 application_path: null
 application_version: null
 tracking_uuid: fake-uuid
-uuid: fake-uuid
+handled: null
+attributes: {  }
+spans: {  }
+span_events: {  }

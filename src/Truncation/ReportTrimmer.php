@@ -10,7 +10,7 @@ class ReportTrimmer
     protected array $strategies = [
         TrimStringsStrategy::class,
         TrimStackFrameArgumentsStrategy::class,
-        TrimContextItemsStrategy::class,
+        TrimAttributesStrategy::class,
     ];
 
     /**
