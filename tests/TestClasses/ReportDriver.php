@@ -67,6 +67,7 @@ class ReportDriver extends YamlDriver
     protected function freezeLanguageVersion(array $data): array
     {
         data_set($data, 'language_version', '7.3.2', true);
+        data_set($data, 'context.env.php_version', '7.3.2', true);
 
         return $data;
     }

@@ -13,7 +13,7 @@ context:
     arguments:
         - '[phpunit arguments removed]'
     env:
-        php_version: 8.3.7
+        php_version: 7.3.2
 stage: null
 message_level: null
 open_frame_index: null

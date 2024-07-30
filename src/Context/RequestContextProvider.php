@@ -144,7 +144,7 @@ class RequestContextProvider implements ContextProvider
         ];
     }
 
-    protected function getInputSource(): InputBag
+    protected function getInputSource(): InputBag|ParameterBag
     {
         $contentType = $this->request->headers->get('CONTENT_TYPE', 'text/html');
 
