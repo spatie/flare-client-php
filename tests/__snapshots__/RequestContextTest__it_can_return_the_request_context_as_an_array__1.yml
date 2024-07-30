@@ -1,0 +1,24 @@
+request:
+    url: 'http://example.com/test'
+    ip: 1.2.3.4
+    method: GET
+    useragent: null
+request_data:
+    queryString:
+        get-key-1: get-value-1
+    body:
+        get-key-1: get-value-1
+    files:
+        file-one:
+            pathname: /tests/stubs/file.txt
+            size: 4
+            mimeType: text/plain
+        file-two:
+            pathname: /tests/stubs/file.txt
+            size: 4
+            mimeType: text/plain
+headers:
+    host: example.com
+cookies:
+    cookie-key-1: cookie-value-1
+session: {  }

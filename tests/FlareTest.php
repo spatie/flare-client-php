@@ -90,6 +90,8 @@ it('can censor request data', function () {
     $_POST['user'] = 'john@example.com';
     $_POST['password'] = 'secret';
 
+    $_SERVER['REQUEST_METHOD'] = 'POST';
+
     $this->flare->censorRequestBodyFields(['user', 'password']);
 
     reportException();
