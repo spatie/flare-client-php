@@ -2,7 +2,6 @@
 
 namespace Spatie\FlareClient\Context;
 
-use Illuminate\Support\Arr;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\InputBag;
