@@ -1,0 +1,22 @@
+url.full: 'http://example.com/test'
+http.request.method: GET
+user_agent.original: null
+url.query:
+    get-key-1: get-value-1
+http.request.files:
+    file-one:
+        pathname: /tests/stubs/file.txt
+        size: 4
+        mime_type: text/plain
+    file-two:
+        pathname: /tests/stubs/file.txt
+        size: 4
+        mime_type: text/plain
+http.request.body.size: 10
+client.address: 1.2.3.4
+http.request.body.contents:
+    get-key-1: get-value-1
+http.request.headers:
+    host: example.com
+http.request.cookies:
+    cookie-key-1: cookie-value-1

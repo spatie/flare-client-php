@@ -8,40 +8,39 @@ use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\Backtrace\Arguments\Reducers\ArgumentReducer;
 use Spatie\ErrorSolutions\Contracts\HasSolutionsForThrowable;
 use Spatie\ErrorSolutions\SolutionProviderRepository;
-use Spatie\FlareClient\Context\BaseContextProviderDetector;
-use Spatie\FlareClient\Context\ContextProviderDetector;
-use Spatie\FlareClient\FlareMiddleware\AddDumps;
-use Spatie\FlareClient\FlareMiddleware\AddEnvironmentInformation;
+use Spatie\FlareClient\Contracts\Recorder;
+use Spatie\FlareClient\FlareMiddleware\AddConsoleInformation;
 use Spatie\FlareClient\FlareMiddleware\AddGitInformation;
-use Spatie\FlareClient\FlareMiddleware\AddGlows;
-use Spatie\FlareClient\FlareMiddleware\AddNotifierName;
+use Spatie\FlareClient\FlareMiddleware\AddRequestInformation;
 use Spatie\FlareClient\FlareMiddleware\AddSolutions;
-use Spatie\FlareClient\FlareMiddleware\CensorRequestBodyFields;
-use Spatie\FlareClient\FlareMiddleware\CensorRequestHeaders;
 use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
-use Spatie\FlareClient\FlareMiddleware\RemoveRequestIp;
-use Spatie\FlareClient\Http\Client;
+use Spatie\FlareClient\Recorders\DumpRecorder\DumpRecorder;
+use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
+use Spatie\FlareClient\Sampling\AlwaysSampler;
+use Spatie\FlareClient\Sampling\RateSampler;
 use Spatie\FlareClient\Senders\CurlSender;
 use Spatie\FlareClient\Senders\Sender;
+use Spatie\FlareClient\Support\TraceLimits;
 
 class FlareConfig
 {
+
     /**
-     * @param array<class-string<FlareMiddleware>, FlareMiddleware> $middleware
-     * @param class-string<ContextProviderDetector>|null $contextProviderDetector
+     * @param array<class-string<FlareMiddleware>, array> $middleware
+     * @param array<class-string<Recorder>, array> $recorders
      * @param array<class-string<ArgumentReducer>|ArgumentReducer>|ArgumentReducers|null $argumentReducers
      * @param class-string<Sender> $sender
      * @param class-string<SolutionProviderRepository> $solutionsProviderRepository
      * @param array<class-string<HasSolutionsForThrowable>> $solutionsProviders
      */
     public function __construct(
-        public string $apiToken,
+        public ?string $apiToken = null,
         public string $baseUrl = 'https://reporting.flareapp.io/api',
         public int $timeout = 10,
         public bool $sendReportsImmediately = false,
         public array $middleware = [],
+        public array $recorders = [],
         public ?string $applicationPath = null,
-        public ?string $contextProviderDetector = BaseContextProviderDetector::class,
         public ?int $reportErrorLevels = null,
         public ?Closure $filterExceptionsCallable = null,
         public ?Closure $filterReportsCallable = null,
@@ -52,105 +51,102 @@ class FlareConfig
         public bool $withStackFrameArguments = true,
         public bool $forcePHPStackFrameArgumentsIniSetting = true,
         public string $sender = CurlSender::class,
+        public array $senderConfig = [],
         public string $solutionsProviderRepository = SolutionProviderRepository::class,
         public array $solutionsProviders = [],
-        public ?Client $client = null,
+        public bool $trace = true,
+        public string $sampler = RateSampler::class,
+        public array $samplerConfig = [],
+        public ?TraceLimits $traceLimits = null,
     ) {
-        $this->addNotifierName();
     }
 
-    public static function make(string $apiToken): self
+    public static function make(string $apiToken): static
     {
-        return new self($apiToken);
+        return new static($apiToken);
     }
 
-    public static function makeDefault(string $apiToken): self
+    public static function makeDefault(string $apiToken): static
     {
-        return (new self($apiToken))
+        return (new static($apiToken))
             ->addDumps()
-            ->addEnvironmentInfo()
+            ->addRequestInfo()
+            ->addConsoleInfo()
             ->addGitInfo()
             ->addGlows()
             ->addSolutions()
-            ->censorRequestBodyFields()
-            ->censorRequestHeaders()
-            ->removeRequestIp()
             ->addStackFrameArguments()
             ->setArgumentReducers(ArgumentReducers::default());
     }
 
-    public function addDumps(
-        int $maxDumps = 300,
-        bool $traceDumps = false,
-        bool $traceDumpOrigins = false
-    ): self {
-        $this->middleware(new AddDumps($maxDumps, $traceDumps, $traceDumpOrigins));
-
-        return $this;
-    }
-
-    public function addEnvironmentInfo(): self
-    {
-        $this->middleware(new AddEnvironmentInformation());
-
-        return $this;
-    }
-
-    public function addGitInfo(): self
-    {
-        $this->middleware(new AddGitInformation());
-
-        return $this;
-    }
-
-    public function addGlows(
-        int $maxGlows = 30,
-        bool $traceGlows = false
-    ): self {
-        $this->middleware(new AddGlows($maxGlows, $traceGlows));
-
-        return $this;
-    }
-
-    public function addNotifierName(): self
-    {
-        $this->middleware(new AddNotifierName());
-
-        return $this;
-    }
-
-    public function addSolutions(): self
-    {
-        $this->middleware(new AddSolutions());
-
-        return $this;
-    }
-
-    public function censorRequestBodyFields(array $fieldNames = ['password', 'password_confirmation']): self
-    {
-        $this->middleware(new CensorRequestBodyFields($fieldNames));
-
-        return $this;
-    }
-
-    public function censorRequestHeaders(
-        array $headers = [
+    public function addRequestInfo(
+        array $censorBodyFields = ['password', 'password_confirmation'],
+        array $censorRequestHeaders = [
             'API-KEY',
             'Authorization',
             'Cookie',
             'Set-Cookie',
             'X-CSRF-TOKEN',
             'X-XSRF-TOKEN',
-        ]
+        ],
+        bool $removeRequestIp = false,
     ): self {
-        $this->middleware(new CensorRequestHeaders($headers));
+        $this->middleware[AddRequestInformation::class] = [
+            'censor_body_fields' => $censorBodyFields,
+            'censor_request_headers' => $censorRequestHeaders,
+            'remove_requestIp' => $removeRequestIp,
+        ];
 
         return $this;
     }
 
-    public function removeRequestIp(): self
+    public function addConsoleInfo(): self
     {
-        $this->middleware(new RemoveRequestIp());
+        $this->middleware[AddConsoleInformation::class] = [];
+
+        return $this;
+    }
+
+    public function addGitInfo(): static
+    {
+        $this->middleware[AddGitInformation::class] = [];
+
+        return $this;
+    }
+
+    public function addGlows(
+        bool $traceGlows = true,
+        bool $reportGlows = true,
+        ?int $maxReportedGlows = 10,
+    ): static {
+        $this->recorders[GlowRecorder::class] = [
+            'trace_glows' => $traceGlows,
+            'report_glows' => $reportGlows,
+            'max_reported_glows' => $maxReportedGlows,
+        ];
+
+        return $this;
+    }
+
+    public function addSolutions(): static
+    {
+        $this->middleware[AddSolutions::class] = [];
+
+        return $this;
+    }
+
+    public function addDumps(
+        bool $traceDumps = true,
+        bool $reportDumps = true,
+        ?int $maxReportedDumps = 25,
+        bool $findDumpOrigins = true,
+    ): static {
+        $this->recorders[DumpRecorder::class] = [
+            'trace_dumps' => $traceDumps,
+            'report_dumps' => $reportDumps,
+            'max_reported_dumps' => $maxReportedDumps,
+            'find_dump_origins' => $findDumpOrigins,
+        ];
 
         return $this;
     }
@@ -158,7 +154,7 @@ class FlareConfig
     /**
      * @param string|Closure(): string $version
      */
-    public function applicationVersion(string|Closure $version): self
+    public function applicationVersion(string|Closure $version): static
     {
         $this->applicationVersion = is_callable($version) ? $version() : $version;
 
@@ -168,7 +164,7 @@ class FlareConfig
     /**
      * @param string|Closure(): string $name
      */
-    public function applicationName(string|Closure $name): self
+    public function applicationName(string|Closure $name): static
     {
         $this->applicationName = is_callable($name) ? $name() : $name;
 
@@ -178,14 +174,14 @@ class FlareConfig
     /**
      * @param string|Closure(): string $stage
      */
-    public function applicationStage(string|Closure $stage): self
+    public function applicationStage(string|Closure $stage): static
     {
         $this->applicationStage = is_callable($stage) ? $stage() : $stage;
 
         return $this;
     }
 
-    public function addStackFrameArguments(bool $withStackFrameArguments = true, bool $forcePHPIniSetting = true): self
+    public function addStackFrameArguments(bool $withStackFrameArguments = true, bool $forcePHPIniSetting = true): static
     {
         $this->withStackFrameArguments = $withStackFrameArguments;
         $this->forcePHPStackFrameArgumentsIniSetting = $forcePHPIniSetting;
@@ -196,14 +192,14 @@ class FlareConfig
     /**
      * @param Closure(Exception): bool $filterExceptionsCallable
      */
-    public function filterExceptionsUsing(Closure $filterExceptionsCallable): self
+    public function filterExceptionsUsing(Closure $filterExceptionsCallable): static
     {
         $this->filterExceptionsCallable = $filterExceptionsCallable;
 
         return $this;
     }
 
-    public function reportErrorLevels(int $reportErrorLevels): self
+    public function reportErrorLevels(int $reportErrorLevels): static
     {
         $this->reportErrorLevels = $reportErrorLevels;
 
@@ -215,7 +211,7 @@ class FlareConfig
      */
     public function usingArgumentReducer(
         string|ArgumentReducer ...$argumentReducer
-    ): self {
+    ): static {
         if ($this->argumentReducers === null) {
             $this->argumentReducers = [];
         }
@@ -231,16 +227,59 @@ class FlareConfig
         return $this;
     }
 
-    public function middleware(FlareMiddleware $middleware): self
+    public function setArgumentReducers(ArgumentReducers $argumentReducers): static
     {
-        $this->middleware[$middleware::class] = $middleware;
+        $this->argumentReducers = $argumentReducers;
 
         return $this;
     }
 
-    public function setArgumentReducers(ArgumentReducers $argumentReducers): self
+    /**
+     * @param array<class-string<HasSolutionsForThrowable>> ...$solutionProvider
+     */
+    public function solutionProvider(string ...$solutionProvider): static
     {
-        $this->argumentReducers = $argumentReducers;
+        array_push($this->solutionsProviders, ...$solutionProvider);
+
+        return $this;
+    }
+
+    public function trace(
+        bool $trace = true,
+        int $maxSpans = 512,
+        int $maxAttributesPerSpan = 128,
+        int $maxSpanEventsPerSpan = 128,
+        int $maxAttributesPerSpanEvent = 128,
+    ): static {
+        $this->trace = $trace;
+        $this->traceLimits = new TraceLimits(
+            $maxSpans,
+            $maxAttributesPerSpan,
+            $maxSpanEventsPerSpan,
+            $maxAttributesPerSpanEvent,
+        );
+
+        return $this;
+    }
+
+    public function alwaysSampleTraces(): static
+    {
+        $this->sampler = AlwaysSampler::class;
+
+        return $this;
+    }
+
+    public function sampleRate(float $rate): static
+    {
+        $this->sampler = RateSampler::class;
+        $this->samplerConfig = ['rate' => $rate];
+
+        return $this;
+    }
+
+    public function sendReportsImmediately(bool $sendReportsImmediately = true): static
+    {
+        $this->sendReportsImmediately = $sendReportsImmediately;
 
         return $this;
     }

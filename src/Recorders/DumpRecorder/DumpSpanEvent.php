@@ -2,10 +2,10 @@
 
 namespace Spatie\FlareClient\Recorders\DumpRecorder;
 
+use Spatie\FlareClient\Concerns\HasOriginAttributes;
 use Spatie\FlareClient\Contracts\FlareSpanEventType;
-use Spatie\FlareClient\Performance\Concerns\HasOriginAttributes;
-use Spatie\FlareClient\Performance\Enums\SpanEventType;
-use Spatie\FlareClient\Performance\Spans\SpanEvent;
+use Spatie\FlareClient\Enums\SpanEventType;
+use Spatie\FlareClient\Spans\SpanEvent;
 
 class DumpSpanEvent extends SpanEvent
 {
@@ -21,16 +21,6 @@ class DumpSpanEvent extends SpanEvent
             timeUs: $time ?? static::getCurrentTime(),
             attributes: $this->collectAttributes(),
         );
-    }
-
-    public function toOriginalFlareFormat(): array
-    {
-        return [
-            'html_dump' => $this->htmlDump,
-            'file' => $this->attributes['code.filepath'],
-            'line_number' =>  $this->attributes['code.lineno'],
-            'microtime' => (int )($this->timeUs / 1000),
-        ];
     }
 
     protected function collectAttributes(): array

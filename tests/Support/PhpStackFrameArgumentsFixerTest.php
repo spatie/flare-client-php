@@ -2,7 +2,6 @@
 
 use Spatie\FlareClient\Flare;
 use Spatie\FlareClient\FlareConfig;
-use Spatie\FlareClient\Http\Client;
 use Spatie\FlareClient\Tests\TestClasses\TraceArguments;
 
 it('can enable stack trace arguments on a PHP level', function () {
@@ -11,7 +10,7 @@ it('can enable stack trace arguments on a PHP level', function () {
     $report = Flare::makeFromConfig(
         FlareConfig::make('FAKE-API-KEY')->addStackFrameArguments(true, forcePHPIniSetting: false)
     )
-        ->createReport(TraceArguments::create()->exception('string', new DateTime()))
+        ->report(TraceArguments::create()->exception('string', new DateTime()))
         ->toArray();
 
     expect($report['stacktrace'][1]['arguments'])->toBeNull();
@@ -19,10 +18,11 @@ it('can enable stack trace arguments on a PHP level', function () {
     $report = Flare::makeFromConfig(
         FlareConfig::make('FAKE-API-KEY')->addStackFrameArguments(true, forcePHPIniSetting: true)
     )
-        ->createReport(TraceArguments::create()->exception('string', new DateTime()))
+        ->report(TraceArguments::create()->exception('string', new DateTime()))
         ->toArray();
 
     expect($report['stacktrace'][1]['arguments'])
         ->toBeArray()
         ->toHaveCount(2);
 });
+

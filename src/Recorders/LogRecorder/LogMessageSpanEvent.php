@@ -3,10 +3,8 @@
 namespace Spatie\FlareClient\Recorders\LogRecorder;
 
 use Spatie\FlareClient\Contracts\FlareSpanEventType;
-use Spatie\FlareClient\Contracts\FlareSpanType;
-use Spatie\FlareClient\Performance\Enums\SpanEventType;
-use Spatie\FlareClient\Performance\Enums\SpanType;
-use Spatie\FlareClient\Performance\Spans\SpanEvent;
+use Spatie\FlareClient\Enums\SpanEventType;
+use Spatie\FlareClient\Spans\SpanEvent;
 
 class LogMessageSpanEvent extends SpanEvent
 {

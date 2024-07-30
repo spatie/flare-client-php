@@ -3,136 +3,45 @@
 namespace Spatie\FlareClient;
 
 use ErrorException;
-use Spatie\Backtrace\Arguments\ArgumentReducers;
-use Spatie\Backtrace\Arguments\Reducers\ArgumentReducer;
 use Spatie\Backtrace\Backtrace;
 use Spatie\Backtrace\Frame as SpatieFrame;
 use Spatie\ErrorSolutions\Contracts\Solution;
-use Spatie\FlareClient\Concerns\HasContext;
+use Spatie\FlareClient\Concerns\HasAttributes;
 use Spatie\FlareClient\Concerns\UsesTime;
-use Spatie\FlareClient\Context\ContextProvider;
-use Spatie\FlareClient\Contracts\ProvidesFlareContext;
-use Spatie\FlareClient\Recorders\GlowRecorder\GlowSpanEvent;
 use Spatie\FlareClient\Solutions\ReportSolution;
-use Spatie\Ignition\Contracts\Solution as IgnitionSolution;
-use Spatie\LaravelFlare\Exceptions\ViewException;
-use Spatie\LaravelIgnition\Exceptions\ViewException as IgnitionViewException;
+use Spatie\FlareClient\Spans\Span;
+use Spatie\FlareClient\Spans\SpanEvent;
+use Spatie\FlareClient\Support\Telemetry;
 use Throwable;
 
 class Report
 {
     use UsesTime;
-    use HasContext;
 
-    protected Backtrace $stacktrace;
+    /**
+     * @param array<int, Solution> $solutions
+     * @param array<int|string, Span> $spans
+     * @param array<int|string, SpanEvent> $spanEvents
+     */
+    public function __construct(
+        protected Backtrace $stacktrace,
+        protected string $exceptionClass,
+        protected string $message,
+        protected array $attributes = [],
+        protected array $solutions = [],
+        protected ?Throwable $throwable = null,
+        protected ?string $stage = null,
+        protected ?string $applicationPath = null,
+        protected ?string $applicationVersion = null,
+        protected ?string $languageVersion = null,
+        protected ?string $frameworkVersion = null,
+        protected ?int $openFrameIndex = null,
+        protected ?bool $handled = null,
+        protected array $spans = [],
+        protected array $spanEvents = [],
+        protected ?string $trackingUuid = null,
 
-    protected string $exceptionClass = '';
-
-    protected string $message = '';
-
-    /** @var array<int, array{time: int, name: string, message_level: string, meta_data: array, microtime: float}> */
-    protected array $glows = [];
-
-    /** @var array<int, array<int|string, mixed>> */
-    protected array $solutions = [];
-
-    /** @var array<int, string> */
-    public array $documentationLinks = [];
-
-    protected ContextProvider $context;
-
-    protected ?string $applicationPath = null;
-
-    protected ?string $applicationVersion = null;
-
-    /** @var array<int|string, mixed> */
-    protected array $userProvidedContext = [];
-
-    /** @var array<int|string, mixed> */
-    protected array $exceptionContext = [];
-
-    protected ?Throwable $throwable = null;
-
-    protected string $notifierName = 'Flare Client';
-
-    protected ?string $languageVersion = null;
-
-    protected ?string $frameworkVersion = null;
-
-    protected ?int $openFrameIndex = null;
-
-    protected string $trackingUuid;
-
-    protected ?View $view;
-
-    public static ?string $fakeTrackingUuid = null;
-
-    protected ?bool $handled = null;
-
-    /** @param array<class-string<ArgumentReducer>|ArgumentReducer>|ArgumentReducers|null $argumentReducers */
-    public static function createForThrowable(
-        Throwable $throwable,
-        ContextProvider $context,
-        ?string $applicationPath = null,
-        ?string $version = null,
-        null|array|ArgumentReducers $argumentReducers = null,
-        bool $withStackTraceArguments = true,
-    ): self {
-        $stacktrace = Backtrace::createForThrowable($throwable)
-            ->withArguments($withStackTraceArguments)
-            ->reduceArguments($argumentReducers)
-            ->applicationPath($applicationPath ?? '');
-
-        return (new self())
-            ->setApplicationPath($applicationPath)
-            ->throwable($throwable)
-            ->useContext($context)
-            ->exceptionClass(self::getClassForThrowable($throwable))
-            ->message($throwable->getMessage())
-            ->stackTrace($stacktrace)
-            ->exceptionContext($throwable)
-            ->setApplicationVersion($version);
-    }
-
-    protected static function getClassForThrowable(Throwable $throwable): string
-    {
-        /** @phpstan-ignore-next-line */
-        if ($throwable::class === IgnitionViewException::class || $throwable::class === ViewException::class) {
-            /** @phpstan-ignore-next-line */
-            if ($previous = $throwable->getPrevious()) {
-                return get_class($previous);
-            }
-        }
-
-        return get_class($throwable);
-    }
-
-    /** @param array<class-string<ArgumentReducer>|ArgumentReducer>|ArgumentReducers|null $argumentReducers */
-    public static function createForMessage(
-        string $message,
-        string $logLevel,
-        ContextProvider $context,
-        ?string $applicationPath = null,
-        null|array|ArgumentReducers $argumentReducers = null,
-        bool $withStackTraceArguments = true,
-    ): self {
-        $stacktrace = Backtrace::create()
-            ->withArguments($withStackTraceArguments)
-            ->reduceArguments($argumentReducers)
-            ->applicationPath($applicationPath ?? '');
-
-        return (new self())
-            ->setApplicationPath($applicationPath)
-            ->message($message)
-            ->useContext($context)
-            ->exceptionClass($logLevel)
-            ->stacktrace($stacktrace)
-            ->openFrameIndex($stacktrace->firstApplicationFrameIndex());
-    }
-
-    public function __construct()
-    {
-        $this->trackingUuid = self::$fakeTrackingUuid ?? $this->generateUuid();
+    ) {
     }
 
     public function trackingUuid(): string
@@ -140,184 +49,34 @@ class Report
         return $this->trackingUuid;
     }
 
-    public function exceptionClass(string $exceptionClass): self
-    {
-        $this->exceptionClass = $exceptionClass;
-
-        return $this;
-    }
-
-    public function getExceptionClass(): string
-    {
-        return $this->exceptionClass;
-    }
-
-    public function throwable(Throwable $throwable): self
-    {
-        $this->throwable = $throwable;
-
-        return $this;
-    }
-
-    public function getThrowable(): ?Throwable
-    {
-        return $this->throwable;
-    }
-
-    public function message(string $message): self
-    {
-        $this->message = $message;
-
-        return $this;
-    }
-
-    public function getMessage(): string
-    {
-        return $this->message;
-    }
-
-    public function stacktrace(Backtrace $stacktrace): self
-    {
-        $this->stacktrace = $stacktrace;
-
-        return $this;
-    }
-
-    public function getStacktrace(): Backtrace
-    {
-        return $this->stacktrace;
-    }
-
-    public function notifierName(string $notifierName): self
-    {
-        $this->notifierName = $notifierName;
-
-        return $this;
-    }
-
-    public function languageVersion(string $languageVersion): self
-    {
-        $this->languageVersion = $languageVersion;
-
-        return $this;
-    }
-
-    public function frameworkVersion(string $frameworkVersion): self
-    {
-        $this->frameworkVersion = $frameworkVersion;
-
-        return $this;
-    }
-
-    public function useContext(ContextProvider $request): self
-    {
-        $this->context = $request;
-
-        return $this;
-    }
-
-    public function openFrameIndex(?int $index): self
-    {
-        $this->openFrameIndex = $index;
-
-        return $this;
-    }
-
-    public function setApplicationPath(?string $applicationPath): self
-    {
-        $this->applicationPath = $applicationPath;
-
-        return $this;
-    }
-
-    public function getApplicationPath(): ?string
-    {
-        return $this->applicationPath;
-    }
-
-    public function setApplicationVersion(?string $applicationVersion): self
-    {
-        $this->applicationVersion = $applicationVersion;
-
-        return $this;
-    }
-
-    public function getApplicationVersion(): ?string
-    {
-        return $this->applicationVersion;
-    }
-
-    public function view(?View $view): self
-    {
-        $this->view = $view;
-
-        return $this;
-    }
-
-    public function setGlows(array $glows): self
-    {
-        $this->glows = $glows;
-
-        return $this;
-    }
-
-    public function addSolution(Solution|IgnitionSolution $solution): self
-    {
-        $this->solutions[] = ReportSolution::fromSolution($solution)->toArray();
-
-        return $this;
-    }
-
     /**
-     * @param array<int, string> $documentationLinks
-     *
-     * @return $this
+     * @return array<string, mixed>
      */
-    public function addDocumentationLinks(array $documentationLinks): self
+    public function toArray(): array
     {
-        $this->documentationLinks = $documentationLinks;
-
-        return $this;
-    }
-
-    /**
-     * @param array<int|string, mixed> $userProvidedContext
-     *
-     * @return $this
-     */
-    public function userProvidedContext(array $userProvidedContext): self
-    {
-        $this->userProvidedContext = $userProvidedContext;
-
-        return $this;
-    }
-
-    /**
-     * @return array<int|string, mixed>
-     */
-    public function allContext(): array
-    {
-        $context = $this->context->toArray();
-
-        $context = array_merge_recursive_distinct($context, $this->exceptionContext);
-
-        return array_merge_recursive_distinct($context, $this->userProvidedContext);
-    }
-
-    public function handled(?bool $handled = true): self
-    {
-        $this->handled = $handled;
-
-        return $this;
-    }
-
-    protected function exceptionContext(Throwable $throwable): self
-    {
-        if ($throwable instanceof ProvidesFlareContext) {
-            $this->exceptionContext = $throwable->context();
-        }
-
-        return $this;
+        return [
+            'notifier' => $this->notifierName ?? Telemetry::NAME,
+            'language' => 'PHP',
+            'framework_version' => $this->frameworkVersion,
+            'language_version' => $this->languageVersion ?? phpversion(),
+            'exception_class' => $this->exceptionClass,
+            'seen_at' => $this::getCurrentTime(),
+            'message' => $this->message,
+            'solutions' => array_map(
+                fn (Solution $solution) => ReportSolution::fromSolution($solution)->toArray(),
+                $this->solutions,
+            ),
+            'stacktrace' => $this->stracktraceAsArray(),
+            'stage' => $this->stage,
+            'open_frame_index' => $this->openFrameIndex,
+            'application_path' => $this->applicationPath,
+            'application_version' => $this->applicationVersion,
+            'tracking_uuid' => $this->trackingUuid,
+            'handled' => $this->handled,
+            'attributes' => $this->attributes,
+            'spans' => array_map(fn (Span $span) => $this->spanAsArray($span), $this->spans),
+            'span_events' => array_map(fn (SpanEvent $spanEvent) => $this->spanEventAsArray($spanEvent), $this->spanEvents),
+        ];
     }
 
     /**
@@ -363,48 +122,22 @@ class Report
         return array_values(array_slice($restructuredFrames, $firstErrorFrameIndex));
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function toArray(): array
+    protected function spanAsArray(Span $span): array
     {
         return [
-            'notifier' => $this->notifierName ?? 'Flare Client',
-            'language' => 'PHP',
-            'framework_version' => $this->frameworkVersion,
-            'language_version' => $this->languageVersion ?? phpversion(),
-            'exception_class' => $this->exceptionClass,
-            'seen_at' => (int) ($this::getCurrentTime() / 1000), // Old flare format doesn't use microseconds,
-            'message' => $this->message,
-            'glows' => $this->glows,
-            'solutions' => $this->solutions,
-            'documentation_links' => $this->documentationLinks,
-            'stacktrace' => $this->stracktraceAsArray(),
-            'context' => $this->allContext(),
-            'stage' => $this->stage,
-            'message_level' => $this->messageLevel,
-            'open_frame_index' => $this->openFrameIndex,
-            'application_path' => $this->applicationPath,
-            'application_version' => $this->applicationVersion,
-            'tracking_uuid' => $this->trackingUuid,
-            'handled' => $this->handled,
+            'name' => $span->name,
+            'start' => $span->startUs,
+            'end' => $span->endUs,
+            'attributes' => $span->attributes,
         ];
     }
 
-    /*
-     * Found on https://stackoverflow.com/questions/2040240/php-function-to-generate-v4-uuid/15875555#15875555
-     */
-    protected function generateUuid(): string
+    protected function spanEventAsArray(SpanEvent $spanEvent): array
     {
-        // Generate 16 bytes (128 bits) of random data or use the data passed into the function.
-        $data = random_bytes(16);
-
-        // Set version to 0100
-        $data[6] = chr(ord($data[6]) & 0x0f | 0x40);
-        // Set bits 6-7 to 10
-        $data[8] = chr(ord($data[8]) & 0x3f | 0x80);
-
-        // Output the 36 character UUID.
-        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
+        return [
+            'name' => $spanEvent->name,
+            'time' => $spanEvent->timeUs,
+            'attributes' => $spanEvent->attributes,
+        ];
     }
 }

@@ -2,8 +2,8 @@
 
 namespace Spatie\FlareClient\Concerns;
 
-use Spatie\FlareClient\Performance\Spans\Span;
-use Spatie\FlareClient\Performance\Tracer;
+use Spatie\FlareClient\Spans\Span;
+use Spatie\FlareClient\Tracer;
 
 /**
  * @template T of Span
@@ -14,23 +14,29 @@ trait RecordsSpans
     /** @var T[] */
     protected array $spans = [];
 
-    protected ?int $maxEntries = null;
-
     protected bool $traceSpans = true;
+
+    protected bool $reportSpans = true;
+
+    protected ?int $maxReportedSpans = null;
 
     /**
      * @param T $span
      */
     protected function persistSpan(mixed $span): void
     {
-        $this->spans[] = $span;
-
-        if ($this->shouldTraceSpans()) {
+        if ($this->traceSpans && $this->tracer->isSamping()) {
             $this->tracer->addSpan($span);
         }
 
-        if ($this->maxEntries && count($this->spans) > $this->maxEntries) {
-            $this->removeOldestSpan();
+        if($this->reportSpans === false) {
+            return;
+        }
+
+        $this->spans[] = $span;
+
+        if ($this->maxReportedSpans && count($this->spans) > $this->maxReportedSpans) {
+            array_shift($this->spans);
         }
     }
 
@@ -43,19 +49,5 @@ trait RecordsSpans
     public function reset(): void
     {
         $this->spans = [];
-    }
-
-    protected function shouldTraceSpans(): bool
-    {
-        return $this->traceSpans && $this->tracer->isSamping();
-    }
-
-    protected function removeOldestSpan(): void
-    {
-        $span = array_shift($this->spans);
-
-        if ($this->shouldTraceSpans()) {
-            unset($this->tracer[$span->traceId][$span->spanId]);
-        }
     }
 }

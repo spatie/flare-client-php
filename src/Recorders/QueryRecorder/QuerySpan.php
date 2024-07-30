@@ -3,21 +3,14 @@
 namespace Spatie\FlareClient\Recorders\QueryRecorder;
 
 use Spatie\FlareClient\Contracts\FlareSpanType;
-use Spatie\FlareClient\Performance\Enums\SpanType;
-use Spatie\FlareClient\Performance\Spans\Span;
-use Spatie\FlareClient\Performance\Support\SpanId;
+use Spatie\FlareClient\Enums\SpanType;
+use Spatie\FlareClient\Spans\Span;
+use Spatie\FlareClient\Support\SpanId;
 
 class QuerySpan extends Span
 {
     /**
-     * @param string $traceId
-     * @param string $parentSpanId
-     * @param string $sql
-     * @param int $duration
      * @param array<int|string, mixed>|null $bindings
-     * @param string|null $databaseName
-     * @param string|null $driverName
-     * @param SpanType $spanType
      */
     public function __construct(
         string $traceId,

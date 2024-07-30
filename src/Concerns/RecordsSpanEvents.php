@@ -2,8 +2,8 @@
 
 namespace Spatie\FlareClient\Concerns;
 
-use Spatie\FlareClient\Performance\Spans\SpanEvent;
-use Spatie\FlareClient\Performance\Tracer;
+use Spatie\FlareClient\Spans\SpanEvent;
+use Spatie\FlareClient\Tracer;
 
 /**
  * @template T of SpanEvent
@@ -14,10 +14,13 @@ trait RecordsSpanEvents
     /** @var array<T> */
     protected array $spanEvents = [];
 
-    protected ?int $maxEntries = null;
-
     protected bool $traceSpanEvents = true;
 
+    protected bool $reportSpanEvents = true;
+
+    protected ?int $maxReportedSpanEvents = null;
+
+    /** @return array<T> */
     public function getSpanEvents(): array
     {
         return $this->spanEvents;
@@ -33,29 +36,37 @@ trait RecordsSpanEvents
      */
     protected function persistSpanEvent(mixed $spanEvent): void
     {
-        if ($this->shouldTraceSpanEvents()) {
-            $span = $this->tracer->currentSpan();
+        if ($this->traceSpanEvents
+            && $this->tracer->isSamping()
+            && $this->tracer->currentSpanId()
+        ) {
+            $this->traceSpanEvent($spanEvent);
+        }
 
-            $span->addEvent($spanEvent);
+        if ($this->reportSpanEvents === false) {
+            return;
         }
 
         $this->spanEvents[] = $spanEvent;
 
-        if ($this->maxEntries && count($this->spanEvents) > $this->maxEntries) {
-            $this->removeOldestSpanEvent();
+        if ($this->maxReportedSpanEvents && count($this->spanEvents) > $this->maxReportedSpanEvents) {
+            array_shift($this->spanEvents);
         }
     }
 
-
-    protected function shouldTraceSpanEvents(): bool
+    /**
+     * @param T $spanEvent
+     */
+    protected function traceSpanEvent(mixed $spanEvent): void
     {
-        return $this->traceSpanEvents
-            && $this->tracer->isSamping()
-            && $this->tracer->currentSpanId();
-    }
+        $span = $this->tracer->currentSpan();
 
-    protected function removeOldestSpanEvent(): void
-    {
-        array_shift($this->spanEvents);
+        if (count($span->events) >= $this->tracer->limits->maxSpanEventsPerSpan) {
+            $span->droppedEventsCount++;
+
+            return;
+        }
+
+        $span->addEvent($spanEvent);
     }
 }

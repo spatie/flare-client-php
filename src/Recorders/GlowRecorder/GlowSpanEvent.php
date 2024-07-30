@@ -4,8 +4,8 @@ namespace Spatie\FlareClient\Recorders\GlowRecorder;
 
 use Spatie\FlareClient\Contracts\FlareSpanEventType;
 use Spatie\FlareClient\Enums\MessageLevels;
-use Spatie\FlareClient\Performance\Enums\SpanEventType;
-use Spatie\FlareClient\Performance\Spans\SpanEvent;
+use Spatie\FlareClient\Enums\SpanEventType;
+use Spatie\FlareClient\Spans\SpanEvent;
 
 class GlowSpanEvent extends SpanEvent
 {
@@ -28,20 +28,6 @@ class GlowSpanEvent extends SpanEvent
             timeUs: $time ?? static::getCurrentTime(),
             attributes: $this->collectAttributes(),
         );
-    }
-
-    /**
-     * @return array{time: int, name: string, message_level: string, meta_data: array, microtime: float}
-     */
-    public function toOriginalFlareFormat(): array
-    {
-        return [
-            'time' => (int) ($this->timeUs / 1000),
-            'name' => $this->glowName,
-            'message_level' => $this->level,
-            'meta_data' => $this->context,
-            'microtime' => (int) ($this->timeUs / 1000),
-        ];
     }
 
     protected function collectAttributes(): array

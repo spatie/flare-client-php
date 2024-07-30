@@ -3,25 +3,32 @@
 namespace Spatie\FlareClient;
 
 use Exception;
-use Spatie\FlareClient\Http\Client;
+use Spatie\FlareClient\Senders\CurlSender;
+use Spatie\FlareClient\Senders\Sender;
 use Spatie\FlareClient\Truncation\ReportTrimmer;
 
 class Api
 {
     /** @var array<int, Report> */
-    protected array $queue = [];
+    protected array $reportQueue = [];
+
+    /** @var array<int, array> */
+    protected array $traceQueue = [];
 
     public function __construct(
-        protected Client $client,
+        protected ?string $apiToken = null,
+        protected string $baseUrl = 'https://reporting.flareapp.io/api',
+        protected int $timeout = 10,
+        protected Sender $sender = new CurlSender(),
         protected bool $sendReportsImmediately = false,
     ) {
-        register_shutdown_function([$this, 'sendQueuedReports']);
+        register_shutdown_function([$this, 'sendQueue']);
     }
 
-    public function report(Report $report): void
+    public function report(Report $report, bool $immediately = false): void
     {
         try {
-            $this->sendReportsImmediately
+            $immediately || $this->sendReportsImmediately
                 ? $this->sendReportToApi($report)
                 : $this->addReportToQueue($report);
         } catch (Exception $e) {
@@ -29,30 +36,50 @@ class Api
         }
     }
 
-    public function sendTestReport(Report $report): self
+    public function trace(array $trace, bool $immediately = false): void
     {
-        $this->sendReportToApi($report);
-
-        return $this;
-    }
+        try {
+            $immediately || $this->sendReportsImmediately
+                ? $this->sendTraceToApi($trace)
+                : $this->addTraceToQueue($trace);
+        } catch (Exception $e) {
+            //
+        }    }
 
     protected function addReportToQueue(Report $report): self
     {
-        $this->queue[] = $report;
+        $this->reportQueue[] = $report;
 
         return $this;
     }
 
-    public function sendQueuedReports(): void
+    protected function addTraceToQueue(array $trace): self
+    {
+        $this->traceQueue[] = $trace;
+
+        return $this;
+    }
+
+    public function sendQueue(): void
     {
         try {
-            foreach ($this->queue as $report) {
+            foreach ($this->reportQueue as $report) {
                 $this->sendReportToApi($report);
             }
         } catch (Exception $e) {
             //
         } finally {
-            $this->queue = [];
+            $this->reportQueue = [];
+        }
+
+        try {
+            foreach ($this->traceQueue as $trace) {
+                $this->sendTraceToApi($trace);
+            }
+        } catch (Exception $e) {
+            //
+        } finally {
+            $this->reportQueue = [];
         }
     }
 
@@ -60,7 +87,20 @@ class Api
     {
         $payload = $this->truncateReport($report->toArray());
 
-        $this->client->post('reports', $payload);
+        $this->sender->post(
+            "{$this->baseUrl}/reports",
+            $this->apiToken,
+            $payload,
+        );
+    }
+
+    protected function sendTraceToApi(array $trace): void
+    {
+        $this->sender->post(
+            "{$this->baseUrl}/traces",
+            $this->apiToken,
+            $trace,
+        );
     }
 
     /**
@@ -70,6 +110,7 @@ class Api
      */
     protected function truncateReport(array $payload): array
     {
+        // TODO: rewrite these for the new report type
         return (new ReportTrimmer())->trim($payload);
     }
 }

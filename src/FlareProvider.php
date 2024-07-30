@@ -3,22 +3,23 @@
 namespace Spatie\FlareClient;
 
 use Illuminate\Contracts\Container\Container as IlluminateContainer;
+use Illuminate\Support\Arr;
 use Spatie\ErrorSolutions\Contracts\SolutionProviderRepository as SolutionProviderRepositoryContract;
-use Spatie\ErrorSolutions\SolutionProviderRepository;
-use Spatie\FlareClient\Context\BaseContextProviderDetector;
 use Spatie\FlareClient\Context\ContextProviderDetector;
 use Spatie\FlareClient\Contracts\Recorder;
+use Spatie\FlareClient\Exporters\JsonExporter;
+use Spatie\FlareClient\FlareMiddleware\AddRecordedEntries;
 use Spatie\FlareClient\FlareMiddleware\ContainerAwareFlareMiddleware;
 use Spatie\FlareClient\FlareMiddleware\RecordingMiddleware;
 use Spatie\FlareClient\Http\Client;
-use Spatie\FlareClient\Performance\Exporters\JsonExporter;
-use Spatie\FlareClient\Performance\Resources\Resource;
-use Spatie\FlareClient\Performance\Scopes\Scope;
-use Spatie\FlareClient\Performance\Support\BackTracer;
-use Spatie\FlareClient\Performance\Tracer;
+use Spatie\FlareClient\Resources\Resource;
+use Spatie\FlareClient\Sampling\Sampler;
+use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Senders\Sender;
+use Spatie\FlareClient\Support\BackTracer;
 use Spatie\FlareClient\Support\Container;
 use Spatie\FlareClient\Support\PhpStackFrameArgumentsFixer;
+use Spatie\FlareClient\Support\TraceLimits;
 
 class FlareProvider
 {
@@ -32,19 +33,21 @@ class FlareProvider
     {
         $this->container ??= Container::instance();
 
-        $this->container->singleton(Client::class, fn () => $this->config->client ?? new Client(
-            apiToken: $this->config->apiToken,
-            baseUrl: $this->config->baseUrl,
-            timeout: $this->config->timeout,
-            sender: $this->container->get(Sender::class)
+        $this->container->singleton(Sender::class, fn () => new $this->config->sender(
+            ...$this->config->senderConfig
         ));
 
         $this->container->singleton(Api::class, fn () => new Api(
-            client: $this->container->get(Client::class),
+            apiToken: $this->config->apiToken,
+            baseUrl: $this->config->baseUrl,
+            timeout: $this->config->timeout,
+            sender: $this->container->get(Sender::class),
             sendReportsImmediately: $this->config->sendReportsImmediately
         ));
 
-        $this->container->singleton(Sender::class, fn () => new $this->config->sender);
+        $this->container->singleton(Sampler::class, fn () => new $this->config->sampler(
+            ...$this->config->samplerConfig
+        ));
 
         $this->container->singleton(JsonExporter::class, fn () => new JsonExporter());
 
@@ -58,14 +61,13 @@ class FlareProvider
         $this->container->singleton(Scope::class, fn () => Scope::build());
 
         $this->container->singleton(Tracer::class, fn () => new Tracer(
-            client: $this->container->get(Client::class),
+            api: $this->container->get(Api::class),
             exporter: $this->container->get(JsonExporter::class),
             backTracer: $this->container->get(BackTracer::class),
             resource: $this->container->get(Resource::class),
-            scope: $this->container->get(Scope::class)
+            scope: $this->container->get(Scope::class),
+            limits: $this->config->traceLimits ?? TraceLimits::defaults(),
         ));
-
-        $this->container->singleton(ContextProviderDetector::class, fn () => new $this->config->contextProviderDetector);
 
         $this->container->singleton(SolutionProviderRepositoryContract::class, function () {
             /** @var SolutionProviderRepositoryContract $repository */
@@ -76,67 +78,57 @@ class FlareProvider
             return $repository;
         });
 
-        foreach ($this->config->middleware as $middleware) {
-            if ($middleware instanceof ContainerAwareFlareMiddleware) {
-                $middleware->register($this->container);
-            }
-
-            if ($middleware instanceof RecordingMiddleware) {
-                $middleware->setupRecording(
-                    fn (string $recorderClass, callable $recorderInitializer, callable $recorderSetter) => $this->container->singleton(
-                        $recorderClass,
-                        fn () => $recorderInitializer($this->container)
-                    )
-                );
-            }
+        foreach ($this->config->recorders as $recorder => $config) {
+            $this->container->singleton($recorder, fn () => $recorder::initialize($this->container, $config));
         }
 
-        $this->container->singleton(Flare::class, fn () => new Flare(
-            container: $this->container,
-            api: $this->container->get(Api::class),
-            client: $this->container->get(Client::class),
-            tracer: $this->container->get(Tracer::class),
-            applicationPath: $this->config->applicationPath,
-            contextProviderDetector: $this->container->get(ContextProviderDetector::class),
-            middleware: $this->config->middleware,
-            applicationName: $this->config->applicationName,
-            applicationVersion: $this->config->applicationVersion,
-            stage: $this->config->applicationStage,
-            reportErrorLevels: $this->config->reportErrorLevels,
-            filterExceptionsCallable: $this->config->filterExceptionsCallable,
-            filterReportsCallable: $this->config->filterReportsCallable,
-            argumentReducers: $this->config->argumentReducers,
-            withStackFrameArguments: $this->config->withStackFrameArguments,
-        ));
+        foreach ($this->config->middleware as $middleware => $config) {
+            $this->container->singleton($middleware, fn () => $middleware::initialize($this->container, $config));
+        }
+
+        $this->container->singleton(Flare::class, function () {
+            $recorders = array_combine(
+                array_keys($this->config->recorders),
+                array_map(
+                    fn ($recorder) => $this->container->get($recorder),
+                    array_keys($this->config->recorders)
+                )
+            );
+
+            $middleware = array_map(
+                fn ($middleware) => $this->container->get($middleware),
+                array_keys($this->config->middleware)
+            );
+
+            array_unshift($middleware, new AddRecordedEntries($recorders));
+
+            return new Flare(
+                container: $this->container,
+                api: $this->container->get(Api::class),
+                tracer: $this->container->get(Tracer::class),
+                applicationPath: $this->config->applicationPath,
+                middleware: $middleware,
+                recorders: $recorders,
+                applicationName: $this->config->applicationName,
+                applicationVersion: $this->config->applicationVersion,
+                stage: $this->config->applicationStage,
+                reportErrorLevels: $this->config->reportErrorLevels,
+                filterExceptionsCallable: $this->config->filterExceptionsCallable,
+                filterReportsCallable: $this->config->filterReportsCallable,
+                argumentReducers: $this->config->argumentReducers,
+                withStackFrameArguments: $this->config->withStackFrameArguments,
+            );
+        });
 
         if ($this->config->forcePHPStackFrameArgumentsIniSetting) {
             (new PhpStackFrameArgumentsFixer())->enable();
         }
     }
 
-    public function boot(): Flare
+    public function boot(): void
     {
-        $flare = $this->container->get(Flare::class);
-
-        foreach ($this->config->middleware as $middleware) {
-            if ($middleware instanceof ContainerAwareFlareMiddleware) {
-                $middleware->boot($this->container);
-            }
-
-            if ($middleware instanceof RecordingMiddleware) {
-                $middleware->setupRecording(
-                    function (string $recorderClass, callable $recorderInitializer, callable $recorderSetter) {
-                        /** @var Recorder $recorder */
-                        $recorder = $this->container->get($recorderClass);
-
-                        $recorderSetter($recorder);
-
-                        $recorder->start();
-                    }
-                );
-            }
+        foreach ($this->config->recorders as $recorder => $config) {
+            $this->container->get($recorder)->start();
         }
-
-        return $flare;
     }
 }

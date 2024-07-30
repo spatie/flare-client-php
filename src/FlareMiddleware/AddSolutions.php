@@ -5,29 +5,33 @@ namespace Spatie\FlareClient\FlareMiddleware;
 use Closure;
 use Psr\Container\ContainerInterface;
 use Spatie\ErrorSolutions\Contracts\SolutionProviderRepository;
-use Spatie\FlareClient\Report;
+use Spatie\FlareClient\ReportFactory;
 use Spatie\FlareClient\Support\Container;
 
-class AddSolutions implements FlareMiddleware, ContainerAwareFlareMiddleware
+class AddSolutions implements FlareMiddleware
 {
-    protected SolutionProviderRepository $solutionProviderRepository;
-
-    public function handle(Report $report, Closure $next)
+    public static function initialize(ContainerInterface $container, array $config): static
     {
-        if ($throwable = $report->getThrowable()) {
-            $solutions = $this->solutionProviderRepository->getSolutionsForThrowable($throwable);
-
-            foreach ($solutions as $solution) {
-                $report->addSolution($solution);
-            }
-        }
-
-        return $next($report);
+        return new self($container->get(SolutionProviderRepository::class)) ;
     }
 
-    public function register(ContainerInterface|Container $container): void
+    public function __construct(
+        protected SolutionProviderRepository $solutionProviderRepository
+    )
     {
+    }
 
+    public function handle(ReportFactory $report, Closure $next)
+    {
+        if ($report->throwable === null) {
+            return $next($report);
+        }
+
+        $report->addSolutions(
+            ...$this->solutionProviderRepository->getSolutionsForThrowable($report->throwable)
+        );
+
+        return $next($report);
     }
 
     public function boot(ContainerInterface|Container $container): void

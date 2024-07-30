@@ -2,17 +2,21 @@
 
 namespace Spatie\FlareClient\Recorders\DumpRecorder;
 
+use Psr\Container\ContainerInterface;
 use ReflectionMethod;
 use ReflectionProperty;
 use Spatie\Backtrace\Frame;
+use Spatie\FlareClient\Concerns\HasOriginAttributes;
 use Spatie\FlareClient\Concerns\RecordsSpanEvents;
 use Spatie\FlareClient\Contracts\Recorder;
-use Spatie\FlareClient\Performance\Concerns\HasOriginAttributes;
-use Spatie\FlareClient\Performance\Tracer;
+use Spatie\FlareClient\Contracts\SpanEventsRecorder;
+use Spatie\FlareClient\FlareMiddleware\AddDumps;
+use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
+use Spatie\FlareClient\Tracer;
 use Symfony\Component\VarDumper\Cloner\Data;
 use Symfony\Component\VarDumper\VarDumper;
 
-class DumpRecorder implements Recorder
+class DumpRecorder implements SpanEventsRecorder
 {
     use HasOriginAttributes;
 
@@ -21,14 +25,27 @@ class DumpRecorder implements Recorder
 
     protected static MultiDumpHandler $multiDumpHandler;
 
+    public static function initialize(ContainerInterface $container, array $config): static
+    {
+        return new self(
+            tracer: $container->get(Tracer::class),
+            traceDumps: $config['trace_dumps'],
+            reportDumps: $config['report_dumps'],
+            maxReportedDumps: $config['max_reported_dumps'],
+            findDumpOrigins: $config['find_dump_origins'],
+        );
+    }
+
     public function __construct(
         protected Tracer $tracer,
-        ?int $maxDumps,
         bool $traceDumps,
-        protected bool $traceDumpOrigins,
+        bool $reportDumps,
+        ?int $maxReportedDumps,
+        protected bool $findDumpOrigins,
     ) {
-        $this->maxEntries = $maxDumps;
         $this->traceSpanEvents = $traceDumps;
+        $this->reportSpanEvents = $reportDumps;
+        $this->maxReportedSpanEvents = $maxReportedDumps;
     }
 
     public function start(): void
@@ -51,7 +68,7 @@ class DumpRecorder implements Recorder
             htmlDump: (new HtmlDumper())->dump($data),
         );
 
-        if ($this->traceDumpOrigins) {
+        if ($this->findDumpOrigins) {
             $frame = $this->tracer->backTracer->after(function (Frame $frame) {
                 return $frame->class === VarDumper::class && $frame->method === 'dump';
             });
@@ -63,18 +80,6 @@ class DumpRecorder implements Recorder
 
         $this->persistSpanEvent($spanEvent);
     }
-
-    public function getDumps(): array
-    {
-        $dumps = [];
-
-        foreach ($this->spanEvents as $spanEvent) {
-            $dumps[] = $spanEvent->toOriginalFlareFormat();
-        }
-
-        return $dumps;
-    }
-
     /*
      * Only the `VarDumper` knows how to create the orignal HTML or CLI VarDumper.
      * Using reflection and the private VarDumper::register() method we can force it
@@ -83,6 +88,7 @@ class DumpRecorder implements Recorder
      *
      * @throws \ReflectionException
      */
+
     protected function ensureOriginalHandlerExists(): void
     {
         $reflectionProperty = new ReflectionProperty(VarDumper::class, 'handler');
