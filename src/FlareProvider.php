@@ -51,7 +51,9 @@ class FlareProvider
 
         $this->container->singleton(JsonExporter::class, fn () => new JsonExporter());
 
-        $this->container->singleton(BackTracer::class, fn () => new BackTracer());
+        $this->container->singleton(BackTracer::class, fn () => new BackTracer(
+            $this->config->applicationPath
+        ));
 
         $this->container->singleton(Resource::class, fn () => Resource::build(
             $this->config->applicationName,
@@ -106,12 +108,12 @@ class FlareProvider
                 container: $this->container,
                 api: $this->container->get(Api::class),
                 tracer: $this->container->get(Tracer::class),
-                applicationPath: $this->config->applicationPath,
                 middleware: $middleware,
                 recorders: $recorders,
+                applicationPath: $this->config->applicationPath,
                 applicationName: $this->config->applicationName,
                 applicationVersion: $this->config->applicationVersion,
-                stage: $this->config->applicationStage,
+                applicationStage: $this->config->applicationStage,
                 reportErrorLevels: $this->config->reportErrorLevels,
                 filterExceptionsCallable: $this->config->filterExceptionsCallable,
                 filterReportsCallable: $this->config->filterReportsCallable,

@@ -30,7 +30,7 @@ class Report
         protected array $attributes = [],
         protected array $solutions = [],
         protected ?Throwable $throwable = null,
-        protected ?string $stage = null,
+        protected ?string $applicationStage = null,
         protected ?string $applicationPath = null,
         protected ?string $applicationVersion = null,
         protected ?string $languageVersion = null,
@@ -67,15 +67,15 @@ class Report
                 $this->solutions,
             ),
             'stacktrace' => $this->stracktraceAsArray(),
-            'stage' => $this->stage,
+            'application_stage' => $this->applicationStage,
             'open_frame_index' => $this->openFrameIndex,
             'application_path' => $this->applicationPath,
             'application_version' => $this->applicationVersion,
             'tracking_uuid' => $this->trackingUuid,
             'handled' => $this->handled,
             'attributes' => $this->attributes,
-            'spans' => array_map(fn (Span $span) => $this->spanAsArray($span), $this->spans),
-            'span_events' => array_map(fn (SpanEvent $spanEvent) => $this->spanEventAsArray($spanEvent), $this->spanEvents),
+            'spans' => array_map(fn (Span $span) => $span->toReport(), $this->spans),
+            'span_events' => array_map(fn (SpanEvent $spanEvent) => $spanEvent->toReport(), $this->spanEvents),
         ];
     }
 
@@ -120,24 +120,5 @@ class Report
         $restructuredFrames[$firstErrorFrameIndex]->arguments = null; // Remove error arguments
 
         return array_values(array_slice($restructuredFrames, $firstErrorFrameIndex));
-    }
-
-    protected function spanAsArray(Span $span): array
-    {
-        return [
-            'name' => $span->name,
-            'start' => $span->startUs,
-            'end' => $span->endUs,
-            'attributes' => $span->attributes,
-        ];
-    }
-
-    protected function spanEventAsArray(SpanEvent $spanEvent): array
-    {
-        return [
-            'name' => $spanEvent->name,
-            'time' => $spanEvent->timeUs,
-            'attributes' => $spanEvent->attributes,
-        ];
     }
 }

@@ -25,7 +25,7 @@ trait RecordsSpans
      */
     protected function persistSpan(mixed $span): void
     {
-        if ($this->traceSpans && $this->tracer->isSamping()) {
+        if ($this->shouldTraceSpans()) {
             $this->tracer->addSpan($span);
         }
 
@@ -49,5 +49,10 @@ trait RecordsSpans
     public function reset(): void
     {
         $this->spans = [];
+    }
+
+    protected function shouldTraceSpans(): bool
+    {
+        return $this->traceSpans && $this->tracer->isSamping();
     }
 }

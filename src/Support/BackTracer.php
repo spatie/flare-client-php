@@ -8,11 +8,21 @@ use Spatie\Backtrace\Frame;
 
 class BackTracer
 {
+    public function __construct(
+        protected ?string $applicationPath,
+    )
+    {
+    }
+
     public function frames(int $limit = null): array
     {
         $backTracer = Backtrace::create()
-            ->applicationPath(realpath(base_path()))
             ->offset(1);
+
+        if($this->applicationPath){
+            // TODO: make it clear in docs this is required to correctly backtrace
+            $backTracer->applicationPath($this->applicationPath);
+        }
 
         if ($limit) {
             $backTracer->limit($limit);

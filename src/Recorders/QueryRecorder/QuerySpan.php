@@ -2,6 +2,7 @@
 
 namespace Spatie\FlareClient\Recorders\QueryRecorder;
 
+use Spatie\FlareClient\Concerns\HasOriginAttributes;
 use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Spans\Span;
@@ -9,6 +10,8 @@ use Spatie\FlareClient\Support\SpanId;
 
 class QuerySpan extends Span
 {
+    use HasOriginAttributes;
+
     /**
      * @param array<int|string, mixed>|null $bindings
      */
@@ -33,16 +36,6 @@ class QuerySpan extends Span
             endUs: $end,
             attributes: array_filter($this->collectAttributes()),
         );
-    }
-
-    public function toOriginalFlareFormat(): array
-    {
-        return [
-            'sql' => $this->sql,
-            'time' => (int) ($this->duration / 1000),
-            'bindings' => $this->bindings,
-            'microtime' => (int) ($this->endUs / 1000),
-        ];
     }
 
     protected function collectAttributes(): array

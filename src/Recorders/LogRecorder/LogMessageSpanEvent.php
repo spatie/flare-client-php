@@ -25,16 +25,6 @@ class LogMessageSpanEvent extends SpanEvent
         );
     }
 
-    public function toOriginalFlareFormat(): array
-    {
-        return [
-            'message' => $this->message,
-            'level' => $this->level,
-            'context' => $this->context,
-            'microtime' => (int )($this->timeUs / 1000),
-        ];
-    }
-
     protected function collectAttributes(): array
     {
         return [

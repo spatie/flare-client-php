@@ -10,11 +10,16 @@ use Psr\Container\ContainerInterface;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\Backtrace\Arguments\Reducers\ArgumentReducer;
 use Spatie\FlareClient\Concerns\HasUserProvidedContext;
+use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Contracts\Recorder;
 use Spatie\FlareClient\Enums\MessageLevels;
+use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowSpanEvent;
+use Spatie\FlareClient\Recorders\LogRecorder\LogMessageSpanEvent;
+use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
+use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
 use Spatie\FlareClient\Support\Container;
 use Throwable;
 
@@ -37,12 +42,12 @@ class Flare
         protected ContainerInterface $container,
         protected Api $api,
         public readonly Tracer $tracer,
-        protected ?string $applicationPath,
         protected array $middleware,
         protected array $recorders,
+        protected ?string $applicationPath,
         protected string $applicationName,
         protected ?string $applicationVersion,
-        protected ?string $stage,
+        protected ?string $applicationStage,
         protected ?int $reportErrorLevels,
         protected null|Closure $filterExceptionsCallable,
         protected null|Closure $filterReportsCallable,
@@ -111,13 +116,67 @@ class Flare
         string $messageLevel = MessageLevels::INFO,
         array $metaData = []
     ): self {
-        $recorder = $this->recorders[GlowRecorder::class] ??= null;
+        /** @var GlowRecorder $recorder */
+        $recorder = $this->recorders[GlowRecorder::class] ?? null;
 
         if ($recorder === null) {
             return $this;
         }
 
-        $recorder->record(new GlowSpanEvent($name, $messageLevel, $metaData));
+        $recorder->record($name, $messageLevel, $metaData);
+
+        return $this;
+    }
+
+    /**
+     * @param string $name
+     * @param string $messageLevel
+     * @param array<int, mixed> $metaData
+     *
+     * @return $this
+     */
+    public function log(
+        string $message,
+        string $level = MessageLevels::INFO,
+        array $context = []
+    ): self {
+        /** @var LogRecorder $recorder */
+        $recorder = $this->recorders[LogRecorder::class] ?? null;
+
+        if ($recorder === null) {
+            return $this;
+        }
+
+        $recorder->record($message, $level, $context);
+
+        return $this;
+    }
+
+    public function query(
+        string $sql,
+        int $duration,
+        ?array $bindings = null,
+        ?string $databaseName = null,
+        ?string $driverName = null,
+        FlareSpanType $spanType = SpanType::Query,
+        ?array $attributes = null,
+    ): self {
+        /** @var QueryRecorder $recorder */
+        $recorder = $this->recorders[QueryRecorder::class] ?? null;
+
+        if ($recorder === null) {
+            return $this;
+        }
+
+        $recorder->record(
+            sql: $sql,
+            duration: $duration,
+            bindings: $bindings,
+            databaseName: $databaseName,
+            driverName: $driverName,
+            spanType: $spanType,
+            attributes: $attributes
+        );
 
         return $this;
     }
@@ -250,13 +309,8 @@ class Flare
 
     public function resetRecorders(): void
     {
-        // TODO: Make sure, we only remove spans for this error
-        // we want to keep spans for performance
-
-        foreach ($this->middleware as $middleware) {
-            if ($middleware instanceof Recorder) {
-                $middleware->reset();
-            }
+        foreach ($this->recorders as $recorder) {
+            $recorder->reset();
         }
     }
 
@@ -268,7 +322,7 @@ class Flare
         ?callable $callback
     ): ReportFactory {
         $factory
-            ->stage($this->stage)
+            ->applicationStage($this->applicationStage)
             ->applicationPath($this->applicationPath)
             ->applicationVersion($this->applicationVersion)
             ->languageVersion(phpversion())

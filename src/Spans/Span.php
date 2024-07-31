@@ -103,7 +103,7 @@ class Span
         return $this;
     }
 
-    public function toArray(): array
+    public function toTrace(): array
     {
         return [
             'traceId' => $this->traceId,
@@ -114,11 +114,21 @@ class Span
             'endTimeUnixNano' => $this->endUs * 1000,
             'attributes' => $this->attributesAsArray(),
             'droppedAttributesCount' => $this->droppedAttributesCount,
-            'events' => array_map(fn (SpanEvent $event) => $event->toArray(), $this->events),
+            'events' => array_map(fn (SpanEvent $event) => $event->toTrace(), $this->events),
             'droppedEventsCount' => $this->droppedEventsCount,
             'links' => [],
             'droppedLinksCount' => 0,
             'status' => $this->status?->toArray() ?? SpanStatus::default(),
+        ];
+    }
+
+    public function toReport(): array
+    {
+        return [
+            'name' => $this->name,
+            'startTimeUnixNano' => $this->startUs * 1000,
+            'endTimeUnixNano' => $this->endUs * 1000,
+            'attributes' => $this->attributes,
         ];
     }
 }

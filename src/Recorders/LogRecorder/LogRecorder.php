@@ -1,6 +1,6 @@
 <?php
 
-namespace Spatie\FlareClient\Recorders\GlowRecorder;
+namespace Spatie\FlareClient\Recorders\LogRecorder;
 
 use Psr\Container\ContainerInterface;
 use Spatie\FlareClient\Concerns\RecordsSpanEvents;
@@ -8,33 +8,31 @@ use Spatie\FlareClient\Contracts\FlareSpanEventType;
 use Spatie\FlareClient\Contracts\SpanEventsRecorder;
 use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Enums\SpanEventType;
-use Spatie\FlareClient\FlareMiddleware\AddGlows;
 use Spatie\FlareClient\Tracer;
 
-class GlowRecorder implements SpanEventsRecorder
+class LogRecorder implements SpanEventsRecorder
 {
-    /**  @use RecordsSpanEvents<GlowSpanEvent> */
     use RecordsSpanEvents;
 
     public static function initialize(ContainerInterface $container, array $config): static
     {
         return new self(
             tracer: $container->get(Tracer::class),
-            traceGlows: $config['trace_glows'],
-            reportGlows: $config['report_glows'],
-            maxReportedGlows: $config['max_reported_glows'],
+            traceLogs: $config['trace_logs'],
+            reportLogs: $config['report_logs'],
+            maxReportedLogs: $config['max_reported_logs'],
         );
     }
 
     public function __construct(
         protected Tracer $tracer,
-        bool $traceGlows,
-        bool $reportGlows,
-        ?int $maxReportedGlows,
+        bool $traceLogs = true,
+        bool $reportLogs = true,
+        ?int $maxReportedLogs = null,
     ) {
-        $this->traceSpanEvents = $traceGlows;
-        $this->reportSpanEvents = $reportGlows;
-        $this->maxReportedSpanEvents = $maxReportedGlows;
+        $this->traceSpanEvents = $traceLogs;
+        $this->reportSpanEvents = $reportLogs;
+        $this->maxReportedSpanEvents = $maxReportedLogs;
     }
 
     public function start(): void
@@ -43,15 +41,15 @@ class GlowRecorder implements SpanEventsRecorder
     }
 
     public function record(
-        string $name,
+        ?string $message,
         string $level = MessageLevels::INFO,
         array $context = [],
         ?int $time = null,
-        FlareSpanEventType $spanEventType = SpanEventType::Glow,
+        FlareSpanEventType $spanEventType = SpanEventType::Log,
         ?array $attributes = null,
-    ): GlowSpanEvent {
-        $spanEvent = new GlowSpanEvent(
-            name: $name,
+    ): LogMessageSpanEvent {
+        $spanEvent = new LogMessageSpanEvent(
+            message: $message,
             level: $level,
             context: $context,
             time: $time,
@@ -59,7 +57,7 @@ class GlowRecorder implements SpanEventsRecorder
         );
 
         if ($attributes) {
-            $spanEvent->setAttributes($attributes);
+            $spanEvent->addAttributes($attributes);
         }
 
         $this->persistSpanEvent($spanEvent);

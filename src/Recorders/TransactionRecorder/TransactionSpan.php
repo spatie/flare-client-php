@@ -2,6 +2,7 @@
 
 namespace Spatie\FlareClient\Recorders\TransactionRecorder;
 
+use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Support\SpanId;
@@ -11,6 +12,7 @@ class TransactionSpan extends Span
     public function __construct(
         string $traceId,
         ?string $parentSpanId,
+        public FlareSpanType $spanType = SpanType::Transaction,
     ) {
         parent::__construct(
             traceId: $traceId,
@@ -26,7 +28,7 @@ class TransactionSpan extends Span
     protected function collectAttributes(): array
     {
         return [
-            'flare.span_type' => SpanType::Transaction,
+            'flare.span_type' => $this->spanType,
         ];
     }
 }

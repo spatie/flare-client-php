@@ -32,7 +32,7 @@ class DumpRecorder implements SpanEventsRecorder
             traceDumps: $config['trace_dumps'],
             reportDumps: $config['report_dumps'],
             maxReportedDumps: $config['max_reported_dumps'],
-            findDumpOrigins: $config['find_dump_origins'],
+            findDumpOrigin: $config['find_dump_origin'],
         );
     }
 
@@ -41,7 +41,7 @@ class DumpRecorder implements SpanEventsRecorder
         bool $traceDumps,
         bool $reportDumps,
         ?int $maxReportedDumps,
-        protected bool $findDumpOrigins,
+        protected bool $findDumpOrigin,
     ) {
         $this->traceSpanEvents = $traceDumps;
         $this->reportSpanEvents = $reportDumps;
@@ -62,13 +62,13 @@ class DumpRecorder implements SpanEventsRecorder
         static::$multiDumpHandler = $multiDumpHandler;
     }
 
-    public function record(Data $data): void
+    public function record(Data $data): DumpSpanEvent
     {
         $spanEvent = new DumpSpanEvent(
             htmlDump: (new HtmlDumper())->dump($data),
         );
 
-        if ($this->findDumpOrigins) {
+        if ($this->findDumpOrigin) {
             $frame = $this->tracer->backTracer->after(function (Frame $frame) {
                 return $frame->class === VarDumper::class && $frame->method === 'dump';
             });
@@ -79,6 +79,8 @@ class DumpRecorder implements SpanEventsRecorder
         }
 
         $this->persistSpanEvent($spanEvent);
+
+        return $spanEvent;
     }
     /*
      * Only the `VarDumper` knows how to create the orignal HTML or CLI VarDumper.

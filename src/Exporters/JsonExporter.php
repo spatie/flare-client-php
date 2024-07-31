@@ -21,7 +21,7 @@ class JsonExporter
 
         foreach ($traces as $spans) {
             foreach ($spans as $span) {
-                $flattenedTraces[] = $span->toArray();
+                $flattenedTraces[] = $span->toTrace();
             }
         }
 

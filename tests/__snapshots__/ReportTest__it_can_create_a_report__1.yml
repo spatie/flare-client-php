@@ -7,7 +7,7 @@ seen_at: 1546305825000
 message: 'this is an exception'
 solutions: {  }
 stacktrace: {  }
-stage: null
+application_stage: null
 open_frame_index: null
 application_path: null
 application_version: null

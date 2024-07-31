@@ -4,12 +4,14 @@ use PHPUnit\Framework\Exception;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Enums\SpanEventType;
+use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\ReportFactory;
 use Spatie\FlareClient\Tests\Concerns\MatchesReportSnapshots;
 use Spatie\FlareClient\Tests\Mocks\FakeSender;
 use Spatie\FlareClient\Tests\TestClasses\ExceptionWithContext;
 use Spatie\FlareClient\Tests\TestClasses\TraceArguments;
+use Spatie\FlareClient\Time\Duration;
 
 uses(MatchesReportSnapshots::class);
 
@@ -77,12 +79,12 @@ test('callbacks can modify the report', function () {
 
     $flare->report($throwable, function (ReportFactory $report) {
         $report->context('my key', 'new value');
-        $report->stage('development');
+        $report->applicationStage('development');
     });
 
     FakeSender::instance()->assertLastRequestAttribute('context.user', ['my key' => 'new value']);
 
-    expect(FakeSender::instance()->getLastPayload()['stage'])->toBe('development');
+    expect(FakeSender::instance()->getLastPayload()['application_stage'])->toBe('development');
 });
 
 it('can censor request data', function () {
@@ -155,9 +157,8 @@ it('can set stages', function () {
 
     reportException();
 
-    expect(FakeSender::instance()->getLastPayload()['stage'])->toBe('production');
+    expect(FakeSender::instance()->getLastPayload()['application_stage'])->toBe('production');
 });
-
 
 it('can add glows', function () {
     $flare = setupFlare(fn (FlareConfig $config) => $config->addGlows());
@@ -167,6 +168,8 @@ it('can add glows', function () {
         MessageLevels::INFO,
         ['my key' => 'my value']
     );
+
+    useTime('2019-01-01 12:34:57'); // One second later 1546346097000000
 
     $flare->glow(
         'another glow',
@@ -187,7 +190,7 @@ it('can add glows', function () {
                 'glow.level' => 'info',
                 'glow.context' => ['my key' => 'my value'],
             ],
-            'time' => 1546346096000,
+            'timeUnixNano' => 1546346096000000,
         ],
         [
             'name' => 'Glow - another glow',
@@ -197,9 +200,104 @@ it('can add glows', function () {
                 'glow.level' => 'error',
                 'glow.context' => ['another key' => 'another value'],
             ],
-            'time' => 1546346096000,
+            'timeUnixNano' => 1546346097000000,
         ],
     ], $payload['span_events']);
+});
+
+it('can add logs', function () {
+    $flare = setupFlare(fn (FlareConfig $config) => $config->addLogs());
+
+    $flare->log(
+        'my log',
+        MessageLevels::INFO,
+        ['my key' => 'my value']
+    );
+
+    useTime('2019-01-01 12:34:57'); // One second later 1546346097000000
+
+    $flare->log(
+        'another log',
+        MessageLevels::ERROR,
+        ['another key' => 'another value']
+    );
+
+    reportException();
+
+    $payload = FakeSender::instance()->getLastPayload();
+
+    $this->assertEquals([
+        [
+            'name' => 'Log entry',
+            'attributes' => [
+                'flare.span_event_type' => SpanEventType::Log,
+                'log.message' => 'my log',
+                'log.level' => 'info',
+                'log.context' => ['my key' => 'my value'],
+            ],
+            'timeUnixNano' => 1546346096000000,
+        ],
+        [
+            'name' => 'Log entry',
+            'attributes' => [
+                'flare.span_event_type' => SpanEventType::Log,
+                'log.message' => 'another log',
+                'log.level' => 'error',
+                'log.context' => ['another key' => 'another value'],
+            ],
+            'timeUnixNano' => 1546346097000000,
+        ],
+    ], $payload['span_events']);
+});
+
+it('can add queries', function () {
+    $flare = setupFlare(fn (FlareConfig $config) => $config->addQueries());
+
+    $flare->query(
+        'select * from users where id = ?',
+        Duration::milliseconds(250),
+        ['id' => 1],
+        'users',
+        'mysql',
+    );
+
+    useTime('2019-01-01 12:34:57'); // One second later 1546346097000000
+
+    $flare->query(
+        'select * from users where id = ?',
+        Duration::milliseconds(125),
+        ['id' => 2],
+        'users',
+        'mysql',
+    );
+
+    reportException();
+
+    $payload = FakeSender::instance()->getLastPayload();
+
+    expect($payload['spans'])->toHaveCount(2);
+
+    expect($payload['spans'][0])
+        ->toHaveKey('name', 'Query - select * from users where id = ?')
+        ->toHaveKey('startTimeUnixNano', 1546346096000000 - Duration::milliseconds(250, asNano: true))
+        ->toHaveKey('endTimeUnixNano', 1546346096000000)
+        ->attributes
+        ->toHaveKey('db.system', 'mysql')
+        ->toHaveKey('db.name', 'users')
+        ->toHaveKey('db.statement', 'select * from users where id = ?')
+        ->toHaveKey('db.sql.bindings', ['id' => 1])
+        ->toHaveKey('flare.span_type', SpanType::Query);
+
+    expect($payload['spans'][1])
+        ->toHaveKey('name', 'Query - select * from users where id = ?')
+        ->toHaveKey('startTimeUnixNano', 1546346097000000 - Duration::milliseconds(125, asNano: true))
+        ->toHaveKey('endTimeUnixNano', 1546346097000000)
+        ->attributes
+        ->toHaveKey('db.system', 'mysql')
+        ->toHaveKey('db.name', 'users')
+        ->toHaveKey('db.statement', 'select * from users where id = ?')
+        ->toHaveKey('db.sql.bindings', ['id' => 2])
+        ->toHaveKey('flare.span_type', SpanType::Query);
 });
 
 test('a version is by default null', function () {
@@ -224,7 +322,7 @@ it('will add the version to the report', function () {
     expect($payload['application_version'])->toEqual('123');
 });
 
-it('will add the php version to the report', function (){
+it('will add the php version to the report', function () {
     setupFlare();
 
     reportException();

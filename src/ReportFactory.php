@@ -30,7 +30,7 @@ class ReportFactory
 
     public bool $withStackTraceArguments = true;
 
-    public ?string $stage = null;
+    public ?string $applicationStage = null;
 
     /** @var array<Span> */
     public array $spans = [];
@@ -69,9 +69,9 @@ class ReportFactory
         return new self(throwable: $throwable);
     }
 
-    public function stage(?string $stage): self
+    public function applicationStage(?string $stage): self
     {
-        $this->stage = $stage;
+        $this->applicationStage = $stage;
 
         return $this;
     }
@@ -189,7 +189,7 @@ class ReportFactory
             attributes: $attributes,
             solutions: $this->solutions,
             throwable: $this->throwable,
-            stage: $this->stage,
+            applicationStage: $this->applicationStage,
             applicationPath: $this->applicationPath,
             applicationVersion: $this->applicationVersion,
             languageVersion: $this->languageVersion,

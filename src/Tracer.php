@@ -72,9 +72,15 @@ class Tracer
         $this->samplingType = SamplingType::Waiting;
     }
 
-    public function currentTraceId(): string
+    public function currentTraceId(): ?string
     {
         return $this->currentTraceId;
+    }
+
+    /** @return array<Span> */
+    public function &currentTrace(): array
+    {
+        return $this->traces[$this->currentTraceId];
     }
 
     public function setCurrentSpanId(?string $id): void

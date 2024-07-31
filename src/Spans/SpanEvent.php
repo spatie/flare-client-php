@@ -36,13 +36,22 @@ class SpanEvent
         );
     }
 
-    public function toArray(): array
+    public function toTrace(): array
     {
         return [
             'name' => $this->name,
             'timeUnixNano' => $this->timeUs * 1000,
             'attributes' => $this->attributesAsArray(),
             'droppedAttributesCount' => $this->droppedAttributesCount,
+        ];
+    }
+
+    public function toReport(): array
+    {
+        return [
+            'name' => $this->name,
+            'timeUnixNano' => $this->timeUs * 1000,
+            'attributes' => $this->attributes,
         ];
     }
 }

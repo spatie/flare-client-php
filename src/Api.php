@@ -110,7 +110,6 @@ class Api
      */
     protected function truncateReport(array $payload): array
     {
-        // TODO: rewrite these for the new report type
         return (new ReportTrimmer())->trim($payload);
     }
 }

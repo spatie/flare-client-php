@@ -16,11 +16,14 @@ use Spatie\FlareClient\FlareMiddleware\AddSolutions;
 use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 use Spatie\FlareClient\Recorders\DumpRecorder\DumpRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
+use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
+use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
 use Spatie\FlareClient\Sampling\AlwaysSampler;
 use Spatie\FlareClient\Sampling\RateSampler;
 use Spatie\FlareClient\Senders\CurlSender;
 use Spatie\FlareClient\Senders\Sender;
 use Spatie\FlareClient\Support\TraceLimits;
+use Spatie\FlareClient\Time\Duration;
 
 class FlareConfig
 {
@@ -40,10 +43,10 @@ class FlareConfig
         public bool $sendReportsImmediately = false,
         public array $middleware = [],
         public array $recorders = [],
-        public ?string $applicationPath = null,
         public ?int $reportErrorLevels = null,
         public ?Closure $filterExceptionsCallable = null,
         public ?Closure $filterReportsCallable = null,
+        public ?string $applicationPath = null,
         public ?string $applicationName = 'My Application',
         public ?string $applicationVersion = null,
         public ?string $applicationStage = null,
@@ -128,6 +131,20 @@ class FlareConfig
         return $this;
     }
 
+    public function addLogs(
+        bool $traceLogs = true,
+        bool $reportLogs = true,
+        ?int $maxReportedLogs = 10,
+    ): static {
+        $this->recorders[LogRecorder::class] = [
+            'trace_logs' => $traceLogs,
+            'report_logs' => $reportLogs,
+            'max_reported_logs' => $maxReportedLogs,
+        ];
+
+        return $this;
+    }
+
     public function addSolutions(): static
     {
         $this->middleware[AddSolutions::class] = [];
@@ -139,13 +156,33 @@ class FlareConfig
         bool $traceDumps = true,
         bool $reportDumps = true,
         ?int $maxReportedDumps = 25,
-        bool $findDumpOrigins = true,
+        bool $findDumpOrigin = true,
     ): static {
         $this->recorders[DumpRecorder::class] = [
             'trace_dumps' => $traceDumps,
             'report_dumps' => $reportDumps,
             'max_reported_dumps' => $maxReportedDumps,
-            'find_dump_origins' => $findDumpOrigins,
+            'find_dump_origin' => $findDumpOrigin,
+        ];
+
+        return $this;
+    }
+
+    public function addQueries(
+        bool $traceQueries = true,
+        bool $reportQueries = true,
+        ?int $maxReportedQueries = 100,
+        bool $includeBindings = true,
+        bool $findQueryOrigin = true,
+        ?int $findQueryOriginThreshold = 300_000
+    ): static {
+        $this->recorders[QueryRecorder::class] = [
+            'trace_queries' => $traceQueries,
+            'report_queries' => $reportQueries,
+            'max_reported_queries' => $maxReportedQueries,
+            'include_bindings' => $includeBindings,
+            'find_query_origin' => $findQueryOrigin,
+            'find_query_origin_threshold' => $findQueryOriginThreshold,
         ];
 
         return $this;
@@ -177,6 +214,13 @@ class FlareConfig
     public function applicationStage(string|Closure $stage): static
     {
         $this->applicationStage = is_callable($stage) ? $stage() : $stage;
+
+        return $this;
+    }
+
+    public function applicationPath(string $applicationPath): static
+    {
+        $this->applicationPath = $applicationPath;
 
         return $this;
     }

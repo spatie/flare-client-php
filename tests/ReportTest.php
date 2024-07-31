@@ -13,7 +13,7 @@ use Spatie\FlareClient\Tests\TestClasses\FakeTime;
 uses(MatchesReportSnapshots::class);
 
 beforeEach(function () {
-    Report::useTime(new FakeTime('2019-01-01 01:23:45'));
+    useTime('2019-01-01 01:23:45');
 });
 
 it('can create a report', function () {
