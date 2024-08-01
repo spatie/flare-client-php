@@ -2,6 +2,10 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 1.8.0 - 2024-08-01
+
+- Fix issues with symphony request payloads not behaving like they should.
+
 ## 1.7.0 - 2024-06-12
 
 ### What's Changed
