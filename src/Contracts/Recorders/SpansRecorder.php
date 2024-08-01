@@ -1,6 +1,6 @@
 <?php
 
-namespace Spatie\FlareClient\Contracts;
+namespace Spatie\FlareClient\Contracts\Recorders;
 
 use Spatie\FlareClient\Spans\Span;
 

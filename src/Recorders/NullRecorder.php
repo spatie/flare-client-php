@@ -2,9 +2,8 @@
 
 namespace Spatie\FlareClient\Recorders;
 
-use Psr\Container\ContainerInterface;
-use Spatie\FlareClient\Contracts\SpanEventsRecorder;
-use Spatie\FlareClient\Contracts\SpansRecorder;
+use Spatie\FlareClient\Contracts\Recorders\SpanEventsRecorder;
+use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 
 class NullRecorder implements SpansRecorder, SpanEventsRecorder

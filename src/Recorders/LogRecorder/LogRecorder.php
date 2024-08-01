@@ -2,14 +2,12 @@
 
 namespace Spatie\FlareClient\Recorders\LogRecorder;
 
-use Psr\Container\ContainerInterface;
-use Spatie\FlareClient\Concerns\RecordsSpanEvents;
+use Spatie\FlareClient\Concerns\Recorders\RecordsSpanEvents;
 use Spatie\FlareClient\Contracts\FlareSpanEventType;
-use Spatie\FlareClient\Contracts\SpanEventsRecorder;
+use Spatie\FlareClient\Contracts\Recorders\SpanEventsRecorder;
 use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanEventType;
-use Spatie\FlareClient\Tracer;
 
 class LogRecorder implements SpanEventsRecorder
 {

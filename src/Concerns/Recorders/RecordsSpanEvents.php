@@ -1,6 +1,6 @@
 <?php
 
-namespace Spatie\FlareClient\Concerns;
+namespace Spatie\FlareClient\Concerns\Recorders;
 
 use Spatie\FlareClient\Spans\SpanEvent;
 
@@ -26,7 +26,7 @@ trait RecordsSpanEvents
     }
 
     /**
-     * @param T $entry
+     * @param SpanEvent $entry
      */
     protected function traceEntry(mixed $entry): void
     {

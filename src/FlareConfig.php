@@ -8,12 +8,14 @@ use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\Backtrace\Arguments\Reducers\ArgumentReducer;
 use Spatie\ErrorSolutions\Contracts\HasSolutionsForThrowable;
 use Spatie\ErrorSolutions\SolutionProviderRepository;
-use Spatie\FlareClient\Contracts\Recorder;
+use Spatie\FlareClient\Contracts\Recorders\Recorder;
+use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\FlareMiddleware\AddConsoleInformation;
 use Spatie\FlareClient\FlareMiddleware\AddGitInformation;
 use Spatie\FlareClient\FlareMiddleware\AddRequestInformation;
 use Spatie\FlareClient\FlareMiddleware\AddSolutions;
 use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
+use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\DumpRecorder\DumpRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
 use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
@@ -121,6 +123,23 @@ class FlareConfig
         return $this;
     }
 
+    public function cacheEvents(
+        bool $trace = true,
+        bool $report = true,
+        ?int $maxReported = 100,
+        array $events = [SpanEventType::CacheHit, SpanEventType::CacheMiss, SpanEventType::CacheKeyWritten, SpanEventType::CacheKeyForgotten],
+        string $recorder = CacheRecorder::class,
+    ) {
+        $this->recorders[$recorder] = [
+            'trace' => $trace,
+            'report' => $report,
+            'max_reported' => $maxReported,
+            'events' => $events,
+        ];
+
+        return $this;
+    }
+
     public function glows(
         bool $trace = true,
         bool $report = true,
@@ -199,10 +218,14 @@ class FlareConfig
 
     public function transactions(
         bool $trace = true,
+        bool $report = true,
+        ?int $maxReported = 100,
         string $recorder = TransactionRecorder::class
     ): static {
         $this->recorders[$recorder] = [
             'trace' => $trace,
+            'report' => $report,
+            'max_reported' => $maxReported,
         ];
 
         return $this;

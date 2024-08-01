@@ -3,11 +3,9 @@
 namespace Spatie\FlareClient\FlareMiddleware;
 
 use Closure;
-use Psr\Container\ContainerInterface;
-use Spatie\FlareClient\Concerns\RecordsSpanEvents;
-use Spatie\FlareClient\Contracts\Recorder;
-use Spatie\FlareClient\Contracts\SpanEventsRecorder;
-use Spatie\FlareClient\Contracts\SpansRecorder;
+use Spatie\FlareClient\Contracts\Recorders\Recorder;
+use Spatie\FlareClient\Contracts\Recorders\SpanEventsRecorder;
+use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\ReportFactory;
 
 class AddRecordedEntries implements FlareMiddleware

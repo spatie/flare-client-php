@@ -5,7 +5,7 @@ namespace Spatie\FlareClient;
 use Illuminate\Contracts\Container\Container as IlluminateContainer;
 use Spatie\ErrorSolutions\Contracts\SolutionProviderRepository as SolutionProviderRepositoryContract;
 use Spatie\FlareClient\Context\ContextProviderDetector;
-use Spatie\FlareClient\Contracts\Recorder;
+use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Exporters\JsonExporter;
 use Spatie\FlareClient\FlareMiddleware\AddRecordedEntries;
 use Spatie\FlareClient\FlareMiddleware\ContainerAwareFlareMiddleware;

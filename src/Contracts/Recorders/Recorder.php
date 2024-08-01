@@ -1,8 +1,7 @@
 <?php
 
-namespace Spatie\FlareClient\Contracts;
+namespace Spatie\FlareClient\Contracts\Recorders;
 
-use Psr\Container\ContainerInterface;
 use Spatie\FlareClient\Enums\RecorderType;
 
 interface Recorder

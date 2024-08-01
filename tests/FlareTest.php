@@ -160,6 +160,66 @@ it('can set stages', function () {
     expect(FakeSender::instance()->getLastPayload()['application_stage'])->toBe('production');
 });
 
+it('can add cache events', function (){
+    $flare = setupFlare(fn (FlareConfig $config) => $config->cacheEvents());
+
+    $flare->cache()->recordHit('key', 'store');
+
+    useTime('2019-01-01 12:34:57'); // One second later 1546346097000000
+
+    $flare->cache()->recordMiss('key', 'store');
+
+    useTime('2019-01-01 12:34:58'); // One second later 1546346098000000
+
+    $flare->cache()->recordKeyWritten('key', 'store');
+
+    useTime('2019-01-01 12:34:59'); // One second later 1546346099000000
+
+    $flare->cache()->recordKeyForgotten('key', 'store');
+
+    reportException();
+
+    $payload = FakeSender::instance()->getLastPayload();
+
+    expect($payload['span_events'])->toHaveCount(4);
+
+    expect($payload['span_events'][0])
+        ->toHaveKey('name', 'Cache hit - key')
+        ->toHaveKey('timeUnixNano', 1546346096000000)
+        ->attributes
+        ->toHaveCount(3)
+        ->toHaveKey('cache.key', 'key')
+        ->toHaveKey('cache.store', 'store')
+        ->toHaveKey('flare.span_event_type', SpanEventType::CacheHit);
+
+    expect($payload['span_events'][1])
+        ->toHaveKey('name', 'Cache miss - key')
+        ->toHaveKey('timeUnixNano', 1546346097000000)
+        ->attributes
+        ->toHaveCount(3)
+        ->toHaveKey('cache.key', 'key')
+        ->toHaveKey('cache.store', 'store')
+        ->toHaveKey('flare.span_event_type', SpanEventType::CacheMiss);
+
+    expect($payload['span_events'][2])
+        ->toHaveKey('name', 'Cache key written - key')
+        ->toHaveKey('timeUnixNano', 1546346098000000)
+        ->attributes
+        ->toHaveCount(3)
+        ->toHaveKey('cache.key', 'key')
+        ->toHaveKey('cache.store', 'store')
+        ->toHaveKey('flare.span_event_type', SpanEventType::CacheKeyWritten);
+
+    expect($payload['span_events'][3])
+        ->toHaveKey('name', 'Cache key forgotten - key')
+        ->toHaveKey('timeUnixNano', 1546346099000000)
+        ->attributes
+        ->toHaveCount(3)
+        ->toHaveKey('cache.key', 'key')
+        ->toHaveKey('cache.store', 'store')
+        ->toHaveKey('flare.span_event_type', SpanEventType::CacheKeyForgotten);
+});
+
 it('can add glows', function () {
     $flare = setupFlare(fn (FlareConfig $config) => $config->glows());
 
@@ -316,26 +376,34 @@ it('can begin and commit transactions', function (){
     expect($payload['spans'])->toHaveCount(1);
 
     expect($payload['spans'][0])
-        ->toHaveKey('name', 'Query - select * from users where id = ?')
-        ->toHaveKey('startTimeUnixNano', 1546346096000000 - Duration::milliseconds(250, asNano: true))
-        ->toHaveKey('endTimeUnixNano', 1546346096000000)
-        ->attributes
-        ->toHaveKey('db.system', 'mysql')
-        ->toHaveKey('db.name', 'users')
-        ->toHaveKey('db.statement', 'select * from users where id = ?')
-        ->toHaveKey('db.sql.bindings', ['id' => 1])
-        ->toHaveKey('flare.span_type', SpanType::Query);
-
-    expect($payload['spans'][1])
-        ->toHaveKey('name', 'Query - select * from users where id = ?')
-        ->toHaveKey('startTimeUnixNano', 1546346097000000 - Duration::milliseconds(125, asNano: true))
+        ->toHaveKey('name', 'DB Transaction')
+        ->toHaveKey('startTimeUnixNano', 1546346096000000)
         ->toHaveKey('endTimeUnixNano', 1546346097000000)
         ->attributes
-        ->toHaveKey('db.system', 'mysql')
-        ->toHaveKey('db.name', 'users')
-        ->toHaveKey('db.statement', 'select * from users where id = ?')
-        ->toHaveKey('db.sql.bindings', ['id' => 2])
-        ->toHaveKey('flare.span_type', SpanType::Query);
+        ->toHaveKey('flare.span_type', SpanType::Transaction);
+});
+
+it('can begin and rollback transactions', function (){
+    $flare = setupFlare(fn (FlareConfig $config) => $config->transactions());
+
+    $flare->transaction()->recordBegin();
+
+    useTime('2019-01-01 12:34:57'); // One second later 1546346097000000
+
+    $flare->transaction()->recordRollback();
+
+    reportException();
+
+    $payload = FakeSender::instance()->getLastPayload();
+
+    expect($payload['spans'])->toHaveCount(1);
+
+    expect($payload['spans'][0])
+        ->toHaveKey('name', 'DB Transaction')
+        ->toHaveKey('startTimeUnixNano', 1546346096000000)
+        ->toHaveKey('endTimeUnixNano', 1546346097000000)
+        ->attributes
+        ->toHaveKey('flare.span_type', SpanType::Transaction);
 });
 
 test('a version is by default null', function () {

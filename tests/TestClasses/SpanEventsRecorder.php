@@ -2,13 +2,10 @@
 
 namespace Spatie\FlareClient\Tests\TestClasses;
 
-use Exception;
-use Psr\Container\ContainerInterface;
-use Spatie\FlareClient\Concerns\RecordsSpanEvents;
-use Spatie\FlareClient\Contracts\SpanEventsRecorder as BaseSpanEventsRecorder;
+use Spatie\FlareClient\Concerns\Recorders\RecordsSpanEvents;
+use Spatie\FlareClient\Contracts\Recorders\SpanEventsRecorder as BaseSpanEventsRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Spans\SpanEvent;
-use Spatie\FlareClient\Tracer;
 
 class SpanEventsRecorder implements BaseSpanEventsRecorder
 {

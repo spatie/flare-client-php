@@ -6,11 +6,10 @@ use ReflectionMethod;
 use ReflectionProperty;
 use Spatie\Backtrace\Frame;
 use Spatie\FlareClient\Concerns\HasOriginAttributes;
-use Spatie\FlareClient\Concerns\RecordsSpanEvents;
-use Spatie\FlareClient\Contracts\SpanEventsRecorder;
+use Spatie\FlareClient\Concerns\Recorders\RecordsSpanEvents;
+use Spatie\FlareClient\Contracts\Recorders\SpanEventsRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\FlareMiddleware\AddDumps;
-use Spatie\FlareClient\Tracer;
 use Symfony\Component\VarDumper\Cloner\Data;
 use Symfony\Component\VarDumper\VarDumper;
 

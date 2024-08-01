@@ -1,6 +1,6 @@
 <?php
 
-namespace Spatie\FlareClient\Concerns;
+namespace Spatie\FlareClient\Concerns\Recorders;
 
 use Closure;
 use Spatie\FlareClient\Spans\Span;
@@ -26,7 +26,7 @@ trait RecordsEntries
     abstract protected function shouldReport(): bool;
 
     /**
-     * @param T $entry
+     * @param SpanEvent $entry
      */
     abstract protected function traceEntry(mixed $entry): void;
 
@@ -55,9 +55,9 @@ trait RecordsEntries
     }
 
     /**
-     * @param Closure(): T|T $entry
+     * @param Closure(): T|SpanEvent $entry
      *
-     * @return T
+     * @return SpanEvent
      */
     protected function persistEntry(Closure|SpanEvent|Span $entry): null|Span|SpanEvent
     {

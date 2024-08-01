@@ -1,8 +1,7 @@
 <?php
 
-namespace Spatie\FlareClient\Concerns;
+namespace Spatie\FlareClient\Concerns\Recorders;
 
-use Closure;
 use Spatie\FlareClient\Spans\Span;
 
 /**
@@ -25,14 +24,14 @@ trait RecordsSpans
     }
 
     /**
-     * @param T $entry
+     * @param Span $entry
      */
     protected function traceEntry(mixed $entry): void
     {
         $this->tracer->addSpan($entry);
     }
 
-    /** @return T[] */
+    /** @return Span */
     public function getSpans(): array
     {
         return $this->entries;

@@ -2,12 +2,15 @@
 
 namespace Spatie\FlareClient\Recorders\CacheRecorder;
 
-use Spatie\FlareClient\Concerns\RecordsSpanEvents;
+use Spatie\FlareClient\Concerns\Recorders\RecordsSpanEvents;
 use Spatie\FlareClient\Contracts\FlareSpanEventType;
-use Spatie\FlareClient\Contracts\SpanEventsRecorder;
+use Spatie\FlareClient\Contracts\Recorders\SpanEventsRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanEventType;
 
+/**
+ * @uses RecordsSpanEvents<CacheSpanEvent>
+ */
 class CacheRecorder implements SpanEventsRecorder
 {
     use RecordsSpanEvents;

@@ -10,10 +10,10 @@ use Psr\Container\ContainerInterface;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\Backtrace\Arguments\Reducers\ArgumentReducer;
 use Spatie\FlareClient\Concerns\HasUserProvidedContext;
-use Spatie\FlareClient\Contracts\Recorder;
-use Spatie\FlareClient\Enums\MessageLevels;
+use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
+use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
 use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
 use Spatie\FlareClient\Recorders\NullRecorder;
@@ -111,6 +111,11 @@ class Flare
         }
 
         return $this;
+    }
+
+    public function cache(): CacheRecorder|NullRecorder
+    {
+        return $this->recorders[RecorderType::Cache->value] ??= NullRecorder::instance();
     }
 
     public function glow(): GlowRecorder|NullRecorder

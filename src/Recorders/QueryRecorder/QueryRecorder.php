@@ -2,13 +2,11 @@
 
 namespace Spatie\FlareClient\Recorders\QueryRecorder;
 
-use Psr\Container\ContainerInterface;
-use Spatie\FlareClient\Concerns\RecordsSpans;
+use Spatie\FlareClient\Concerns\Recorders\RecordsSpans;
 use Spatie\FlareClient\Contracts\FlareSpanType;
-use Spatie\FlareClient\Contracts\SpansRecorder;
+use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
-use Spatie\FlareClient\Tracer;
 
 class QueryRecorder implements SpansRecorder
 {
