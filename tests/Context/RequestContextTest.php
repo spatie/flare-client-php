@@ -48,3 +48,55 @@ it('can return the request context as an array', function () {
 
     $this->assertMatchesCodeSnippetSnapshot($contextArray);
 });
+
+it('can retrieve the body contents of a json request', function () {
+    $content = '{"key": "value"}';
+
+    $server = [
+        'HTTP_CONTENT_TYPE' => 'application/json',
+    ];
+
+    $request = new Request(server: $server, content: $content);
+
+    $context = new RequestContextProvider($request);
+
+    expect($context->toArray()['request_data']['body'])->toBe(['key' => 'value']);
+});
+
+it('will not crash when a json body is invalid', function () {
+    $content = 'SOME INVALID JSON';
+
+    $server = [
+        'HTTP_CONTENT_TYPE' => 'application/json',
+    ];
+
+    $request = new Request(server: $server, content: $content);
+
+    $context = new RequestContextProvider($request);
+
+    expect($context->toArray()['request_data']['body'])->toBe([]);
+});
+
+it('can retrieve the body contents of a POST request', function () {
+    $post = ['key' => 'value'];
+
+    $server['REQUEST_METHOD'] = 'POST';
+
+    $request = new Request(request: $post, server: $server);
+
+    $context = new RequestContextProvider($request);
+
+    expect($context->toArray()['request_data']['body'])->toBe(['key' => 'value']);
+});
+
+it('can retrieve the body contents of a GET request', function () {
+    $query = ['key' => 'value'];
+
+    $server['REQUEST_METHOD'] = 'GET';
+
+    $request = new Request(query: $query, server: $server);
+
+    $context = new RequestContextProvider($request);
+
+    expect($context->toArray()['request_data']['body'])->toBe(['key' => 'value']);
+});

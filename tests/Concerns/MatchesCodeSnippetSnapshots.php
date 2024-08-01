@@ -3,18 +3,16 @@
 namespace Spatie\FlareClient\Tests\Concerns;
 
 use Spatie\FlareClient\Tests\TestClasses\CodeSnippetDriver;
-use Spatie\Snapshots\MatchesSnapshots;
+use function Spatie\Snapshots\assertMatchesSnapshot;
 
 trait MatchesCodeSnippetSnapshots
 {
-    use MatchesSnapshots;
-
     public function assertMatchesCodeSnippetSnapshot(array $codeSnippet)
     {
         $codeSnippet = $this->removeMicrotime($codeSnippet);
         $codeSnippet = $this->removeTime($codeSnippet);
 
-        $this->assertMatchesSnapshot($codeSnippet, new CodeSnippetDriver());
+        assertMatchesSnapshot($codeSnippet, new CodeSnippetDriver());
     }
 
     private function removeMicrotime(array $codeSnippet): array

@@ -12,10 +12,13 @@ stacktrace: {  }
 context:
     arguments:
         - '[phpunit arguments removed]'
+    env:
+        php_version: 7.3.2
 stage: null
 message_level: null
 open_frame_index: 0
 application_path: null
 application_version: null
 tracking_uuid: fake-uuid
+handled: null
 uuid: fake-uuid

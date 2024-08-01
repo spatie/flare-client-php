@@ -3,14 +3,12 @@
 namespace Spatie\FlareClient\Tests\Concerns;
 
 use Spatie\FlareClient\Tests\TestClasses\DumpDriver;
-use Spatie\Snapshots\MatchesSnapshots;
+use function Spatie\Snapshots\assertMatchesSnapshot;
 
 trait MatchesDumpSnapshots
 {
-    use MatchesSnapshots;
-
     public function assertMatchesDumpSnapshot(array $codeSnippet)
     {
-        $this->assertMatchesSnapshot($codeSnippet, new DumpDriver());
+        assertMatchesSnapshot($codeSnippet, new DumpDriver());
     }
 }
