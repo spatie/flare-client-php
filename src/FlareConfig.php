@@ -98,7 +98,8 @@ class FlareConfig
         bool $removeRequestIp = false,
         string $middleware = AddRequestInformation::class,
     ): self {
-        $this->middleware[$middleware] = [
+        // Will be overwritten by framework specific packages
+        $this->middleware[$middleware] += [
             'censor_body_fields' => $censorBodyFields,
             'censor_request_headers' => $censorRequestHeaders,
             'remove_request_ip' => $removeRequestIp,
