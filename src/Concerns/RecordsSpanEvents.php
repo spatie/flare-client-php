@@ -3,61 +3,32 @@
 namespace Spatie\FlareClient\Concerns;
 
 use Spatie\FlareClient\Spans\SpanEvent;
-use Spatie\FlareClient\Tracer;
 
 /**
  * @template T of SpanEvent
- * @property Tracer $tracer
+ *
+ * @uses  RecordsEntries<T>
  */
 trait RecordsSpanEvents
 {
-    /** @var array<T> */
-    protected array $spanEvents = [];
+    use RecordsEntries;
 
-    protected bool $traceSpanEvents = true;
-
-    protected bool $reportSpanEvents = true;
-
-    protected ?int $maxReportedSpanEvents = null;
-
-    /** @return array<T> */
-    public function getSpanEvents(): array
+    protected function shouldTrace(): bool
     {
-        return $this->spanEvents;
-    }
-
-    public function reset(): void
-    {
-        $this->spanEvents = [];
-    }
-
-    /**
-     * @param T $spanEvent
-     */
-    protected function persistSpanEvent(mixed $spanEvent): void
-    {
-        if ($this->traceSpanEvents
+        return $this->trace
             && $this->tracer->isSamping()
-            && $this->tracer->currentSpanId()
-        ) {
-            $this->traceSpanEvent($spanEvent);
-        }
+            && $this->tracer->currentSpanId();
+    }
 
-        if ($this->reportSpanEvents === false) {
-            return;
-        }
-
-        $this->spanEvents[] = $spanEvent;
-
-        if ($this->maxReportedSpanEvents && count($this->spanEvents) > $this->maxReportedSpanEvents) {
-            array_shift($this->spanEvents);
-        }
+    protected function shouldReport(): bool
+    {
+        return $this->report;
     }
 
     /**
-     * @param T $spanEvent
+     * @param T $entry
      */
-    protected function traceSpanEvent(mixed $spanEvent): void
+    protected function traceEntry(mixed $entry): void
     {
         $span = $this->tracer->currentSpan();
 
@@ -67,6 +38,12 @@ trait RecordsSpanEvents
             return;
         }
 
-        $span->addEvent($spanEvent);
+        $span->addEvent($entry);
+    }
+
+    /** @return array<T> */
+    public function getSpanEvents(): array
+    {
+        return $this->entries;
     }
 }

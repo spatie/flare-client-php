@@ -8,7 +8,10 @@ use Symfony\Component\HttpFoundation\Request;
 uses(MatchesCodeSnippetSnapshots::class);
 
 it('can return the request context as an array', function () {
-    $get = ['get-key-1' => 'get-value-1'];
+    $get = [
+        'get-key-1' => 'get-value-1',
+        'get-key-2' => 'get-value-2',
+    ];
 
     $post = ['post-key-1' => 'post-value-1'];
 
@@ -97,7 +100,7 @@ it('can strip headers', function () {
         'authorization' => 'Bearer token',
         'other-header' => 'other',
         'lower-case-header' => 'lower',
-        'keep' => 'keep'
+        'keep' => 'keep',
     ]);
 
     $attributes = (new RequestAttributesProvider(
@@ -114,7 +117,7 @@ it('can strip headers', function () {
     ]);
 });
 
-it('can strip body fields', function (){
+it('can strip body fields', function () {
     $post = [
         'password' => 'secret',
         'API_KEY' => 'secret',

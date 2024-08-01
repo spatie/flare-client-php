@@ -18,8 +18,12 @@ trait HasAttributes
         $this->attributes[$key] = $value;
     }
 
-    public function addAttributes(array $attributes): static
+    public function addAttributes(?array $attributes): static
     {
+        if($attributes === null) {
+            return $this;
+        }
+
         $this->attributes = array_merge($this->attributes, $attributes);
 
         return $this;

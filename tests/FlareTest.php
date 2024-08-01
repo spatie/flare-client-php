@@ -88,7 +88,7 @@ test('callbacks can modify the report', function () {
 });
 
 it('can censor request data', function () {
-    setupFlare(fn (FlareConfig $config) => $config->addRequestInfo(
+    setupFlare(fn (FlareConfig $config) => $config->requestInfo(
         censorBodyFields: ['user', 'password'])
     );
 
@@ -161,9 +161,9 @@ it('can set stages', function () {
 });
 
 it('can add glows', function () {
-    $flare = setupFlare(fn (FlareConfig $config) => $config->addGlows());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->glows());
 
-    $flare->glow(
+    $flare->glow()->record(
         'my glow',
         MessageLevels::INFO,
         ['my key' => 'my value']
@@ -171,7 +171,7 @@ it('can add glows', function () {
 
     useTime('2019-01-01 12:34:57'); // One second later 1546346097000000
 
-    $flare->glow(
+    $flare->glow()->record(
         'another glow',
         MessageLevels::ERROR,
         ['another key' => 'another value']
@@ -206,9 +206,9 @@ it('can add glows', function () {
 });
 
 it('can add logs', function () {
-    $flare = setupFlare(fn (FlareConfig $config) => $config->addLogs());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->logs());
 
-    $flare->log(
+    $flare->log()->record(
         'my log',
         MessageLevels::INFO,
         ['my key' => 'my value']
@@ -216,7 +216,7 @@ it('can add logs', function () {
 
     useTime('2019-01-01 12:34:57'); // One second later 1546346097000000
 
-    $flare->log(
+    $flare->log()->record(
         'another log',
         MessageLevels::ERROR,
         ['another key' => 'another value']
@@ -251,9 +251,9 @@ it('can add logs', function () {
 });
 
 it('can add queries', function () {
-    $flare = setupFlare(fn (FlareConfig $config) => $config->addQueries());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->queries());
 
-    $flare->query(
+    $flare->query()->record(
         'select * from users where id = ?',
         Duration::milliseconds(250),
         ['id' => 1],
@@ -263,7 +263,7 @@ it('can add queries', function () {
 
     useTime('2019-01-01 12:34:57'); // One second later 1546346097000000
 
-    $flare->query(
+    $flare->query()->record(
         'select * from users where id = ?',
         Duration::milliseconds(125),
         ['id' => 2],
@@ -276,6 +276,44 @@ it('can add queries', function () {
     $payload = FakeSender::instance()->getLastPayload();
 
     expect($payload['spans'])->toHaveCount(2);
+
+    expect($payload['spans'][0])
+        ->toHaveKey('name', 'Query - select * from users where id = ?')
+        ->toHaveKey('startTimeUnixNano', 1546346096000000 - Duration::milliseconds(250, asNano: true))
+        ->toHaveKey('endTimeUnixNano', 1546346096000000)
+        ->attributes
+        ->toHaveKey('db.system', 'mysql')
+        ->toHaveKey('db.name', 'users')
+        ->toHaveKey('db.statement', 'select * from users where id = ?')
+        ->toHaveKey('db.sql.bindings', ['id' => 1])
+        ->toHaveKey('flare.span_type', SpanType::Query);
+
+    expect($payload['spans'][1])
+        ->toHaveKey('name', 'Query - select * from users where id = ?')
+        ->toHaveKey('startTimeUnixNano', 1546346097000000 - Duration::milliseconds(125, asNano: true))
+        ->toHaveKey('endTimeUnixNano', 1546346097000000)
+        ->attributes
+        ->toHaveKey('db.system', 'mysql')
+        ->toHaveKey('db.name', 'users')
+        ->toHaveKey('db.statement', 'select * from users where id = ?')
+        ->toHaveKey('db.sql.bindings', ['id' => 2])
+        ->toHaveKey('flare.span_type', SpanType::Query);
+});
+
+it('can begin and commit transactions', function (){
+    $flare = setupFlare(fn (FlareConfig $config) => $config->transactions());
+
+    $flare->transaction()->recordBegin();
+
+    useTime('2019-01-01 12:34:57'); // One second later 1546346097000000
+
+    $flare->transaction()->recordCommit();
+
+    reportException();
+
+    $payload = FakeSender::instance()->getLastPayload();
+
+    expect($payload['spans'])->toHaveCount(1);
 
     expect($payload['spans'][0])
         ->toHaveKey('name', 'Query - select * from users where id = ?')
@@ -402,7 +440,7 @@ it('will add arguments to a stack trace by default', function () {
 it('is possible to disable stack frame arguments', function () {
     ini_set('zend.exception_ignore_args', 0); // Enabled on GH actions
 
-    $flare = setupFlare(fn (FlareConfig $config) => $config->addStackFrameArguments(false));
+    $flare = setupFlare(fn (FlareConfig $config) => $config->stackArguments(false));
 
     $exception = TraceArguments::create()->exception(
         'a message',
@@ -417,7 +455,7 @@ it('is possible to disable stack frame arguments', function () {
 it('is possible to disable stack frame arguments with zend.exception_ignore_args', function () {
     ini_set('zend.exception_ignore_args', 1);
 
-    $flare = setupFlare(fn (FlareConfig $config) => $config->addStackFrameArguments(false));
+    $flare = setupFlare(fn (FlareConfig $config) => $config->stackArguments(false));
 
     $exception = TraceArguments::create()->exception(
         'a message',

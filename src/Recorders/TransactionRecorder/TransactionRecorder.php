@@ -5,6 +5,7 @@ namespace Spatie\FlareClient\Recorders\TransactionRecorder;
 use Psr\Container\ContainerInterface;
 use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Contracts\SpansRecorder;
+use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Tracer;
 
@@ -13,23 +14,30 @@ class TransactionRecorder implements SpansRecorder
     /** @var array<int, TransactionSpan> */
     protected array $stack = [];
 
-    public static function initialize(ContainerInterface $container, array $config): static
+    protected bool $traceTransactions = true;
+
+    public static function type(): string|RecorderType
     {
-        return new static(
-            tracer: $container->get(Tracer::class),
-            traceTransactions: $config['trace_transactions'] ?? false,
-        );
+        return RecorderType::Transaction;
     }
 
     public function __construct(
         protected Tracer $tracer,
-        protected bool $traceTransactions,
+        ?array $config = null,
     ) {
+        if($config !== null) {
+            $this->configure($config);
+        }
     }
 
     public function start(): void
     {
-        // should be done manually
+
+    }
+
+    public function configure(array $config): void
+    {
+        $this->traceTransactions = $config['trace'] ?? true;
     }
 
     public function recordBegin(
@@ -48,9 +56,7 @@ class TransactionRecorder implements SpansRecorder
             spanType: $spanType,
         );
 
-        if ($attributes !== null) {
-            $span->setAttributes($attributes);
-        }
+        $span->addAttributes($attributes);
 
         $this->stack[] = $span;
 
@@ -72,10 +78,7 @@ class TransactionRecorder implements SpansRecorder
             return null;
         }
 
-        if ($attributes !== null) {
-            $span->setAttributes($attributes);
-        }
-
+        $span->addAttributes($attributes);
         $span->end();
 
         return $span;
@@ -94,9 +97,7 @@ class TransactionRecorder implements SpansRecorder
             return null;
         }
 
-        if ($attributes !== null) {
-            $span->setAttributes($attributes);
-        }
+        $span->addAttributes($attributes);
 
         // TODO: maybe provide a reason
         $span->end();

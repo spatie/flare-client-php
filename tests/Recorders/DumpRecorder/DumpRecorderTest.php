@@ -12,10 +12,11 @@ it('can symphony record dumps', function () {
 
     $dumpRecorder = new DumpRecorder(
         tracer: setupFlare()->tracer,
-        traceDumps: true,
-        reportDumps: true,
-        maxReportedDumps: 10,
-        findDumpOrigin: false,
+        config: [
+            'trace' => true,
+            'report' => true,
+            'max_reported' => 10,
+        ],
     );
 
     $dumpRecorder->start();
@@ -40,10 +41,12 @@ it('can record dump origins', function () {
 
     $dumpRecorder = new DumpRecorder(
         tracer: setupFlare()->tracer,
-        traceDumps: true,
-        reportDumps: true,
-        maxReportedDumps: 10,
-        findDumpOrigin: true,
+        config: [
+            'trace' => true,
+            'report' => true,
+            'max_reported' => 10,
+            'find_origin' => true,
+        ],
     );
 
     $dumpRecorder->start();
@@ -61,10 +64,12 @@ it('can disable recording dump origins', function () {
 
     $dumpRecorder = new DumpRecorder(
         tracer: setupFlare()->tracer,
-        traceDumps: true,
-        reportDumps: true,
-        maxReportedDumps: 10,
-        findDumpOrigin: false,
+        config: [
+            'trace' => true,
+            'report' => true,
+            'max_reported' => 10,
+            'find_origin' => false,
+        ],
     );
 
     $dumpRecorder->start();

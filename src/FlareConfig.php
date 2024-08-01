@@ -18,12 +18,12 @@ use Spatie\FlareClient\Recorders\DumpRecorder\DumpRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
 use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
+use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
 use Spatie\FlareClient\Sampling\AlwaysSampler;
 use Spatie\FlareClient\Sampling\RateSampler;
 use Spatie\FlareClient\Senders\CurlSender;
 use Spatie\FlareClient\Senders\Sender;
 use Spatie\FlareClient\Support\TraceLimits;
-use Spatie\FlareClient\Time\Duration;
 
 class FlareConfig
 {
@@ -72,17 +72,18 @@ class FlareConfig
     public static function makeDefault(string $apiToken): static
     {
         return (new static($apiToken))
-            ->addDumps()
-            ->addRequestInfo()
-            ->addConsoleInfo()
-            ->addGitInfo()
-            ->addGlows()
-            ->addSolutions()
-            ->addStackFrameArguments()
+            ->dumps()
+            ->requestInfo()
+            ->consoleInfo()
+            ->gitInfo()
+            ->glows()
+            ->solutions()
+            ->stackArguments()
+            // TODO: merge? with stackArguments
             ->setArgumentReducers(ArgumentReducers::default());
     }
 
-    public function addRequestInfo(
+    public function requestInfo(
         array $censorBodyFields = ['password', 'password_confirmation'],
         array $censorRequestHeaders = [
             'API-KEY',
@@ -93,96 +94,115 @@ class FlareConfig
             'X-XSRF-TOKEN',
         ],
         bool $removeRequestIp = false,
+        string $middleware = AddRequestInformation::class,
     ): self {
-        $this->middleware[AddRequestInformation::class] = [
+        $this->middleware[$middleware] = [
             'censor_body_fields' => $censorBodyFields,
             'censor_request_headers' => $censorRequestHeaders,
-            'remove_requestIp' => $removeRequestIp,
+            'remove_request_ip' => $removeRequestIp,
         ];
 
         return $this;
     }
 
-    public function addConsoleInfo(): self
-    {
-        $this->middleware[AddConsoleInformation::class] = [];
+    public function consoleInfo(
+        string $middleware = AddConsoleInformation::class,
+    ): self {
+        $this->middleware[$middleware] = [];
 
         return $this;
     }
 
-    public function addGitInfo(): static
-    {
-        $this->middleware[AddGitInformation::class] = [];
-
-        return $this;
-    }
-
-    public function addGlows(
-        bool $traceGlows = true,
-        bool $reportGlows = true,
-        ?int $maxReportedGlows = 10,
+    public function gitInfo(
+        string $middleware = AddGitInformation::class,
     ): static {
-        $this->recorders[GlowRecorder::class] = [
-            'trace_glows' => $traceGlows,
-            'report_glows' => $reportGlows,
-            'max_reported_glows' => $maxReportedGlows,
-        ];
+        $this->middleware[$middleware] = [];
 
         return $this;
     }
 
-    public function addLogs(
-        bool $traceLogs = true,
-        bool $reportLogs = true,
-        ?int $maxReportedLogs = 10,
+    public function glows(
+        bool $trace = true,
+        bool $report = true,
+        ?int $maxReported = 10,
+        string $recorder = GlowRecorder::class,
     ): static {
-        $this->recorders[LogRecorder::class] = [
-            'trace_logs' => $traceLogs,
-            'report_logs' => $reportLogs,
-            'max_reported_logs' => $maxReportedLogs,
+        $this->recorders[$recorder] = [
+            'trace' => $trace,
+            'report' => $report,
+            'max_reported' => $maxReported,
         ];
 
         return $this;
     }
 
-    public function addSolutions(): static
-    {
-        $this->middleware[AddSolutions::class] = [];
-
-        return $this;
-    }
-
-    public function addDumps(
-        bool $traceDumps = true,
-        bool $reportDumps = true,
-        ?int $maxReportedDumps = 25,
-        bool $findDumpOrigin = true,
+    public function logs(
+        bool $trace = true,
+        bool $report = true,
+        ?int $maxReported = 10,
+        string $recorder = LogRecorder::class,
     ): static {
-        $this->recorders[DumpRecorder::class] = [
-            'trace_dumps' => $traceDumps,
-            'report_dumps' => $reportDumps,
-            'max_reported_dumps' => $maxReportedDumps,
-            'find_dump_origin' => $findDumpOrigin,
+        $this->recorders[$recorder] = [
+            'trace' => $trace,
+            'report' => $report,
+            'max_reported' => $maxReported,
         ];
 
         return $this;
     }
 
-    public function addQueries(
-        bool $traceQueries = true,
-        bool $reportQueries = true,
-        ?int $maxReportedQueries = 100,
+    public function solutions(
+        string $middleware = AddSolutions::class,
+    ): static {
+        $this->middleware[$middleware] = [];
+
+        return $this;
+    }
+
+    public function dumps(
+        bool $trace = false,
+        bool $report = true,
+        ?int $maxReported = 25,
+        bool $findOrigin = false,
+        string $recorder = DumpRecorder::class
+    ): static {
+        $this->recorders[$recorder] = [
+            'trace' => $trace,
+            'report' => $report,
+            'max_reported' => $maxReported,
+            'find_dump' => $findOrigin,
+        ];
+
+        return $this;
+    }
+
+    public function queries(
+        bool $trace = true,
+        bool $report = true,
+        ?int $maxReported = 100,
         bool $includeBindings = true,
-        bool $findQueryOrigin = true,
-        ?int $findQueryOriginThreshold = 300_000
+        bool $findOrigin = true,
+        ?int $findOriginThreshold = 300_000,
+        string $recorder = QueryRecorder::class,
     ): static {
-        $this->recorders[QueryRecorder::class] = [
-            'trace_queries' => $traceQueries,
-            'report_queries' => $reportQueries,
-            'max_reported_queries' => $maxReportedQueries,
+        $this->recorders[$recorder] = [
+            'trace' => $trace,
+            'report' => $report,
+            'max_reported' => $maxReported,
             'include_bindings' => $includeBindings,
-            'find_query_origin' => $findQueryOrigin,
-            'find_query_origin_threshold' => $findQueryOriginThreshold,
+            'find_origin' => $findOrigin,
+            'find_origin_threshold' => $findOriginThreshold,
+        ];
+
+        return $this;
+    }
+
+    public function transactions(
+        bool $trace = true,
+        string $recorder = TransactionRecorder::class
+    ): static {
+        $this->recorders[$recorder] = [
+            'trace' => $trace,
         ];
 
         return $this;
@@ -225,7 +245,7 @@ class FlareConfig
         return $this;
     }
 
-    public function addStackFrameArguments(bool $withStackFrameArguments = true, bool $forcePHPIniSetting = true): static
+    public function stackArguments(bool $withStackFrameArguments = true, bool $forcePHPIniSetting = true): static
     {
         $this->withStackFrameArguments = $withStackFrameArguments;
         $this->forcePHPStackFrameArgumentsIniSetting = $forcePHPIniSetting;

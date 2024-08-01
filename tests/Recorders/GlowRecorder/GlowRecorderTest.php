@@ -13,7 +13,11 @@ beforeEach(function () {
 });
 
 it('stores glows for reporting and tracing', function () {
-    $recorder = new GlowRecorder(setupFlare()->tracer, traceGlows: false, reportGlows: true, maxReportedGlows: 30);
+    $recorder = new GlowRecorder(setupFlare()->tracer, config: [
+        'trace' => true,
+        'report' => true,
+        'max_reported' => 10,
+    ]);
 
     $glow = new GlowSpanEvent('Some name', 'info', [
         'some' => 'metadata',

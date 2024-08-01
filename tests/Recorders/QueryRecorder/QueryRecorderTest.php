@@ -1,12 +1,9 @@
 <?php
 
-use Illuminate\Support\Arr;
 use Spatie\FlareClient\Enums\SpanType;
-use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
 use Spatie\FlareClient\Recorders\QueryRecorder\QuerySpan;
 use Spatie\FlareClient\Time\Duration;
-use Spatie\FlareClient\Time\SystemTime;
 
 beforeEach(function () {
     useTime('2019-01-01 12:34:56');
@@ -15,12 +12,14 @@ beforeEach(function () {
 it('can trace queries', function () {
     $recorder = new QueryRecorder(
         $tracer = setupFlare()->tracer,
-        traceQueries: true,
-        reportQueries: false,
-        maxReportedQueries: null,
-        includeBindings: true,
-        findQueryOrigin: false,
-        findQueryOriginThreshold: null
+        config: [
+            'trace' => true,
+            'report' => false,
+            'max_reported' => null,
+            'include_bindings' => true,
+            'find_origin' => false,
+            'find_origin_threshold' => null,
+        ]
     );
 
     $tracer->startTrace();
@@ -52,12 +51,14 @@ it('can trace queries', function () {
 it('can report queries without tracing', function () {
     $recorder = new QueryRecorder(
         $tracer = setupFlare()->tracer,
-        traceQueries: false,
-        reportQueries: true,
-        maxReportedQueries: null,
-        includeBindings: true,
-        findQueryOrigin: false,
-        findQueryOriginThreshold: null
+        config: [
+            'trace' => false,
+            'report' => true,
+            'max_reported' => null,
+            'include_bindings' => true,
+            'find_origin' => false,
+            'find_origin_threshold' => null,
+        ]
     );
 
     $recorder->record('select * from users where id = ?', Duration::milliseconds(300), ['id' => 1], 'users', 'mysql');
@@ -87,12 +88,14 @@ it('can report queries without tracing', function () {
 it('can disable the inclusion of bindings', function () {
     $recorder = new QueryRecorder(
         $tracer = setupFlare()->tracer,
-        traceQueries: false,
-        reportQueries: true,
-        maxReportedQueries: null,
-        includeBindings: false,
-        findQueryOrigin: false,
-        findQueryOriginThreshold: null
+        config: [
+            'trace' => true,
+            'report' => false,
+            'max_reported' => null,
+            'include_bindings' => false,
+            'find_origin' => false,
+            'find_origin_threshold' => null,
+        ]
     );
 
     $tracer->startTrace();
@@ -102,15 +105,17 @@ it('can disable the inclusion of bindings', function () {
     expect($recorder->getSpans()[0]->attributes)->not()->toHaveKey('db.sql.bindings');
 });
 
-it('can find the origin of a query when tracing and a threshold is met', function (){
+it('can find the origin of a query when tracing and a threshold is met', function () {
     $recorder = new QueryRecorder(
         $tracer = setupFlare()->tracer,
-        traceQueries: true,
-        reportQueries: false,
-        maxReportedQueries: null,
-        includeBindings: true,
-        findQueryOrigin: true,
-        findQueryOriginThreshold: Duration::milliseconds(300)
+        config: [
+            'trace' => true,
+            'report' => false,
+            'max_reported' => null,
+            'include_bindings' => true,
+            'find_origin' => true,
+            'find_origin_threshold' => Duration::milliseconds(300),
+        ]
     );
 
     $tracer->startTrace();
@@ -128,15 +133,17 @@ it('can find the origin of a query when tracing and a threshold is met', functio
     ]);
 });
 
-it('can find the origin of a query when tracing no threshold is set', function (){
+it('can find the origin of a query when tracing no threshold is set', function () {
     $recorder = new QueryRecorder(
         $tracer = setupFlare()->tracer,
-        traceQueries: true,
-        reportQueries: false,
-        maxReportedQueries: null,
-        includeBindings: true,
-        findQueryOrigin: true,
-        findQueryOriginThreshold: null
+        config: [
+            'trace' => true,
+            'report' => false,
+            'max_reported' => null,
+            'include_bindings' => true,
+            'find_origin' => true,
+            'find_origin_threshold' => null,
+        ]
     );
 
     $tracer->startTrace();
@@ -154,15 +161,17 @@ it('can find the origin of a query when tracing no threshold is set', function (
     ]);
 });
 
-it('will not find the origin of a query when tracing and a threshold is not met', function (){
+it('will not find the origin of a query when tracing and a threshold is not met', function () {
     $recorder = new QueryRecorder(
         $tracer = setupFlare()->tracer,
-        traceQueries: true,
-        reportQueries: false,
-        maxReportedQueries: null,
-        includeBindings: true,
-        findQueryOrigin: true,
-        findQueryOriginThreshold: Duration::milliseconds(300)
+        config: [
+            'trace' => true,
+            'report' => false,
+            'max_reported' => null,
+            'include_bindings' => true,
+            'find_origin' => true,
+            'find_origin_threshold' => Duration::milliseconds(300),
+        ]
     );
 
     $tracer->startTrace();
@@ -180,15 +189,17 @@ it('will not find the origin of a query when tracing and a threshold is not met'
     ]);
 });
 
-it('will not find the origin of a query when only reporting', function (){
+it('will not find the origin of a query when only reporting', function () {
     $recorder = new QueryRecorder(
         $tracer = setupFlare()->tracer,
-        traceQueries: false,
-        reportQueries: true,
-        maxReportedQueries: null,
-        includeBindings: true,
-        findQueryOrigin: true,
-        findQueryOriginThreshold: Duration::milliseconds(300)
+        config: [
+            'trace' => false,
+            'report' => true,
+            'max_reported' => null,
+            'include_bindings' => true,
+            'find_origin' => true,
+            'find_origin_threshold' => Duration::milliseconds(300),
+        ]
     );
 
     $recorder->record('select * from users where id = ?', Duration::milliseconds(299), ['id' => 1], 'users', 'mysql');

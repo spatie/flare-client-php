@@ -2,37 +2,24 @@
 
 namespace Spatie\FlareClient\Recorders\ExceptionRecorder;
 
-use Psr\Container\ContainerInterface;
 use Spatie\FlareClient\Concerns\RecordsSpanEvents;
 use Spatie\FlareClient\Contracts\Recorder;
+use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Report;
-use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
+use Spatie\FlareClient\Tracer;
 
 class ExceptionRecorder implements Recorder
 {
     use RecordsSpanEvents;
 
-    public static function initialize(ContainerInterface $container, array $config): static
+    public static function type(): string|RecorderType
     {
-        return new self(
-            traceExceptions: $config['trace_exceptions'],
-        );
-    }
-
-    public function __construct(
-        bool $traceExceptions,
-    ) {
-        $this->traceSpanEvents = $traceExceptions;
-    }
-
-    public function start(): void
-    {
-        // Started by Flare
+        return RecorderType::Exception;
     }
 
     public function record(Report $report): void
     {
-        $this->persistSpanEvent(ExceptionSpanEvent::fromFlareReport($report));
+        $this->persistEntry(fn () => ExceptionSpanEvent::fromFlareReport($report));
     }
 }
 

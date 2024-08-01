@@ -10,15 +10,16 @@ use Spatie\FlareClient\Support\Container;
 
 class AddSolutions implements FlareMiddleware
 {
-    public static function initialize(ContainerInterface $container, array $config): static
+    public static function register(ContainerInterface $container): Closure
     {
-        return new self($container->get(SolutionProviderRepository::class)) ;
+        return fn () => new self(
+            $container->get(SolutionProviderRepository::class)
+        );
     }
 
     public function __construct(
         protected SolutionProviderRepository $solutionProviderRepository
-    )
-    {
+    ) {
     }
 
     public function handle(ReportFactory $report, Closure $next)

@@ -16,17 +16,19 @@ it('can trace a transaction', function () {
 
     $transactionRecorder = new TransactionRecorder(
         $tracer,
-        traceTransactions: true
+        config: ['trace' => true]
     );
 
     $queryRecorder = new QueryRecorder(
         $tracer,
-        traceQueries: true,
-        reportQueries: true,
-        maxReportedQueries: 10,
-        includeBindings: true,
-        findQueryOrigin: true,
-        findQueryOriginThreshold: 0,
+        config: [
+            'trace' => true,
+            'report' => true,
+            'max_reported' => 10,
+            'include_bindings' => true,
+            'find_origin' => true,
+            'find_origin_threshold' => 0
+        ],
     );
 
     $tracer->startTrace();
@@ -66,7 +68,7 @@ it('can rollback a transaction', function () {
 
     $transactionRecorder = new TransactionRecorder(
         $tracer,
-        traceTransactions: true
+        config: ['trace' => true]
     );
 
     $tracer->startTrace();
@@ -95,7 +97,7 @@ it('can nest transaction spans', function () {
 
     $transactionRecorder = new TransactionRecorder(
         $tracer,
-        traceTransactions: true
+        config: ['trace' => true]
     );
 
     $tracer->startTrace();

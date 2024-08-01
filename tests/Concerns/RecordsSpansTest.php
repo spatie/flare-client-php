@@ -1,10 +1,6 @@
 <?php
 
-use Spatie\FlareClient\Enums\SpanEventType;
-use Spatie\FlareClient\Flare;
 use Spatie\FlareClient\FlareConfig;
-use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
-use Spatie\FlareClient\Recorders\GlowRecorder\GlowSpanEvent;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Tests\TestClasses\SpanEventsRecorder;
@@ -15,13 +11,18 @@ beforeEach(function () {
 });
 
 it('is initially empty', function () {
-    $recorder = new SpansRecorder(setupFlare()->tracer);
+    $recorder = new SpansRecorder(setupFlare()->tracer, [
+        'report' => true,
+        'trace' => true,
+    ]);
 
     expect($recorder->getSpans())->toHaveCount(0);
 });
 
 it('stores spans for reporting', function () {
-    $recorder = new SpansRecorder(setupFlare()->tracer);
+    $recorder = new SpansRecorder(setupFlare()->tracer, [
+        'report' => true,
+    ]);
 
     $recorder->record('Hello World');
 
@@ -39,7 +40,10 @@ it('stores spans for reporting', function () {
 });
 
 it('does not store more than the max defined number of reported spans and removes the first ones', function () {
-    $recorder = new SpansRecorder(setupFlare()->tracer, maxReportedSpans: 35);
+    $recorder = new SpansRecorder(setupFlare()->tracer, [
+        'report' => true,
+        'max_reported' => 35,
+    ]);
 
     foreach (range(1, 40) as $i) {
         $recorder->record("Hello {$i}");
@@ -51,7 +55,10 @@ it('does not store more than the max defined number of reported spans and remove
 });
 
 it('can disable the limit of spans stored for reporting', function () {
-    $recorder = new SpansRecorder(setupFlare()->tracer, maxReportedSpans: null);
+    $recorder = new SpansRecorder(setupFlare()->tracer, [
+        'report' => true,
+        'max_reported' => null,
+    ]);
 
     foreach (range(1, 250) as $i) {
         $recorder->record("Hello {$i}");
@@ -61,8 +68,10 @@ it('can disable the limit of spans stored for reporting', function () {
 });
 
 
-it('can completely disable reporting', function (){
-    $recorder = new SpansRecorder(setupFlare()->tracer, reportSpans: false);
+it('can completely disable reporting', function () {
+    $recorder = new SpansRecorder(setupFlare()->tracer, [
+        'report' => false,
+    ]);
 
     $recorder->record('Hello World');
 
@@ -72,7 +81,9 @@ it('can completely disable reporting', function (){
 });
 
 it('can trace spans', function () {
-    $recorder = new SpansRecorder($tracer = setupFlare()->tracer, traceSpans: true);
+    $recorder = new SpansRecorder($tracer = setupFlare()->tracer, [
+        'trace' => true,
+    ]);
 
     $tracer->startTrace();
 
@@ -93,20 +104,24 @@ it('can trace spans', function () {
         ->toHaveKey('message', 'Hello World');
 });
 
-it('will not trace span when not tracing', function (){
-    $recorder = new SpansRecorder($tracer = setupFlare()->tracer, traceSpans: true);
+it('will not trace span when not tracing', function () {
+    $recorder = new SpansRecorder($tracer = setupFlare()->tracer, [
+        'trace' => true,
+    ]);
 
     $recorder->record('Hello World');
 
     expect($tracer->traces)->toHaveCount(0);
 });
 
-it('will not trace a span when the span limit is reached', function (){
-    $flare = setupFlare(function (FlareConfig $config){
+it('will not trace a span when the span limit is reached', function () {
+    $flare = setupFlare(function (FlareConfig $config) {
         $config->trace(maxSpans: 35);
     });
 
-    $recorder = new SpansRecorder($tracer = $flare->tracer, traceSpans: true);
+    $recorder = new SpansRecorder($tracer = $flare->tracer,  [
+        'trace' => true,
+    ]);
 
     $tracer->startTrace();
 
@@ -117,12 +132,39 @@ it('will not trace a span when the span limit is reached', function (){
     expect($tracer->traces[$tracer->currentTraceId()])->toHaveCount(35);
 });
 
-it('is possible to disable the recorder for tracing', function (){
-    $recorder = new SpansRecorder($tracer = setupFlare()->tracer, traceSpans: false);
+it('is possible to disable the recorder for tracing', function () {
+    $recorder = new SpansRecorder($tracer = setupFlare()->tracer,  [
+        'trace' => false,
+    ]);
 
     $tracer->startTrace();
 
     $recorder->record('Hello World');
 
     expect($tracer->traces[$tracer->currentTraceId()] ?? [])->toHaveCount(0);
+});
+
+it('a closure passed span will not be executed when not tracing or reporting', function () {
+    class TestSpanRecorderExecution extends SpansRecorder{
+        public function record(string $message): ?Span
+        {
+            $this->persistEntry(fn () => throw new Exception('Closure executed'));
+        }
+    }
+
+    expect(fn () => (new TestSpanRecorderExecution(setupFlare()->tracer, [
+        'trace' => true,
+        'report' => true,
+    ]))->record('Hello World'))->toThrow(
+        Exception::class,
+        'Closure executed'
+    );
+
+    expect(fn () => (new TestSpanRecorderExecution(setupFlare()->tracer, [
+        'trace' => false,
+        'report' => false,
+    ]))->record('Hello World'))->not()->toThrow(
+        Exception::class,
+        'Closure executed'
+    );
 });

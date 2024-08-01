@@ -10,14 +10,9 @@ use Spatie\FlareClient\Support\Runtime;
 
 class AddConsoleInformation implements FlareMiddleware
 {
-    public static function initialize(ContainerInterface $container, array $config): static
-    {
-        return new self();
-    }
-
     public function handle(ReportFactory $report, Closure $next)
     {
-        if (! Runtime::runningInConsole()) {
+        if (! $this->isRunningInConsole()) {
             return $next($report);
         }
 
@@ -26,5 +21,15 @@ class AddConsoleInformation implements FlareMiddleware
         $report->addAttributes($provider->toArray($_SERVER['argv'] ?? []));
 
         return $next($report);
+    }
+
+    protected function isRunningInConsole(): bool
+    {
+        return Runtime::runningInConsole();
+    }
+
+    protected function buildProvider(): ConsoleAttributesProvider
+    {
+        return new ConsoleAttributesProvider();
     }
 }

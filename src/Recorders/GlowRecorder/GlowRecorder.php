@@ -7,6 +7,7 @@ use Spatie\FlareClient\Concerns\RecordsSpanEvents;
 use Spatie\FlareClient\Contracts\FlareSpanEventType;
 use Spatie\FlareClient\Contracts\SpanEventsRecorder;
 use Spatie\FlareClient\Enums\MessageLevels;
+use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\FlareMiddleware\AddGlows;
 use Spatie\FlareClient\Tracer;
@@ -16,30 +17,9 @@ class GlowRecorder implements SpanEventsRecorder
     /**  @use RecordsSpanEvents<GlowSpanEvent> */
     use RecordsSpanEvents;
 
-    public static function initialize(ContainerInterface $container, array $config): static
+    public static function type(): string|RecorderType
     {
-        return new self(
-            tracer: $container->get(Tracer::class),
-            traceGlows: $config['trace_glows'],
-            reportGlows: $config['report_glows'],
-            maxReportedGlows: $config['max_reported_glows'],
-        );
-    }
-
-    public function __construct(
-        protected Tracer $tracer,
-        bool $traceGlows,
-        bool $reportGlows,
-        ?int $maxReportedGlows,
-    ) {
-        $this->traceSpanEvents = $traceGlows;
-        $this->reportSpanEvents = $reportGlows;
-        $this->maxReportedSpanEvents = $maxReportedGlows;
-    }
-
-    public function start(): void
-    {
-
+        return RecorderType::Glow;
     }
 
     public function record(
@@ -49,21 +29,13 @@ class GlowRecorder implements SpanEventsRecorder
         ?int $time = null,
         FlareSpanEventType $spanEventType = SpanEventType::Glow,
         ?array $attributes = null,
-    ): GlowSpanEvent {
-        $spanEvent = new GlowSpanEvent(
+    ): ?GlowSpanEvent {
+        return $this->persistEntry(fn () => (new GlowSpanEvent(
             name: $name,
             level: $level,
             context: $context,
             time: $time,
             spanEventType: $spanEventType,
-        );
-
-        if ($attributes) {
-            $spanEvent->setAttributes($attributes);
-        }
-
-        $this->persistSpanEvent($spanEvent);
-
-        return $spanEvent;
+        ))->addAttributes($attributes));
     }
 }

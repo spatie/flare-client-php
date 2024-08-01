@@ -12,7 +12,11 @@ beforeEach(function () {
 });
 
 it('stores glows for reporting and tracing', function () {
-    $recorder = new LogRecorder(setupFlare()->tracer, traceLogs: false, reportLogs: true, maxReportedLogs: 30);
+    $recorder = new LogRecorder(setupFlare()->tracer, config: [
+        'trace' => true,
+        'report' => true,
+        'max_reported' => 10,
+    ]);
 
     $recorder->record(
         'Some name',

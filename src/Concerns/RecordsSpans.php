@@ -2,57 +2,39 @@
 
 namespace Spatie\FlareClient\Concerns;
 
+use Closure;
 use Spatie\FlareClient\Spans\Span;
-use Spatie\FlareClient\Tracer;
 
 /**
  * @template T of Span
- * @property Tracer $tracer
+ *
+ * @uses  RecordsEntries<T>
  */
 trait RecordsSpans
 {
-    /** @var T[] */
-    protected array $spans = [];
+    use RecordsEntries;
 
-    protected bool $traceSpans = true;
+    protected function shouldTrace(): bool
+    {
+        return $this->trace && $this->tracer->isSamping();
+    }
 
-    protected bool $reportSpans = true;
-
-    protected ?int $maxReportedSpans = null;
+    protected function shouldReport(): bool
+    {
+        return $this->report;
+    }
 
     /**
-     * @param T $span
+     * @param T $entry
      */
-    protected function persistSpan(mixed $span): void
+    protected function traceEntry(mixed $entry): void
     {
-        if ($this->shouldTraceSpans()) {
-            $this->tracer->addSpan($span);
-        }
-
-        if($this->reportSpans === false) {
-            return;
-        }
-
-        $this->spans[] = $span;
-
-        if ($this->maxReportedSpans && count($this->spans) > $this->maxReportedSpans) {
-            array_shift($this->spans);
-        }
+        $this->tracer->addSpan($entry);
     }
 
     /** @return T[] */
     public function getSpans(): array
     {
-        return $this->spans;
-    }
-
-    public function reset(): void
-    {
-        $this->spans = [];
-    }
-
-    protected function shouldTraceSpans(): bool
-    {
-        return $this->traceSpans && $this->tracer->isSamping();
+        return $this->entries;
     }
 }

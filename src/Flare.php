@@ -10,16 +10,16 @@ use Psr\Container\ContainerInterface;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\Backtrace\Arguments\Reducers\ArgumentReducer;
 use Spatie\FlareClient\Concerns\HasUserProvidedContext;
-use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Contracts\Recorder;
 use Spatie\FlareClient\Enums\MessageLevels;
-use Spatie\FlareClient\Enums\SpanType;
+use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
-use Spatie\FlareClient\Recorders\GlowRecorder\GlowSpanEvent;
-use Spatie\FlareClient\Recorders\LogRecorder\LogMessageSpanEvent;
 use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
+use Spatie\FlareClient\Recorders\NullRecorder;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
+use Spatie\FlareClient\Recorders\Recorders;
+use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
 use Spatie\FlareClient\Support\Container;
 use Throwable;
 
@@ -33,7 +33,7 @@ class Flare
 
     /**
      * @param array<int, FlareMiddleware> $middleware
-     * @param array<class-string<Recorder>, Recorder> $recorders
+     * @param array<string, Recorder> $recorders
      * @param null|Closure(Exception): bool $filterExceptionsCallable
      * @param null|Closure(ReportFactory): bool $filterReportsCallable
      * @param array<class-string<ArgumentReducer>|ArgumentReducer>|ArgumentReducers|null $argumentReducers
@@ -104,81 +104,33 @@ class Flare
         return $this;
     }
 
-    /**
-     * @param string $name
-     * @param string $messageLevel
-     * @param array<int, mixed> $metaData
-     *
-     * @return $this
-     */
-    public function glow(
-        string $name,
-        string $messageLevel = MessageLevels::INFO,
-        array $metaData = []
-    ): self {
-        /** @var GlowRecorder $recorder */
-        $recorder = $this->recorders[GlowRecorder::class] ?? null;
-
-        if ($recorder === null) {
-            return $this;
+    public function startRecorders(): self
+    {
+        foreach ($this->recorders as $recorder) {
+            $recorder->start();
         }
-
-        $recorder->record($name, $messageLevel, $metaData);
 
         return $this;
     }
 
-    /**
-     * @param string $name
-     * @param string $messageLevel
-     * @param array<int, mixed> $metaData
-     *
-     * @return $this
-     */
-    public function log(
-        string $message,
-        string $level = MessageLevels::INFO,
-        array $context = []
-    ): self {
-        /** @var LogRecorder $recorder */
-        $recorder = $this->recorders[LogRecorder::class] ?? null;
-
-        if ($recorder === null) {
-            return $this;
-        }
-
-        $recorder->record($message, $level, $context);
-
-        return $this;
+    public function glow(): GlowRecorder|NullRecorder
+    {
+        return $this->recorders[RecorderType::Glow->value] ??= NullRecorder::instance();
     }
 
-    public function query(
-        string $sql,
-        int $duration,
-        ?array $bindings = null,
-        ?string $databaseName = null,
-        ?string $driverName = null,
-        FlareSpanType $spanType = SpanType::Query,
-        ?array $attributes = null,
-    ): self {
-        /** @var QueryRecorder $recorder */
-        $recorder = $this->recorders[QueryRecorder::class] ?? null;
+    public function log(): LogRecorder|NullRecorder
+    {
+        return $this->recorders[RecorderType::Log->value] ??= NullRecorder::instance();
+    }
 
-        if ($recorder === null) {
-            return $this;
-        }
+    public function query(): QueryRecorder|NullRecorder
+    {
+        return $this->recorders[RecorderType::Query->value] ??= NullRecorder::instance();
+    }
 
-        $recorder->record(
-            sql: $sql,
-            duration: $duration,
-            bindings: $bindings,
-            databaseName: $databaseName,
-            driverName: $driverName,
-            spanType: $spanType,
-            attributes: $attributes
-        );
-
-        return $this;
+    public function transaction(): TransactionRecorder|NullRecorder
+    {
+        return $this->recorders[RecorderType::Transaction->value] ??= NullRecorder::instance();
     }
 
     public function handleException(Throwable $throwable): void

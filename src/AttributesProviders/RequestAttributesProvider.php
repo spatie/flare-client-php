@@ -47,14 +47,22 @@ class RequestAttributesProvider
         ];
     }
 
-    public function getRequest(Request $request): array
+    protected function getRequest(Request $request): array
     {
         $payload = [
             'url.full' => $request->getUri(),
-            'http.request.method' => $request->getMethod(),
+            'url.scheme' => $request->getScheme(),
+            'url.path' => $request->getPathInfo(),
+            'url.query' => http_build_query($request->query->all()),
+
+            'server.address' => empty($request->server->get('SERVER_NAME'))
+                ? $request->server->get('SERVER_ADDR')
+                : $request->server->get('SERVER_NAME'),
+            'server.port' => $request->server->get('SERVER_PORT'),
+
             'user_agent.original' => $request->headers->get('User-Agent'),
 
-            'url.query' => $request->query->all(),
+            'http.request.method' => strtoupper($request->getMethod()),
             'http.request.files' => $this->getFiles($request),
             'http.request.body.size' => strlen($request->getContent()),
         ];
@@ -131,7 +139,7 @@ class RequestAttributesProvider
         }, $files);
     }
 
-    public function getSession(Request $request): array
+    protected function getSession(Request $request): array
     {
         try {
             $session = $request->getSession();
@@ -154,14 +162,14 @@ class RequestAttributesProvider
         }
     }
 
-    public function getCookies(Request $request): array
+    protected function getCookies(Request $request): array
     {
         return [
             'http.request.cookies' => $request->cookies->all(),
         ];
     }
 
-    public function getHeaders(Request $request): array
+    protected function getHeaders(Request $request): array
     {
         $headers = [];
 

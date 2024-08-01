@@ -12,12 +12,6 @@ use Spatie\FlareClient\ReportFactory;
 
 class AddRecordedEntries implements FlareMiddleware
 {
-
-    public static function initialize(ContainerInterface $container, array $config): static
-    {
-        return new self([]);
-    }
-
     /**
      * @param array<Recorder> $recorders
      */

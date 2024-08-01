@@ -6,6 +6,7 @@ use Psr\Container\ContainerInterface;
 use Spatie\FlareClient\Concerns\RecordsSpans;
 use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Contracts\SpansRecorder;
+use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Tracer;
 
@@ -13,36 +14,24 @@ class QueryRecorder implements SpansRecorder
 {
     use RecordsSpans;
 
-    public static function initialize(ContainerInterface $container, array $config): static
+    protected bool $includeBindings = true;
+
+    protected bool $findOrigin = false;
+
+    protected ?int $findOriginThreshold = null;
+
+    public static function type(): string|RecorderType
     {
-        return new static(
-            $container->get(Tracer::class),
-            $config['trace_queries'],
-            $config['report_queries'],
-            $config['max_reported_queries'],
-            $config['include_bindings'],
-            $config['find_query_origin'],
-            $config['find_query_origin_threshold'],
-        );
+        return RecorderType::Query;
     }
 
-    public function __construct(
-        protected Tracer $tracer,
-        bool $traceQueries,
-        bool $reportQueries,
-        ?int $maxReportedQueries,
-        protected bool $includeBindings,
-        protected bool $findQueryOrigin,
-        protected ?int $findQueryOriginThreshold,
-    ) {
-        $this->traceSpans = $traceQueries;
-        $this->reportSpans = $reportQueries;
-        $this->maxReportedSpans = $maxReportedQueries;
-    }
-
-    public function start(): void
+    public function configure(array $config): void
     {
+        $this->configureRecorder($config);
 
+        $this->includeBindings = $config['include_bindings'] ?? true;
+        $this->findOrigin = $config['find_origin'] ?? false;
+        $this->findOriginThreshold = $config['find_origin_threshold'] ?? null;
     }
 
     public function record(
@@ -54,35 +43,33 @@ class QueryRecorder implements SpansRecorder
         FlareSpanType $spanType = SpanType::Query,
         ?array $attributes = null,
     ): QuerySpan {
-        $span = new QuerySpan(
-            $this->tracer->currentTraceId() ?? '',
-            $this->tracer->currentSpan()?->spanId,
-            $sql,
-            $duration,
-            $this->includeBindings ? $bindings : null,
-            $databaseName,
-            $driverName,
-            $spanType
-        );
+        return $this->persistEntry(function () use ($attributes, $spanType, $driverName, $databaseName, $bindings, $duration, $sql) {
+            $span = new QuerySpan(
+                $this->tracer->currentTraceId() ?? '',
+                $this->tracer->currentSpan()?->spanId,
+                $sql,
+                $duration,
+                $this->includeBindings ? $bindings : null,
+                $databaseName,
+                $driverName,
+                $spanType
+            );
 
-        if ($this->shouldFindOrigins($duration)) {
-            $this->setQueryOrigins($span);
-        }
+            $span->addAttributes($attributes);
 
-        if ($attributes) {
-            $span->setAttributes($attributes);
-        }
+            if ($this->shouldFindOrigins($duration)) {
+                $this->setQueryOrigins($span);
+            }
 
-        $this->persistSpan($span);
-
-        return $span;
+            return $span;
+        });
     }
 
     protected function shouldFindOrigins(int $duration): bool
     {
-        return $this->shouldTraceSpans()
-            && $this->findQueryOrigin
-            && ($this->findQueryOriginThreshold === null || $duration >= $this->findQueryOriginThreshold);
+        return $this->shouldTrace()
+            && $this->findOrigin
+            && ($this->findOriginThreshold === null || $duration >= $this->findOriginThreshold);
     }
 
     protected function setQueryOrigins(QuerySpan $span): QuerySpan

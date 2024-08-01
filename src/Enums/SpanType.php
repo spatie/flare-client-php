@@ -8,6 +8,14 @@ enum SpanType: string implements FlareSpanType
 {
     case Request = 'php_request';
     case Query = 'php_query';
-
     case Transaction = 'php_transaction';
+
+    public function humanReadable(): string
+    {
+        return match ($this) {
+            self::Request => 'request',
+            self::Query => 'query',
+            self::Transaction => 'transaction',
+        };
+    }
 }

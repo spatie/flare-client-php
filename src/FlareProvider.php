@@ -3,13 +3,13 @@
 namespace Spatie\FlareClient;
 
 use Illuminate\Contracts\Container\Container as IlluminateContainer;
-use Illuminate\Support\Arr;
 use Spatie\ErrorSolutions\Contracts\SolutionProviderRepository as SolutionProviderRepositoryContract;
 use Spatie\FlareClient\Context\ContextProviderDetector;
 use Spatie\FlareClient\Contracts\Recorder;
 use Spatie\FlareClient\Exporters\JsonExporter;
 use Spatie\FlareClient\FlareMiddleware\AddRecordedEntries;
 use Spatie\FlareClient\FlareMiddleware\ContainerAwareFlareMiddleware;
+use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 use Spatie\FlareClient\FlareMiddleware\RecordingMiddleware;
 use Spatie\FlareClient\Http\Client;
 use Spatie\FlareClient\Resources\Resource;
@@ -80,17 +80,43 @@ class FlareProvider
             return $repository;
         });
 
-        foreach ($this->config->recorders as $recorder => $config) {
-            $this->container->singleton($recorder, fn () => $recorder::initialize($this->container, $config));
+        foreach ($this->config->recorders as $recorderClass => $config) {
+            $this->container->singleton($recorderClass, function () use ($config, $recorderClass) {
+                /** @var Recorder $recorder */
+                $recorder = method_exists($recorderClass, 'register')
+                    ? $recorderClass::register($this->container)()
+                    : new $recorderClass($this->container->get(Tracer::class));
+
+                if (method_exists($recorder, 'configure')) {
+                    $recorder->configure($config);
+                }
+
+                return $recorder;
+            });
         }
 
-        foreach ($this->config->middleware as $middleware => $config) {
-            $this->container->singleton($middleware, fn () => $middleware::initialize($this->container, $config));
+        foreach ($this->config->middleware as $middlewareClass => $config) {
+            $this->container->singleton($middlewareClass, function () use ($middlewareClass, $config) {
+                /** @var FlareMiddleware $middleware */
+                $middleware = method_exists($middlewareClass, 'register')
+                    ? $middlewareClass::register($this->container)()
+                    : new $middlewareClass;
+
+                if (method_exists($middleware, 'configure')) {
+                    $middleware->configure($config);
+                }
+
+                return $middleware;
+            });
         }
 
         $this->container->singleton(Flare::class, function () {
             $recorders = array_combine(
-                array_keys($this->config->recorders),
+                array_map(
+                /** @var class-string<Recorder> $recorder */
+                    fn ($recorder) => $recorder::type()->value,
+                    array_keys($this->config->recorders)
+                ),
                 array_map(
                     fn ($recorder) => $this->container->get($recorder),
                     array_keys($this->config->recorders)
@@ -129,8 +155,6 @@ class FlareProvider
 
     public function boot(): void
     {
-        foreach ($this->config->recorders as $recorder => $config) {
-            $this->container->get($recorder)->start();
-        }
+        $this->container->get(Flare::class)->startRecorders();
     }
 }

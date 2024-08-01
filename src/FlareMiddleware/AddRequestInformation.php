@@ -11,41 +11,54 @@ use Symfony\Component\HttpFoundation\Request;
 
 class AddRequestInformation implements FlareMiddleware
 {
-    public static function initialize(ContainerInterface $container, array $config): static
-    {
-        return new static(
-            $config['censor_body_fields'] ?? [],
-            $config['censor_request_headers'] ?? [],
-            $config['remove_ip'] ?? false,
-        );
-    }
+    /** @var array<string> */
+    public array $censorBodyFields = [];
 
-    /**
-     * @param array<string> $censorBodyFields
-     * @param array<string> $censorRequestHeaders
-     */
-    public function __construct(
-        public array $censorBodyFields = [],
-        public array $censorRequestHeaders = [],
-        public bool $removeIp = false,
-    )
+    /** @var array<string> */
+    public array $censorRequestHeaders = [];
+
+    public bool $removeIp = false;
+
+    public function configure(array $config): void
     {
+        $this->censorBodyFields = $config['censor_body_fields'] ?? [];
+        $this->censorRequestHeaders = $config['censor_request_headers'] ?? [];
+        $this->removeIp = $config['remove_ip'] ?? false;
     }
 
     public function handle(ReportFactory $report, Closure $next)
     {
-        if (Runtime::runningInConsole()) {
+        if ($this->isRunningInConsole()) {
             return $next($report);
         }
 
-        $provider = new RequestAttributesProvider(
+        $request = $this->getRequest();
+
+        $provider = $this->buildProvider($request);
+
+        $report->addAttributes(
+            $provider->toArray($request)
+        );
+
+        return $next($report);
+    }
+
+    protected function isRunningInConsole(): bool
+    {
+        return Runtime::runningInConsole();
+    }
+
+    protected function getRequest(): Request
+    {
+        return Request::createFromGlobals();
+    }
+
+    protected function buildProvider(Request $request): RequestAttributesProvider
+    {
+        return new RequestAttributesProvider(
             $this->censorBodyFields,
             $this->censorRequestHeaders,
             $this->removeIp,
         );
-
-        $report->addAttributes($provider->toArray(Request::createFromGlobals()));
-
-        return $next($report);
     }
 }
