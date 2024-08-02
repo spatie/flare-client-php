@@ -114,7 +114,7 @@ class FlareProvider
             $recorders = array_combine(
                 array_map(
                 /** @var class-string<Recorder> $recorder */
-                    fn ($recorder) => $recorder::type()->value,
+                    fn ($recorder) => is_string($recorder::type()) ? $recorder::type() : $recorder::type()->value,
                     array_keys($this->config->recorders)
                 ),
                 array_map(
