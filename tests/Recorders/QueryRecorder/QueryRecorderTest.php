@@ -3,15 +3,18 @@
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
 use Spatie\FlareClient\Recorders\QueryRecorder\QuerySpan;
+use Spatie\FlareClient\Tests\Shared\FakeTime;
 use Spatie\FlareClient\Time\Duration;
 
 beforeEach(function () {
-    useTime('2019-01-01 12:34:56');
+    FakeTime::setup('2019-01-01 12:34:56');
 });
 
 it('can trace queries', function () {
+    $flare = setupFlare();
     $recorder = new QueryRecorder(
-        $tracer = setupFlare()->tracer,
+        tracer: $flare->tracer,
+        backTracer: $flare->backTracer,
         config: [
             'trace' => true,
             'report' => false,
@@ -22,21 +25,21 @@ it('can trace queries', function () {
         ]
     );
 
-    $tracer->startTrace();
+    $flare->tracer->startTrace();
 
     $recorder->record('select * from users where id = ?', Duration::milliseconds(300), ['id' => 1], 'users', 'mysql');
 
-    expect($tracer->currentTrace())->toHaveCount(1);
+    expect($flare->tracer->currentTrace())->toHaveCount(1);
 
-    $span = reset($tracer->currentTrace());
+    $span = reset($flare->tracer->currentTrace());
 
     expect($span)
         ->toBeInstanceOf(QuerySpan::class)
         ->spanId->not()->toBeNull()
-        ->traceId->toBe($tracer->currentTraceId())
+        ->traceId->toBe($flare->tracer->currentTraceId())
         ->parentSpanId->toBeNull()
-        ->startUs->toBe(1546346096000 - Duration::milliseconds(300))
-        ->endUs->toBe(1546346096000)
+        ->start->toBe(1546346096000000 - Duration::milliseconds(300))
+        ->end->toBe(1546346096000000)
         ->name->toBe('Query - select * from users where id = ?');
 
     expect($span->attributes)
@@ -49,8 +52,11 @@ it('can trace queries', function () {
 });
 
 it('can report queries without tracing', function () {
+    $flare = setupFlare();
+
     $recorder = new QueryRecorder(
-        $tracer = setupFlare()->tracer,
+        $flare->tracer,
+        $flare->backTracer,
         config: [
             'trace' => false,
             'report' => true,
@@ -72,8 +78,8 @@ it('can report queries without tracing', function () {
         ->spanId->not()->toBeNull()
         ->traceId->toBe('')
         ->parentSpanId->toBeNull()
-        ->startUs->toBe(1546346096000 - Duration::milliseconds(300))
-        ->endUs->toBe(1546346096000)
+        ->start->toBe(1546346096000000 - Duration::milliseconds(300))
+        ->end->toBe(1546346096000000)
         ->name->toBe('Query - select * from users where id = ?');
 
     expect($span->attributes)
@@ -86,8 +92,11 @@ it('can report queries without tracing', function () {
 });
 
 it('can disable the inclusion of bindings', function () {
+    $flare = setupFlare();
+
     $recorder = new QueryRecorder(
-        $tracer = setupFlare()->tracer,
+        $flare->tracer,
+        $flare->backTracer,
         config: [
             'trace' => true,
             'report' => false,
@@ -98,7 +107,7 @@ it('can disable the inclusion of bindings', function () {
         ]
     );
 
-    $tracer->startTrace();
+    $flare->tracer->startTrace();
 
     $recorder->record('select * from users where id = ?', Duration::milliseconds(300), ['id' => 1], 'users', 'mysql');
 
@@ -106,8 +115,11 @@ it('can disable the inclusion of bindings', function () {
 });
 
 it('can find the origin of a query when tracing and a threshold is met', function () {
+    $flare = setupFlare();
+
     $recorder = new QueryRecorder(
-        $tracer = setupFlare()->tracer,
+        $flare->tracer,
+        $flare->backTracer,
         config: [
             'trace' => true,
             'report' => false,
@@ -118,13 +130,13 @@ it('can find the origin of a query when tracing and a threshold is met', functio
         ]
     );
 
-    $tracer->startTrace();
+    $flare->tracer->startTrace();
 
     $recorder->record('select * from users where id = ?', Duration::milliseconds(300), ['id' => 1], 'users', 'mysql');
 
-    expect($tracer->currentTrace())->toHaveCount(1);
+    expect($flare->tracer->currentTrace())->toHaveCount(1);
 
-    $span = reset($tracer->currentTrace());
+    $span = reset($flare->tracer->currentTrace());
 
     expect($span->attributes)->toHaveKeys([
         'code.filepath',
@@ -134,8 +146,11 @@ it('can find the origin of a query when tracing and a threshold is met', functio
 });
 
 it('can find the origin of a query when tracing no threshold is set', function () {
+    $flare = setupFlare();
+
     $recorder = new QueryRecorder(
-        $tracer = setupFlare()->tracer,
+        $flare->tracer,
+        $flare->backTracer,
         config: [
             'trace' => true,
             'report' => false,
@@ -146,13 +161,13 @@ it('can find the origin of a query when tracing no threshold is set', function (
         ]
     );
 
-    $tracer->startTrace();
+    $flare->tracer->startTrace();
 
     $recorder->record('select * from users where id = ?', Duration::milliseconds(300), ['id' => 1], 'users', 'mysql');
 
-    expect($tracer->currentTrace())->toHaveCount(1);
+    expect($flare->tracer->currentTrace())->toHaveCount(1);
 
-    $span = reset($tracer->currentTrace());
+    $span = reset($flare->tracer->currentTrace());
 
     expect($span->attributes)->toHaveKeys([
         'code.filepath',
@@ -162,8 +177,11 @@ it('can find the origin of a query when tracing no threshold is set', function (
 });
 
 it('will not find the origin of a query when tracing and a threshold is not met', function () {
+    $flare = setupFlare();
+
     $recorder = new QueryRecorder(
-        $tracer = setupFlare()->tracer,
+        $flare->tracer,
+        $flare->backTracer,
         config: [
             'trace' => true,
             'report' => false,
@@ -174,13 +192,13 @@ it('will not find the origin of a query when tracing and a threshold is not met'
         ]
     );
 
-    $tracer->startTrace();
+    $flare->tracer->startTrace();
 
     $recorder->record('select * from users where id = ?', 99, ['id' => 1], 'users', 'mysql');
 
-    expect($tracer->currentTrace())->toHaveCount(1);
+    expect($flare->tracer->currentTrace())->toHaveCount(1);
 
-    $span = reset($tracer->currentTrace());
+    $span = reset($flare->tracer->currentTrace());
 
     expect($span->attributes)->not()->toHaveKeys([
         'code.filepath',
@@ -190,8 +208,11 @@ it('will not find the origin of a query when tracing and a threshold is not met'
 });
 
 it('will not find the origin of a query when only reporting', function () {
+    $flare = setupFlare();
+
     $recorder = new QueryRecorder(
-        $tracer = setupFlare()->tracer,
+        $flare->tracer,
+        $flare->backTracer,
         config: [
             'trace' => false,
             'report' => true,

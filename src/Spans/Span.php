@@ -2,15 +2,18 @@
 
 namespace Spatie\FlareClient\Spans;
 
+use Spatie\FlareClient\Concerns\GeneratesIds;
 use Spatie\FlareClient\Concerns\HasAttributes;
 use Spatie\FlareClient\Concerns\UsesTime;
+use Spatie\FlareClient\Contracts\WithAttributes;
 use Spatie\FlareClient\Enums\SpanStatusCode;
 use Spatie\FlareClient\Support\SpanId;
 
-class Span
+class Span  implements WithAttributes
 {
     use HasAttributes;
     use UsesTime;
+    use GeneratesIds;
 
     /** @var SpanEvent[] */
     public array $events = [];
@@ -23,8 +26,8 @@ class Span
         public string $spanId,
         public ?string $parentSpanId,
         public string $name,
-        public int $startUs,
-        public ?int $endUs,
+        public int $start,
+        public ?int $end,
         array $attributes = [],
         public int $droppedEventsCount = 0,
         public ?SpanStatus $status = null,
@@ -39,22 +42,23 @@ class Span
     public static function build(
         string $traceId,
         string $name,
-        ?int $startUs = null,
-        ?int $endUs = null,
-        ?int $durationUs = null,
+        ?int $start = null,
+        ?int $end = null,
+        ?int $duration = null,
         ?string $id = null,
         ?string $parentId = null,
         array $attributes = [],
         array $events = [],
         SpanStatus $status = null,
     ): self {
-        $id ??= SpanId::generate();
+        $id ??= self::generateIdFor()->span();
 
-        [$startUs, $endUs] = match (true) {
-            $startUs && $endUs => [$startUs, $endUs],
-            $startUs && $durationUs => [$startUs, $startUs + $durationUs],
-            $endUs && $durationUs => [$endUs - $durationUs, $endUs],
-            $startUs && $endUs === null && $durationUs === null => [$startUs, null],
+        [$start, $end] = match (true) {
+            $start && $end => [$start, $end],
+            $start && $duration => [$start, $start + $duration],
+            $end && $duration => [$end - $duration, $end],
+            $start && $end === null && $duration === null => [$start, null],
+            $duration && $start === null && $end === null => [self::getCurrentTime() - $duration, self::getCurrentTime()],
             default => [self::getCurrentTime(), null],
         };
 
@@ -63,8 +67,8 @@ class Span
             spanId: $id,
             parentSpanId: $parentId,
             name: $name,
-            startUs: $startUs,
-            endUs: $endUs,
+            start: $start,
+            end: $end,
             attributes: $attributes,
             droppedEventsCount: 0,
             status: $status,
@@ -91,7 +95,7 @@ class Span
 
     public function end(?int $endUs = null): self
     {
-        $this->endUs = $endUs ?? self::getCurrentTime();
+        $this->end = $endUs ?? self::getCurrentTime();
 
         return $this;
     }
@@ -110,8 +114,8 @@ class Span
             'spanId' => $this->spanId,
             'parentSpanId' => $this->parentSpanId,
             'name' => $this->name,
-            'startTimeUnixNano' => $this->startUs * 1000,
-            'endTimeUnixNano' => $this->endUs * 1000,
+            'startTimeUnixNano' => $this->start * 1000,
+            'endTimeUnixNano' => $this->end * 1000,
             'attributes' => $this->attributesAsArray(),
             'droppedAttributesCount' => $this->droppedAttributesCount,
             'events' => array_map(fn (SpanEvent $event) => $event->toTrace(), $this->events),
@@ -126,8 +130,8 @@ class Span
     {
         return [
             'name' => $this->name,
-            'startTimeUnixNano' => $this->startUs * 1000,
-            'endTimeUnixNano' => $this->endUs * 1000,
+            'startTimeUnixNano' => $this->start * 1000,
+            'endTimeUnixNano' => $this->end * 1000,
             'attributes' => $this->attributes,
         ];
     }

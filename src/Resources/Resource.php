@@ -5,10 +5,11 @@ namespace Spatie\FlareClient\Resources;
 use Composer\InstalledVersions;
 use Spatie\FlareClient\AttributesProviders\GitAttributesProvider;
 use Spatie\FlareClient\Concerns\HasAttributes;
+use Spatie\FlareClient\Contracts\WithAttributes;
 use Spatie\FlareClient\Support\Telemetry;
 
 /** @see https://github.com/opentelemetry-php/sdk/blob/main/Resource/Detectors/ */
-class Resource
+class Resource  implements WithAttributes
 {
     use HasAttributes;
 

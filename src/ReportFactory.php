@@ -7,26 +7,29 @@ use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\Backtrace\Arguments\Reducers\ArgumentReducer;
 use Spatie\Backtrace\Backtrace;
 use Spatie\ErrorSolutions\Contracts\Solution;
+use Spatie\FlareClient\Concerns\GeneratesIds;
 use Spatie\FlareClient\Concerns\HasAttributes;
 use Spatie\FlareClient\Concerns\HasUserProvidedContext;
 use Spatie\FlareClient\Contracts\ProvidesFlareContext;
+use Spatie\FlareClient\Contracts\WithAttributes;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\LaravelFlare\Exceptions\ViewException;
 use Spatie\LaravelIgnition\Exceptions\ViewException as IgnitionViewException;
 use Throwable;
 
-class ReportFactory
+class ReportFactory implements WithAttributes
 {
     use HasAttributes;
     use HasUserProvidedContext;
+    use GeneratesIds;
 
     public ?string $applicationPath = null;
 
     public ?string $version = null;
 
-    /** @var  array<class-string<ArgumentReducer>|ArgumentReducer>|ArgumentReducers|null */
-    public null|array|ArgumentReducers $argumentReducers = null;
+    /** @var  ArgumentReducers|null */
+    public null|ArgumentReducers $argumentReducers = null;
 
     public bool $withStackTraceArguments = true;
 
@@ -50,6 +53,8 @@ class ReportFactory
     public ?string $languageVersion = null;
 
     public ?string $frameworkVersion = null;
+
+    public ?string $trackingUuid = null;
 
     protected function __construct(
         public ?Throwable $throwable = null,
@@ -139,7 +144,7 @@ class ReportFactory
         return $this;
     }
 
-    public function argumentReducers(null|ArgumentReducers|array $argumentReducers): self
+    public function argumentReducers(null|ArgumentReducers $argumentReducers): self
     {
         $this->argumentReducers = $argumentReducers;
 
@@ -149,6 +154,13 @@ class ReportFactory
     public function withStackTraceArguments(bool $withStackTraceArguments): self
     {
         $this->withStackTraceArguments = $withStackTraceArguments;
+
+        return $this;
+    }
+
+    public function trackingUuid(string $uuid): self
+    {
+        $this->trackingUuid = $uuid;
 
         return $this;
     }
@@ -198,7 +210,7 @@ class ReportFactory
             handled: $this->handled,
             spans: $this->spans,
             spanEvents: $this->spanEvents,
-            trackingUuid: $this->generateUuid(),
+            trackingUuid: $this->trackingUuid ?? self::generateIdFor()->uuid(),
         );
     }
 
@@ -227,22 +239,5 @@ class ReportFactory
         }
 
         return get_class($throwable);
-    }
-
-    /*
-     * Found on https://stackoverflow.com/questions/2040240/php-function-to-generate-v4-uuid/15875555#15875555
-     */
-    protected function generateUuid(): string
-    {
-        // Generate 16 bytes (128 bits) of random data or use the data passed into the function.
-        $data = random_bytes(16);
-
-        // Set version to 0100
-        $data[6] = chr(ord($data[6]) & 0x0f | 0x40);
-        // Set bits 6-7 to 10
-        $data[8] = chr(ord($data[8]) & 0x3f | 0x80);
-
-        // Output the 36 character UUID.
-        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
     }
 }

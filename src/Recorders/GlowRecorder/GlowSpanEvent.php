@@ -25,7 +25,7 @@ class GlowSpanEvent extends SpanEvent
 
         parent::__construct(
             name: "Glow - {$name}",
-            timeUs: $time ?? static::getCurrentTime(),
+            timestamp: $time ?? static::getCurrentTime(),
             attributes: $this->collectAttributes(),
         );
     }

@@ -2,18 +2,18 @@
 
 use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Enums\SpanEventType;
-use Spatie\FlareClient\Flare;
-use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowSpanEvent;
-use Spatie\FlareClient\Spans\Span;
+use Spatie\FlareClient\Tests\Shared\FakeTime;
 
 beforeEach(function () {
-    useTime('2019-01-01 12:34:56');
+    FakeTime::setup('2019-01-01 12:34:56');
 });
 
 it('stores glows for reporting and tracing', function () {
-    $recorder = new GlowRecorder(setupFlare()->tracer, config: [
+    $flare = setupFlare();
+
+    $recorder = new GlowRecorder($flare->tracer, $flare->backTracer, config: [
         'trace' => true,
         'report' => true,
         'max_reported' => 10,
@@ -36,7 +36,7 @@ it('stores glows for reporting and tracing', function () {
     expect($glow)
         ->toBeInstanceOf(GlowSpanEvent::class)
         ->name->toBe('Glow - Some name')
-        ->timeUs->toBe(1546346096000);
+        ->timestamp->toBe(1546346096000000);
 
     expect($glow->attributes)
         ->toHaveCount(4)

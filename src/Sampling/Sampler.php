@@ -4,5 +4,5 @@ namespace Spatie\FlareClient\Sampling;
 
 interface Sampler
 {
-    public function shouldSample(SamplingContext $context): bool;
+    public function shouldSample(array $context): bool;
 }

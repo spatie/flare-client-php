@@ -3,7 +3,7 @@ language: PHP
 framework_version: null
 language_version: 7.3.2
 exception_class: PHPUnit\Framework\Exception
-seen_at: 1546346096000
+seen_at: 1546346096000000
 message: 'This is a test'
 solutions: {  }
 stacktrace: {  }

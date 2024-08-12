@@ -3,15 +3,18 @@
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Recorders\DumpRecorder\DumpRecorder;
 use Spatie\FlareClient\Recorders\DumpRecorder\DumpSpanEvent;
+use Spatie\FlareClient\Tests\Shared\FakeTime;
 
 beforeEach(function () {
-    useTime('2019-01-01 12:34:56');
+    FakeTime::setup('2019-01-01 12:34:56');
 });
 
 it('can symphony record dumps', function () {
 
+    $flare = setupFlare();
     $dumpRecorder = new DumpRecorder(
-        tracer: setupFlare()->tracer,
+        tracer: $flare->tracer,
+        backTracer: $flare->backTracer,
         config: [
             'trace' => true,
             'report' => true,
@@ -29,7 +32,7 @@ it('can symphony record dumps', function () {
     expect($dumps[0])
         ->toBeInstanceOf(DumpSpanEvent::class)
         ->name->toBe('Dump entry')
-        ->timeUs->toBe(1546346096000);
+        ->timestamp->toBe(1546346096000000);
 
     expect($dumps[0]->attributes)
         ->toHaveCount(2)
@@ -38,9 +41,11 @@ it('can symphony record dumps', function () {
 });
 
 it('can record dump origins', function () {
+    $flare = setupFlare();
 
     $dumpRecorder = new DumpRecorder(
-        tracer: setupFlare()->tracer,
+        tracer: $flare->tracer,
+        backTracer: $flare->backTracer,
         config: [
             'trace' => true,
             'report' => true,
@@ -61,9 +66,11 @@ it('can record dump origins', function () {
 });
 
 it('can disable recording dump origins', function () {
+    $flare = setupFlare();
 
     $dumpRecorder = new DumpRecorder(
-        tracer: setupFlare()->tracer,
+        tracer: $flare->tracer,
+        backTracer: $flare->backTracer,
         config: [
             'trace' => true,
             'report' => true,

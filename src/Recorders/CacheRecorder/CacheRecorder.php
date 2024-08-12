@@ -22,7 +22,7 @@ class CacheRecorder implements SpanEventsRecorder
         return RecorderType::Cache;
     }
 
-    public function configure(array $config): void
+    protected function configure(array $config): void
     {
         $this->configureRecorder($config);
 

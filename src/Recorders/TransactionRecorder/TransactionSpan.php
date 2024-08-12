@@ -16,11 +16,11 @@ class TransactionSpan extends Span
     ) {
         parent::__construct(
             traceId: $traceId,
-            spanId: SpanId::generate(),
+            spanId: self::generateIdFor()->span(),
             parentSpanId: $parentSpanId,
             name: 'DB Transaction',
-            startUs: static::getCurrentTime(),
-            endUs: null,
+            start: static::getCurrentTime(),
+            end: null,
             attributes: array_filter($this->collectAttributes()),
         );
     }

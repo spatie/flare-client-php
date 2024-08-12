@@ -20,7 +20,7 @@ class LogMessageSpanEvent extends SpanEvent
     ) {
         parent::__construct(
             name: "Log entry",
-            timeUs: $time ?? static::getCurrentTime(),
+            timestamp: $time ?? static::getCurrentTime(),
             attributes: $this->collectAttributes(),
         );
     }

@@ -21,7 +21,7 @@ class NullRecorder implements SpansRecorder, SpanEventsRecorder
     }
 
 
-    public function configure(array $config): void
+    protected function configure(array $config): void
     {
 
     }

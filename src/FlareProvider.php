@@ -2,14 +2,16 @@
 
 namespace Spatie\FlareClient;
 
+use Closure;
 use Illuminate\Contracts\Container\Container as IlluminateContainer;
+use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\ErrorSolutions\Contracts\SolutionProviderRepository as SolutionProviderRepositoryContract;
 use Spatie\FlareClient\Context\ContextProviderDetector;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
+use Spatie\FlareClient\Enums\SamplingType;
 use Spatie\FlareClient\Exporters\JsonExporter;
 use Spatie\FlareClient\FlareMiddleware\AddRecordedEntries;
 use Spatie\FlareClient\FlareMiddleware\ContainerAwareFlareMiddleware;
-use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 use Spatie\FlareClient\FlareMiddleware\RecordingMiddleware;
 use Spatie\FlareClient\Http\Client;
 use Spatie\FlareClient\Resources\Resource;
@@ -19,14 +21,20 @@ use Spatie\FlareClient\Senders\Sender;
 use Spatie\FlareClient\Support\BackTracer;
 use Spatie\FlareClient\Support\Container;
 use Spatie\FlareClient\Support\PhpStackFrameArgumentsFixer;
+use Spatie\FlareClient\Support\SentReports;
 use Spatie\FlareClient\Support\TraceLimits;
 
 class FlareProvider
 {
+    /**
+     * @param Closure(Container|IlluminateContainer, class-string<Recorder>, array):void|null $registerRecorderAndMiddlewaresCallback
+     */
     public function __construct(
         protected FlareConfig $config,
-        protected Container|IlluminateContainer $container
+        protected Container|IlluminateContainer $container,
+        protected ?Closure $registerRecorderAndMiddlewaresCallback = null,
     ) {
+        $this->registerRecorderAndMiddlewaresCallback ??= $this->defaultRegisterRecordersAndMiddlewaresCallback();
     }
 
     public function register(): void
@@ -63,13 +71,22 @@ class FlareProvider
         $this->container->singleton(Scope::class, fn () => Scope::build());
 
         $this->container->singleton(Tracer::class, fn () => new Tracer(
+            samplingType: $this->config->trace
+                ? SamplingType::Waiting
+                : SamplingType::Disabled,
             api: $this->container->get(Api::class),
+            sampler: $this->container->get(Sampler::class),
             exporter: $this->container->get(JsonExporter::class),
-            backTracer: $this->container->get(BackTracer::class),
             resource: $this->container->get(Resource::class),
             scope: $this->container->get(Scope::class),
             limits: $this->config->traceLimits ?? TraceLimits::defaults(),
         ));
+
+        $this->container->singleton(ArgumentReducers::class, fn () => match (true) {
+            $this->config->argumentReducers === null => null,
+            is_array($this->config->argumentReducers) => ArgumentReducers::create($this->config->argumentReducers),
+            default => $this->config->argumentReducers,
+        });
 
         $this->container->singleton(SolutionProviderRepositoryContract::class, function () {
             /** @var SolutionProviderRepositoryContract $repository */
@@ -80,34 +97,14 @@ class FlareProvider
             return $repository;
         });
 
+        $this->container->singleton(SentReports::class, fn () => new SentReports());
+
         foreach ($this->config->recorders as $recorderClass => $config) {
-            $this->container->singleton($recorderClass, function () use ($config, $recorderClass) {
-                /** @var Recorder $recorder */
-                $recorder = method_exists($recorderClass, 'register')
-                    ? $recorderClass::register($this->container)()
-                    : new $recorderClass($this->container->get(Tracer::class));
-
-                if (method_exists($recorder, 'configure')) {
-                    $recorder->configure($config);
-                }
-
-                return $recorder;
-            });
+            ($this->registerRecorderAndMiddlewaresCallback)($this->container, $recorderClass, $config);
         }
 
         foreach ($this->config->middleware as $middlewareClass => $config) {
-            $this->container->singleton($middlewareClass, function () use ($middlewareClass, $config) {
-                /** @var FlareMiddleware $middleware */
-                $middleware = method_exists($middlewareClass, 'register')
-                    ? $middlewareClass::register($this->container)()
-                    : new $middlewareClass;
-
-                if (method_exists($middleware, 'configure')) {
-                    $middleware->configure($config);
-                }
-
-                return $middleware;
-            });
+            ($this->registerRecorderAndMiddlewaresCallback)($this->container, $middlewareClass, $config);
         }
 
         $this->container->singleton(Flare::class, function () {
@@ -134,6 +131,8 @@ class FlareProvider
                 container: $this->container,
                 api: $this->container->get(Api::class),
                 tracer: $this->container->get(Tracer::class),
+                backTracer: $this->container->get(BackTracer::class),
+                sentReports: $this->container->get(SentReports::class),
                 middleware: $middleware,
                 recorders: $recorders,
                 applicationPath: $this->config->applicationPath,
@@ -143,7 +142,7 @@ class FlareProvider
                 reportErrorLevels: $this->config->reportErrorLevels,
                 filterExceptionsCallable: $this->config->filterExceptionsCallable,
                 filterReportsCallable: $this->config->filterReportsCallable,
-                argumentReducers: $this->config->argumentReducers,
+                argumentReducers: $this->container->get(ArgumentReducers::class),
                 withStackFrameArguments: $this->config->withStackFrameArguments,
             );
         });
@@ -156,5 +155,17 @@ class FlareProvider
     public function boot(): void
     {
         $this->container->get(Flare::class)->startRecorders();
+    }
+
+    protected function defaultRegisterRecordersAndMiddlewaresCallback(): Closure
+    {
+        return fn (Container|IlluminateContainer $container, string $class, array $config) => $container->singleton(
+            $class,
+            function () use ($container, $config, $class) {
+                return method_exists($class, 'register')
+                    ? $class::register($container, $config)()
+                    : new $class;
+            }
+        );
     }
 }

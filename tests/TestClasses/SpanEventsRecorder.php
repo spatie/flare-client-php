@@ -2,6 +2,7 @@
 
 namespace Spatie\FlareClient\Tests\TestClasses;
 
+use Spatie\FlareClient\Concerns\Recorders\FindsOrigins;
 use Spatie\FlareClient\Concerns\Recorders\RecordsSpanEvents;
 use Spatie\FlareClient\Contracts\Recorders\SpanEventsRecorder as BaseSpanEventsRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
@@ -11,6 +12,11 @@ class SpanEventsRecorder implements BaseSpanEventsRecorder
 {
     use RecordsSpanEvents;
 
+    protected function configure(array $config): void
+    {
+        $this->configureRecorder(['find_origin_threshold' => null] + $config);
+    }
+
     public static function type(): string|RecorderType
     {
         return 'span_events';
@@ -18,13 +24,11 @@ class SpanEventsRecorder implements BaseSpanEventsRecorder
 
     public function record(string $message): ?SpanEvent
     {
-        $spanEvent = SpanEvent::build(
+        return $this->persistEntry(fn () => SpanEvent::build(
             name: "Span Event - {$message}",
             attributes: [
                 'message' => $message,
             ],
-        );
-
-        return $this->persistEntry($spanEvent);
+        ));
     }
 }

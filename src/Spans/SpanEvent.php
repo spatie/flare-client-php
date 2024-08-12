@@ -4,8 +4,9 @@ namespace Spatie\FlareClient\Spans;
 
 use Spatie\FlareClient\Concerns\HasAttributes;
 use Spatie\FlareClient\Concerns\UsesTime;
+use Spatie\FlareClient\Contracts\WithAttributes;
 
-class SpanEvent
+class SpanEvent implements WithAttributes
 {
     use UsesTime;
     use HasAttributes;
@@ -15,7 +16,7 @@ class SpanEvent
      */
     public function __construct(
         public string $name,
-        public int $timeUs,
+        public int $timestamp,
         array $attributes,
     ) {
         $this->setAttributes($attributes);
@@ -26,12 +27,12 @@ class SpanEvent
      */
     public static function build(
         string $name,
-        ?int $timeUs = null,
+        ?int $timestamp = null,
         array $attributes = [],
     ): self {
         return new self(
             name: $name,
-            timeUs: $timeUs ?? self::getCurrentTime(),
+            timestamp: $timestamp ?? self::getCurrentTime(),
             attributes: $attributes,
         );
     }
@@ -40,7 +41,7 @@ class SpanEvent
     {
         return [
             'name' => $this->name,
-            'timeUnixNano' => $this->timeUs * 1000,
+            'timeUnixNano' => $this->timestamp * 1000,
             'attributes' => $this->attributesAsArray(),
             'droppedAttributesCount' => $this->droppedAttributesCount,
         ];
@@ -50,7 +51,7 @@ class SpanEvent
     {
         return [
             'name' => $this->name,
-            'timeUnixNano' => $this->timeUs * 1000,
+            'timeUnixNano' => $this->timestamp * 1000,
             'attributes' => $this->attributes,
         ];
     }

@@ -3,7 +3,7 @@ language: PHP
 framework_version: null
 language_version: 7.3.2
 exception_class: Log
-seen_at: 1546305825000
+seen_at: 1546305825000000
 message: 'this is a message'
 solutions: {  }
 stacktrace: {  }

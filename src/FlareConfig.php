@@ -71,18 +71,16 @@ class FlareConfig
         return new static($apiToken);
     }
 
-    public static function makeDefault(string $apiToken): static
+    public function useDefaults(): static
     {
-        return (new static($apiToken))
+        return $this
             ->dumps()
             ->requestInfo()
             ->consoleInfo()
             ->gitInfo()
             ->glows()
             ->solutions()
-            ->stackArguments()
-            // TODO: merge? with stackArguments
-            ->setArgumentReducers(ArgumentReducers::default());
+            ->stackFrameArguments();
     }
 
     public function requestInfo(
@@ -98,6 +96,10 @@ class FlareConfig
         bool $removeRequestIp = false,
         string $middleware = AddRequestInformation::class,
     ): self {
+        if (! array_key_exists($middleware, $this->middleware)) {
+            $this->middleware[$middleware] = [];
+        }
+
         // Will be overwritten by framework specific packages
         $this->middleware[$middleware] += [
             'censor_body_fields' => $censorBodyFields,
@@ -269,10 +271,21 @@ class FlareConfig
         return $this;
     }
 
-    public function stackArguments(bool $withStackFrameArguments = true, bool $forcePHPIniSetting = true): static
-    {
+    public function stackFrameArguments(
+        bool $withStackFrameArguments = true,
+        string|ArgumentReducers|ArgumentReducer|array|null $argumentReducers = null,
+        bool $forcePHPIniSetting = true
+    ): static {
         $this->withStackFrameArguments = $withStackFrameArguments;
         $this->forcePHPStackFrameArgumentsIniSetting = $forcePHPIniSetting;
+
+        $argumentReducers = match (true) {
+            $argumentReducers === null => ArgumentReducers::default(),
+            $argumentReducers instanceof ArgumentReducers, is_array($argumentReducers) => $argumentReducers,
+            $argumentReducers instanceof ArgumentReducer, is_string($argumentReducers) => [$argumentReducers],
+        };
+
+        $this->argumentReducers = $argumentReducers;
 
         return $this;
     }
@@ -290,34 +303,6 @@ class FlareConfig
     public function reportErrorLevels(int $reportErrorLevels): static
     {
         $this->reportErrorLevels = $reportErrorLevels;
-
-        return $this;
-    }
-
-    /**
-     * @param array<class-string<ArgumentReducer>|ArgumentReducer> $argumentReducer
-     */
-    public function usingArgumentReducer(
-        string|ArgumentReducer ...$argumentReducer
-    ): static {
-        if ($this->argumentReducers === null) {
-            $this->argumentReducers = [];
-        }
-
-        if (! is_array($this->argumentReducers)) {
-            throw new Exception('Argument reducers already set');
-        }
-
-        foreach ($argumentReducer as $reducer) {
-            $this->argumentReducers[] = $reducer;
-        }
-
-        return $this;
-    }
-
-    public function setArgumentReducers(ArgumentReducers $argumentReducers): static
-    {
-        $this->argumentReducers = $argumentReducers;
 
         return $this;
     }
@@ -368,6 +353,59 @@ class FlareConfig
     public function sendReportsImmediately(bool $sendReportsImmediately = true): static
     {
         $this->sendReportsImmediately = $sendReportsImmediately;
+
+        return $this;
+    }
+
+
+    /**
+     * @param class-string<FlareMiddleware> ...$middlewareClasses
+     */
+    public function removeMiddleware(string ...$middlewareClasses): self
+    {
+        foreach ($middlewareClasses as $middlewareClass) {
+            unset($this->middleware[$middlewareClass]);
+        }
+
+        return $this;
+    }
+
+    public function removeAllMiddleware(): self
+    {
+        $this->middleware = [];
+
+        return $this;
+    }
+
+    /**
+     * @param class-string<Recorder> ...$recorderClasses
+     */
+    public function removeRecorder(string ...$recorderClasses): self
+    {
+        foreach ($recorderClasses as $recorderClass) {
+            unset($this->recorders[$recorderClass]);
+        }
+
+        return $this;
+    }
+
+    public function removeAllRecorders(): self
+    {
+        $this->recorders = [];
+
+        return $this;
+    }
+
+    /**
+     * @param class-string<Sender> $senderClass
+     */
+    public function sendUsing(
+        string $senderClass,
+        array $config = []
+    ): self
+    {
+        $this->sender = $senderClass;
+        $this->senderConfig = $config;
 
         return $this;
     }

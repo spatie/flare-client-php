@@ -3,15 +3,18 @@
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheSpanEvent;
-use Spatie\FlareClient\Recorders\DumpRecorder\DumpSpanEvent;
+use Spatie\FlareClient\Tests\Shared\FakeTime;
 
 beforeEach(function () {
-    useTime('2019-01-01 12:34:56');
+    FakeTime::setup('2019-01-01 12:34:56');
 });
 
 it('can record cache events', function () {
+    $flare = setupFlare();
+
     $recorder = new CacheRecorder(
-        tracer: setupFlare()->tracer,
+        tracer: $flare->tracer,
+        backTracer: $flare->backTracer,
         config: [
             'trace' => true,
             'report' => true,
@@ -34,7 +37,7 @@ it('can record cache events', function () {
     expect($events[0])
         ->toBeInstanceOf(CacheSpanEvent::class)
         ->name->toBe('Cache hit - key')
-        ->timeUs->toBe(1546346096000)
+        ->timestamp->toBe(1546346096000000)
         ->attributes
         ->toHaveCount(3)
         ->toHaveKey('flare.span_event_type', SpanEventType::CacheHit)
@@ -44,7 +47,7 @@ it('can record cache events', function () {
     expect($events[1])
         ->toBeInstanceOf(CacheSpanEvent::class)
         ->name->toBe('Cache miss - key')
-        ->timeUs->toBe(1546346096000)
+        ->timestamp->toBe(1546346096000000)
         ->attributes
         ->toHaveCount(3)
         ->toHaveKey('flare.span_event_type', SpanEventType::CacheMiss)
@@ -54,7 +57,7 @@ it('can record cache events', function () {
     expect($events[2])
         ->toBeInstanceOf(CacheSpanEvent::class)
         ->name->toBe('Cache key written - key')
-        ->timeUs->toBe(1546346096000)
+        ->timestamp->toBe(1546346096000000)
         ->attributes
         ->toHaveCount(3)
         ->toHaveKey('flare.span_event_type', SpanEventType::CacheKeyWritten)
@@ -64,7 +67,7 @@ it('can record cache events', function () {
     expect($events[3])
         ->toBeInstanceOf(CacheSpanEvent::class)
         ->name->toBe('Cache key forgotten - key')
-        ->timeUs->toBe(1546346096000)
+        ->timestamp->toBe(1546346096000000)
         ->attributes
         ->toHaveCount(3)
         ->toHaveKey('flare.span_event_type', SpanEventType::CacheKeyForgotten)
@@ -73,8 +76,10 @@ it('can record cache events', function () {
 });
 
 it('can limit the kinds of events being recorder', function (){
+    $flare = setupFlare();
     $recorder = new CacheRecorder(
-        tracer: setupFlare()->tracer,
+        tracer: $flare->tracer,
+        backTracer: $flare->backTracer,
         config: [
             'trace' => true,
             'report' => true,

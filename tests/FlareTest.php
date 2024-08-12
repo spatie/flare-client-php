@@ -8,7 +8,8 @@ use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\ReportFactory;
 use Spatie\FlareClient\Tests\Concerns\MatchesReportSnapshots;
-use Spatie\FlareClient\Tests\Mocks\FakeSender;
+use Spatie\FlareClient\Tests\Shared\FakeSender;
+use Spatie\FlareClient\Tests\Shared\FakeTime;
 use Spatie\FlareClient\Tests\TestClasses\ExceptionWithContext;
 use Spatie\FlareClient\Tests\TestClasses\TraceArguments;
 use Spatie\FlareClient\Time\Duration;
@@ -16,7 +17,7 @@ use Spatie\FlareClient\Time\Duration;
 uses(MatchesReportSnapshots::class);
 
 beforeEach(function () {
-    useTime('2019-01-01 12:34:56');
+    FakeTime::setup('2019-01-01 12:34:56');
 });
 
 it('can report an exception', function () {
@@ -165,15 +166,15 @@ it('can add cache events', function (){
 
     $flare->cache()->recordHit('key', 'store');
 
-    useTime('2019-01-01 12:34:57'); // One second later 1546346097000000
+    FakeTime::setup('2019-01-01 12:34:57'); // One second later 1546346097000000
 
     $flare->cache()->recordMiss('key', 'store');
 
-    useTime('2019-01-01 12:34:58'); // One second later 1546346098000000
+    FakeTime::setup('2019-01-01 12:34:58'); // One second later 1546346098000000
 
     $flare->cache()->recordKeyWritten('key', 'store');
 
-    useTime('2019-01-01 12:34:59'); // One second later 1546346099000000
+    FakeTime::setup('2019-01-01 12:34:59'); // One second later 1546346099000000
 
     $flare->cache()->recordKeyForgotten('key', 'store');
 
@@ -185,7 +186,7 @@ it('can add cache events', function (){
 
     expect($payload['span_events'][0])
         ->toHaveKey('name', 'Cache hit - key')
-        ->toHaveKey('timeUnixNano', 1546346096000000)
+        ->toHaveKey('timeUnixNano', 1546346096000000000)
         ->attributes
         ->toHaveCount(3)
         ->toHaveKey('cache.key', 'key')
@@ -194,7 +195,7 @@ it('can add cache events', function (){
 
     expect($payload['span_events'][1])
         ->toHaveKey('name', 'Cache miss - key')
-        ->toHaveKey('timeUnixNano', 1546346097000000)
+        ->toHaveKey('timeUnixNano', 1546346097000000000)
         ->attributes
         ->toHaveCount(3)
         ->toHaveKey('cache.key', 'key')
@@ -203,7 +204,7 @@ it('can add cache events', function (){
 
     expect($payload['span_events'][2])
         ->toHaveKey('name', 'Cache key written - key')
-        ->toHaveKey('timeUnixNano', 1546346098000000)
+        ->toHaveKey('timeUnixNano', 1546346098000000000)
         ->attributes
         ->toHaveCount(3)
         ->toHaveKey('cache.key', 'key')
@@ -212,7 +213,7 @@ it('can add cache events', function (){
 
     expect($payload['span_events'][3])
         ->toHaveKey('name', 'Cache key forgotten - key')
-        ->toHaveKey('timeUnixNano', 1546346099000000)
+        ->toHaveKey('timeUnixNano', 1546346099000000000)
         ->attributes
         ->toHaveCount(3)
         ->toHaveKey('cache.key', 'key')
@@ -229,7 +230,7 @@ it('can add glows', function () {
         ['my key' => 'my value']
     );
 
-    useTime('2019-01-01 12:34:57'); // One second later 1546346097000000
+    FakeTime::setup('2019-01-01 12:34:57'); // One second later 1546346097000000
 
     $flare->glow()->record(
         'another glow',
@@ -250,7 +251,7 @@ it('can add glows', function () {
                 'glow.level' => 'info',
                 'glow.context' => ['my key' => 'my value'],
             ],
-            'timeUnixNano' => 1546346096000000,
+            'timeUnixNano' => 1546346096000000000,
         ],
         [
             'name' => 'Glow - another glow',
@@ -260,7 +261,7 @@ it('can add glows', function () {
                 'glow.level' => 'error',
                 'glow.context' => ['another key' => 'another value'],
             ],
-            'timeUnixNano' => 1546346097000000,
+            'timeUnixNano' => 1546346097000000000,
         ],
     ], $payload['span_events']);
 });
@@ -274,7 +275,7 @@ it('can add logs', function () {
         ['my key' => 'my value']
     );
 
-    useTime('2019-01-01 12:34:57'); // One second later 1546346097000000
+    FakeTime::setup('2019-01-01 12:34:57'); // One second later 1546346097000000
 
     $flare->log()->record(
         'another log',
@@ -295,7 +296,7 @@ it('can add logs', function () {
                 'log.level' => 'info',
                 'log.context' => ['my key' => 'my value'],
             ],
-            'timeUnixNano' => 1546346096000000,
+            'timeUnixNano' => 1546346096000000000,
         ],
         [
             'name' => 'Log entry',
@@ -305,7 +306,7 @@ it('can add logs', function () {
                 'log.level' => 'error',
                 'log.context' => ['another key' => 'another value'],
             ],
-            'timeUnixNano' => 1546346097000000,
+            'timeUnixNano' => 1546346097000000000,
         ],
     ], $payload['span_events']);
 });
@@ -321,7 +322,7 @@ it('can add queries', function () {
         'mysql',
     );
 
-    useTime('2019-01-01 12:34:57'); // One second later 1546346097000000
+    FakeTime::setup('2019-01-01 12:34:57'); // One second later 1546346097000000
 
     $flare->query()->record(
         'select * from users where id = ?',
@@ -339,8 +340,8 @@ it('can add queries', function () {
 
     expect($payload['spans'][0])
         ->toHaveKey('name', 'Query - select * from users where id = ?')
-        ->toHaveKey('startTimeUnixNano', 1546346096000000 - Duration::milliseconds(250, asNano: true))
-        ->toHaveKey('endTimeUnixNano', 1546346096000000)
+        ->toHaveKey('startTimeUnixNano', 1546346096000000000 - Duration::milliseconds(250, asNano: true))
+        ->toHaveKey('endTimeUnixNano', 1546346096000000000)
         ->attributes
         ->toHaveKey('db.system', 'mysql')
         ->toHaveKey('db.name', 'users')
@@ -350,8 +351,8 @@ it('can add queries', function () {
 
     expect($payload['spans'][1])
         ->toHaveKey('name', 'Query - select * from users where id = ?')
-        ->toHaveKey('startTimeUnixNano', 1546346097000000 - Duration::milliseconds(125, asNano: true))
-        ->toHaveKey('endTimeUnixNano', 1546346097000000)
+        ->toHaveKey('startTimeUnixNano', 1546346097000000000 - Duration::milliseconds(125, asNano: true))
+        ->toHaveKey('endTimeUnixNano', 1546346097000000000)
         ->attributes
         ->toHaveKey('db.system', 'mysql')
         ->toHaveKey('db.name', 'users')
@@ -365,7 +366,7 @@ it('can begin and commit transactions', function (){
 
     $flare->transaction()->recordBegin();
 
-    useTime('2019-01-01 12:34:57'); // One second later 1546346097000000
+    FakeTime::setup('2019-01-01 12:34:57'); // One second later 1546346097000000
 
     $flare->transaction()->recordCommit();
 
@@ -377,8 +378,8 @@ it('can begin and commit transactions', function (){
 
     expect($payload['spans'][0])
         ->toHaveKey('name', 'DB Transaction')
-        ->toHaveKey('startTimeUnixNano', 1546346096000000)
-        ->toHaveKey('endTimeUnixNano', 1546346097000000)
+        ->toHaveKey('startTimeUnixNano', 1546346096000000000)
+        ->toHaveKey('endTimeUnixNano', 1546346097000000000)
         ->attributes
         ->toHaveKey('flare.span_type', SpanType::Transaction);
 });
@@ -388,7 +389,7 @@ it('can begin and rollback transactions', function (){
 
     $flare->transaction()->recordBegin();
 
-    useTime('2019-01-01 12:34:57'); // One second later 1546346097000000
+    FakeTime::setup('2019-01-01 12:34:57'); // One second later 1546346097000000
 
     $flare->transaction()->recordRollback();
 
@@ -400,8 +401,8 @@ it('can begin and rollback transactions', function (){
 
     expect($payload['spans'][0])
         ->toHaveKey('name', 'DB Transaction')
-        ->toHaveKey('startTimeUnixNano', 1546346096000000)
-        ->toHaveKey('endTimeUnixNano', 1546346097000000)
+        ->toHaveKey('startTimeUnixNano', 1546346096000000000)
+        ->toHaveKey('endTimeUnixNano', 1546346097000000000)
         ->attributes
         ->toHaveKey('flare.span_type', SpanType::Transaction);
 });
@@ -474,7 +475,7 @@ it('can filter error exceptions based on their severity', function () {
 
 it('will add arguments to a stack trace by default', function () {
     // Todo: add some default argument reducers in the config
-    $flare = setupFlare(fn (FlareConfig $config) => $config->setArgumentReducers(ArgumentReducers::default()));
+    $flare = setupFlare(fn (FlareConfig $config) => $config->stackFrameArguments(argumentReducers: ArgumentReducers::default()));
 
     $exception = TraceArguments::create()->exception(
         'a message',
@@ -508,7 +509,7 @@ it('will add arguments to a stack trace by default', function () {
 it('is possible to disable stack frame arguments', function () {
     ini_set('zend.exception_ignore_args', 0); // Enabled on GH actions
 
-    $flare = setupFlare(fn (FlareConfig $config) => $config->stackArguments(false));
+    $flare = setupFlare(fn (FlareConfig $config) => $config->stackFrameArguments(false));
 
     $exception = TraceArguments::create()->exception(
         'a message',
@@ -523,7 +524,7 @@ it('is possible to disable stack frame arguments', function () {
 it('is possible to disable stack frame arguments with zend.exception_ignore_args', function () {
     ini_set('zend.exception_ignore_args', 1);
 
-    $flare = setupFlare(fn (FlareConfig $config) => $config->stackArguments(false));
+    $flare = setupFlare(fn (FlareConfig $config) => $config->stackFrameArguments(false));
 
     $exception = TraceArguments::create()->exception(
         'a message',

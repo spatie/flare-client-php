@@ -2,16 +2,19 @@
 
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Spans\Span;
-use Spatie\FlareClient\Spans\SpanEvent;
+use Spatie\FlareClient\Tests\Shared\FakeTime;
 use Spatie\FlareClient\Tests\TestClasses\SpanEventsRecorder;
 use Spatie\FlareClient\Tests\TestClasses\SpansRecorder;
+use Spatie\FlareClient\Time\Duration;
 
 beforeEach(function () {
-    useTime('2019-01-01 12:34:56');
+    FakeTime::setup('2019-01-01 12:34:56');
 });
 
 it('is initially empty', function () {
-    $recorder = new SpansRecorder(setupFlare()->tracer, [
+    $flare = setupFlare();
+
+    $recorder = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
         'report' => true,
         'trace' => true,
     ]);
@@ -20,7 +23,9 @@ it('is initially empty', function () {
 });
 
 it('stores spans for reporting', function () {
-    $recorder = new SpansRecorder(setupFlare()->tracer, [
+    $flare = setupFlare();
+
+    $recorder = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
         'report' => true,
     ]);
 
@@ -33,14 +38,16 @@ it('stores spans for reporting', function () {
     expect($spans[0])
         ->toBeInstanceOf(Span::class)
         ->name->toBe('Span - Hello World')
-        ->startUs->toBe(1546346096000)
+        ->start->toBe(1546346096000000)
         ->attributes
         ->toHaveCount(1)
         ->toHaveKey('message', 'Hello World');
 });
 
 it('does not store more than the max defined number of reported spans and removes the first ones', function () {
-    $recorder = new SpansRecorder(setupFlare()->tracer, [
+    $flare = setupFlare();
+
+    $recorder = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
         'report' => true,
         'max_reported' => 35,
     ]);
@@ -55,7 +62,9 @@ it('does not store more than the max defined number of reported spans and remove
 });
 
 it('can disable the limit of spans stored for reporting', function () {
-    $recorder = new SpansRecorder(setupFlare()->tracer, [
+    $flare = setupFlare();
+
+    $recorder = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
         'report' => true,
         'max_reported' => null,
     ]);
@@ -69,7 +78,9 @@ it('can disable the limit of spans stored for reporting', function () {
 
 
 it('can completely disable reporting', function () {
-    $recorder = new SpansRecorder(setupFlare()->tracer, [
+    $flare = setupFlare();
+
+    $recorder = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
         'report' => false,
     ]);
 
@@ -81,15 +92,17 @@ it('can completely disable reporting', function () {
 });
 
 it('can trace spans', function () {
-    $recorder = new SpansRecorder($tracer = setupFlare()->tracer, [
+    $flare = setupFlare();
+
+    $recorder = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
         'trace' => true,
     ]);
 
-    $tracer->startTrace();
+    $flare->tracer->startTrace();
 
     $recorder->record('Hello World');
 
-    $spans = $tracer->traces[$tracer->currentTraceId()];
+    $spans = $flare->tracer->traces[$flare->tracer->currentTraceId()];
 
     expect($spans)->toHaveCount(1);
 
@@ -98,20 +111,22 @@ it('can trace spans', function () {
     expect($span)
         ->toBeInstanceOf(Span::class)
         ->name->toBe('Span - Hello World')
-        ->startUs->toBe(1546346096000)
+        ->start->toBe(1546346096000000)
         ->attributes
         ->toHaveCount(1)
         ->toHaveKey('message', 'Hello World');
 });
 
 it('will not trace span when not tracing', function () {
-    $recorder = new SpansRecorder($tracer = setupFlare()->tracer, [
+    $flare = setupFlare();
+
+    $recorder = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
         'trace' => true,
     ]);
 
     $recorder->record('Hello World');
 
-    expect($tracer->traces)->toHaveCount(0);
+    expect($flare->tracer->traces)->toHaveCount(0);
 });
 
 it('will not trace a span when the span limit is reached', function () {
@@ -119,40 +134,44 @@ it('will not trace a span when the span limit is reached', function () {
         $config->trace(maxSpans: 35);
     });
 
-    $recorder = new SpansRecorder($tracer = $flare->tracer,  [
+    $recorder = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
         'trace' => true,
     ]);
 
-    $tracer->startTrace();
+    $flare->tracer->startTrace();
 
     foreach (range(1, 40) as $i) {
         $recorder->record("Hello {$i}");
     }
 
-    expect($tracer->traces[$tracer->currentTraceId()])->toHaveCount(35);
+    expect($flare->tracer->traces[$flare->tracer->currentTraceId()])->toHaveCount(35);
 });
 
 it('is possible to disable the recorder for tracing', function () {
-    $recorder = new SpansRecorder($tracer = setupFlare()->tracer,  [
+    $flare = setupFlare();
+
+    $recorder = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
         'trace' => false,
     ]);
 
-    $tracer->startTrace();
+    $flare->tracer->startTrace();
 
     $recorder->record('Hello World');
 
-    expect($tracer->traces[$tracer->currentTraceId()] ?? [])->toHaveCount(0);
+    expect($flare->tracer->traces[$flare->tracer->currentTraceId()] ?? [])->toHaveCount(0);
 });
 
 it('a closure passed span will not be executed when not tracing or reporting', function () {
     class TestSpanRecorderExecution extends SpansRecorder{
-        public function record(string $message): ?Span
+        public function record(string $message, ?int $duration = null): ?Span
         {
             $this->persistEntry(fn () => throw new Exception('Closure executed'));
         }
     }
 
-    expect(fn () => (new TestSpanRecorderExecution(setupFlare()->tracer, [
+    $flare = setupFlare();
+
+    expect(fn () => (new TestSpanRecorderExecution($flare->tracer, $flare->backTracer, [
         'trace' => true,
         'report' => true,
     ]))->record('Hello World'))->toThrow(
@@ -160,11 +179,100 @@ it('a closure passed span will not be executed when not tracing or reporting', f
         'Closure executed'
     );
 
-    expect(fn () => (new TestSpanRecorderExecution(setupFlare()->tracer, [
+    expect(fn () => (new TestSpanRecorderExecution($flare->tracer, $flare->backTracer, [
         'trace' => false,
         'report' => false,
     ]))->record('Hello World'))->not()->toThrow(
         Exception::class,
         'Closure executed'
     );
+});
+
+it('can find origins when tracing events', function () {
+    $flare = setupFlare();
+
+    $recorder = new SpansRecorder($flare->tracer, $flare->backTracer, config:[
+        'trace' => true,
+        'find_origin' => true
+    ]);
+
+    $flare->tracer->startTrace();
+
+    $span = $recorder->record('Hello World');
+
+    expect($span->attributes)->toHaveKeys([
+        'code.filepath',
+        'code.lineno',
+        'code.function',
+    ]);
+});
+
+it('will not find origins when tracing events when find origin is disabled', function () {
+    $flare = setupFlare();
+
+    $recorder = new SpansRecorder($flare->tracer, $flare->backTracer, config:[
+        'trace' => true,
+        'find_origin' => false
+    ]);
+
+    $flare->tracer->startTrace();
+
+    $span = $recorder->record('Hello World');
+
+    expect($span->attributes)->not()->toHaveKeys([
+        'code.filepath',
+        'code.lineno',
+        'code.function',
+    ]);
+});
+
+it('it will only find origins when the find origins threshold has been passed', function () {
+    $flare = setupFlare();
+
+    $recorder = new SpansRecorder($flare->tracer, $flare->backTracer, config:[
+        'trace' => true,
+        'find_origin' => true,
+        'find_origin_threshold' => Duration::milliseconds(300)
+    ]);
+
+    $flare->tracer->startTrace();
+
+    $spanA = $recorder->record('Hello World', duration: Duration::milliseconds(299));
+    $spanB = $recorder->record('Hello World', duration: Duration::milliseconds(300));
+    $spanC = $recorder->record('Hello World', duration: Duration::milliseconds(301));
+
+    expect($spanA->attributes)->not()->toHaveKeys([
+        'code.filepath',
+        'code.lineno',
+        'code.function',
+    ]);
+
+    expect($spanB->attributes)->toHaveKeys([
+        'code.filepath',
+        'code.lineno',
+        'code.function',
+    ]);
+
+    expect($spanC->attributes)->toHaveKeys([
+        'code.filepath',
+        'code.lineno',
+        'code.function',
+    ]);
+});
+
+it('will not find origins when only reporting', function (){
+    $flare = setupFlare();
+
+    $recorder = new SpansRecorder($flare->tracer, $flare->backTracer, config:[
+        'report' => true,
+        'find_origin' => true
+    ]);
+
+    $recorder->record('Hello World');
+
+    expect($recorder->getSpans()[0]->attributes)->not()->toHaveKeys([
+        'code.filepath',
+        'code.lineno',
+        'code.function',
+    ]);
 });

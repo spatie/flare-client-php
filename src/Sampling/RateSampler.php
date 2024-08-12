@@ -5,7 +5,7 @@ namespace Spatie\FlareClient\Sampling;
 class RateSampler implements Sampler
 {
     public function __construct(
-        protected float $rate,
+        protected float $rate = 0.2,
     )
     {
         if($rate < 0 || $rate > 1) {
@@ -13,7 +13,7 @@ class RateSampler implements Sampler
         }
     }
 
-    public function shouldSample(SamplingContext $context): bool
+    public function shouldSample(array $context): bool
     {
         // TODO: add a laravel lottery sampler
         // TODO: add support for propagation

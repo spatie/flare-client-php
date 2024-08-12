@@ -17,14 +17,39 @@ trait RecordsPendingSpans
     /** @var array<int, T> */
     protected array $stack = [];
 
+    protected bool $shouldEndTrace = false;
+
+    protected int $nestingCounter = 0;
+
     protected function shouldTrace(): bool
     {
-        return $this->trace && $this->tracer->isSamping();
+        if ($this->trace === false) {
+            return false;
+        }
+
+        if ($this->tracer->isSamping()) {
+            return true;
+        }
+
+        if ($this->canStartTraces() === false) {
+            return false;
+        }
+
+        $this->tracer->potentialStartTrace();
+
+        $this->shouldEndTrace = true;
+
+        return $this->tracer->isSamping();
     }
 
     protected function shouldReport(): bool
     {
         return $this->report;
+    }
+
+    protected function canStartTraces(): bool
+    {
+        return false;
     }
 
     /**
@@ -36,12 +61,12 @@ trait RecordsPendingSpans
     }
 
     /**
-     * @param Closure(): T|Span $entry
+     * @param Closure(): T $entry
      *
-     * @return Span
+     * @return T
      */
     protected function startSpan(
-        Closure|Span $span
+        Closure $span
     ): ?Span {
         return $this->persistEntry(function () use ($span) {
             if ($span instanceof Closure) {
@@ -49,6 +74,7 @@ trait RecordsPendingSpans
             }
 
             $this->stack[] = $span;
+            $this->nestingCounter++;
 
             return $span;
         });
@@ -57,13 +83,13 @@ trait RecordsPendingSpans
     /**
      * @param Closure(T): void|null $closure
      *
-     * @return Span|null
+     * @return Span|T|null
      */
     protected function endSpan(
         ?Closure $closure = null,
         ?int $time = null,
     ): ?Span {
-        $shouldTrace = $this->shouldTrace();
+        $shouldTrace = $this->trace && $this->tracer->isSamping();
         $shouldReport = $this->shouldReport();
 
         if ($shouldTrace === false && $shouldReport === false) {
@@ -76,12 +102,20 @@ trait RecordsPendingSpans
             return null;
         }
 
-        if($closure !== null) {
+        if ($closure !== null) {
             $closure($span);
         }
 
         $span->end($time);
+
         $this->tracer->setCurrentSpanId($span->parentSpanId);
+
+        $this->nestingCounter--;
+
+        if ($this->shouldEndTrace && $this->nestingCounter === 0) {
+            $this->tracer->endTrace();
+            $this->shouldEndTrace = false;
+        }
 
         return $span;
     }

@@ -1,23 +1,23 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use Spatie\FlareClient\Context\ConsoleContextProvider;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Performance\Support\Timer;
-use Spatie\FlareClient\Recorders\GlowRecorder\GlowSpanEvent;
-use Spatie\FlareClient\Report;
-use Spatie\FlareClient\ReportFactory;
 use Spatie\FlareClient\Tests\Concerns\MatchesReportSnapshots;
+use Spatie\FlareClient\Tests\Shared\FakeSender;
+use Spatie\FlareClient\Tests\Shared\FakeTime;
 use Spatie\FlareClient\Tests\TestClasses\FakeErrorHandler;
-use Spatie\FlareClient\Tests\TestClasses\FakeTime;
+use Spatie\LaravelFlare\Support\SentReports;
 
 uses(MatchesReportSnapshots::class);
 
 beforeEach(function () {
-    useTime('2019-01-01 01:23:45');
+    FakeTime::setup('2019-01-01 01:23:45');
 });
 
 it('can create a report', function () {
-    $flare = setupFlare(fn(FlareConfig $config) => $config);
+    $flare = setupFlare(fn (FlareConfig $config) => $config);
 
     $report = $flare->report(new Exception('this is an exception'));
 
@@ -46,8 +46,6 @@ it('can create a report with error exception and will cleanup the stack trace', 
     $flare = setupFlare();
 
     FakeErrorHandler::setup(function (ErrorException $exception) use ($flare) {
-        ;
-
         $stacktrace = $flare->report($exception)->toArray()['stacktrace'];
 
         expect($stacktrace[0]['file'])->toBe(__FILE__);
@@ -56,4 +54,14 @@ it('can create a report with error exception and will cleanup the stack trace', 
     });
 
     $test->doSomething; // We expect this to fail!
+});
+
+it('will keep sent reports', function () {
+    $flare = setupFlare();
+
+    $report = $flare->report(new Exception('this is an exception'));
+
+    FakeSender::instance()->assertRequestsSent(1);
+
+    expect($flare->sentReports()->all())->toHaveCount(1);
 });

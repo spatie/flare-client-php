@@ -9,8 +9,6 @@ use Spatie\FlareClient\Spans\SpanEvent;
 
 class DumpSpanEvent extends SpanEvent
 {
-    use HasOriginAttributes;
-
     public function __construct(
         public string $htmlDump,
         ?int $time = null,
@@ -18,7 +16,7 @@ class DumpSpanEvent extends SpanEvent
     ) {
         parent::__construct(
             name: "Dump entry",
-            timeUs: $time ?? static::getCurrentTime(),
+            timestamp: $time ?? static::getCurrentTime(),
             attributes: $this->collectAttributes(),
         );
     }

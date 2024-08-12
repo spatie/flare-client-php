@@ -5,6 +5,7 @@ namespace Spatie\FlareClient\Support;
 use Closure;
 use Spatie\Backtrace\Backtrace;
 use Spatie\Backtrace\Frame;
+use Spatie\FlareClient\Contracts\WithAttributes;
 
 class BackTracer
 {

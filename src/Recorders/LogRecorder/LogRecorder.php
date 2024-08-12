@@ -18,7 +18,6 @@ class LogRecorder implements SpanEventsRecorder
         return RecorderType::Log;
     }
 
-
     public function record(
         ?string $message,
         string $level = MessageLevels::INFO,

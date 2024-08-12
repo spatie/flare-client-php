@@ -38,6 +38,8 @@ trait RecordsSpanEvents
             return;
         }
 
+        $this->setOrigin($entry);
+
         $span->addEvent($entry);
     }
 

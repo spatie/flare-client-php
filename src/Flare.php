@@ -20,7 +20,9 @@ use Spatie\FlareClient\Recorders\NullRecorder;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
 use Spatie\FlareClient\Recorders\Recorders;
 use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
+use Spatie\FlareClient\Support\BackTracer;
 use Spatie\FlareClient\Support\Container;
+use Spatie\FlareClient\Support\SentReports;
 use Throwable;
 
 class Flare
@@ -36,12 +38,14 @@ class Flare
      * @param array<string, Recorder> $recorders
      * @param null|Closure(Exception): bool $filterExceptionsCallable
      * @param null|Closure(ReportFactory): bool $filterReportsCallable
-     * @param array<class-string<ArgumentReducer>|ArgumentReducer>|ArgumentReducers|null $argumentReducers
+     * @param ArgumentReducers|null $argumentReducers
      */
     public function __construct(
         protected ContainerInterface $container,
         protected Api $api,
         public readonly Tracer $tracer,
+        public readonly BackTracer $backTracer,
+        protected SentReports $sentReports,
         protected array $middleware,
         protected array $recorders,
         protected ?string $applicationPath,
@@ -51,7 +55,7 @@ class Flare
         protected ?int $reportErrorLevels,
         protected null|Closure $filterExceptionsCallable,
         protected null|Closure $filterReportsCallable,
-        protected null|array|ArgumentReducers $argumentReducers,
+        protected null|ArgumentReducers $argumentReducers,
         protected bool $withStackFrameArguments,
     ) {
     }
@@ -60,7 +64,7 @@ class Flare
         string $apiToken,
     ): self {
         return self::makeFromConfig(
-            FlareConfig::makeDefault($apiToken)
+            FlareConfig::make($apiToken)->useDefaults()
         );
     }
 
@@ -189,6 +193,8 @@ class Flare
 
         $report = $factory->build();
 
+        $this->sentReports->add($report);
+
         $this->sendReportToApi($report);
 
         return $report;
@@ -262,6 +268,12 @@ class Flare
         $this->userProvidedContext = [];
 
         $this->resetRecorders();
+        $this->sentReports->clear();
+    }
+
+    public function sentReports(): SentReports
+    {
+        return $this->sentReports;
     }
 
     public function resetRecorders(): void
@@ -294,7 +306,6 @@ class Flare
                 : $singleMiddleware;
         }, $this->middleware);
 
-        // TODO: not sure about this working?
         foreach ($middlewares as $middleware) {
             $factory = $middleware->handle($factory, function ($factory) {
                 return $factory;

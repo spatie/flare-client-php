@@ -1,6 +1,6 @@
 <?php
 
-namespace Spatie\FlareClient\Tests\Mocks;
+namespace Spatie\FlareClient\Tests\Shared;
 
 use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 use Illuminate\Support\Arr;
@@ -42,16 +42,16 @@ class FakeSender implements Sender
 
     public function assertRequestsSent(int $expectedCount): void
     {
-        Assert::assertCount($expectedCount, self::$requests);
+        expect(count(self::$requests))->toBe($expectedCount);
     }
 
     public function assertLastRequestAttribute(string $key, mixed $expectedContent = null): void
     {
-        Assert::assertGreaterThan(0, count(self::$requests), 'There were no requests sent');
+        expect(count(self::$requests))->toBeGreaterThan(0, 'There were no requests sent');
 
         $lastPayload = Arr::last(self::$requests)['arguments'];
 
-        Assert::assertTrue(array_key_exists($key, $lastPayload['attributes']), 'The last payload doesnt have the expected key. ');
+        expect(array_key_exists($key, $lastPayload['attributes']))->toBeTrue('The last payload doesnt have the expected key. ');
 
         if ($expectedContent === null) {
             return;
@@ -59,7 +59,7 @@ class FakeSender implements Sender
 
         $actualContent = $lastPayload['attributes'][$key];
 
-        Assert::assertEquals($expectedContent, $actualContent);
+        expect($actualContent)->toEqual($expectedContent);
     }
 
     /** @return array<string, mixed>|null */

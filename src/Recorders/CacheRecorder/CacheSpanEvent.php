@@ -16,7 +16,7 @@ class CacheSpanEvent extends SpanEvent
     ) {
         parent::__construct(
             name: ucfirst($spanEventType->humanReadable()) . " - {$key}",
-            timeUs: $time ?? static::getCurrentTime(),
+            timestamp: $time ?? static::getCurrentTime(),
             attributes: $this->collectAttributes(),
         );
     }

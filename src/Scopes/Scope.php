@@ -3,9 +3,10 @@
 namespace Spatie\FlareClient\Scopes;
 
 use Spatie\FlareClient\Concerns\HasAttributes;
+use Spatie\FlareClient\Contracts\WithAttributes;
 use Spatie\FlareClient\Support\Telemetry;
 
-class Scope
+class Scope  implements WithAttributes
 {
     use HasAttributes;
 

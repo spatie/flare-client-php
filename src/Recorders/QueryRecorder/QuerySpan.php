@@ -10,8 +10,6 @@ use Spatie\FlareClient\Support\SpanId;
 
 class QuerySpan extends Span
 {
-    use HasOriginAttributes;
-
     /**
      * @param array<int|string, mixed>|null $bindings
      */
@@ -29,11 +27,11 @@ class QuerySpan extends Span
 
         parent::__construct(
             traceId: $traceId,
-            spanId: SpanId::generate(),
+            spanId: self::generateIdFor()->span(),
             parentSpanId: $parentSpanId,
             name: "Query - {$sql}",
-            startUs: $end - $duration,
-            endUs: $end,
+            start: $end - $duration,
+            end: $end,
             attributes: array_filter($this->collectAttributes()),
         );
     }

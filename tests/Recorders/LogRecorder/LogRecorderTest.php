@@ -2,17 +2,18 @@
 
 use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Enums\SpanEventType;
-use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
-use Spatie\FlareClient\Recorders\GlowRecorder\GlowSpanEvent;
 use Spatie\FlareClient\Recorders\LogRecorder\LogMessageSpanEvent;
 use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
+use Spatie\FlareClient\Tests\Shared\FakeTime;
 
 beforeEach(function () {
-    useTime('2019-01-01 12:34:56');
+    FakeTime::setup('2019-01-01 12:34:56');
 });
 
 it('stores glows for reporting and tracing', function () {
-    $recorder = new LogRecorder(setupFlare()->tracer, config: [
+    $flare = setupFlare();
+
+    $recorder = new LogRecorder($flare->tracer, $flare->backTracer, config: [
         'trace' => true,
         'report' => true,
         'max_reported' => 10,
@@ -31,7 +32,7 @@ it('stores glows for reporting and tracing', function () {
     expect($logs[0])
         ->toBeInstanceOf(LogMessageSpanEvent::class)
         ->name->toBe('Log entry')
-        ->timeUs->toBe(1546346096000)
+        ->timestamp->toBe(1546346096000000)
         ->attributes
         ->toHaveCount(4)
         ->toHaveKey('flare.span_event_type', SpanEventType::Log)

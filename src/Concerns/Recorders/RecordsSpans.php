@@ -28,6 +28,8 @@ trait RecordsSpans
      */
     protected function traceEntry(mixed $entry): void
     {
+        $this->setOrigin($entry);
+
         $this->tracer->addSpan($entry);
     }
 

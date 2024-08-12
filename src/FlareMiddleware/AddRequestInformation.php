@@ -19,8 +19,14 @@ class AddRequestInformation implements FlareMiddleware
 
     public bool $removeIp = false;
 
-    public function configure(array $config): void
+    public static function register(ContainerInterface $container, array $config): Closure
     {
+        return fn () => new self($config);
+    }
+
+    public function __construct(
+        array $config
+    ) {
         $this->censorBodyFields = $config['censor_body_fields'] ?? [];
         $this->censorRequestHeaders = $config['censor_request_headers'] ?? [];
         $this->removeIp = $config['remove_ip'] ?? false;

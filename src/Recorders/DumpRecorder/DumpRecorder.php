@@ -15,10 +15,7 @@ use Symfony\Component\VarDumper\VarDumper;
 
 class DumpRecorder implements SpanEventsRecorder
 {
-    use HasOriginAttributes;
     use RecordsSpanEvents;
-
-    protected bool $findOrigin = false;
 
     protected static MultiDumpHandler $multiDumpHandler;
 
@@ -27,11 +24,9 @@ class DumpRecorder implements SpanEventsRecorder
         return RecorderType::Dump;
     }
 
-    public function configure(array $config): void
+    protected function configure(array $config): void
     {
-        $this->configureRecorder($config);
-
-        $this->findOrigin = $config['find_origin'] ?? false;
+        $this->configureRecorder($config + ['find_origin_threshold' => null]);
     }
 
     public function start(): void
@@ -55,15 +50,9 @@ class DumpRecorder implements SpanEventsRecorder
                 htmlDump: (new HtmlDumper())->dump($data),
             );
 
-            if ($this->findOrigin) {
-                $frame = $this->tracer->backTracer->after(function (Frame $frame) {
-                    return $frame->class === VarDumper::class && $frame->method === 'dump';
-                });
-
-                if ($frame) {
-                    $spanEvent->setOriginFrame($frame);
-                }
-            }
+            $this->setOrigin($spanEvent, frameAfter: function (Frame $frame) {
+                return $frame->class === VarDumper::class && $frame->method === 'dump';
+            });
 
             return $spanEvent;
         });
@@ -90,5 +79,10 @@ class DumpRecorder implements SpanEventsRecorder
             $reflectionMethod->setAccessible(true);
             $reflectionMethod->invoke(null);
         }
+    }
+
+    protected function shouldFindOrigin(?int $duration): bool
+    {
+        return $this->findOrigin;
     }
 }
