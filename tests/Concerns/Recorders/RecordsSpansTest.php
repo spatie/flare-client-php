@@ -3,7 +3,6 @@
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
-use Spatie\FlareClient\Tests\TestClasses\SpanEventsRecorder;
 use Spatie\FlareClient\Tests\TestClasses\SpansRecorder;
 use Spatie\FlareClient\Time\Duration;
 
@@ -162,7 +161,8 @@ it('is possible to disable the recorder for tracing', function () {
 });
 
 it('a closure passed span will not be executed when not tracing or reporting', function () {
-    class TestSpanRecorderExecution extends SpansRecorder{
+    class TestSpanRecorderExecution extends SpansRecorder
+    {
         public function record(string $message, ?int $duration = null): ?Span
         {
             $this->persistEntry(fn () => throw new Exception('Closure executed'));
@@ -193,7 +193,7 @@ it('can find origins when tracing events', function () {
 
     $recorder = new SpansRecorder($flare->tracer, $flare->backTracer, config:[
         'trace' => true,
-        'find_origin' => true
+        'find_origin' => true,
     ]);
 
     $flare->tracer->startTrace();
@@ -212,7 +212,7 @@ it('will not find origins when tracing events when find origin is disabled', fun
 
     $recorder = new SpansRecorder($flare->tracer, $flare->backTracer, config:[
         'trace' => true,
-        'find_origin' => false
+        'find_origin' => false,
     ]);
 
     $flare->tracer->startTrace();
@@ -232,7 +232,7 @@ it('it will only find origins when the find origins threshold has been passed', 
     $recorder = new SpansRecorder($flare->tracer, $flare->backTracer, config:[
         'trace' => true,
         'find_origin' => true,
-        'find_origin_threshold' => Duration::milliseconds(300)
+        'find_origin_threshold' => Duration::milliseconds(300),
     ]);
 
     $flare->tracer->startTrace();
@@ -260,12 +260,12 @@ it('it will only find origins when the find origins threshold has been passed', 
     ]);
 });
 
-it('will not find origins when only reporting', function (){
+it('will not find origins when only reporting', function () {
     $flare = setupFlare();
 
     $recorder = new SpansRecorder($flare->tracer, $flare->backTracer, config:[
         'report' => true,
-        'find_origin' => true
+        'find_origin' => true,
     ]);
 
     $recorder->record('Hello World');

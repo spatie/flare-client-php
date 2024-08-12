@@ -5,14 +5,12 @@ namespace Spatie\FlareClient\Support;
 use Closure;
 use Spatie\Backtrace\Backtrace;
 use Spatie\Backtrace\Frame;
-use Spatie\FlareClient\Contracts\WithAttributes;
 
 class BackTracer
 {
     public function __construct(
         protected ?string $applicationPath,
-    )
-    {
+    ) {
     }
 
     public function frames(int $limit = null): array
@@ -20,7 +18,7 @@ class BackTracer
         $backTracer = Backtrace::create()
             ->offset(1);
 
-        if($this->applicationPath){
+        if($this->applicationPath) {
             // TODO: make it clear in docs this is required to correctly backtrace
             $backTracer->applicationPath($this->applicationPath);
         }

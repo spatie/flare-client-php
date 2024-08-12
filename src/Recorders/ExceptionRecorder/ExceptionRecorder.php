@@ -21,5 +21,3 @@ class ExceptionRecorder implements Recorder
         $this->persistEntry(fn () => ExceptionSpanEvent::fromFlareReport($report));
     }
 }
-
-

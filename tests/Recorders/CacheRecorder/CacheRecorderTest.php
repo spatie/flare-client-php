@@ -75,7 +75,7 @@ it('can record cache events', function () {
         ->toHaveKey('cache.store', 'store');
 });
 
-it('can limit the kinds of events being recorder', function (){
+it('can limit the kinds of events being recorder', function () {
     $flare = setupFlare();
     $recorder = new CacheRecorder(
         tracer: $flare->tracer,

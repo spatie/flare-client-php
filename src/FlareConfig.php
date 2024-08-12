@@ -29,7 +29,6 @@ use Spatie\FlareClient\Support\TraceLimits;
 
 class FlareConfig
 {
-
     /**
      * @param array<class-string<FlareMiddleware>, array> $middleware
      * @param array<class-string<Recorder>, array> $recorders
@@ -357,7 +356,6 @@ class FlareConfig
         return $this;
     }
 
-
     /**
      * @param class-string<FlareMiddleware> ...$middlewareClasses
      */
@@ -402,8 +400,7 @@ class FlareConfig
     public function sendUsing(
         string $senderClass,
         array $config = []
-    ): self
-    {
+    ): self {
         $this->sender = $senderClass;
         $this->senderConfig = $config;
 

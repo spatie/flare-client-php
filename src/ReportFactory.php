@@ -4,7 +4,6 @@ namespace Spatie\FlareClient;
 
 use Exception;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
-use Spatie\Backtrace\Arguments\Reducers\ArgumentReducer;
 use Spatie\Backtrace\Backtrace;
 use Spatie\ErrorSolutions\Contracts\Solution;
 use Spatie\FlareClient\Concerns\GeneratesIds;
@@ -28,7 +27,7 @@ class ReportFactory implements WithAttributes
 
     public ?string $version = null;
 
-    /** @var  ArgumentReducers|null */
+    /** @var ArgumentReducers|null */
     public null|ArgumentReducers $argumentReducers = null;
 
     public bool $withStackTraceArguments = true;
@@ -187,9 +186,9 @@ class ReportFactory implements WithAttributes
 
         $attributes = $this->attributes;
 
-        if(! empty($this->userProvidedContext) || ! empty($exceptionContext)){
+        if(! empty($this->userProvidedContext) || ! empty($exceptionContext)) {
             $attributes['context.user'] = array_merge_recursive_distinct(
-                $this->userProvidedContext ,
+                $this->userProvidedContext,
                 $exceptionContext,
             );
         }
@@ -225,7 +224,6 @@ class ReportFactory implements WithAttributes
             ->reduceArguments($this->argumentReducers)
             ->applicationPath($applicationPath ?? '');
     }
-
 
     protected function getClassForThrowable(Throwable $throwable): string
     {

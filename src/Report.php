@@ -6,7 +6,6 @@ use ErrorException;
 use Spatie\Backtrace\Backtrace;
 use Spatie\Backtrace\Frame as SpatieFrame;
 use Spatie\ErrorSolutions\Contracts\Solution;
-use Spatie\FlareClient\Concerns\HasAttributes;
 use Spatie\FlareClient\Concerns\UsesTime;
 use Spatie\FlareClient\Solutions\ReportSolution;
 use Spatie\FlareClient\Spans\Span;
@@ -40,7 +39,6 @@ class Report
         protected array $spans = [],
         protected array $spanEvents = [],
         protected ?string $trackingUuid = null,
-
     ) {
     }
 

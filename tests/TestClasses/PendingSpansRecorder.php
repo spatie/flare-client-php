@@ -2,7 +2,6 @@
 
 namespace Spatie\FlareClient\Tests\TestClasses;
 
-use Spatie\FlareClient\Concerns\Recorders\FindsOrigins;
 use Spatie\FlareClient\Concerns\Recorders\RecordsPendingSpans;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Spans\Span;

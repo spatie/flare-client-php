@@ -40,7 +40,7 @@ class TransactionRecorder implements SpansRecorder
         ?array $attributes = null,
     ): ?TransactionSpan {
         return $this->endSpan(
-        //TODO: Maybe also provide a reason why it was rolled back?
+            //TODO: Maybe also provide a reason why it was rolled back?
             fn (TransactionSpan $span) => $span->addAttributes($attributes)
         );
     }

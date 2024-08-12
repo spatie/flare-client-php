@@ -68,7 +68,7 @@ class ExpectTracer
     {
         $trace = array_values($this->tracer->traces)[$this->traceAssertCounter] ?? null;
 
-        if($trace === null){
+        if($trace === null) {
             throw new Exception('Trace is not recorded');
         }
 

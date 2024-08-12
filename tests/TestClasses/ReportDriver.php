@@ -59,7 +59,7 @@ class ReportDriver extends YamlDriver
 
     protected function removePhpunitArguments(array $data): array
     {
-//        $data['context']['arguments'] = ['[phpunit arguments removed]'];
+        //        $data['context']['arguments'] = ['[phpunit arguments removed]'];
 
         return $data;
     }

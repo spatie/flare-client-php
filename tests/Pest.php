@@ -3,7 +3,6 @@
 use Spatie\FlareClient\Flare;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Support\Container;
-use Spatie\FlareClient\Tests\Mocks\FakeClient;
 use Spatie\FlareClient\Tests\Shared\FakeSender;
 
 uses()->beforeEach(function () {
@@ -29,11 +28,11 @@ function setupFlare(
         sendReportsImmediately: $sendReportsImmediately,
     );
 
-    if($useFakeSender){
+    if($useFakeSender) {
         $config->sender = FakeSender::class;
     }
 
-    if($closure){
+    if($closure) {
         $closure($config);
     }
 

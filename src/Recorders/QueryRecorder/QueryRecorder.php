@@ -2,7 +2,6 @@
 
 namespace Spatie\FlareClient\Recorders\QueryRecorder;
 
-use Spatie\FlareClient\Concerns\Recorders\FindsOrigins;
 use Spatie\FlareClient\Concerns\Recorders\RecordsSpans;
 use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;

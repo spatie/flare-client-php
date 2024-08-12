@@ -2,11 +2,7 @@
 
 namespace Spatie\FlareClient\Tests\Shared;
 
-use Closure;
-use Laravel\SerializableClosure\Support\ReflectionClosure;
 use Spatie\FlareClient\Contracts\FlareSpanEventType;
-use Spatie\FlareClient\Contracts\FlareSpanType;
-use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
 
 class ExpectSpanEvent

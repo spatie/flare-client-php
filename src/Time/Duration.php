@@ -44,8 +44,6 @@ class Duration
         return self::normalize($microseconds,  $asNano);
     }
 
-
-
     protected static function normalize(
         int $microseconds,
         bool $asNano

@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Support\Str;
 
 use Spatie\FlareClient\Truncation\ReportTrimmer;
 use Spatie\FlareClient\Truncation\TrimAttributesStrategy;

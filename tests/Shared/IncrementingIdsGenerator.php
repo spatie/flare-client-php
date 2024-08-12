@@ -32,7 +32,8 @@ class IncrementingIdsGenerator extends IdsGenerator
 
     public function span(): string
     {
-        return static::$spanId++;;
+        return static::$spanId++;
+        ;
     }
 
     public function uuid(): string

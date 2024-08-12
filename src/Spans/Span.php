@@ -7,9 +7,8 @@ use Spatie\FlareClient\Concerns\HasAttributes;
 use Spatie\FlareClient\Concerns\UsesTime;
 use Spatie\FlareClient\Contracts\WithAttributes;
 use Spatie\FlareClient\Enums\SpanStatusCode;
-use Spatie\FlareClient\Support\SpanId;
 
-class Span  implements WithAttributes
+class Span implements WithAttributes
 {
     use HasAttributes;
     use UsesTime;

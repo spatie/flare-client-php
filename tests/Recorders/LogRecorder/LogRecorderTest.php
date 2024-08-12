@@ -40,4 +40,3 @@ it('stores glows for reporting and tracing', function () {
         ->toHaveKey('log.level', 'info')
         ->toHaveKey('log.context', ['some' => 'metadata']);
 });
-

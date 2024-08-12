@@ -4,15 +4,13 @@ namespace Spatie\FlareClient\Tests\Shared;
 
 use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 use Illuminate\Support\Arr;
-use Spatie\FlareClient\Http\Client;
 use Spatie\FlareClient\Senders\Sender;
-use Spatie\FlareClient\Tests\TestClasses\Assert;
 
 class FakeSender implements Sender
 {
     use ArraySubsetAsserts;
 
-    /** @var array<int, array{verb: string, fullUrl: string, headers: array<string, string>, arguments: array<string, mixed>}>  */
+    /** @var array<int, array{verb: string, fullUrl: string, headers: array<string, string>, arguments: array<string, mixed>}> */
     protected static array $requests = [];
 
     public static function reset(): void
@@ -29,7 +27,7 @@ class FakeSender implements Sender
         string $endpoint,
         string $apiToken,
         array $payload
-    ): array{
+    ): array {
         self::$requests[] = [
             'verb' => 'POST',
             'fullUrl' => $endpoint,

@@ -26,7 +26,7 @@ class LogRecorder implements SpanEventsRecorder
         FlareSpanEventType $spanEventType = SpanEventType::Log,
         ?array $attributes = null,
     ): ?LogMessageSpanEvent {
-        return $this->persistEntry(fn() => (new LogMessageSpanEvent(
+        return $this->persistEntry(fn () => (new LogMessageSpanEvent(
             message: $message,
             level: $level,
             context: $context,

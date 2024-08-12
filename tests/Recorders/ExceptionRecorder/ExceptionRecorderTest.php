@@ -1,5 +1,5 @@
 <?php
 
-it('can trace exceptions', function (){
+it('can trace exceptions', function () {
 
 })->todo();

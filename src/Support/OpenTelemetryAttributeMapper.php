@@ -17,23 +17,23 @@ class OpenTelemetryAttributeMapper
             return ['stringValue' => $value];
         }
 
-        if(is_bool($value)){
+        if(is_bool($value)) {
             return ['boolValue' => $value];
         }
 
-        if(is_int($value)){
+        if(is_int($value)) {
             return ['intValue' => $value];
         }
 
-        if(is_float($value)){
+        if(is_float($value)) {
             return ['doubleValue' => $value];
         }
 
-        if(is_array($value) && array_is_list($value)){
+        if(is_array($value) && array_is_list($value)) {
             return ['arrayValue' => $value];
         }
 
-        if(is_array($value) && ! array_is_list($value)){
+        if(is_array($value) && ! array_is_list($value)) {
             return ['kvlistValue' => $value];
         }
 

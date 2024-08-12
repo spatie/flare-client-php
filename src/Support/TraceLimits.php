@@ -19,7 +19,6 @@ class TraceLimits
         public int $maxAttributesPerSpan,
         public int $maxSpanEventsPerSpan,
         public int $maxAttributesPerSpanEvent,
-    )
-    {
+    ) {
     }
 }

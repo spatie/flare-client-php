@@ -29,7 +29,7 @@ it('can trace a transaction', function () {
             'max_reported' => 10,
             'include_bindings' => true,
             'find_origin' => true,
-            'find_origin_threshold' => 0
+            'find_origin_threshold' => 0,
         ],
     );
 
@@ -132,5 +132,3 @@ it('can nest transaction spans', function () {
         ->end->toBe(1546346098000000)
         ->parentSpanId->toBe($transactionSpanA->spanId);
 });
-
-

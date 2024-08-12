@@ -15,8 +15,7 @@ class AddRecordedEntries implements FlareMiddleware
      */
     public function __construct(
         public array $recorders,
-    )
-    {
+    ) {
     }
 
     public function handle(ReportFactory $report, Closure $next)

@@ -25,4 +25,3 @@ it('can enable stack trace arguments on a PHP level', function () {
         ->toBeArray()
         ->toHaveCount(2);
 });
-

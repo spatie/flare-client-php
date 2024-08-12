@@ -157,7 +157,6 @@ trait RecordsEntries
         return $entry;
     }
 
-
     protected function shouldFindOrigin(?int $duration): bool
     {
         return $this->shouldTrace()

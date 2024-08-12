@@ -2,7 +2,6 @@
 
 namespace Spatie\FlareClient\Recorders\DumpRecorder;
 
-use Spatie\FlareClient\Concerns\HasOriginAttributes;
 use Spatie\FlareClient\Contracts\FlareSpanEventType;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Spans\SpanEvent;

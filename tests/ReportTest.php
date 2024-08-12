@@ -1,14 +1,10 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Spatie\FlareClient\Context\ConsoleContextProvider;
 use Spatie\FlareClient\FlareConfig;
-use Spatie\FlareClient\Performance\Support\Timer;
 use Spatie\FlareClient\Tests\Concerns\MatchesReportSnapshots;
 use Spatie\FlareClient\Tests\Shared\FakeSender;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
 use Spatie\FlareClient\Tests\TestClasses\FakeErrorHandler;
-use Spatie\LaravelFlare\Support\SentReports;
 
 uses(MatchesReportSnapshots::class);
 

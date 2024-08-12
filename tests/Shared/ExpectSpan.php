@@ -4,7 +4,6 @@ namespace Spatie\FlareClient\Tests\Shared;
 
 use Closure;
 use Exception;
-use Laravel\SerializableClosure\Support\ReflectionClosure;
 use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
@@ -27,7 +26,7 @@ class ExpectSpan
 
     public function hasParent(Span|ExpectSpan|string $span): self
     {
-        $id = match (true){
+        $id = match (true) {
             $span instanceof Span => $span->spanId,
             $span instanceof ExpectSpan => $span->span->spanId,
             default => $span,
@@ -83,11 +82,10 @@ class ExpectSpan
     public function spanEvent(
         Closure $closure,
         ?SpanEvent &$spanEvent = null,
-    ): self
-    {
+    ): self {
         $spanEvent = array_values($this->span->events)[$this->spanEventAssertCounter] ?? null;
 
-        if($spanEvent === null){
+        if($spanEvent === null) {
             throw new Exception('Span Event is not recorded');
         }
 

@@ -77,7 +77,7 @@ it('can disable the limit of span events stored for reporting', function () {
 });
 
 
-it('can completely disable reporting', function (){
+it('can completely disable reporting', function () {
     $flare = setupFlare();
 
     $recorder = new SpanEventsRecorder($flare->tracer, $flare->backTracer, config:[
@@ -116,7 +116,7 @@ it('can trace span events', function () {
         ->toHaveKey('message', 'Hello World');
 });
 
-it('will not trace span events when no span is current', function (){
+it('will not trace span events when no span is current', function () {
     $flare = setupFlare();
 
     $recorder = new SpanEventsRecorder($flare->tracer, $flare->backTracer, config:[
@@ -131,7 +131,7 @@ it('will not trace span events when no span is current', function (){
     expect($span->events)->toHaveCount(0);
 });
 
-it('will not trace span events when not tracing', function (){
+it('will not trace span events when not tracing', function () {
     $flare = setupFlare();
 
     $recorder = new SpanEventsRecorder($flare->tracer, $flare->backTracer, config:[
@@ -145,8 +145,8 @@ it('will not trace span events when not tracing', function (){
     expect($span->events)->toHaveCount(0);
 });
 
-it('will not trace span events when the span events per span limit is reached', function (){
-    $flare = setupFlare(function (FlareConfig $config){
+it('will not trace span events when the span events per span limit is reached', function () {
+    $flare = setupFlare(function (FlareConfig $config) {
         $config->trace(maxSpanEventsPerSpan: 35);
     });
 
@@ -166,7 +166,7 @@ it('will not trace span events when the span events per span limit is reached', 
     expect($span->events)->toHaveCount(35);
 });
 
-it('is possible to disable the recorder for tracing', function (){
+it('is possible to disable the recorder for tracing', function () {
     $flare = setupFlare();
 
     $recorder = new SpanEventsRecorder($flare->tracer, $flare->backTracer, config:[
@@ -182,7 +182,8 @@ it('is possible to disable the recorder for tracing', function (){
 });
 
 it('a closure passed span event will not be executed when not tracing or reporting', function () {
-    class TestSpanEventRecorderExecution extends SpanEventsRecorder{
+    class TestSpanEventRecorderExecution extends SpanEventsRecorder
+    {
         public function record(string $message): ?SpanEvent
         {
             $this->persistEntry(fn () => throw new Exception('Closure executed'));
@@ -213,7 +214,7 @@ it('can find origins when tracing events', function () {
 
     $recorder = new SpanEventsRecorder($flare->tracer, $flare->backTracer, config:[
         'trace' => true,
-        'find_origin' => true
+        'find_origin' => true,
     ]);
 
     $flare->tracer->startTrace();
@@ -233,7 +234,7 @@ it('can will not find origins when tracing events when find origin is disabled',
 
     $recorder = new SpanEventsRecorder($flare->tracer, $flare->backTracer, config:[
         'trace' => true,
-        'find_origin' => false
+        'find_origin' => false,
     ]);
 
     $flare->tracer->startTrace();
@@ -254,7 +255,7 @@ it('is not possible to overwrite the find origin threshold', function () {
     $recorder = new SpanEventsRecorder($flare->tracer, $flare->backTracer, config:[
         'trace' => true,
         'find_origin' => true,
-        'find_origin_threshold' => Duration::milliseconds(300)
+        'find_origin_threshold' => Duration::milliseconds(300),
     ]);
 
     $flare->tracer->startTrace();
@@ -269,12 +270,12 @@ it('is not possible to overwrite the find origin threshold', function () {
     ]);
 });
 
-it('will not find origins when only reporting', function (){
+it('will not find origins when only reporting', function () {
     $flare = setupFlare();
 
     $recorder = new SpanEventsRecorder($flare->tracer, $flare->backTracer, config:[
         'report' => true,
-        'find_origin' => true
+        'find_origin' => true,
     ]);
 
     $recorder->record('Hello World');

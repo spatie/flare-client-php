@@ -6,14 +6,10 @@ use Closure;
 use Illuminate\Contracts\Container\Container as IlluminateContainer;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\ErrorSolutions\Contracts\SolutionProviderRepository as SolutionProviderRepositoryContract;
-use Spatie\FlareClient\Context\ContextProviderDetector;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\SamplingType;
 use Spatie\FlareClient\Exporters\JsonExporter;
 use Spatie\FlareClient\FlareMiddleware\AddRecordedEntries;
-use Spatie\FlareClient\FlareMiddleware\ContainerAwareFlareMiddleware;
-use Spatie\FlareClient\FlareMiddleware\RecordingMiddleware;
-use Spatie\FlareClient\Http\Client;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Sampling\Sampler;
 use Spatie\FlareClient\Scopes\Scope;
@@ -110,7 +106,7 @@ class FlareProvider
         $this->container->singleton(Flare::class, function () {
             $recorders = array_combine(
                 array_map(
-                /** @var class-string<Recorder> $recorder */
+                    /** @var class-string<Recorder> $recorder */
                     fn ($recorder) => is_string($recorder::type()) ? $recorder::type() : $recorder::type()->value,
                     array_keys($this->config->recorders)
                 ),

@@ -44,7 +44,8 @@ class Api
                 : $this->addTraceToQueue($trace);
         } catch (Exception $e) {
             //
-        }    }
+        }
+    }
 
     protected function addReportToQueue(Report $report): self
     {

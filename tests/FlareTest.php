@@ -89,8 +89,10 @@ test('callbacks can modify the report', function () {
 });
 
 it('can censor request data', function () {
-    setupFlare(fn (FlareConfig $config) => $config->requestInfo(
-        censorBodyFields: ['user', 'password'])
+    setupFlare(
+        fn (FlareConfig $config) => $config->requestInfo(
+            censorBodyFields: ['user', 'password']
+        )
     );
 
     $_ENV['FLARE_FAKE_WEB_REQUEST'] = true;
@@ -161,7 +163,7 @@ it('can set stages', function () {
     expect(FakeSender::instance()->getLastPayload()['application_stage'])->toBe('production');
 });
 
-it('can add cache events', function (){
+it('can add cache events', function () {
     $flare = setupFlare(fn (FlareConfig $config) => $config->cacheEvents());
 
     $flare->cache()->recordHit('key', 'store');
@@ -361,7 +363,7 @@ it('can add queries', function () {
         ->toHaveKey('flare.span_type', SpanType::Query);
 });
 
-it('can begin and commit transactions', function (){
+it('can begin and commit transactions', function () {
     $flare = setupFlare(fn (FlareConfig $config) => $config->transactions());
 
     $flare->transaction()->recordBegin();
@@ -384,7 +386,7 @@ it('can begin and commit transactions', function (){
         ->toHaveKey('flare.span_type', SpanType::Transaction);
 });
 
-it('can begin and rollback transactions', function (){
+it('can begin and rollback transactions', function () {
     $flare = setupFlare(fn (FlareConfig $config) => $config->transactions());
 
     $flare->transaction()->recordBegin();
@@ -565,5 +567,3 @@ function reportError(int $code)
 
     test()->flare->report($throwable);
 }
-
-

@@ -2,11 +2,9 @@
 
 namespace Spatie\FlareClient\Recorders\QueryRecorder;
 
-use Spatie\FlareClient\Concerns\HasOriginAttributes;
 use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Spans\Span;
-use Spatie\FlareClient\Support\SpanId;
 
 class QuerySpan extends Span
 {

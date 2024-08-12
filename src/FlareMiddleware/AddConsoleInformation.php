@@ -3,7 +3,6 @@
 namespace Spatie\FlareClient\FlareMiddleware;
 
 use Closure;
-use Psr\Container\ContainerInterface;
 use Spatie\FlareClient\AttributesProviders\ConsoleAttributesProvider;
 use Spatie\FlareClient\ReportFactory;
 use Spatie\FlareClient\Support\Runtime;

@@ -5,11 +5,9 @@ namespace Spatie\FlareClient\Recorders\DumpRecorder;
 use ReflectionMethod;
 use ReflectionProperty;
 use Spatie\Backtrace\Frame;
-use Spatie\FlareClient\Concerns\HasOriginAttributes;
 use Spatie\FlareClient\Concerns\Recorders\RecordsSpanEvents;
 use Spatie\FlareClient\Contracts\Recorders\SpanEventsRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
-use Spatie\FlareClient\FlareMiddleware\AddDumps;
 use Symfony\Component\VarDumper\Cloner\Data;
 use Symfony\Component\VarDumper\VarDumper;
 

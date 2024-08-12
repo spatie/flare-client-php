@@ -9,7 +9,7 @@ use Spatie\FlareClient\Contracts\WithAttributes;
 use Spatie\FlareClient\Support\Telemetry;
 
 /** @see https://github.com/opentelemetry-php/sdk/blob/main/Resource/Detectors/ */
-class Resource  implements WithAttributes
+class Resource implements WithAttributes
 {
     use HasAttributes;
 
@@ -63,7 +63,7 @@ class Resource  implements WithAttributes
 
     public function process(): self
     {
-        $this->attributes['process.pid'] =  getmypid();
+        $this->attributes['process.pid'] = getmypid();
         $this->attributes['process.executable.path'] = PHP_BINARY;
 
         if ($_SERVER['argv'] ?? null) {

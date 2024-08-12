@@ -20,7 +20,6 @@ class NullRecorder implements SpansRecorder, SpanEventsRecorder
         return self::$instance ??= new self();
     }
 
-
     protected function configure(array $config): void
     {
 
