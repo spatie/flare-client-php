@@ -90,7 +90,7 @@ test('callbacks can modify the report', function () {
 
 it('can censor request data', function () {
     setupFlare(
-        fn (FlareConfig $config) => $config->requestInfo(
+        fn (FlareConfig $config) => $config->addRequestInfo(
             censorBodyFields: ['user', 'password']
         )
     );
@@ -164,7 +164,7 @@ it('can set stages', function () {
 });
 
 it('can add cache events', function () {
-    $flare = setupFlare(fn (FlareConfig $config) => $config->cacheEvents());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->addCacheEvents());
 
     $flare->cache()->recordHit('key', 'store');
 
@@ -224,7 +224,7 @@ it('can add cache events', function () {
 });
 
 it('can add glows', function () {
-    $flare = setupFlare(fn (FlareConfig $config) => $config->glows());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->addGlows());
 
     $flare->glow()->record(
         'my glow',
@@ -269,7 +269,7 @@ it('can add glows', function () {
 });
 
 it('can add logs', function () {
-    $flare = setupFlare(fn (FlareConfig $config) => $config->logs());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->addLogs());
 
     $flare->log()->record(
         'my log',
@@ -314,7 +314,7 @@ it('can add logs', function () {
 });
 
 it('can add queries', function () {
-    $flare = setupFlare(fn (FlareConfig $config) => $config->queries());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->addQueries());
 
     $flare->query()->record(
         'select * from users where id = ?',
@@ -364,7 +364,7 @@ it('can add queries', function () {
 });
 
 it('can begin and commit transactions', function () {
-    $flare = setupFlare(fn (FlareConfig $config) => $config->transactions());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->addTransactions());
 
     $flare->transaction()->recordBegin();
 
@@ -387,7 +387,7 @@ it('can begin and commit transactions', function () {
 });
 
 it('can begin and rollback transactions', function () {
-    $flare = setupFlare(fn (FlareConfig $config) => $config->transactions());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->addTransactions());
 
     $flare->transaction()->recordBegin();
 
@@ -477,7 +477,7 @@ it('can filter error exceptions based on their severity', function () {
 
 it('will add arguments to a stack trace by default', function () {
     // Todo: add some default argument reducers in the config
-    $flare = setupFlare(fn (FlareConfig $config) => $config->stackFrameArguments(argumentReducers: ArgumentReducers::default()));
+    $flare = setupFlare(fn (FlareConfig $config) => $config->addStackFrameArguments(argumentReducers: ArgumentReducers::default()));
 
     $exception = TraceArguments::create()->exception(
         'a message',
@@ -511,7 +511,7 @@ it('will add arguments to a stack trace by default', function () {
 it('is possible to disable stack frame arguments', function () {
     ini_set('zend.exception_ignore_args', 0); // Enabled on GH actions
 
-    $flare = setupFlare(fn (FlareConfig $config) => $config->stackFrameArguments(false));
+    $flare = setupFlare(fn (FlareConfig $config) => $config->addStackFrameArguments(false));
 
     $exception = TraceArguments::create()->exception(
         'a message',
@@ -526,7 +526,7 @@ it('is possible to disable stack frame arguments', function () {
 it('is possible to disable stack frame arguments with zend.exception_ignore_args', function () {
     ini_set('zend.exception_ignore_args', 1);
 
-    $flare = setupFlare(fn (FlareConfig $config) => $config->stackFrameArguments(false));
+    $flare = setupFlare(fn (FlareConfig $config) => $config->addStackFrameArguments(false));
 
     $exception = TraceArguments::create()->exception(
         'a message',

@@ -66,14 +66,14 @@ class ReportDriver extends YamlDriver
 
     protected function freezeLanguageVersion(array $data): array
     {
-        data_set($data, 'language_version', '7.3.2', true);
+        $data['language_version'] = '7.3.2';
 
         return $data;
     }
 
     protected function removeUuid(array $data): array
     {
-        data_set($data, 'tracking_uuid', 'fake-uuid', true);
+        $data['tracking_uuid'] = 'fake-uuid';
 
         return $data;
     }

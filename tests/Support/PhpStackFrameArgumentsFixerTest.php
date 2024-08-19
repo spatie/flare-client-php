@@ -8,7 +8,7 @@ it('can enable stack trace arguments on a PHP level', function () {
     ini_set('zend.exception_ignore_args', 1);
 
     $report = Flare::makeFromConfig(
-        FlareConfig::make('FAKE-API-KEY')->stackFrameArguments(true, forcePHPIniSetting: false)
+        FlareConfig::make('FAKE-API-KEY')->addStackFrameArguments(true, forcePHPIniSetting: false)
     )
         ->report(TraceArguments::create()->exception('string', new DateTime()))
         ->toArray();
@@ -16,7 +16,7 @@ it('can enable stack trace arguments on a PHP level', function () {
     expect($report['stacktrace'][1]['arguments'])->toBeNull();
 
     $report = Flare::makeFromConfig(
-        FlareConfig::make('FAKE-API-KEY')->stackFrameArguments(true, forcePHPIniSetting: true)
+        FlareConfig::make('FAKE-API-KEY')->addStackFrameArguments(true, forcePHPIniSetting: true)
     )
         ->report(TraceArguments::create()->exception('string', new DateTime()))
         ->toArray();

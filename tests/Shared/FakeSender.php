@@ -3,7 +3,6 @@
 namespace Spatie\FlareClient\Tests\Shared;
 
 use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
-use Illuminate\Support\Arr;
 use Spatie\FlareClient\Senders\Sender;
 
 class FakeSender implements Sender
@@ -47,7 +46,7 @@ class FakeSender implements Sender
     {
         expect(count(self::$requests))->toBeGreaterThan(0, 'There were no requests sent');
 
-        $lastPayload = Arr::last(self::$requests)['arguments'];
+        $lastPayload = end(self::$requests) ? end(self::$requests)['arguments'] : null;
 
         expect(array_key_exists($key, $lastPayload['attributes']))->toBeTrue('The last payload doesnt have the expected key. ');
 
@@ -63,6 +62,6 @@ class FakeSender implements Sender
     /** @return array<string, mixed>|null */
     public function getLastPayload(): ?array
     {
-        return Arr::last(self::$requests)['arguments'];
+        return end(self::$requests) ? end(self::$requests)['arguments'] : null;
     }
 }

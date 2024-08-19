@@ -16,7 +16,9 @@ use Spatie\FlareClient\FlareMiddleware\AddRequestInformation;
 use Spatie\FlareClient\FlareMiddleware\AddSolutions;
 use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
+use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
 use Spatie\FlareClient\Recorders\DumpRecorder\DumpRecorder;
+use Spatie\FlareClient\Recorders\ExceptionRecorder\ExceptionRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
 use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
@@ -73,16 +75,16 @@ class FlareConfig
     public function useDefaults(): static
     {
         return $this
-            ->dumps()
-            ->requestInfo()
-            ->consoleInfo()
-            ->gitInfo()
-            ->glows()
-            ->solutions()
-            ->stackFrameArguments();
+            ->addDumps()
+            ->addRequestInfo()
+            ->addConsoleInfo()
+            ->addGitInfo()
+            ->addGlows()
+            ->addSolutions()
+            ->addStackFrameArguments();
     }
 
-    public function requestInfo(
+    public function addRequestInfo(
         array $censorBodyFields = ['password', 'password_confirmation'],
         array $censorRequestHeaders = [
             'API-KEY',
@@ -109,7 +111,7 @@ class FlareConfig
         return $this;
     }
 
-    public function consoleInfo(
+    public function addConsoleInfo(
         string $middleware = AddConsoleInformation::class,
     ): self {
         $this->middleware[$middleware] = [];
@@ -117,7 +119,7 @@ class FlareConfig
         return $this;
     }
 
-    public function gitInfo(
+    public function addGitInfo(
         string $middleware = AddGitInformation::class,
     ): static {
         $this->middleware[$middleware] = [];
@@ -125,13 +127,13 @@ class FlareConfig
         return $this;
     }
 
-    public function cacheEvents(
+    public function addCacheEvents(
         bool $trace = true,
         bool $report = true,
         ?int $maxReported = 100,
         array $events = [SpanEventType::CacheHit, SpanEventType::CacheMiss, SpanEventType::CacheKeyWritten, SpanEventType::CacheKeyForgotten],
         string $recorder = CacheRecorder::class,
-    ) {
+    ): static {
         $this->recorders[$recorder] = [
             'trace' => $trace,
             'report' => $report,
@@ -142,7 +144,7 @@ class FlareConfig
         return $this;
     }
 
-    public function glows(
+    public function addGlows(
         bool $trace = true,
         bool $report = true,
         ?int $maxReported = 10,
@@ -157,7 +159,7 @@ class FlareConfig
         return $this;
     }
 
-    public function logs(
+    public function addLogs(
         bool $trace = true,
         bool $report = true,
         ?int $maxReported = 10,
@@ -172,7 +174,22 @@ class FlareConfig
         return $this;
     }
 
-    public function solutions(
+    public function addCommands(
+        bool $trace = true,
+        bool $report = true,
+        ?int $maxReported = 10,
+        string $recorder = CommandRecorder::class,
+    ): static {
+        $this->recorders[$recorder] = [
+            'trace' => $trace,
+            'report' => $report,
+            'max_reported' => $maxReported,
+        ];
+
+        return $this;
+    }
+
+    public function addSolutions(
         string $middleware = AddSolutions::class,
     ): static {
         $this->middleware[$middleware] = [];
@@ -180,7 +197,7 @@ class FlareConfig
         return $this;
     }
 
-    public function dumps(
+    public function addDumps(
         bool $trace = false,
         bool $report = true,
         ?int $maxReported = 25,
@@ -197,7 +214,18 @@ class FlareConfig
         return $this;
     }
 
-    public function queries(
+    public function addExceptions(
+        bool $trace = true,
+    ): static {
+        $this->recorders[ExceptionRecorder::class] = [
+            'trace' => $trace,
+            'report' => false,
+        ];
+
+        return $this;
+    }
+
+    public function addQueries(
         bool $trace = true,
         bool $report = true,
         ?int $maxReported = 100,
@@ -218,7 +246,7 @@ class FlareConfig
         return $this;
     }
 
-    public function transactions(
+    public function addTransactions(
         bool $trace = true,
         bool $report = true,
         ?int $maxReported = 100,
@@ -270,7 +298,7 @@ class FlareConfig
         return $this;
     }
 
-    public function stackFrameArguments(
+    public function addStackFrameArguments(
         bool $withStackFrameArguments = true,
         string|ArgumentReducers|ArgumentReducer|array|null $argumentReducers = null,
         bool $forcePHPIniSetting = true

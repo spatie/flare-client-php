@@ -13,6 +13,7 @@ use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
+use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
 use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
 use Spatie\FlareClient\Recorders\NullRecorder;
@@ -113,6 +114,11 @@ class Flare
         }
 
         return $this;
+    }
+
+    public function command(): CommandRecorder|NullRecorder
+    {
+        return $this->recorders[RecorderType::Command->value] ??= NullRecorder::instance();
     }
 
     public function cache(): CacheRecorder|NullRecorder

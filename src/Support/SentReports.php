@@ -2,7 +2,6 @@
 
 namespace Spatie\FlareClient\Support;
 
-use Illuminate\Support\Arr;
 use Spatie\FlareClient\Report;
 
 class SentReports
@@ -39,12 +38,14 @@ class SentReports
 
     public function latestUuid(): ?string
     {
-        return Arr::last($this->reports)?->trackingUuid();
+        return end($this->reports) ? end($this->reports)->trackingUuid() : null;
     }
 
     public function latestUrl(): ?string
     {
-        return Arr::last($this->urls());
+        $urls = $this->urls();
+
+        return end($urls)?: null;
     }
 
     public function clear(): void

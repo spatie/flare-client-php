@@ -4,6 +4,7 @@ namespace Spatie\FlareClient\Concerns\Recorders;
 
 use Closure;
 use Psr\Container\ContainerInterface;
+use Spatie\FlareClient\Recorders\LogRecorder\LogMessageSpanEvent;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Support\BackTracer;
