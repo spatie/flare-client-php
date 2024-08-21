@@ -15,7 +15,7 @@ trait RecordsSpans
 
     protected function shouldTrace(): bool
     {
-        return $this->trace && $this->tracer->isSamping();
+        return $this->trace && $this->tracer->isSampling();
     }
 
     protected function shouldReport(): bool

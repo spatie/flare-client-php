@@ -20,7 +20,7 @@ trait HasAttributes
 
     public function addAttributes(?array $attributes): static
     {
-        if($attributes === null) {
+        if ($attributes === null) {
             return $this;
         }
 

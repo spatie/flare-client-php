@@ -7,6 +7,7 @@ use Spatie\Backtrace\Backtrace;
 use Spatie\Backtrace\Frame as SpatieFrame;
 use Spatie\ErrorSolutions\Contracts\Solution;
 use Spatie\FlareClient\Concerns\UsesTime;
+use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Solutions\ReportSolution;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
@@ -23,28 +24,22 @@ class Report
      * @param array<int|string, SpanEvent> $spanEvents
      */
     public function __construct(
-        protected Backtrace $stacktrace,
-        protected string $exceptionClass,
-        protected string $message,
-        protected array $attributes = [],
-        protected array $solutions = [],
-        protected ?Throwable $throwable = null,
-        protected ?string $applicationStage = null,
-        protected ?string $applicationPath = null,
-        protected ?string $applicationVersion = null,
-        protected ?string $languageVersion = null,
-        protected ?string $frameworkVersion = null,
-        protected ?int $openFrameIndex = null,
-        protected ?bool $handled = null,
-        protected array $spans = [],
-        protected array $spanEvents = [],
-        protected ?string $trackingUuid = null,
+        public readonly Backtrace $stacktrace,
+        public readonly string $exceptionClass,
+        public readonly string $message,
+        public readonly Resource $resource,
+        public readonly array $attributes = [],
+        public readonly array $solutions = [],
+        public readonly ?Throwable $throwable = null,
+        public readonly ?string $applicationPath = null,
+        public readonly ?string $languageVersion = null,
+        public readonly ?string $frameworkVersion = null,
+        public readonly ?int $openFrameIndex = null,
+        public readonly ?bool $handled = null,
+        public readonly array $spans = [],
+        public readonly array $spanEvents = [],
+        public readonly ?string $trackingUuid = null,
     ) {
-    }
-
-    public function trackingUuid(): string
-    {
-        return $this->trackingUuid;
     }
 
     /**
@@ -64,11 +59,10 @@ class Report
                 fn (Solution $solution) => ReportSolution::fromSolution($solution)->toArray(),
                 $this->solutions,
             ),
+            'resource_attributes' => $this->resource->attributesAsArray(),
             'stacktrace' => $this->stracktraceAsArray(),
-            'application_stage' => $this->applicationStage,
             'open_frame_index' => $this->openFrameIndex,
             'application_path' => $this->applicationPath,
-            'application_version' => $this->applicationVersion,
             'tracking_uuid' => $this->trackingUuid,
             'handled' => $this->handled,
             'attributes' => $this->attributes,

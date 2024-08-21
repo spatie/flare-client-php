@@ -6,7 +6,6 @@ use Composer\InstalledVersions;
 use Spatie\FlareClient\AttributesProviders\GitAttributesProvider;
 use Spatie\FlareClient\Concerns\HasAttributes;
 use Spatie\FlareClient\Contracts\WithAttributes;
-use Spatie\FlareClient\Support\Telemetry;
 
 /** @see https://github.com/opentelemetry-php/sdk/blob/main/Resource/Detectors/ */
 class Resource implements WithAttributes
@@ -16,30 +15,44 @@ class Resource implements WithAttributes
     /**
      * @param array $attributes <string, mixed>
      */
-    public function __construct(array $attributes)
-    {
-        $this->setAttributes($attributes);
+    public function __construct(
+        protected string $serviceName,
+        protected ?string $serviceVersion,
+        protected ?string $serviceStage,
+        protected string $telemetrySdkName,
+        protected string $telemetrySdkVersion,
+        array $attributes = []
+    ) {
+        $this->attributes = $attributes;
     }
 
-    public static function build(
-        string $serviceName,
-        ?string $serviceVersion,
-        string $telemetrySdkName = Telemetry::NAME,
-        string $telemetrySdkVersion = Telemetry::VERSION,
-    ): self {
-        return new self([
-            'service.name' => $serviceName,
-            'service.version' => $serviceVersion,
-            'telemetry.sdk.language' => 'php',
-            'telemetry.sdk.name' => $telemetrySdkName,
-            'telemetry.sdk.version' => $telemetrySdkVersion,
-        ]);
+    public function serviceName(string $name): self
+    {
+        $this->serviceName = $name;
+
+        return $this;
+    }
+
+    public function serviceVersion(?string $version): self
+    {
+        $this->serviceVersion = $version;
+
+        return $this;
+    }
+
+    public function serviceStage(?string $stage): self
+    {
+        $this->serviceStage = $stage;
+
+        return $this;
     }
 
     public function composer(): self
     {
-        $this->attributes['service.name'] = InstalledVersions::getRootPackage()['name'];
-        $this->attributes['service.version'] = InstalledVersions::getRootPackage()['pretty_version'];
+        $this->serviceName = InstalledVersions::getRootPackage()['name'];
+        $this->serviceVersion = InstalledVersions::getRootPackage()['pretty_version'];
+
+        return $this;
     }
 
     public function host(): self
@@ -80,8 +93,10 @@ class Resource implements WithAttributes
 
     public function processRuntime(): self
     {
-        $this->attributes['process.runtime.name'] = php_sapi_name();
+        $this->attributes['process.runtime.name'] = "PHP (".php_sapi_name().")";
         $this->attributes['process.runtime.version'] = PHP_VERSION;
+
+        return $this;
     }
 
     public function git(): self
@@ -94,15 +109,27 @@ class Resource implements WithAttributes
 
         $this->addAttributes($attributes);
 
-        if ($this->attributes['service.version'] === null && isset($attributes['git.tag'])) {
-            $this->attributes['service.version'] = $attributes['git.tag'];
+        if ($this->serviceVersion === null && isset($attributes['git.tag'])) {
+            $this->serviceVersion = $attributes['git.tag'];
         }
 
-        if ($this->attributes['service.version'] === null && isset($attributes['git.hash'])) {
-            $this->attributes['service.version'] = $attributes['git.hash'];
+        if ($this->serviceVersion === null && isset($attributes['git.hash'])) {
+            $this->serviceVersion = $attributes['git.hash'];
         }
 
         return $this;
+    }
+
+    public function attributesAsArray(): array
+    {
+        return array_merge($this->attributes, [
+            'service.name' => $this->serviceName,
+            'service.version' => $this->serviceVersion,
+            'service.stage' => $this->serviceStage,
+            'telemetry.sdk.language' => 'php',
+            'telemetry.sdk.name' => $this->telemetrySdkName,
+            'telemetry.sdk.version' => $this->telemetrySdkVersion,
+        ]);
     }
 
     public function toArray(): array

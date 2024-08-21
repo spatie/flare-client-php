@@ -2,6 +2,7 @@
 
 namespace Spatie\FlareClient;
 
+use Closure;
 use Exception;
 use Spatie\FlareClient\Concerns\GeneratesIds;
 use Spatie\FlareClient\Concerns\UsesTime;
@@ -25,14 +26,21 @@ class Tracer
 
     protected ?string $currentSpanId = null;
 
+    /**
+     * @param SamplingType $samplingType
+     * @param Api $api
+     * @param Sampler $sampler
+     * @param JsonExporter $exporter
+     * @param TraceLimits $limits
+     */
     public function __construct(
         public SamplingType $samplingType,
         protected readonly Api $api,
         public readonly Sampler $sampler,
         protected readonly JsonExporter $exporter,
-        public readonly Resource $resource,
-        public readonly Scope $scope,
         public readonly TraceLimits $limits,
+        protected Resource $resource,
+        protected Scope $scope,
     ) {
     }
 
@@ -64,7 +72,7 @@ class Tracer
         return SamplingType::Sampling;
     }
 
-    public function isSamping(): bool
+    public function isSampling(): bool
     {
         return $this->samplingType === SamplingType::Sampling;
     }
@@ -143,7 +151,7 @@ class Tracer
     public function startSpan(
         string $name,
         array $attributes = [],
-    ) {
+    ): Span {
         $span = Span::build(
             traceId: $this->currentTraceId,
             name: $name,

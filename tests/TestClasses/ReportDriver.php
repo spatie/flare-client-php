@@ -15,6 +15,7 @@ class ReportDriver extends YamlDriver
         $data = $this->removePhpunitArguments($data);
         $data = $this->freezeLanguageVersion($data);
         $data = $this->removeUuid($data);
+        $data = $this->removeResourceAttributes($data);
 
         $yaml = parent::serialize($data);
 
@@ -28,6 +29,7 @@ class ReportDriver extends YamlDriver
         $actual = $this->removePhpunitArguments($actual);
         $actual = $this->freezeLanguageVersion($actual);
         $actual = $this->removeUuid($actual);
+        $actual = $this->removeResourceAttributes($actual);
 
 
         if (is_array($actual)) {
@@ -74,6 +76,13 @@ class ReportDriver extends YamlDriver
     protected function removeUuid(array $data): array
     {
         $data['tracking_uuid'] = 'fake-uuid';
+
+        return $data;
+    }
+
+    protected function removeResourceAttributes(array $data): array
+    {
+        $data['resource_attributes'] = [];
 
         return $data;
     }

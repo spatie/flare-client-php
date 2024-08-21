@@ -11,6 +11,7 @@ use Spatie\FlareClient\Concerns\HasAttributes;
 use Spatie\FlareClient\Concerns\HasUserProvidedContext;
 use Spatie\FlareClient\Contracts\ProvidesFlareContext;
 use Spatie\FlareClient\Contracts\WithAttributes;
+use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\LaravelFlare\Exceptions\ViewException;
@@ -22,6 +23,8 @@ class ReportFactory implements WithAttributes
     use HasAttributes;
     use HasUserProvidedContext;
     use GeneratesIds;
+
+    protected Resource $resource;
 
     public ?string $applicationPath = null;
 
@@ -73,9 +76,9 @@ class ReportFactory implements WithAttributes
         return new self(throwable: $throwable);
     }
 
-    public function applicationStage(?string $stage): self
+    public function resource(Resource $resource): self
     {
-        $this->applicationStage = $stage;
+        $this->resource = $resource;
 
         return $this;
     }
@@ -83,13 +86,6 @@ class ReportFactory implements WithAttributes
     public function applicationPath(?string $applicationPath): self
     {
         $this->applicationPath = $applicationPath;
-
-        return $this;
-    }
-
-    public function applicationVersion(?string $applicationVersion): self
-    {
-        $this->applicationVersion = $applicationVersion;
 
         return $this;
     }
@@ -197,12 +193,11 @@ class ReportFactory implements WithAttributes
             stacktrace: $stackTrace,
             exceptionClass: $exceptionClass,
             message: $message,
+            resource: $this->resource,
             attributes: $attributes,
             solutions: $this->solutions,
             throwable: $this->throwable,
-            applicationStage: $this->applicationStage,
             applicationPath: $this->applicationPath,
-            applicationVersion: $this->applicationVersion,
             languageVersion: $this->languageVersion,
             frameworkVersion: $this->frameworkVersion,
             openFrameIndex: $this->throwable ? null : $stackTrace->firstApplicationFrameIndex(),

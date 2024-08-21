@@ -1,19 +1,19 @@
 <?php
 
-namespace Spatie\FlareClient\Recorders\ExceptionRecorder;
+namespace Spatie\FlareClient\Recorders\ThrowableRecorder;
 
 use Spatie\Backtrace\Frame;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Report;
 use Spatie\FlareClient\Spans\SpanEvent;
 
-class ExceptionSpanEvent extends SpanEvent
+class ThrowableSpanEvent extends SpanEvent
 {
     public function __construct(
         public string $message,
         public string $class,
         public ?bool $handled,
-        /** @var array<array{file: string, line: string, method: ?string, class: ?string}> */
+        /** @var string[] */
         public array $stackTrace,
         public ?string $id = null,
         ?int $timeUs = null,
@@ -26,38 +26,30 @@ class ExceptionSpanEvent extends SpanEvent
         );
     }
 
-    public static function fromFlareReport(Report $report): self
+    public static function fromReport(Report $report): self
     {
+        $stackTrace = array_map(
+            fn (Frame $frame) => "{$frame->class}::{$frame->method} at {$frame->file}:{$frame->lineNumber}".PHP_EOL,
+            $report->stacktrace->frames(),
+        );
+
         return new self(
-            $report->getMessage(),
-            $report->getExceptionClass(),
-            $report->isHandled(),
-            array_map(
-                fn (Frame $frame) => [
-                    'filename' => $frame->file,
-                    'line' => $frame->lineNumber,
-                    'class' => $frame->class,
-                    'method' => $frame->method,
-                ],
-                $report->getStacktrace()->frames(),
-            ),
-            $report->trackingUuid(),
+            $report->message,
+            $report->exceptionClass,
+            $report->handled ?? false,
+            $stackTrace,
+            $report->trackingUuid
         );
     }
 
     protected function collectAttributes(): array
     {
-        $stackTrace = array_map(
-            fn (array $frame) => "{$frame['class']}::{$frame['method']} at {$frame['file']}:{$frame['line']}".PHP_EOL,
-            $this->stackTrace,
-        );
-
         return [
             'flare.span_event_type' => $this->spanEventType,
             'exception.message' => $this->message,
             'exception.type' => $this->class,
             'exception.handled' => $this->handled,
-            'exception.stacktrace' => $stackTrace,
+            'exception.stacktrace' => $this->stackTrace,
             'exception.id' => $this->id,
         ];
     }

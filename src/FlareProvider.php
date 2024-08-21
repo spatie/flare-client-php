@@ -10,6 +10,7 @@ use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\SamplingType;
 use Spatie\FlareClient\Exporters\JsonExporter;
 use Spatie\FlareClient\FlareMiddleware\AddRecordedEntries;
+use Spatie\FlareClient\Recorders\ThrowableRecorder\ThrowableRecorder;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Sampling\Sampler;
 use Spatie\FlareClient\Scopes\Scope;
@@ -18,6 +19,7 @@ use Spatie\FlareClient\Support\BackTracer;
 use Spatie\FlareClient\Support\Container;
 use Spatie\FlareClient\Support\PhpStackFrameArgumentsFixer;
 use Spatie\FlareClient\Support\SentReports;
+use Spatie\FlareClient\Support\Telemetry;
 use Spatie\FlareClient\Support\TraceLimits;
 
 class FlareProvider
@@ -59,12 +61,18 @@ class FlareProvider
             $this->config->applicationPath
         ));
 
-        $this->container->singleton(Resource::class, fn () => Resource::build(
+        $this->container->singleton(Resource::class, fn () => (new Resource(
             $this->config->applicationName,
-            $this->config->applicationVersion
-        ));
+            $this->config->applicationVersion,
+            $this->config->applicationStage,
+            Telemetry::NAME,
+            Telemetry::VERSION
+        ))->host()->operatingSystem()->processRuntime());
 
-        $this->container->singleton(Scope::class, fn () => Scope::build());
+        $this->container->singleton(Scope::class, fn () => Scope::build(
+            Telemetry::NAME,
+            Telemetry::VERSION
+        ));
 
         $this->container->singleton(Tracer::class, fn () => new Tracer(
             samplingType: $this->config->trace
@@ -73,9 +81,9 @@ class FlareProvider
             api: $this->container->get(Api::class),
             sampler: $this->container->get(Sampler::class),
             exporter: $this->container->get(JsonExporter::class),
+            limits: $this->config->traceLimits ?? TraceLimits::defaults(),
             resource: $this->container->get(Resource::class),
             scope: $this->container->get(Scope::class),
-            limits: $this->config->traceLimits ?? TraceLimits::defaults(),
         ));
 
         $this->container->singleton(ArgumentReducers::class, fn () => match (true) {
@@ -95,6 +103,10 @@ class FlareProvider
 
         $this->container->singleton(SentReports::class, fn () => new SentReports());
 
+        $this->container->singleton(ThrowableRecorder::class, fn () => new ThrowableRecorder(
+            $this->container->get(Tracer::class),
+        ));
+
         foreach ($this->config->recorders as $recorderClass => $config) {
             ($this->registerRecorderAndMiddlewaresCallback)($this->container, $recorderClass, $config);
         }
@@ -106,7 +118,7 @@ class FlareProvider
         $this->container->singleton(Flare::class, function () {
             $recorders = array_combine(
                 array_map(
-                    /** @var class-string<Recorder> $recorder */
+                /** @var class-string<Recorder> $recorder */
                     fn ($recorder) => is_string($recorder::type()) ? $recorder::type() : $recorder::type()->value,
                     array_keys($this->config->recorders)
                 ),
@@ -124,22 +136,23 @@ class FlareProvider
             array_unshift($middleware, new AddRecordedEntries($recorders));
 
             return new Flare(
-                container: $this->container,
                 api: $this->container->get(Api::class),
                 tracer: $this->container->get(Tracer::class),
                 backTracer: $this->container->get(BackTracer::class),
                 sentReports: $this->container->get(SentReports::class),
                 middleware: $middleware,
                 recorders: $recorders,
+                throwableRecorder: $this->config->traceThrowables
+                    ? $this->container->get(ThrowableRecorder::class)
+                    : null,
                 applicationPath: $this->config->applicationPath,
-                applicationName: $this->config->applicationName,
-                applicationVersion: $this->config->applicationVersion,
-                applicationStage: $this->config->applicationStage,
                 reportErrorLevels: $this->config->reportErrorLevels,
                 filterExceptionsCallable: $this->config->filterExceptionsCallable,
                 filterReportsCallable: $this->config->filterReportsCallable,
                 argumentReducers: $this->container->get(ArgumentReducers::class),
                 withStackFrameArguments: $this->config->withStackFrameArguments,
+                resource: $this->container->get(Resource::class),
+                scope: $this->container->get(Scope::class),
             );
         });
 

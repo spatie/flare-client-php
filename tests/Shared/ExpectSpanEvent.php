@@ -2,6 +2,7 @@
 
 namespace Spatie\FlareClient\Tests\Shared;
 
+use Closure;
 use Spatie\FlareClient\Contracts\FlareSpanEventType;
 use Spatie\FlareClient\Spans\SpanEvent;
 
@@ -33,8 +34,22 @@ class ExpectSpanEvent
         return $this;
     }
 
-    public function hasAttribute(string $name, mixed $value): self
+    public function hasAttribute(string $name, mixed $value = null): self
     {
+        if (func_num_args() === 1) {
+            expect($this->spanEvent->attributes)->toHaveKey($name);
+
+            return $this;
+        }
+
+        if($value instanceof Closure){
+            expect($this->spanEvent->attributes)->toHaveKey($name);
+
+            $value($this->spanEvent->attributes[$name]);
+
+            return $this;
+        }
+
         expect($this->spanEvent->attributes[$name])->toEqual($value);
 
         return $this;

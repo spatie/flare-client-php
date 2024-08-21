@@ -10,7 +10,7 @@ class FakeSender implements Sender
     use ArraySubsetAsserts;
 
     /** @var array<int, array{verb: string, fullUrl: string, headers: array<string, string>, arguments: array<string, mixed>}> */
-    protected static array $requests = [];
+    public static array $requests = [];
 
     public static function reset(): void
     {

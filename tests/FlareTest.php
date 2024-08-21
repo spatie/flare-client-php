@@ -6,6 +6,7 @@ use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\FlareConfig;
+use Spatie\FlareClient\Report;
 use Spatie\FlareClient\ReportFactory;
 use Spatie\FlareClient\Tests\Concerns\MatchesReportSnapshots;
 use Spatie\FlareClient\Tests\Shared\FakeSender;
@@ -80,12 +81,12 @@ test('callbacks can modify the report', function () {
 
     $flare->report($throwable, function (ReportFactory $report) {
         $report->context('my key', 'new value');
-        $report->applicationStage('development');
+        $report->handled = true;
     });
 
     FakeSender::instance()->assertLastRequestAttribute('context.user', ['my key' => 'new value']);
 
-    expect(FakeSender::instance()->getLastPayload()['application_stage'])->toBe('development');
+    expect(FakeSender::instance()->getLastPayload()['handled'])->toBeTrue();
 });
 
 it('can censor request data', function () {
@@ -160,7 +161,7 @@ it('can set stages', function () {
 
     reportException();
 
-    expect(FakeSender::instance()->getLastPayload()['application_stage'])->toBe('production');
+    expect(FakeSender::instance()->getLastPayload()['resource_attributes']['service.stage'])->toBe('production');
 });
 
 it('can add cache events', function () {
@@ -428,7 +429,21 @@ it('will add the version to the report', function () {
 
     $payload = FakeSender::instance()->getLastPayload();
 
-    expect($payload['application_version'])->toEqual('123');
+    expect($payload['resource_attributes']['service.version'])->toEqual('123');
+});
+
+it('is possible to configure the version on the flare instance', function () {
+    $flare = setupFlare();
+
+    $flare->withApplicationVersion(function () {
+        return '123';
+    });
+
+    reportException();
+
+    $payload = FakeSender::instance()->getLastPayload();
+
+    expect($payload['resource_attributes']['service.version'])->toEqual('123');
 });
 
 it('will add the php version to the report', function () {
@@ -455,6 +470,34 @@ it('can filter exceptions being reported and allow them', function () {
     reportException();
 
     FakeSender::instance()->assertRequestsSent(1);
+});
+
+it('can filter exceptions being reported by setting it on the flare instance', function () {
+    $flare = setupFlare();
+
+    $flare->filterExceptionsUsing(fn (Throwable $exception) => false);
+
+    reportException();
+
+    FakeSender::instance()->assertRequestsSent(0);
+});
+
+it('can filter reports', function () {
+    setupFlare(fn (FlareConfig $config) => $config->filterReportsUsing(fn (Report $report) => false));
+
+    reportException();
+
+    FakeSender::instance()->assertRequestsSent(0);
+});
+
+it('can filter reports by setting it on the flare instance', function () {
+    $flare = setupFlare();
+
+    $flare->filterReportsUsing(fn (Report $report) => false);
+
+    reportException();
+
+    FakeSender::instance()->assertRequestsSent(0);
 });
 
 it('can filter errors based on their level', function () {

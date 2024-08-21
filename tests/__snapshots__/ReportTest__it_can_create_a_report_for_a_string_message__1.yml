@@ -6,11 +6,10 @@ exception_class: Log
 seen_at: 1546305825000000
 message: 'this is a message'
 solutions: {  }
+resource_attributes: {  }
 stacktrace: {  }
-application_stage: null
 open_frame_index: 0
 application_path: null
-application_version: null
 tracking_uuid: fake-uuid
 handled: null
 attributes: {  }

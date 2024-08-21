@@ -25,7 +25,7 @@ it('will generate a uuid', function () {
 
     $report = $flare->report(new Exception('this is an exception'));
 
-    expect($report->trackingUuid())->toBeUuid();
+    expect($report->trackingUuid)->toBeUuid();
 
     expect($report->toArray()['tracking_uuid'])->toBeString();
 });

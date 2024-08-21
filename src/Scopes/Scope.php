@@ -25,9 +25,9 @@ class Scope implements WithAttributes
      * @param array<string, mixed> $attributes
      */
     public static function build(
+        string $name,
+        string $version,
         array $attributes = [],
-        string $name = Telemetry::NAME,
-        string $version = Telemetry::VERSION,
     ): self {
         return new self(
             name: $name,

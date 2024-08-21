@@ -16,7 +16,7 @@ trait RecordsSpanEvents
     protected function shouldTrace(): bool
     {
         return $this->trace
-            && $this->tracer->isSamping()
+            && $this->tracer->isSampling()
             && $this->tracer->currentSpanId();
     }
 

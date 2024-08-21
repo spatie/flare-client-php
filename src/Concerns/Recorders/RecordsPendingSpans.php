@@ -27,7 +27,7 @@ trait RecordsPendingSpans
             return false;
         }
 
-        if ($this->tracer->isSamping()) {
+        if ($this->tracer->isSampling()) {
             return true;
         }
 
@@ -39,7 +39,7 @@ trait RecordsPendingSpans
 
         $this->shouldEndTrace = true;
 
-        return $this->tracer->isSamping();
+        return $this->tracer->isSampling();
     }
 
     protected function shouldReport(): bool
@@ -89,7 +89,7 @@ trait RecordsPendingSpans
         ?Closure $closure = null,
         ?int $time = null,
     ): ?Span {
-        $shouldTrace = $this->trace && $this->tracer->isSamping();
+        $shouldTrace = $this->trace && $this->tracer->isSampling();
         $shouldReport = $this->shouldReport();
 
         if ($shouldTrace === false && $shouldReport === false) {

@@ -6,7 +6,6 @@ use Closure;
 use Error;
 use ErrorException;
 use Exception;
-use Psr\Container\ContainerInterface;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\FlareClient\Concerns\HasUserProvidedContext;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
@@ -18,7 +17,10 @@ use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
 use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
 use Spatie\FlareClient\Recorders\NullRecorder;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
+use Spatie\FlareClient\Recorders\ThrowableRecorder\ThrowableRecorder;
 use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
+use Spatie\FlareClient\Resources\Resource;
+use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Support\BackTracer;
 use Spatie\FlareClient\Support\Container;
 use Spatie\FlareClient\Support\SentReports;
@@ -36,26 +38,25 @@ class Flare
      * @param array<int, FlareMiddleware> $middleware
      * @param array<string, Recorder> $recorders
      * @param null|Closure(Exception): bool $filterExceptionsCallable
-     * @param null|Closure(ReportFactory): bool $filterReportsCallable
+     * @param null|Closure(Report): bool $filterReportsCallable
      * @param ArgumentReducers|null $argumentReducers
      */
     public function __construct(
-        protected ContainerInterface $container,
-        protected Api $api,
+        protected readonly Api $api,
         public readonly Tracer $tracer,
         public readonly BackTracer $backTracer,
-        protected SentReports $sentReports,
-        protected array $middleware,
-        protected array $recorders,
-        protected ?string $applicationPath,
-        protected string $applicationName,
-        protected ?string $applicationVersion,
-        protected ?string $applicationStage,
-        protected ?int $reportErrorLevels,
+        protected readonly SentReports $sentReports,
+        protected readonly array $middleware,
+        protected readonly array $recorders,
+        protected readonly ?ThrowableRecorder $throwableRecorder,
+        protected readonly ?string $applicationPath,
+        protected readonly ?int $reportErrorLevels,
         protected null|Closure $filterExceptionsCallable,
         protected null|Closure $filterReportsCallable,
-        protected null|ArgumentReducers $argumentReducers,
-        protected bool $withStackFrameArguments,
+        protected readonly null|ArgumentReducers $argumentReducers,
+        protected readonly bool $withStackFrameArguments,
+        protected Resource $resource,
+        protected Scope $scope,
     ) {
     }
 
@@ -118,32 +119,32 @@ class Flare
 
     public function command(): CommandRecorder|NullRecorder
     {
-        return $this->recorders[RecorderType::Command->value] ??= NullRecorder::instance();
+        return $this->recorders[RecorderType::Command->value] ?? NullRecorder::instance();
     }
 
     public function cache(): CacheRecorder|NullRecorder
     {
-        return $this->recorders[RecorderType::Cache->value] ??= NullRecorder::instance();
+        return $this->recorders[RecorderType::Cache->value] ?? NullRecorder::instance();
     }
 
     public function glow(): GlowRecorder|NullRecorder
     {
-        return $this->recorders[RecorderType::Glow->value] ??= NullRecorder::instance();
+        return $this->recorders[RecorderType::Glow->value] ?? NullRecorder::instance();
     }
 
     public function log(): LogRecorder|NullRecorder
     {
-        return $this->recorders[RecorderType::Log->value] ??= NullRecorder::instance();
+        return $this->recorders[RecorderType::Log->value] ?? NullRecorder::instance();
     }
 
     public function query(): QueryRecorder|NullRecorder
     {
-        return $this->recorders[RecorderType::Query->value] ??= NullRecorder::instance();
+        return $this->recorders[RecorderType::Query->value] ?? NullRecorder::instance();
     }
 
     public function transaction(): TransactionRecorder|NullRecorder
     {
-        return $this->recorders[RecorderType::Transaction->value] ??= NullRecorder::instance();
+        return $this->recorders[RecorderType::Transaction->value] ?? NullRecorder::instance();
     }
 
     public function handleException(Throwable $throwable): void
@@ -184,6 +185,26 @@ class Flare
             return null;
         }
 
+        $report = $this->createReport($throwable, $callback, $handled);
+
+        if ($this->throwableRecorder) {
+            $this->throwableRecorder->record($report);
+        }
+
+        $this->resetRecorders();
+
+        $this->sentReports->add($report);
+
+        $this->sendReportToApi($report);
+
+        return $report;
+    }
+
+    public function createReport(
+        Throwable $throwable,
+        callable $callback = null,
+        ?bool $handled = null
+    ): Report {
         $factory = $this->feedReportFactory(
             ReportFactory::createForThrowable($throwable),
             $callback
@@ -193,15 +214,7 @@ class Flare
             $factory->handled();
         }
 
-        $this->resetRecorders();
-
-        $report = $factory->build();
-
-        $this->sentReports->add($report);
-
-        $this->sendReportToApi($report);
-
-        return $report;
+        return $factory->build();
     }
 
     public function reportHandled(Throwable $throwable): ?Report
@@ -265,6 +278,33 @@ class Flare
         }
     }
 
+    public function withApplicationVersion(string|Closure $version): self
+    {
+        $this->resource->serviceVersion(is_callable($version) ? $version() : $version);
+
+        return $this;
+    }
+
+    /**
+     * @param Closure(Exception): bool $filterExceptionsCallable
+     */
+    public function filterExceptionsUsing(Closure $filterExceptionsCallable): static
+    {
+        $this->filterExceptionsCallable = $filterExceptionsCallable;
+
+        return $this;
+    }
+
+    /**
+     * @param Closure(Report): bool $filterReportsCallable
+     */
+    public function filterReportsUsing(Closure $filterReportsCallable): static
+    {
+        $this->filterReportsCallable = $filterReportsCallable;
+
+        return $this;
+    }
+
     public function reset(): void
     {
         $this->api->sendQueue();
@@ -295,9 +335,7 @@ class Flare
         ?callable $callback
     ): ReportFactory {
         $factory
-            ->applicationStage($this->applicationStage)
-            ->applicationPath($this->applicationPath)
-            ->applicationVersion($this->applicationVersion)
+            ->resource($this->resource)
             ->languageVersion(phpversion())
             ->withStackTraceArguments($this->withStackFrameArguments)
             ->argumentReducers($this->argumentReducers)

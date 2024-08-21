@@ -25,7 +25,7 @@ class SentReports
     /** @return array<int, string> */
     public function uuids(): array
     {
-        return array_map(fn (Report $report) => $report->trackingUuid(), $this->reports);
+        return array_map(fn (Report $report) => $report->trackingUuid, $this->reports);
     }
 
     /** @return array<int, string> */
@@ -38,7 +38,7 @@ class SentReports
 
     public function latestUuid(): ?string
     {
-        return end($this->reports) ? end($this->reports)->trackingUuid() : null;
+        return end($this->reports) ? end($this->reports)->trackingUuid : null;
     }
 
     public function latestUrl(): ?string

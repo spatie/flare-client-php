@@ -18,13 +18,14 @@ use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
 use Spatie\FlareClient\Recorders\DumpRecorder\DumpRecorder;
-use Spatie\FlareClient\Recorders\ExceptionRecorder\ExceptionRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
 use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
 use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
 use Spatie\FlareClient\Sampling\AlwaysSampler;
 use Spatie\FlareClient\Sampling\RateSampler;
+use Spatie\FlareClient\Scopes\Scope;
+use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Senders\CurlSender;
 use Spatie\FlareClient\Senders\Sender;
 use Spatie\FlareClient\Support\TraceLimits;
@@ -32,12 +33,16 @@ use Spatie\FlareClient\Support\TraceLimits;
 class FlareConfig
 {
     /**
+     * @param null|Closure(Exception): bool $filterExceptionsCallable
+     * @param null|Closure(Report): bool $filterReportsCallable
      * @param array<class-string<FlareMiddleware>, array> $middleware
      * @param array<class-string<Recorder>, array> $recorders
      * @param array<class-string<ArgumentReducer>|ArgumentReducer>|ArgumentReducers|null $argumentReducers
      * @param class-string<Sender> $sender
      * @param class-string<SolutionProviderRepository> $solutionsProviderRepository
      * @param array<class-string<HasSolutionsForThrowable>> $solutionsProviders
+     * @param Closure(Scope):void|null $configureScopeCallable
+     * @param Closure(Resource):void|null $configureResourceCallable
      */
     public function __construct(
         public ?string $apiToken = null,
@@ -64,6 +69,9 @@ class FlareConfig
         public string $sampler = RateSampler::class,
         public array $samplerConfig = [],
         public ?TraceLimits $traceLimits = null,
+        public bool $traceThrowables = true,
+        public ?Closure $configureScopeCallable = null,
+        public ?Closure $configureResourceCallable = null,
     ) {
     }
 
@@ -76,11 +84,13 @@ class FlareConfig
     {
         return $this
             ->addDumps()
+            ->addCommands()
             ->addRequestInfo()
             ->addConsoleInfo()
             ->addGitInfo()
             ->addGlows()
             ->addSolutions()
+            ->addThrowables()
             ->addStackFrameArguments();
     }
 
@@ -214,13 +224,10 @@ class FlareConfig
         return $this;
     }
 
-    public function addExceptions(
+    public function addThrowables(
         bool $trace = true,
     ): static {
-        $this->recorders[ExceptionRecorder::class] = [
-            'trace' => $trace,
-            'report' => false,
-        ];
+        $this->traceThrowables = $trace;
 
         return $this;
     }
@@ -327,6 +334,16 @@ class FlareConfig
         return $this;
     }
 
+    /**
+     * @param Closure(Report): bool $filterReportsCallable
+     */
+    public function filterReportsUsing(Closure $filterReportsCallable): static
+    {
+        $this->filterReportsCallable = $filterReportsCallable;
+
+        return $this;
+    }
+
     public function reportErrorLevels(int $reportErrorLevels): static
     {
         $this->reportErrorLevels = $reportErrorLevels;
@@ -350,6 +367,8 @@ class FlareConfig
         int $maxAttributesPerSpan = 128,
         int $maxSpanEventsPerSpan = 128,
         int $maxAttributesPerSpanEvent = 128,
+        ?Closure $configureScope = null,
+        ?Closure $configureResource = null,
     ): static {
         $this->trace = $trace;
         $this->traceLimits = new TraceLimits(
@@ -358,6 +377,9 @@ class FlareConfig
             $maxSpanEventsPerSpan,
             $maxAttributesPerSpanEvent,
         );
+
+        $this->configureScopeCallable = $configureScope;
+        $this->configureResourceCallable = $configureResource;
 
         return $this;
     }
