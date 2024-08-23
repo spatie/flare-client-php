@@ -161,7 +161,7 @@ it('can set stages', function () {
 
     reportException();
 
-    expect(FakeSender::instance()->getLastPayload()['resource_attributes']['service.stage'])->toBe('production');
+    expect(FakeSender::instance()->getLastPayload()['attributes']['service.stage'])->toBe('production');
 });
 
 it('can add cache events', function () {
@@ -429,7 +429,7 @@ it('will add the version to the report', function () {
 
     $payload = FakeSender::instance()->getLastPayload();
 
-    expect($payload['resource_attributes']['service.version'])->toEqual('123');
+    expect($payload['attributes']['service.version'])->toEqual('123');
 });
 
 it('is possible to configure the version on the flare instance', function () {
@@ -443,7 +443,7 @@ it('is possible to configure the version on the flare instance', function () {
 
     $payload = FakeSender::instance()->getLastPayload();
 
-    expect($payload['resource_attributes']['service.version'])->toEqual('123');
+    expect($payload['attributes']['service.version'])->toEqual('123');
 });
 
 it('will add the php version to the report', function () {

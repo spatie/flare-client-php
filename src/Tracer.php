@@ -9,6 +9,7 @@ use Spatie\FlareClient\Concerns\UsesTime;
 use Spatie\FlareClient\Enums\SamplingType;
 use Spatie\FlareClient\Exporters\JsonExporter;
 use Spatie\FlareClient\Resources\Resource;
+use Spatie\FlareClient\Sampling\RateSampler;
 use Spatie\FlareClient\Sampling\Sampler;
 use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Spans\Span;
@@ -27,20 +28,20 @@ class Tracer
     protected ?string $currentSpanId = null;
 
     /**
-     * @param SamplingType $samplingType
      * @param Api $api
-     * @param Sampler $sampler
      * @param JsonExporter $exporter
      * @param TraceLimits $limits
+     * @param SamplingType $samplingType
+     * @param Sampler $sampler
      */
     public function __construct(
-        public SamplingType $samplingType,
         protected readonly Api $api,
-        public readonly Sampler $sampler,
         protected readonly JsonExporter $exporter,
         public readonly TraceLimits $limits,
         protected Resource $resource,
         protected Scope $scope,
+        public readonly Sampler $sampler = new RateSampler(),
+        public SamplingType $samplingType = SamplingType::Waiting,
     ) {
     }
 

@@ -6,6 +6,8 @@ use Composer\InstalledVersions;
 use Spatie\FlareClient\AttributesProviders\GitAttributesProvider;
 use Spatie\FlareClient\Concerns\HasAttributes;
 use Spatie\FlareClient\Contracts\WithAttributes;
+use Spatie\FlareClient\Support\OpenTelemetryAttributeMapper;
+use Spatie\FlareClient\Support\Telemetry;
 
 /** @see https://github.com/opentelemetry-php/sdk/blob/main/Resource/Detectors/ */
 class Resource implements WithAttributes
@@ -16,41 +18,63 @@ class Resource implements WithAttributes
      * @param array $attributes <string, mixed>
      */
     public function __construct(
-        protected string $serviceName,
-        protected ?string $serviceVersion,
-        protected ?string $serviceStage,
-        protected string $telemetrySdkName,
-        protected string $telemetrySdkVersion,
+        string $serviceName = 'PHP application',
+        ?string $serviceVersion = null,
+        ?string $serviceStage = null,
+        string $telemetrySdkName = Telemetry::NAME,
+        string $telemetrySdkVersion = Telemetry::VERSION,
         array $attributes = []
     ) {
-        $this->attributes = $attributes;
+        $this->attributes = [
+            'service.name' => $serviceName,
+            'service.version' => $serviceVersion,
+            'service.stage' => $serviceStage,
+            'telemetry.sdk.language' => 'php',
+            'telemetry.sdk.name' => $telemetrySdkName,
+            'telemetry.sdk.version' => $telemetrySdkVersion,
+            ...$attributes,
+        ];
     }
 
     public function serviceName(string $name): self
     {
-        $this->serviceName = $name;
+        $this->addAttribute('service.name', $name);
 
         return $this;
     }
 
     public function serviceVersion(?string $version): self
     {
-        $this->serviceVersion = $version;
+        $this->addAttribute('service.version', $version);
 
         return $this;
     }
 
     public function serviceStage(?string $stage): self
     {
-        $this->serviceStage = $stage;
+        $this->addAttribute('service.stage', $stage);
+
+        return $this;
+    }
+
+    public function telemetrySdkName(string $name): self
+    {
+        $this->addAttribute('telemetry.sdk.name', $name);
+
+        return $this;
+    }
+
+    public function telemetrySdkVersion(string $version): self
+    {
+        $this->addAttribute('telemetry.sdk.version', $version);
 
         return $this;
     }
 
     public function composer(): self
     {
-        $this->serviceName = InstalledVersions::getRootPackage()['name'];
-        $this->serviceVersion = InstalledVersions::getRootPackage()['pretty_version'];
+        $this->serviceName(InstalledVersions::getRootPackage()['name']);
+        $this->serviceVersion(InstalledVersions::getRootPackage()['pretty_version']);
 
         return $this;
     }
@@ -118,18 +142,6 @@ class Resource implements WithAttributes
         }
 
         return $this;
-    }
-
-    public function attributesAsArray(): array
-    {
-        return array_merge($this->attributes, [
-            'service.name' => $this->serviceName,
-            'service.version' => $this->serviceVersion,
-            'service.stage' => $this->serviceStage,
-            'telemetry.sdk.language' => 'php',
-            'telemetry.sdk.name' => $this->telemetrySdkName,
-            'telemetry.sdk.version' => $this->telemetrySdkVersion,
-        ]);
     }
 
     public function toArray(): array

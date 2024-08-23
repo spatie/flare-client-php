@@ -4,21 +4,11 @@ namespace Spatie\FlareClient\Support;
 
 class TraceLimits
 {
-    public static function defaults(): self
-    {
-        return new self(
-            maxSpans: 512,
-            maxAttributesPerSpan: 128,
-            maxSpanEventsPerSpan: 128,
-            maxAttributesPerSpanEvent: 128,
-        );
-    }
-
     public function __construct(
-        public int $maxSpans,
-        public int $maxAttributesPerSpan,
-        public int $maxSpanEventsPerSpan,
-        public int $maxAttributesPerSpanEvent,
+        public int $maxSpans = 512,
+        public int $maxAttributesPerSpan = 128,
+        public int $maxSpanEventsPerSpan = 128,
+        public int $maxAttributesPerSpanEvent = 128,
     ) {
     }
 }

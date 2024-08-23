@@ -82,7 +82,17 @@ class CommandRecorder implements SpansRecorder
 
         $options = collect($input->getOptions())
             ->reject(fn (mixed $option) => $option === null || $option === false)
-            ->map(fn (mixed $option, string $key) => is_bool($option) ? "--{$key}" : "--{$key}={$option}")
+            ->map(function (mixed $option, string $key) {
+                if (is_bool($option) && $option) {
+                    return "--{$key}";
+                }
+
+                if (is_array($option)) {
+                    $option = implode(',', $option);
+                }
+
+                return "--{$key}={$option}";
+            })
             ->values();
 
         return $arguments->merge($options)->toArray();

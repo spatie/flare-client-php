@@ -44,6 +44,11 @@ class Duration
         return self::normalize($microseconds,  $asNano);
     }
 
+    public static function phpMicroTime(int|float $microseconds, bool $asNano = false): int
+    {
+        return self::normalize($microseconds * 1000_000,  $asNano);
+    }
+
     protected static function normalize(
         int|float $microseconds,
         bool $asNano

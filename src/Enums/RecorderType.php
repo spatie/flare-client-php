@@ -4,6 +4,7 @@ namespace Spatie\FlareClient\Enums;
 
 enum RecorderType: string
 {
+    case Application = 'application';
     case Cache = 'cache';
     case Command = 'command';
     case Dump = 'dump';
@@ -17,4 +18,5 @@ enum RecorderType: string
     case Job = 'job';
     case Queue = 'queue';
     case RedisCommand = 'redis_command';
+    case View = 'view';
 }

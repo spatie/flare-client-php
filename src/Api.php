@@ -25,6 +25,13 @@ class Api
         register_shutdown_function([$this, 'sendQueue']);
     }
 
+    public function sendReportsImmediately($sendReportsImmediately = true): self
+    {
+        $this->sendReportsImmediately = $sendReportsImmediately;
+
+        return $this;
+    }
+
     public function report(Report $report, bool $immediately = false): void
     {
         try {

@@ -82,7 +82,18 @@ class ReportDriver extends YamlDriver
 
     protected function removeResourceAttributes(array $data): array
     {
-        $data['resource_attributes'] = [];
+        $data['attributes']['telemetry.sdk.language'] = 'fake-telemetry-sdk-language';
+        $data['attributes']['telemetry.sdk.name'] = 'fake-telemetry-sdk-name';
+        $data['attributes']['telemetry.sdk.version'] = 'fake-telemetry-sdk-version';
+        $data['attributes']['host.ip'] = 'fake-ip';
+        $data['attributes']['host.name'] = 'fake-host-name';
+        $data['attributes']['host.arch'] = 'fake-arch';
+        $data['attributes']['os.type'] = 'fake-os-type';
+        $data['attributes']['os.description'] = 'fake-os-description';
+        $data['attributes']['os.name'] = 'fake-os-name';
+        $data['attributes']['os.version'] = 'fake-os-version';
+        $data['attributes']['process.runtime.name'] = 'fake-process-runtime-name';
+        $data['attributes']['process.runtime.version'] = 'fake-process-runtime-version';
 
         return $data;
     }

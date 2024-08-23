@@ -88,6 +88,7 @@ trait RecordsPendingSpans
     protected function endSpan(
         ?Closure $closure = null,
         ?int $time = null,
+        ?array $attributes = null
     ): ?Span {
         $shouldTrace = $this->trace && $this->tracer->isSampling();
         $shouldReport = $this->shouldReport();
@@ -107,6 +108,10 @@ trait RecordsPendingSpans
         }
 
         $span->end($time);
+
+        if($attributes !== null) {
+            $span->addAttributes($attributes);
+        }
 
         $this->tracer->setCurrentSpanId($span->parentSpanId);
 

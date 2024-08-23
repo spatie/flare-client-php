@@ -14,26 +14,25 @@ class Scope implements WithAttributes
      * @param array<string, mixed> $attributes
      */
     public function __construct(
-        public string $name,
-        public string $version,
-        array $attributes,
+        public string $name = Telemetry::NAME,
+        public string $version = Telemetry::VERSION,
+        array $attributes = [],
     ) {
         $this->setAttributes($attributes);
     }
 
-    /**
-     * @param array<string, mixed> $attributes
-     */
-    public static function build(
-        string $name,
-        string $version,
-        array $attributes = [],
-    ): self {
-        return new self(
-            name: $name,
-            version: $version,
-            attributes: $attributes,
-        );
+    public function name(string $name): self
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
+    public function version(string $version): self
+    {
+        $this->version = $version;
+
+        return $this;
     }
 
     public function toArray(): array

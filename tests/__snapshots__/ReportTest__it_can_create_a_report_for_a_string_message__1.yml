@@ -6,12 +6,26 @@ exception_class: Log
 seen_at: 1546305825000000
 message: 'this is a message'
 solutions: {  }
-resource_attributes: {  }
 stacktrace: {  }
 open_frame_index: 0
 application_path: null
 tracking_uuid: fake-uuid
 handled: null
-attributes: {  }
+attributes:
+    service.name: 'My Application'
+    service.version: null
+    service.stage: null
+    telemetry.sdk.language: fake-telemetry-sdk-language
+    telemetry.sdk.name: fake-telemetry-sdk-name
+    telemetry.sdk.version: fake-telemetry-sdk-version
+    host.ip: fake-ip
+    host.name: fake-host-name
+    host.arch: fake-arch
+    os.type: fake-os-type
+    os.description: fake-os-description
+    os.name: fake-os-name
+    os.version: fake-os-version
+    process.runtime.name: fake-process-runtime-name
+    process.runtime.version: fake-process-runtime-version
 spans: {  }
 span_events: {  }

@@ -259,7 +259,7 @@ class Flare
     public function sendTestReport(Throwable $throwable): void
     {
         $this->api->report(
-            ReportFactory::createForThrowable($throwable)->build(),
+            ReportFactory::createForThrowable($throwable)->resource($this->resource)->build(),
             immediately: true
         );
     }
@@ -301,6 +301,13 @@ class Flare
     public function filterReportsUsing(Closure $filterReportsCallable): static
     {
         $this->filterReportsCallable = $filterReportsCallable;
+
+        return $this;
+    }
+
+    public function sendReportsImmediately(bool $sendReportsImmediately = true): self
+    {
+        $this->api->sendReportsImmediately($sendReportsImmediately);
 
         return $this;
     }

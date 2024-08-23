@@ -21,6 +21,7 @@ use Spatie\FlareClient\Support\PhpStackFrameArgumentsFixer;
 use Spatie\FlareClient\Support\SentReports;
 use Spatie\FlareClient\Support\Telemetry;
 use Spatie\FlareClient\Support\TraceLimits;
+use Throwable;
 
 class FlareProvider
 {
@@ -69,21 +70,21 @@ class FlareProvider
             Telemetry::VERSION
         ))->host()->operatingSystem()->processRuntime());
 
-        $this->container->singleton(Scope::class, fn () => Scope::build(
+        $this->container->singleton(Scope::class, fn () => new Scope(
             Telemetry::NAME,
             Telemetry::VERSION
         ));
 
         $this->container->singleton(Tracer::class, fn () => new Tracer(
+            api: $this->container->get(Api::class),
+            exporter: $this->container->get(JsonExporter::class),
+            limits: $this->config->traceLimits ?? new TraceLimits(),
+            resource: $this->container->get(Resource::class),
+            scope: $this->container->get(Scope::class),
+            sampler: $this->container->get(Sampler::class),
             samplingType: $this->config->trace
                 ? SamplingType::Waiting
                 : SamplingType::Disabled,
-            api: $this->container->get(Api::class),
-            sampler: $this->container->get(Sampler::class),
-            exporter: $this->container->get(JsonExporter::class),
-            limits: $this->config->traceLimits ?? TraceLimits::defaults(),
-            resource: $this->container->get(Resource::class),
-            scope: $this->container->get(Scope::class),
         ));
 
         $this->container->singleton(ArgumentReducers::class, fn () => match (true) {
@@ -123,7 +124,13 @@ class FlareProvider
                     array_keys($this->config->recorders)
                 ),
                 array_map(
-                    fn ($recorder) => $this->container->get($recorder),
+                    function ($recorder) {
+                        try {
+                            return $this->container->get($recorder);
+                        } catch (Throwable $t) {
+                            dd($t); // TODO: remove
+                        }
+                    },
                     array_keys($this->config->recorders)
                 )
             );

@@ -2,11 +2,15 @@
 
 namespace Spatie\FlareClient\Concerns;
 
+use Spatie\FlareClient\Support\OpenTelemetryAttributeMapper;
+
 trait HasAttributes
 {
     public array $attributes = [];
 
     public int $droppedAttributesCount = 0;
+
+    protected static ?OpenTelemetryAttributeMapper $openTelemetryAttributesMapper = null;
 
     public function setAttributes(array $attributes): void
     {
@@ -31,8 +35,9 @@ trait HasAttributes
 
     public function attributesAsArray(): array
     {
-        // TODO: technically not otel: https://github.com/open-telemetry/opentelemetry-proto/blob/main/examples/trace.json
-        return $this->attributes;
+        self::$openTelemetryAttributesMapper ??= new OpenTelemetryAttributeMapper();
+
+        return self::$openTelemetryAttributesMapper->attributesToOpenTelemetry($this->attributes);
     }
 
     public function dropAttributes(): static
