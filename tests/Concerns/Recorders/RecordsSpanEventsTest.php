@@ -5,7 +5,7 @@ use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
 use Spatie\FlareClient\Tests\TestClasses\SpanEventsRecorder;
-use Spatie\FlareClient\Time\Duration;
+use Spatie\FlareClient\Time\TimeHelper;
 
 beforeEach(function () {
     FakeTime::setup('2019-01-01 12:34:56');
@@ -255,7 +255,7 @@ it('is not possible to overwrite the find origin threshold', function () {
     $recorder = new SpanEventsRecorder($flare->tracer, $flare->backTracer, config:[
         'trace' => true,
         'find_origin' => true,
-        'find_origin_threshold' => Duration::milliseconds(300),
+        'find_origin_threshold' => TimeHelper::milliseconds(300),
     ]);
 
     $flare->tracer->startTrace();

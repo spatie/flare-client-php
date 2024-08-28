@@ -9,7 +9,11 @@ use Spatie\FlareClient\Tests\Shared\ExpectTracer;
 use Spatie\FlareClient\Tests\TestClasses\ExceptionWithContext;
 
 it('can trace throwables', function () {
-    $flare = setupFlare(fn (FlareConfig $config) => $config->addCommands()->trace()->alwaysSampleTraces());
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config->addCommands()->trace()->alwaysSampleTraces()
+    );
+
+    $flare->tracer->clearTracesAfterExport = false;
 
     $flare->command()->recordStart('command', []);
 

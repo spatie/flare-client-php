@@ -13,7 +13,7 @@ use Spatie\FlareClient\Tests\Shared\FakeSender;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
 use Spatie\FlareClient\Tests\TestClasses\ExceptionWithContext;
 use Spatie\FlareClient\Tests\TestClasses\TraceArguments;
-use Spatie\FlareClient\Time\Duration;
+use Spatie\FlareClient\Time\TimeHelper;
 
 uses(MatchesReportSnapshots::class);
 
@@ -91,9 +91,7 @@ test('callbacks can modify the report', function () {
 
 it('can censor request data', function () {
     setupFlare(
-        fn (FlareConfig $config) => $config->addRequestInfo(
-            censorBodyFields: ['user', 'password']
-        )
+        fn (FlareConfig $config) => $config->censorBodyFields('user', 'password')->addRequestInfo()
     );
 
     $_ENV['FLARE_FAKE_WEB_REQUEST'] = true;
@@ -105,8 +103,8 @@ it('can censor request data', function () {
     reportException();
 
     FakeSender::instance()->assertLastRequestAttribute('http.request.body.contents', [
-        'user' => '<CENSORED>',
-        'password' => '<CENSORED>',
+        'user' => '<CENSORED:string>',
+        'password' => '<CENSORED:string>',
     ]);
 });
 
@@ -319,7 +317,7 @@ it('can add queries', function () {
 
     $flare->query()->record(
         'select * from users where id = ?',
-        Duration::milliseconds(250),
+        TimeHelper::milliseconds(250),
         ['id' => 1],
         'users',
         'mysql',
@@ -329,7 +327,7 @@ it('can add queries', function () {
 
     $flare->query()->record(
         'select * from users where id = ?',
-        Duration::milliseconds(125),
+        TimeHelper::milliseconds(125),
         ['id' => 2],
         'users',
         'mysql',
@@ -343,7 +341,7 @@ it('can add queries', function () {
 
     expect($payload['spans'][0])
         ->toHaveKey('name', 'Query - select * from users where id = ?')
-        ->toHaveKey('startTimeUnixNano', 1546346096000000000 - Duration::milliseconds(250, asNano: true))
+        ->toHaveKey('startTimeUnixNano', 1546346096000000000 - TimeHelper::milliseconds(250, asNano: true))
         ->toHaveKey('endTimeUnixNano', 1546346096000000000)
         ->attributes
         ->toHaveKey('db.system', 'mysql')
@@ -354,7 +352,7 @@ it('can add queries', function () {
 
     expect($payload['spans'][1])
         ->toHaveKey('name', 'Query - select * from users where id = ?')
-        ->toHaveKey('startTimeUnixNano', 1546346097000000000 - Duration::milliseconds(125, asNano: true))
+        ->toHaveKey('startTimeUnixNano', 1546346097000000000 - TimeHelper::milliseconds(125, asNano: true))
         ->toHaveKey('endTimeUnixNano', 1546346097000000000)
         ->attributes
         ->toHaveKey('db.system', 'mysql')

@@ -22,10 +22,10 @@ use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
 use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
 use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
+use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Sampling\AlwaysSampler;
 use Spatie\FlareClient\Sampling\RateSampler;
 use Spatie\FlareClient\Scopes\Scope;
-use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Senders\CurlSender;
 use Spatie\FlareClient\Senders\Sender;
 use Spatie\FlareClient\Support\TraceLimits;
@@ -43,6 +43,8 @@ class FlareConfig
      * @param array<class-string<HasSolutionsForThrowable>> $solutionsProviders
      * @param Closure(Scope):void|null $configureScopeCallable
      * @param Closure(Resource):void|null $configureResourceCallable
+     * @param array<string> $censorHeaders
+     * @param array<string> $censorBodyFields
      */
     public function __construct(
         public ?string $apiToken = null,
@@ -72,12 +74,34 @@ class FlareConfig
         public bool $traceThrowables = true,
         public ?Closure $configureScopeCallable = null,
         public ?Closure $configureResourceCallable = null,
+        public bool $censorClientIps = false,
+        public array $censorHeaders = [],
+        public array $censorBodyFields = [],
     ) {
     }
 
     public static function make(string $apiToken): static
     {
         return new static($apiToken);
+    }
+
+    public function censorClientIps(bool $censorClientIps = true): self
+    {
+        $this->censorClientIps = $censorClientIps;
+    }
+
+    public function censorHeaders(string ...$headers): self
+    {
+        array_push($this->censorHeaders, ...$headers);
+
+        return $this;
+    }
+
+    public function censorBodyFields(string ...$fields): self
+    {
+        array_push($this->censorBodyFields, ...$fields);
+
+        return $this;
     }
 
     public function useDefaults(): static
@@ -91,32 +115,25 @@ class FlareConfig
             ->addGlows()
             ->addSolutions()
             ->addThrowables()
-            ->addStackFrameArguments();
+            ->addStackFrameArguments()
+            ->censorHeaders(
+                'API-KEY',
+                'Authorization',
+                'Cookie',
+                'Set-Cookie',
+                'X-CSRF-TOKEN',
+                'X-XSRF-TOKEN',
+            )
+            ->censorBodyFields(
+                'password',
+                'password_confirmation',
+            );
     }
 
     public function addRequestInfo(
-        array $censorBodyFields = ['password', 'password_confirmation'],
-        array $censorRequestHeaders = [
-            'API-KEY',
-            'Authorization',
-            'Cookie',
-            'Set-Cookie',
-            'X-CSRF-TOKEN',
-            'X-XSRF-TOKEN',
-        ],
-        bool $removeRequestIp = false,
         string $middleware = AddRequestInformation::class,
     ): self {
-        if (! array_key_exists($middleware, $this->middleware)) {
-            $this->middleware[$middleware] = [];
-        }
-
-        // Will be overwritten by framework specific packages
-        $this->middleware[$middleware] += [
-            'censor_body_fields' => $censorBodyFields,
-            'censor_request_headers' => $censorRequestHeaders,
-            'remove_request_ip' => $removeRequestIp,
-        ];
+        $this->middleware[$middleware] = [];
 
         return $this;
     }

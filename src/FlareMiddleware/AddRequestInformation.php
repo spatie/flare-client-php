@@ -6,6 +6,7 @@ use Closure;
 use Psr\Container\ContainerInterface;
 use Spatie\FlareClient\AttributesProviders\RequestAttributesProvider;
 use Spatie\FlareClient\ReportFactory;
+use Spatie\FlareClient\Support\Redactor;
 use Spatie\FlareClient\Support\Runtime;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -21,15 +22,16 @@ class AddRequestInformation implements FlareMiddleware
 
     public static function register(ContainerInterface $container, array $config): Closure
     {
-        return fn () => new self($config);
+        return fn () => new self(
+            new RequestAttributesProvider($container->get(Redactor::class)),
+            $config
+        );
     }
 
     public function __construct(
+        protected RequestAttributesProvider $attributesProvider,
         array $config
     ) {
-        $this->censorBodyFields = $config['censor_body_fields'] ?? [];
-        $this->censorRequestHeaders = $config['censor_request_headers'] ?? [];
-        $this->removeIp = $config['remove_ip'] ?? false;
     }
 
     public function handle(ReportFactory $report, Closure $next)
@@ -40,10 +42,8 @@ class AddRequestInformation implements FlareMiddleware
 
         $request = $this->getRequest();
 
-        $provider = $this->buildProvider($request);
-
         $report->addAttributes(
-            $provider->toArray($request)
+            $this->attributesProvider->toArray($request)
         );
 
         return $next($report);
@@ -57,14 +57,5 @@ class AddRequestInformation implements FlareMiddleware
     protected function getRequest(): Request
     {
         return Request::createFromGlobals();
-    }
-
-    protected function buildProvider(Request $request): RequestAttributesProvider
-    {
-        return new RequestAttributesProvider(
-            $this->censorBodyFields,
-            $this->censorRequestHeaders,
-            $this->removeIp,
-        );
     }
 }

@@ -5,7 +5,7 @@ use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
 use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
 use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionSpan;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
-use Spatie\FlareClient\Time\Duration;
+use Spatie\FlareClient\Time\TimeHelper;
 
 beforeEach(function () {
     FakeTime::setup('2019-01-01 12:34:56'); // 1546346096000
@@ -39,7 +39,7 @@ it('can trace a transaction', function () {
 
     $querySpan = $queryRecorder->record(
         'select * from users',
-        Duration::milliseconds(300),
+        TimeHelper::milliseconds(300),
         bindings: ['id' => 1],
         databaseName: 'mysql',
         driverName: 'mysql',

@@ -1,6 +1,7 @@
 <?php
 
 use Spatie\FlareClient\AttributesProviders\RequestAttributesProvider;
+use Spatie\FlareClient\Support\Redactor;
 use Spatie\FlareClient\Tests\Concerns\MatchesCodeSnippetSnapshots;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
@@ -45,13 +46,7 @@ it('can return the request context as an array', function () {
 
     $request = new Request($get, $post, $request, $cookies, $files, $server, $content);
 
-    $provider = new RequestAttributesProvider(
-        censorBodyFields: [],
-        censorRequestHeaders: [],
-        removeIp: false
-    );
-
-    $attributes = $provider->toArray($request);
+    $attributes = (new RequestAttributesProvider(new Redactor()))->toArray($request);
 
     $this->assertMatchesCodeSnippetSnapshot($attributes);
 });
@@ -63,19 +58,13 @@ it('can hide the IP', function () {
 
     $request = new Request(server: $server);
 
-    $attributes = (new RequestAttributesProvider(
-        censorBodyFields: [],
-        censorRequestHeaders: [],
-        removeIp: false
-    ))->toArray($request);
+    $attributes = (new RequestAttributesProvider(new Redactor()))->toArray($request);
 
     expect($attributes)->toHaveKey('client.address', '1.2.3.4');
 
-    $attributes = (new RequestAttributesProvider(
-        censorBodyFields: [],
-        censorRequestHeaders: [],
-        removeIp: true
-    ))->toArray($request);
+    $attributes = (new RequestAttributesProvider(new Redactor(
+        censorClientIps: true,
+    )))->toArray($request);
 
     expect($attributes)->not->toHaveKey('client.address');
 });
@@ -90,11 +79,7 @@ it('can strip headers', function () {
 
     $request = new Request(server: $server);
 
-    $attributes = (new RequestAttributesProvider(
-        censorBodyFields: [],
-        censorRequestHeaders: [],
-        removeIp: false
-    ))->toArray($request);
+    $attributes = (new RequestAttributesProvider(new Redactor()))->toArray($request);
 
     expect($attributes)->toHaveKey('http.request.headers', [
         'authorization' => 'Bearer token',
@@ -103,16 +88,14 @@ it('can strip headers', function () {
         'keep' => 'keep',
     ]);
 
-    $attributes = (new RequestAttributesProvider(
-        censorBodyFields: [],
-        censorRequestHeaders: ['AUTHORIZATION', 'other-header', 'lower_case_header'],
-        removeIp: false
-    ))->toArray($request);
+    $attributes = (new RequestAttributesProvider(new Redactor(
+        censorHeaders: ['AUTHORIZATION', 'other-header', 'lower_case_header'],
+    )))->toArray($request);
 
     expect($attributes)->toHaveKey('http.request.headers', [
-        'authorization' => '<CENSORED>',
-        'other-header' => '<CENSORED>',
-        'lower-case-header' => '<CENSORED>',
+        'authorization' => '<CENSORED:string>',
+        'other-header' => '<CENSORED:string>',
+        'lower-case-header' => '<CENSORED:string>',
         'keep' => 'keep',
     ]);
 });
@@ -131,11 +114,7 @@ it('can strip body fields', function () {
 
     $request = new Request(request: $post, server: $server);
 
-    $attributes = (new RequestAttributesProvider(
-        censorBodyFields: [],
-        censorRequestHeaders: [],
-        removeIp: false
-    ))->toArray($request);
+    $attributes = (new RequestAttributesProvider(new Redactor()))->toArray($request);
 
     expect($attributes)->toHaveKey('http.request.body.contents', [
         'password' => 'secret',
@@ -144,16 +123,14 @@ it('can strip body fields', function () {
         'keep' => 'keep',
     ]);
 
-    $attributes = (new RequestAttributesProvider(
-        censorBodyFields: ['password', 'api_key', 'token'],
-        censorRequestHeaders: [],
-        removeIp: false
-    ))->toArray($request);
+    $attributes = (new RequestAttributesProvider(new Redactor(
+        censorBodyFields: ['password', 'api_key', 'token']
+    )))->toArray($request);
 
     expect($attributes)->toHaveKey('http.request.body.contents', [
-        'password' => '<CENSORED>',
-        'API_KEY' => '<CENSORED>',
-        'token' => '<CENSORED>',
+        'password' => '<CENSORED:string>',
+        'API_KEY' => '<CENSORED:string>',
+        'token' => '<CENSORED:string>',
         'keep' => 'keep',
     ]);
 });
@@ -167,7 +144,7 @@ it('can retrieve the body contents of a json request', function () {
 
     $request = new Request(server: $server, content: $content);
 
-    $provider = new RequestAttributesProvider();
+    $provider = new RequestAttributesProvider(new Redactor());
 
     expect($provider->toArray($request)['http.request.body.contents'])->toBe(['key' => 'value']);
 });
@@ -181,9 +158,9 @@ it('will not crash when a json body is invalid', function () {
 
     $request = new Request(server: $server, content: $content);
 
-    $provider = new RequestAttributesProvider();
+    $provider = new RequestAttributesProvider(new Redactor());
 
-    expect($provider->toArray($request)['http.request.body.contents'])->toBe(null);
+    expect($provider->toArray($request)['http.request.body.contents'])->toBe([]);
 });
 
 it('can retrieve the body contents of a POST request', function () {
@@ -193,7 +170,7 @@ it('can retrieve the body contents of a POST request', function () {
 
     $request = new Request(request: $post, server: $server);
 
-    $provider = new RequestAttributesProvider();
+    $provider = new RequestAttributesProvider(new Redactor());
 
     expect($provider->toArray($request)['http.request.body.contents'])->toBe(['key' => 'value']);
 });
@@ -205,7 +182,7 @@ it('can retrieve the body contents of a GET request', function () {
 
     $request = new Request(query: $query, server: $server);
 
-    $provider = new RequestAttributesProvider();
+    $provider = new RequestAttributesProvider(new Redactor());
 
     expect($provider->toArray($request)['http.request.body.contents'])->toBe(['key' => 'value']);
 });

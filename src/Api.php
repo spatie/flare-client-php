@@ -87,7 +87,7 @@ class Api
         } catch (Exception $e) {
             //
         } finally {
-            $this->reportQueue = [];
+            $this->traceQueue = [];
         }
     }
 

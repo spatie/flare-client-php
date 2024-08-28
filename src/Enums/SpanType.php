@@ -10,6 +10,8 @@ enum SpanType: string implements FlareSpanType
     case Query = 'php_query';
     case Transaction = 'php_transaction';
     case Command = 'php_command';
+    case View = 'php_view';
+    case HttpRequest = 'php_http_request';
 
     public function humanReadable(): string
     {
@@ -18,6 +20,7 @@ enum SpanType: string implements FlareSpanType
             self::Query => 'query',
             self::Transaction => 'transaction',
             self::Command => 'command',
+            self::HttpRequest => 'http request',
         };
     }
 }

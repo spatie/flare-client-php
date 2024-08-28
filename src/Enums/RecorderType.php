@@ -5,6 +5,7 @@ namespace Spatie\FlareClient\Enums;
 enum RecorderType: string
 {
     case Application = 'application';
+    case Routing = 'routing';
     case Cache = 'cache';
     case Command = 'command';
     case Dump = 'dump';
@@ -12,6 +13,7 @@ enum RecorderType: string
     case Glow = 'glow';
     case Log = 'log';
     case Query = 'query';
+    case Http = 'http';
     case Transaction = 'transaction';
     case Null = 'null';
     case Event = 'event';

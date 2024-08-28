@@ -18,6 +18,7 @@ use Spatie\FlareClient\Senders\Sender;
 use Spatie\FlareClient\Support\BackTracer;
 use Spatie\FlareClient\Support\Container;
 use Spatie\FlareClient\Support\PhpStackFrameArgumentsFixer;
+use Spatie\FlareClient\Support\Redactor;
 use Spatie\FlareClient\Support\SentReports;
 use Spatie\FlareClient\Support\Telemetry;
 use Spatie\FlareClient\Support\TraceLimits;
@@ -106,6 +107,12 @@ class FlareProvider
 
         $this->container->singleton(ThrowableRecorder::class, fn () => new ThrowableRecorder(
             $this->container->get(Tracer::class),
+        ));
+
+        $this->container->singleton(Redactor::class, fn() => new Redactor(
+            censorClientIps: $this->config->censorClientIps,
+            censorHeaders: $this->config->censorHeaders,
+            censorBodyFields: $this->config->censorBodyFields,
         ));
 
         foreach ($this->config->recorders as $recorderClass => $config) {

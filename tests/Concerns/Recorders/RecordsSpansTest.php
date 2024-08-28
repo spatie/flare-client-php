@@ -4,7 +4,7 @@ use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
 use Spatie\FlareClient\Tests\TestClasses\SpansRecorder;
-use Spatie\FlareClient\Time\Duration;
+use Spatie\FlareClient\Time\TimeHelper;
 
 beforeEach(function () {
     FakeTime::setup('2019-01-01 12:34:56');
@@ -232,14 +232,14 @@ it('it will only find origins when the find origins threshold has been passed', 
     $recorder = new SpansRecorder($flare->tracer, $flare->backTracer, config:[
         'trace' => true,
         'find_origin' => true,
-        'find_origin_threshold' => Duration::milliseconds(300),
+        'find_origin_threshold' => TimeHelper::milliseconds(300),
     ]);
 
     $flare->tracer->startTrace();
 
-    $spanA = $recorder->record('Hello World', duration: Duration::milliseconds(299));
-    $spanB = $recorder->record('Hello World', duration: Duration::milliseconds(300));
-    $spanC = $recorder->record('Hello World', duration: Duration::milliseconds(301));
+    $spanA = $recorder->record('Hello World', duration: TimeHelper::milliseconds(299));
+    $spanB = $recorder->record('Hello World', duration: TimeHelper::milliseconds(300));
+    $spanC = $recorder->record('Hello World', duration: TimeHelper::milliseconds(301));
 
     expect($spanA->attributes)->not()->toHaveKeys([
         'code.filepath',

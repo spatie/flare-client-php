@@ -4,7 +4,7 @@ use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
 use Spatie\FlareClient\Recorders\QueryRecorder\QuerySpan;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
-use Spatie\FlareClient\Time\Duration;
+use Spatie\FlareClient\Time\TimeHelper;
 
 beforeEach(function () {
     FakeTime::setup('2019-01-01 12:34:56');
@@ -27,7 +27,7 @@ it('can trace queries', function () {
 
     $flare->tracer->startTrace();
 
-    $recorder->record('select * from users where id = ?', Duration::milliseconds(300), ['id' => 1], 'users', 'mysql');
+    $recorder->record('select * from users where id = ?', TimeHelper::milliseconds(300), ['id' => 1], 'users', 'mysql');
 
     expect($flare->tracer->currentTrace())->toHaveCount(1);
 
@@ -38,7 +38,7 @@ it('can trace queries', function () {
         ->spanId->not()->toBeNull()
         ->traceId->toBe($flare->tracer->currentTraceId())
         ->parentSpanId->toBeNull()
-        ->start->toBe(1546346096000000 - Duration::milliseconds(300))
+        ->start->toBe(1546346096000000 - TimeHelper::milliseconds(300))
         ->end->toBe(1546346096000000)
         ->name->toBe('Query - select * from users where id = ?');
 
@@ -67,7 +67,7 @@ it('can report queries without tracing', function () {
         ]
     );
 
-    $recorder->record('select * from users where id = ?', Duration::milliseconds(300), ['id' => 1], 'users', 'mysql');
+    $recorder->record('select * from users where id = ?', TimeHelper::milliseconds(300), ['id' => 1], 'users', 'mysql');
 
     expect($recorder->getSpans())->toHaveCount(1);
 
@@ -78,7 +78,7 @@ it('can report queries without tracing', function () {
         ->spanId->not()->toBeNull()
         ->traceId->toBe('')
         ->parentSpanId->toBeNull()
-        ->start->toBe(1546346096000000 - Duration::milliseconds(300))
+        ->start->toBe(1546346096000000 - TimeHelper::milliseconds(300))
         ->end->toBe(1546346096000000)
         ->name->toBe('Query - select * from users where id = ?');
 
@@ -109,7 +109,7 @@ it('can disable the inclusion of bindings', function () {
 
     $flare->tracer->startTrace();
 
-    $recorder->record('select * from users where id = ?', Duration::milliseconds(300), ['id' => 1], 'users', 'mysql');
+    $recorder->record('select * from users where id = ?', TimeHelper::milliseconds(300), ['id' => 1], 'users', 'mysql');
 
     expect($recorder->getSpans()[0]->attributes)->not()->toHaveKey('db.sql.bindings');
 });
@@ -126,13 +126,13 @@ it('can find the origin of a query when tracing and a threshold is met', functio
             'max_reported' => null,
             'include_bindings' => true,
             'find_origin' => true,
-            'find_origin_threshold' => Duration::milliseconds(300),
+            'find_origin_threshold' => TimeHelper::milliseconds(300),
         ]
     );
 
     $flare->tracer->startTrace();
 
-    $recorder->record('select * from users where id = ?', Duration::milliseconds(300), ['id' => 1], 'users', 'mysql');
+    $recorder->record('select * from users where id = ?', TimeHelper::milliseconds(300), ['id' => 1], 'users', 'mysql');
 
     expect($flare->tracer->currentTrace())->toHaveCount(1);
 
@@ -163,7 +163,7 @@ it('can find the origin of a query when tracing no threshold is set', function (
 
     $flare->tracer->startTrace();
 
-    $recorder->record('select * from users where id = ?', Duration::milliseconds(300), ['id' => 1], 'users', 'mysql');
+    $recorder->record('select * from users where id = ?', TimeHelper::milliseconds(300), ['id' => 1], 'users', 'mysql');
 
     expect($flare->tracer->currentTrace())->toHaveCount(1);
 
@@ -188,7 +188,7 @@ it('will not find the origin of a query when tracing and a threshold is not met'
             'max_reported' => null,
             'include_bindings' => true,
             'find_origin' => true,
-            'find_origin_threshold' => Duration::milliseconds(300),
+            'find_origin_threshold' => TimeHelper::milliseconds(300),
         ]
     );
 
@@ -219,11 +219,11 @@ it('will not find the origin of a query when only reporting', function () {
             'max_reported' => null,
             'include_bindings' => true,
             'find_origin' => true,
-            'find_origin_threshold' => Duration::milliseconds(300),
+            'find_origin_threshold' => TimeHelper::milliseconds(300),
         ]
     );
 
-    $recorder->record('select * from users where id = ?', Duration::milliseconds(299), ['id' => 1], 'users', 'mysql');
+    $recorder->record('select * from users where id = ?', TimeHelper::milliseconds(299), ['id' => 1], 'users', 'mysql');
 
     expect($recorder->getSpans())->toHaveCount(1);
 

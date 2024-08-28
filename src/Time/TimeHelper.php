@@ -2,7 +2,7 @@
 
 namespace Spatie\FlareClient\Time;
 
-class Duration
+class TimeHelper
 {
     public static function minute(bool $asNano = false): int
     {

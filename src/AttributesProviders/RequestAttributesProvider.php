@@ -3,6 +3,7 @@
 namespace Spatie\FlareClient\AttributesProviders;
 
 use RuntimeException;
+use Spatie\FlareClient\Support\Redactor;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\InputBag;
 use Symfony\Component\HttpFoundation\ParameterBag;
@@ -12,29 +13,9 @@ use Throwable;
 
 class RequestAttributesProvider
 {
-    /**
-     * @param array<string> $censorBodyFields
-     * @param array<string> $censorRequestHeaders
-     * @param bool $removeIp
-     */
     public function __construct(
-        public array $censorBodyFields = [],
-        public array $censorRequestHeaders = [],
-        public bool $removeIp = false,
+        protected Redactor $redactor,
     ) {
-        $this->censorBodyFields = array_map(
-            fn (string $field) => mb_strtolower($field),
-            $this->censorBodyFields
-        );
-
-        $this->censorRequestHeaders = array_map(
-            fn (string $header) => strtr(
-                $header,
-                '_ABCDEFGHIJKLMNOPQRSTUVWXYZ', // HeaderBag::UPPER
-                '-abcdefghijklmnopqrstuvwxyz' // HeaderBag::LOWER
-            ),
-            $this->censorRequestHeaders
-        );
     }
 
     public function toArray(Request $request): array
@@ -67,19 +48,13 @@ class RequestAttributesProvider
             'http.request.body.size' => strlen($request->getContent()),
         ];
 
-        if ($this->removeIp === false) {
+        if ($this->redactor->shouldCensorClientIps() === false) {
             $payload['client.address'] = $request->getClientIp();
         }
 
-        $body = $this->getInputBag($request)->all() + $request->query->all();
-
-        foreach ($body as $key => $value) {
-            $value = in_array(mb_strtolower($key), $this->censorBodyFields)
-                ? '<CENSORED>'
-                : $value;
-
-            $payload['http.request.body.contents'][$key] = $value;
-        }
+        $payload['http.request.body.contents'] = $this->redactor->censorBody(
+            $this->getInputBag($request)->all() + $request->query->all()
+        );
 
         return $payload;
     }
@@ -171,23 +146,18 @@ class RequestAttributesProvider
 
     protected function getHeaders(Request $request): array
     {
-        $headers = [];
+        $headers = $request->headers->all();
 
-        foreach ($request->headers->all() as $name => $value) {
-            $name = mb_strtolower($name);
+        foreach ($headers as $name => $value) {
+            $headers[$name] = implode($value);
 
-            $value = in_array($name, $this->censorRequestHeaders)
-                ? '<CENSORED>'
-                : implode($value);
-
-            if (empty($value)) {
-                continue;
+            if (empty($headers[$name])) {
+                unset($headers[$name]);
             }
-
-            /** @var $value list<string|null> */
-            $headers['http.request.headers'][$name] = $value;
         }
 
-        return $headers;
+        return [
+            'http.request.headers' => $this->redactor->censorHeaders($headers),
+        ];
     }
 }

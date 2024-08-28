@@ -2,10 +2,10 @@
 
 namespace Spatie\FlareClient;
 
-use Closure;
 use Exception;
 use Spatie\FlareClient\Concerns\GeneratesIds;
 use Spatie\FlareClient\Concerns\UsesTime;
+use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Enums\SamplingType;
 use Spatie\FlareClient\Exporters\JsonExporter;
 use Spatie\FlareClient\Resources\Resource;
@@ -42,6 +42,7 @@ class Tracer
         protected Scope $scope,
         public readonly Sampler $sampler = new RateSampler(),
         public SamplingType $samplingType = SamplingType::Waiting,
+        public bool $clearTracesAfterExport = true,
     ) {
     }
 
@@ -97,8 +98,6 @@ class Tracer
         $this->currentTraceId = null;
         $this->samplingType = SamplingType::Waiting;
 
-        // TODO what if we have spans after the trace is ended?
-
         $payload = $this->exporter->export(
             $this->resource,
             $this->scope,
@@ -106,6 +105,10 @@ class Tracer
         );
 
         $this->api->trace($payload);
+
+        if ($this->clearTracesAfterExport) {
+            $this->traces = [];
+        }
     }
 
     public function currentTraceId(): ?string
@@ -127,6 +130,31 @@ class Tracer
     public function currentSpanId(): ?string
     {
         return $this->currentSpanId;
+    }
+
+    public function hasCurrentSpan(?FlareSpanType $spanType = null): bool
+    {
+        $currentSpan = $this->currentSpan();
+
+        if ($currentSpan === null) {
+            return false;
+        }
+
+        if ($spanType === null) {
+            return true;
+        }
+
+        $type = $currentSpan->attributes['flare.span_type'] ?? null;
+
+        if ($type === null) {
+            return false;
+        }
+
+        if ($type instanceof FlareSpanType) {
+            $type = $type->value;
+        }
+
+        return $type === $spanType->value;
     }
 
     public function currentSpan(): ?Span
@@ -164,12 +192,14 @@ class Tracer
         return $this->addSpan($span, makeCurrent: true);
     }
 
-    public function endCurrentSpan(?int $endUs = null): void
+    public function endCurrentSpan(?int $endUs = null): Span
     {
         $span = $this->currentSpan();
 
         $span->end = $endUs ?? $this::getCurrentTime();
 
         $this->setCurrentSpanId($span->parentSpanId);
+
+        return $span;
     }
 }

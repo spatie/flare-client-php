@@ -262,7 +262,7 @@ it('can start and end traces when not present (nested)', function () {
     $recorder->popSpan();
 
     expect($flare->tracer->isSampling())->toBeFalse();
-    expect($flare->tracer->traces)->toHaveCount(1);
+    expect($flare->tracer->traces)->toHaveCount(0); // trace was sent to API
 });
 
 it('will not start and end a trace when already sampling', function () {
