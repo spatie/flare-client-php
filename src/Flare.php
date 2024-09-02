@@ -117,6 +117,8 @@ class Flare
         return $this;
     }
 
+    // TODO: ensure we've got all the recorders here
+
     public function command(): CommandRecorder|NullRecorder
     {
         return $this->recorders[RecorderType::Command->value] ?? NullRecorder::instance();
