@@ -211,7 +211,7 @@ class Tracer
 
         $span = $this->addSpan($span, makeCurrent: true);
 
-        if($end !== null) {
+        if ($end !== null) {
             $this->endCurrentSpan($end);
         }
 

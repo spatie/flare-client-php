@@ -12,7 +12,6 @@ use Symfony\Component\HttpFoundation\Request;
 
 class AddRequestInformation implements FlareMiddleware
 {
-
     public static function register(ContainerInterface $container, array $config): Closure
     {
         return fn () => new self(

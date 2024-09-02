@@ -23,7 +23,6 @@ use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Support\BackTracer;
 use Spatie\FlareClient\Support\Container;
-use Spatie\FlareClient\Support\Redactor;
 use Spatie\FlareClient\Support\SentReports;
 use Throwable;
 

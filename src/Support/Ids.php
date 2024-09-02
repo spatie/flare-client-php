@@ -46,11 +46,11 @@ class Ids
     ): ?array {
         $parts = explode('-', $traceParent);
 
-        if(count($parts) !== 4) {
+        if (count($parts) !== 4) {
             return null;
         }
 
-        if($parts[0] !== '00') {
+        if ($parts[0] !== '00') {
             return null;
         }
 

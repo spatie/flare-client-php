@@ -28,11 +28,11 @@ function setupFlare(
         sendReportsImmediately: $sendReportsImmediately,
     );
 
-    if($useFakeSender) {
+    if ($useFakeSender) {
         $config->sender = FakeSender::class;
     }
 
-    if($closure) {
+    if ($closure) {
         $closure($config);
     }
 

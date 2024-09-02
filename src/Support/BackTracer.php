@@ -18,7 +18,7 @@ class BackTracer
         $backTracer = Backtrace::create()
             ->offset(1);
 
-        if($this->applicationPath) {
+        if ($this->applicationPath) {
             // TODO: make it clear in docs this is required to correctly backtrace
             $backTracer->applicationPath($this->applicationPath);
         }

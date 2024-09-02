@@ -42,7 +42,7 @@ class ExpectSpanEvent
             return $this;
         }
 
-        if($value instanceof Closure){
+        if ($value instanceof Closure) {
             expect($this->spanEvent->attributes)->toHaveKey($name);
 
             $value($this->spanEvent->attributes[$name]);

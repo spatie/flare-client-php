@@ -6,9 +6,9 @@ use Exception;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\Backtrace\Backtrace;
 use Spatie\ErrorSolutions\Contracts\Solution;
-use Spatie\FlareClient\Concerns\UsesIds;
 use Spatie\FlareClient\Concerns\HasAttributes;
 use Spatie\FlareClient\Concerns\HasUserProvidedContext;
+use Spatie\FlareClient\Concerns\UsesIds;
 use Spatie\FlareClient\Contracts\ProvidesFlareContext;
 use Spatie\FlareClient\Contracts\WithAttributes;
 use Spatie\FlareClient\Resources\Resource;
@@ -182,7 +182,7 @@ class ReportFactory implements WithAttributes
 
         $attributes = $this->attributes;
 
-        if(! empty($this->userProvidedContext) || ! empty($exceptionContext)) {
+        if (! empty($this->userProvidedContext) || ! empty($exceptionContext)) {
             $attributes['context.user'] = array_merge_recursive_distinct(
                 $this->userProvidedContext,
                 $exceptionContext,

@@ -85,7 +85,7 @@ class ExpectSpan
     ): self {
         $spanEvent = array_values($this->span->events)[$this->spanEventAssertCounter] ?? null;
 
-        if($spanEvent === null) {
+        if ($spanEvent === null) {
             throw new Exception('Span Event is not recorded');
         }
 

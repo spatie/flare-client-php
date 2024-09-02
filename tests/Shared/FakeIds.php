@@ -2,8 +2,6 @@
 
 namespace Spatie\FlareClient\Tests\Shared;
 
-use Spatie\FlareClient\Recorders\GlowRecorder\GlowSpanEvent;
-use Spatie\FlareClient\Report;
 use Spatie\FlareClient\ReportFactory;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Support\Ids;

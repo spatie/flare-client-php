@@ -22,10 +22,13 @@ it('can trace throwables', function () {
     $flare->command()->recordEnd(1);
 
     ExpectTracer::create($flare)
-        ->trace(fn (ExpectTrace $trace) => $trace
-            ->span(fn (ExpectSpan $span) => $span
+        ->trace(
+            fn (ExpectTrace $trace) => $trace
+            ->span(
+                fn (ExpectSpan $span) => $span
                 ->hasSpanEventCount(1)
-                ->spanEvent(fn (ExpectSpanEvent $spanEvent) => $spanEvent
+                ->spanEvent(
+                    fn (ExpectSpanEvent $spanEvent) => $spanEvent
                     ->hasName('Exception - Spatie\FlareClient\Tests\TestClasses\ExceptionWithContext')
                     ->hasType(SpanEventType::Exception)
                     ->hasAttributeCount(6)

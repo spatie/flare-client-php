@@ -30,7 +30,7 @@ class ExpectTrace
     ): self {
         $span = array_values($this->trace)[$this->spanAssertCounter] ?? null;
 
-        if($span === null) {
+        if ($span === null) {
             throw new Exception('Span is not recorded');
         }
 

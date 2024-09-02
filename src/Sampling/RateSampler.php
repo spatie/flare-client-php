@@ -7,7 +7,7 @@ class RateSampler implements Sampler
     public function __construct(
         protected float $rate = 0.2,
     ) {
-        if($rate < 0 || $rate > 1) {
+        if ($rate < 0 || $rate > 1) {
             throw new \InvalidArgumentException('Rate must be between 0 and 1');
         }
     }

@@ -109,7 +109,7 @@ trait RecordsPendingSpans
 
         $span->end($time);
 
-        if($attributes !== null) {
+        if ($attributes !== null) {
             $span->addAttributes($attributes);
         }
 

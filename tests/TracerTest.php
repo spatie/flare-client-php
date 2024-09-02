@@ -11,7 +11,7 @@ use Spatie\FlareClient\Tests\Shared\FakeIds;
 use Spatie\FlareClient\Tests\Shared\FakeSender;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
 
-it('can start a trace', function(){
+it('can start a trace', function () {
     $tracer = setupFlare()->tracer;
 
     $tracer->startTrace();
@@ -20,31 +20,31 @@ it('can start a trace', function(){
     expect($tracer->currentTraceId())->not->toBeNull();
 });
 
-it('cannot start a trace when a trace is already happening', function(){
+it('cannot start a trace when a trace is already happening', function () {
     $tracer = setupFlare()->tracer;
 
     $tracer->startTrace();
 
-    expect(fn() => $tracer->startTrace())->toThrow(Exception::class, 'Trace already started');
+    expect(fn () => $tracer->startTrace())->toThrow(Exception::class, 'Trace already started');
 });
 
-it('cannot start a trace when sampling is disabled', function(){
+it('cannot start a trace when sampling is disabled', function () {
     $tracer = setupFlare()->tracer;
 
     $tracer->samplingType = SamplingType::Disabled;
 
-    expect(fn() => $tracer->startTrace())->toThrow(Exception::class, 'Trace cannot be started when sampling is disabled, off or already started');
+    expect(fn () => $tracer->startTrace())->toThrow(Exception::class, 'Trace cannot be started when sampling is disabled, off or already started');
 });
 
-it('cannot start a trace when sampling is off', function(){
+it('cannot start a trace when sampling is off', function () {
     $tracer = setupFlare()->tracer;
 
     $tracer->samplingType = SamplingType::Off;
 
-    expect(fn() => $tracer->startTrace())->toThrow(Exception::class, 'Trace cannot be started when sampling is disabled, off or already started');
+    expect(fn () => $tracer->startTrace())->toThrow(Exception::class, 'Trace cannot be started when sampling is disabled, off or already started');
 });
 
-it('is possible to end a trace and send it to the API', function (){
+it('is possible to end a trace and send it to the API', function () {
     $tracer = setupFlare()->tracer;
 
     $tracer->startTrace();
@@ -60,7 +60,7 @@ it('is possible to end a trace and send it to the API', function (){
     FakeSender::instance()->assertRequestsSent(1);
 });
 
-it('can potentially start a trace', function (){
+it('can potentially start a trace', function () {
     $tracer = setupFlare(fn (FlareConfig $config) => $config->alwaysSampleTraces())->tracer;
 
     $tracer->potentialStartTrace([]);
@@ -69,7 +69,7 @@ it('can potentially start a trace', function (){
     expect($tracer->currentTraceId())->not()->toBeNull();
 });
 
-it('will not start a trace when the sampler decides to', function (){
+it('will not start a trace when the sampler decides to', function () {
     $tracer = setupFlare(fn (FlareConfig $config) => $config->sampler(NeverSampler::class))->tracer;
 
     $tracer->potentialStartTrace([]);
@@ -78,7 +78,7 @@ it('will not start a trace when the sampler decides to', function (){
     expect($tracer->currentTraceId())->toBeNull();
 });
 
-it('can potentially resume a trace', function(){
+it('can potentially resume a trace', function () {
     $tracer = setupFlare()->tracer;
 
     $tracer->potentialStartTrace([
@@ -90,7 +90,7 @@ it('can potentially resume a trace', function(){
     expect($tracer->currentSpanId())->toEqual('spanid');
 });
 
-it('will not resume a trace when the traceparent is invalid', function(){
+it('will not resume a trace when the traceparent is invalid', function () {
     $tracer = setupFlare()->tracer;
 
     $tracer->potentialStartTrace([
@@ -102,7 +102,7 @@ it('will not resume a trace when the traceparent is invalid', function(){
     expect($tracer->currentSpanId())->toBeNull();
 });
 
-it('will not resume a trace when the sampling flag is false', function(){
+it('will not resume a trace when the sampling flag is false', function () {
     $tracer = setupFlare()->tracer;
 
     $tracer->potentialStartTrace([
@@ -114,8 +114,8 @@ it('will not resume a trace when the sampling flag is false', function(){
     expect($tracer->currentSpanId())->toBeNull();
 });
 
-it('can check whether the tracer is sampling', function(){
-    $tracer = setupFlare(fn(FlareConfig $config) => $config->alwaysSampleTraces())->tracer;
+it('can check whether the tracer is sampling', function () {
+    $tracer = setupFlare(fn (FlareConfig $config) => $config->alwaysSampleTraces())->tracer;
 
     $tracer->potentialStartTrace([]);
 
@@ -123,7 +123,7 @@ it('can check whether the tracer is sampling', function(){
     expect($tracer->currentTraceId())->not()->toBeNull();
 });
 
-it('can get the current span', function(){
+it('can get the current span', function () {
     $tracer = setupFlare()->tracer;
 
     $tracer->startTrace();
@@ -133,7 +133,7 @@ it('can get the current span', function(){
     expect($tracer->currentSpan())->toBe($span);
 });
 
-it('can check if the tracer has a current span', function (){
+it('can check if the tracer has a current span', function () {
     $tracer = setupFlare()->tracer;
 
     expect($tracer->hasCurrentSpan())->toBeFalse();
@@ -145,7 +145,7 @@ it('can check if the tracer has a current span', function (){
     expect($tracer->hasCurrentSpan())->toBeTrue();
 });
 
-it('can check if the tracer has a current span of a specific type', function (){
+it('can check if the tracer has a current span of a specific type', function () {
     $tracer = setupFlare()->tracer;
 
     expect($tracer->hasCurrentSpan(SpanType::Query))->toBeFalse();
@@ -158,7 +158,7 @@ it('can check if the tracer has a current span of a specific type', function (){
     expect($tracer->hasCurrentSpan(SpanType::Request))->toBeFalse();
 });
 
-it('can start and end a span', function (){
+it('can start and end a span', function () {
     FakeTime::setup('2019-01-01 12:34:56');
     FakeIds::setup()
         ->nextTraceId('fake-trace-id')
@@ -204,7 +204,7 @@ it('can start and end a span', function (){
     expect($tracer->currentSpanId())->toBeNull();
 });
 
-it('can trash a trace and all its spans', function (){
+it('can trash a trace and all its spans', function () {
     $tracer = setupFlare()->tracer;
 
     $tracer->startTrace();
