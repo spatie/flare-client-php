@@ -90,6 +90,20 @@ class ReportFactory implements WithAttributes
         return $this;
     }
 
+    public function applicationVersion(?string $applicationVersion): self
+    {
+        $this->applicationVersion = $applicationVersion;
+
+        return $this;
+    }
+
+    public function applicationStage(?string $applicationStage): self
+    {
+        $this->applicationStage = $applicationStage;
+
+        return $this;
+    }
+
     public function handled(bool $handled = true): self
     {
         $this->handled = $handled;
