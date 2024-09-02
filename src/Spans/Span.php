@@ -39,7 +39,7 @@ class Span implements WithAttributes
      * @param array<int, SpanEvent> $events
      */
     public static function build(
-        string $traceId,
+        ?string $traceId,
         string $name,
         ?int $start = null,
         ?int $end = null,
@@ -61,8 +61,10 @@ class Span implements WithAttributes
             default => [self::getCurrentTime(), null],
         };
 
+        // TODO: add span types
+        // TODO:maybe we should always have a trace id?
         $span = new self(
-            traceId: $traceId,
+            traceId: $traceId ?? '', // In case of an error only
             spanId: $id,
             parentSpanId: $parentId,
             name: $name,
