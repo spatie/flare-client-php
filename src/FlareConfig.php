@@ -25,6 +25,7 @@ use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Sampling\AlwaysSampler;
 use Spatie\FlareClient\Sampling\RateSampler;
+use Spatie\FlareClient\Sampling\Sampler;
 use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Senders\CurlSender;
 use Spatie\FlareClient\Senders\Sender;
@@ -412,6 +413,17 @@ class FlareConfig
     {
         $this->sampler = RateSampler::class;
         $this->samplerConfig = ['rate' => $rate];
+
+        return $this;
+    }
+
+    /**
+     * @param class-string<Sampler> $sampler
+     */
+    public function sampler(string $sampler, array $config = []): static
+    {
+        $this->sampler = $sampler;
+        $this->samplerConfig = $config;
 
         return $this;
     }

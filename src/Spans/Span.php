@@ -2,7 +2,7 @@
 
 namespace Spatie\FlareClient\Spans;
 
-use Spatie\FlareClient\Concerns\GeneratesIds;
+use Spatie\FlareClient\Concerns\UsesIds;
 use Spatie\FlareClient\Concerns\HasAttributes;
 use Spatie\FlareClient\Concerns\UsesTime;
 use Spatie\FlareClient\Contracts\WithAttributes;
@@ -12,7 +12,7 @@ class Span implements WithAttributes
 {
     use HasAttributes;
     use UsesTime;
-    use GeneratesIds;
+    use UsesIds;
 
     /** @var SpanEvent[] */
     public array $events = [];
@@ -50,7 +50,7 @@ class Span implements WithAttributes
         array $events = [],
         SpanStatus $status = null,
     ): self {
-        $id ??= self::generateIdFor()->span();
+        $id ??= self::ids()->span();
 
         [$start, $end] = match (true) {
             $start && $end => [$start, $end],

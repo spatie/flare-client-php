@@ -15,7 +15,7 @@ class TransactionSpan extends Span
     ) {
         parent::__construct(
             traceId: $traceId,
-            spanId: self::generateIdFor()->span(),
+            spanId: self::ids()->span(),
             parentSpanId: $parentSpanId,
             name: 'DB Transaction',
             start: static::getCurrentTime(),

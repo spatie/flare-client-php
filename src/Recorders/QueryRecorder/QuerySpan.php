@@ -25,7 +25,7 @@ class QuerySpan extends Span
 
         parent::__construct(
             traceId: $traceId,
-            spanId: self::generateIdFor()->span(),
+            spanId: self::ids()->span(),
             parentSpanId: $parentSpanId,
             name: "Query - {$sql}",
             start: $end - $duration,

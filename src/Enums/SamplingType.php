@@ -4,8 +4,8 @@ namespace Spatie\FlareClient\Enums;
 
 enum SamplingType
 {
-    case Off; // When we decided not to sample
-    case Sampling; // When we're currently waiting to sample
+    case Off; // When we decided not to sample this run
+    case Sampling; // We're currently sampling
     case Waiting; // We're waiting for the next opportunity to sample
-    case Disabled; // Sampling is disabled
+    case Disabled; // Sampling is disabled by config
 }

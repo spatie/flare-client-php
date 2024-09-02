@@ -109,7 +109,7 @@ class FlareProvider
             $this->container->get(Tracer::class),
         ));
 
-        $this->container->singleton(Redactor::class, fn() => new Redactor(
+        $this->container->singleton(Redactor::class, fn () => new Redactor(
             censorClientIps: $this->config->censorClientIps,
             censorHeaders: $this->config->censorHeaders,
             censorBodyFields: $this->config->censorBodyFields,

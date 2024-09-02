@@ -313,7 +313,7 @@ class Flare
         return $this;
     }
 
-    public function reset(): void
+    public function resetReporting(): void
     {
         $this->api->sendQueue();
 

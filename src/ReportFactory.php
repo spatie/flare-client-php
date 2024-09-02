@@ -6,7 +6,7 @@ use Exception;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\Backtrace\Backtrace;
 use Spatie\ErrorSolutions\Contracts\Solution;
-use Spatie\FlareClient\Concerns\GeneratesIds;
+use Spatie\FlareClient\Concerns\UsesIds;
 use Spatie\FlareClient\Concerns\HasAttributes;
 use Spatie\FlareClient\Concerns\HasUserProvidedContext;
 use Spatie\FlareClient\Contracts\ProvidesFlareContext;
@@ -22,7 +22,7 @@ class ReportFactory implements WithAttributes
 {
     use HasAttributes;
     use HasUserProvidedContext;
-    use GeneratesIds;
+    use UsesIds;
 
     protected Resource $resource;
 
@@ -204,7 +204,7 @@ class ReportFactory implements WithAttributes
             handled: $this->handled,
             spans: $this->spans,
             spanEvents: $this->spanEvents,
-            trackingUuid: $this->trackingUuid ?? self::generateIdFor()->uuid(),
+            trackingUuid: $this->trackingUuid ?? self::ids()->uuid(),
         );
     }
 

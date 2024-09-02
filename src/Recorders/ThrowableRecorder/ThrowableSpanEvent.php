@@ -6,6 +6,7 @@ use Spatie\Backtrace\Frame;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Report;
 use Spatie\FlareClient\Spans\SpanEvent;
+use Throwable;
 
 class ThrowableSpanEvent extends SpanEvent
 {
@@ -39,6 +40,19 @@ class ThrowableSpanEvent extends SpanEvent
             $report->handled ?? false,
             $stackTrace,
             $report->trackingUuid
+        );
+    }
+
+    public static function fromThrowable(Throwable $throwable): self
+    {
+        return new self(
+            $throwable->getMessage(),
+            $throwable::class,
+            null,
+            array_map(
+                fn (Frame $frame) => "{$frame->class}::{$frame->method} at {$frame->file}:{$frame->lineNumber}".PHP_EOL,
+                $throwable->getTrace(),
+            ),
         );
     }
 

@@ -12,13 +12,6 @@ use Symfony\Component\HttpFoundation\Request;
 
 class AddRequestInformation implements FlareMiddleware
 {
-    /** @var array<string> */
-    public array $censorBodyFields = [];
-
-    /** @var array<string> */
-    public array $censorRequestHeaders = [];
-
-    public bool $removeIp = false;
 
     public static function register(ContainerInterface $container, array $config): Closure
     {
@@ -39,11 +32,9 @@ class AddRequestInformation implements FlareMiddleware
         if ($this->isRunningInConsole()) {
             return $next($report);
         }
-
-        $request = $this->getRequest();
-
+        
         $report->addAttributes(
-            $this->attributesProvider->toArray($request)
+            $this->getAttributes()
         );
 
         return $next($report);
@@ -54,8 +45,11 @@ class AddRequestInformation implements FlareMiddleware
         return Runtime::runningInConsole();
     }
 
-    protected function getRequest(): Request
+    protected function getAttributes(): array
     {
-        return Request::createFromGlobals();
+        $request = Request::createFromGlobals();
+
+
+        return $this->attributesProvider->toArray($request);
     }
 }

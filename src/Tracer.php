@@ -3,7 +3,7 @@
 namespace Spatie\FlareClient;
 
 use Exception;
-use Spatie\FlareClient\Concerns\GeneratesIds;
+use Spatie\FlareClient\Concerns\UsesIds;
 use Spatie\FlareClient\Concerns\UsesTime;
 use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Enums\SamplingType;
@@ -18,7 +18,7 @@ use Spatie\FlareClient\Support\TraceLimits;
 class Tracer
 {
     use UsesTime;
-    use GeneratesIds;
+    use UsesIds;
 
     /** @var array<string, Span[]> */
     public array $traces = [];
@@ -52,17 +52,8 @@ class Tracer
             return $this->samplingType;
         }
 
-        if (array_key_exists('traceId', $context)
-            && $context['traceId'] !== null
-            && array_key_exists('spanId', $context)
-            && $context['spanId'] !== null
-        ) {
-            // TODO: initial work for propagation
-
-            $this->currentTraceId = $context['traceId'];
-            $this->currentSpanId = $context['spanId'];
-
-            return $this->samplingType = SamplingType::Sampling;
+        if (array_key_exists('traceparent', $context)) {
+            return $this->potentiallyResumeTrace($context['traceparent']);
         }
 
         if (! $this->sampler->shouldSample($context)) {
@@ -72,6 +63,31 @@ class Tracer
         $this->startTrace();
 
         return SamplingType::Sampling;
+    }
+
+    protected function potentiallyResumeTrace(
+        string $traceParent
+    ): SamplingType {
+        $parsed = static::ids()->parseTraceParent($traceParent);
+
+        if ($parsed === null) {
+            return $this->samplingType = SamplingType::Off;
+        }
+
+        [
+            'traceId' => $traceId,
+            'parentSpanId' => $parentSpanId,
+            'sampling' => $sampling,
+        ] = $parsed;
+
+        if ($sampling === false) {
+            return $this->samplingType = SamplingType::Off;
+        }
+
+        $this->currentTraceId = $traceId;
+        $this->currentSpanId = $parentSpanId;
+
+        return $this->samplingType = SamplingType::Sampling;
     }
 
     public function isSampling(): bool
@@ -89,12 +105,14 @@ class Tracer
             throw new Exception('Trace cannot be started when sampling is disabled, off or already started');
         }
 
-        $this->currentTraceId = static::generateIdFor()->trace();
+        $this->currentTraceId = static::ids()->trace();
         $this->samplingType = SamplingType::Sampling;
     }
 
     public function endTrace(): void
     {
+        // TODO: should this add an end time on every span?
+
         $this->currentTraceId = null;
         $this->samplingType = SamplingType::Waiting;
 
@@ -179,17 +197,25 @@ class Tracer
 
     public function startSpan(
         string $name,
+        ?int $start = null,
+        ?int $end = null,
         array $attributes = [],
     ): Span {
         $span = Span::build(
-            traceId: $this->currentTraceId,
+            traceId: $this->currentTraceId ?? '',
             name: $name,
-            start: $this::getCurrentTime(),
+            start: $start ?? $this::getCurrentTime(),
             parentId: $this->currentSpanId,
             attributes: $attributes,
         );
 
-        return $this->addSpan($span, makeCurrent: true);
+        $span = $this->addSpan($span, makeCurrent: true);
+
+        if($end !== null) {
+            $this->endCurrentSpan($end);
+        }
+
+        return $span;
     }
 
     public function endCurrentSpan(?int $endUs = null): Span
@@ -201,5 +227,19 @@ class Tracer
         $this->setCurrentSpanId($span->parentSpanId);
 
         return $span;
+    }
+
+    public function trashCurrentTrace(
+        SamplingType $samplingType = SamplingType::Waiting
+    ): void {
+        if ($this->currentTraceId === null) {
+            return;
+        }
+
+        unset($this->traces[$this->currentTraceId]);
+
+        $this->currentTraceId = null;
+        $this->currentSpanId = null;
+        $this->samplingType = $samplingType;
     }
 }

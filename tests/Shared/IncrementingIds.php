@@ -5,18 +5,18 @@ namespace Spatie\FlareClient\Tests\Shared;
 use Ramsey\Uuid\Uuid;
 use Spatie\FlareClient\ReportFactory;
 use Spatie\FlareClient\Spans\Span;
-use Spatie\FlareClient\Support\IdsGenerator;
+use Spatie\FlareClient\Support\Ids;
 use Spatie\FlareClient\Tracer;
 
-class IncrementingIdsGenerator extends IdsGenerator
+class IncrementingIds extends Ids
 {
     public static function setup(): self
     {
         $generator = new self();
 
-        Tracer::useIdsGenerator($generator);
-        Span::useIdsGenerator($generator);
-        ReportFactory::useIdsGenerator($generator);
+        Tracer::useIds($generator);
+        Span::useIds($generator);
+        ReportFactory::useIds($generator);
 
         return $generator;
     }
