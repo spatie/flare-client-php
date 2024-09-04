@@ -11,7 +11,7 @@ class RaySender implements Sender
 
     public function post(string $endpoint, string $apiToken, array $payload): array
     {
-        if($this->raw) {
+        if ($this->raw) {
             ray($payload)->label($endpoint);
 
             return [];

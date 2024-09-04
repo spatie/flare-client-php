@@ -7,11 +7,9 @@ use Spatie\Backtrace\Backtrace;
 use Spatie\Backtrace\Frame as SpatieFrame;
 use Spatie\ErrorSolutions\Contracts\Solution;
 use Spatie\FlareClient\Concerns\UsesTime;
-use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Solutions\ReportSolution;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
-use Spatie\FlareClient\Support\Telemetry;
 use Throwable;
 
 class Report
