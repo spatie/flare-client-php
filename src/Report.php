@@ -20,24 +20,19 @@ class Report
 
     /**
      * @param array<int, Solution> $solutions
-     * @param array<int|string, Span> $spans
-     * @param array<int|string, SpanEvent> $spanEvents
+     * @param array<int|string, Span|SpanEvent> $spans
      */
     public function __construct(
         public readonly Backtrace $stacktrace,
         public readonly string $exceptionClass,
         public readonly string $message,
-        public readonly Resource $resource,
         public readonly array $attributes = [],
         public readonly array $solutions = [],
         public readonly ?Throwable $throwable = null,
         public readonly ?string $applicationPath = null,
-        public readonly ?string $languageVersion = null,
-        public readonly ?string $frameworkVersion = null,
         public readonly ?int $openFrameIndex = null,
         public readonly ?bool $handled = null,
         public readonly array $spans = [],
-        public readonly array $spanEvents = [],
         public readonly ?string $trackingUuid = null,
     ) {
     }
@@ -48,10 +43,6 @@ class Report
     public function toArray(): array
     {
         return [
-            'notifier' => $this->notifierName ?? Telemetry::NAME,
-            'language' => 'PHP',
-            'framework_version' => $this->frameworkVersion,
-            'language_version' => $this->languageVersion ?? phpversion(),
             'exception_class' => $this->exceptionClass,
             'seen_at' => $this::getCurrentTime(),
             'message' => $this->message,
@@ -64,9 +55,8 @@ class Report
             'application_path' => $this->applicationPath,
             'tracking_uuid' => $this->trackingUuid,
             'handled' => $this->handled,
-            'attributes' => array_merge($this->resource->attributes, $this->attributes),
-            'spans' => array_map(fn (Span $span) => $span->toReport(), $this->spans),
-            'span_events' => array_map(fn (SpanEvent $spanEvent) => $spanEvent->toReport(), $this->spanEvents),
+            'attributes' => $this->attributes,
+            'spans' => array_map(fn (Span|SpanEvent $span) => $span->toReport(), $this->spans),
         ];
     }
 

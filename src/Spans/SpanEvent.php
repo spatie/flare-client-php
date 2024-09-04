@@ -19,7 +19,7 @@ class SpanEvent implements WithAttributes
         public int $timestamp,
         array $attributes,
     ) {
-        $this->setAttributes($attributes);
+        $this->addAttributes($attributes);
     }
 
     /**
@@ -51,7 +51,8 @@ class SpanEvent implements WithAttributes
     {
         return [
             'name' => $this->name,
-            'timeUnixNano' => $this->timestamp * 1000,
+            'startTimeUnixNano' => $this->timestamp * 1000,
+            'endTimeUnixNano' => null,
             'attributes' => $this->attributes,
         ];
     }

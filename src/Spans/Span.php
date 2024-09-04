@@ -31,7 +31,7 @@ class Span implements WithAttributes
         public int $droppedEventsCount = 0,
         public ?SpanStatus $status = null,
     ) {
-        $this->setAttributes($attributes);
+        $this->addAttributes($attributes);
     }
 
     /**

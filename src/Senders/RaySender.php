@@ -4,8 +4,19 @@ namespace Spatie\FlareClient\Senders;
 
 class RaySender implements Sender
 {
+    public function __construct(
+        protected bool $raw = false,
+    ) {
+    }
+
     public function post(string $endpoint, string $apiToken, array $payload): array
     {
+        if($this->raw) {
+            ray($payload)->label($endpoint);
+
+            return [];
+        }
+
         if (! array_key_exists('resourceSpans', $payload)) {
             ray($payload)->label($endpoint);
         }

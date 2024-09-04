@@ -75,7 +75,7 @@ class Api
                 $this->sendReportToApi($report);
             }
         } catch (Exception $e) {
-            //
+            ray($e);
         } finally {
             $this->reportQueue = [];
         }
@@ -85,7 +85,7 @@ class Api
                 $this->sendTraceToApi($trace);
             }
         } catch (Exception $e) {
-            //
+            ray($e);
         } finally {
             $this->traceQueue = [];
         }

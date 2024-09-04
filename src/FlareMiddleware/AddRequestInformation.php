@@ -31,7 +31,7 @@ class AddRequestInformation implements FlareMiddleware
         if ($this->isRunningInConsole()) {
             return $next($report);
         }
-        
+
         $report->addAttributes(
             $this->getAttributes()
         );

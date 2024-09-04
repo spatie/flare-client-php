@@ -28,20 +28,13 @@ class ReportFactory implements WithAttributes
 
     public ?string $applicationPath = null;
 
-    public ?string $version = null;
-
     /** @var ArgumentReducers|null */
     public null|ArgumentReducers $argumentReducers = null;
 
     public bool $withStackTraceArguments = true;
 
-    public ?string $applicationStage = null;
-
-    /** @var array<Span> */
+    /** @var array<Span|SpanEvent> */
     public array $spans = [];
-
-    /** @var array<SpanEvent> */
-    public array $spanEvents = [];
 
     /** @var array<Solution> */
     public array $solutions = [];
@@ -49,12 +42,6 @@ class ReportFactory implements WithAttributes
     public ?string $notifierName = null;
 
     public ?bool $handled = null;
-
-    public ?string $applicationVersion = null;
-
-    public ?string $languageVersion = null;
-
-    public ?string $frameworkVersion = null;
 
     public ?string $trackingUuid = null;
 
@@ -90,20 +77,6 @@ class ReportFactory implements WithAttributes
         return $this;
     }
 
-    public function applicationVersion(?string $applicationVersion): self
-    {
-        $this->applicationVersion = $applicationVersion;
-
-        return $this;
-    }
-
-    public function applicationStage(?string $applicationStage): self
-    {
-        $this->applicationStage = $applicationStage;
-
-        return $this;
-    }
-
     public function handled(bool $handled = true): self
     {
         $this->handled = $handled;
@@ -120,7 +93,7 @@ class ReportFactory implements WithAttributes
 
     public function spanEvent(SpanEvent ...$spanEvent): self
     {
-        array_push($this->spanEvents, ...$spanEvent);
+        array_push($this->spans, ...$spanEvent);
 
         return $this;
     }
@@ -135,20 +108,6 @@ class ReportFactory implements WithAttributes
     public function addSolutions(Solution ...$solution): self
     {
         array_push($this->solutions, ...$solution);
-
-        return $this;
-    }
-
-    public function languageVersion(string $languageVersion): self
-    {
-        $this->languageVersion = $languageVersion;
-
-        return $this;
-    }
-
-    public function frameworkVersion(string $frameworkVersion): self
-    {
-        $this->frameworkVersion = $frameworkVersion;
 
         return $this;
     }
@@ -182,7 +141,6 @@ class ReportFactory implements WithAttributes
 
         $stackTrace = $this->buildStacktrace();
 
-
         $exceptionClass = $this->throwable
             ? $this->getClassForThrowable($this->throwable)
             : $this->logLevel;
@@ -195,7 +153,10 @@ class ReportFactory implements WithAttributes
             ? $this->throwable->getMessage()
             : $this->message;
 
-        $attributes = $this->attributes;
+        $attributes = array_merge(
+            isset($this->resource) ? $this->resource->attributes : [],
+            $this->attributes
+        );
 
         if (! empty($this->userProvidedContext) || ! empty($exceptionContext)) {
             $attributes['context.user'] = array_merge_recursive_distinct(
@@ -204,23 +165,19 @@ class ReportFactory implements WithAttributes
             );
         }
 
-        $resource = $this->resource ?? new Resource();
+        $attributes['flare.language'] = 'PHP';
 
         return new Report(
             stacktrace: $stackTrace,
             exceptionClass: $exceptionClass,
             message: $message,
-            resource: $resource,
             attributes: $attributes,
             solutions: $this->solutions,
             throwable: $this->throwable,
             applicationPath: $this->applicationPath,
-            languageVersion: $this->languageVersion,
-            frameworkVersion: $this->frameworkVersion,
             openFrameIndex: $this->throwable ? null : $stackTrace->firstApplicationFrameIndex(),
             handled: $this->handled,
             spans: $this->spans,
-            spanEvents: $this->spanEvents,
             trackingUuid: $this->trackingUuid ?? self::ids()->uuid(),
         );
     }

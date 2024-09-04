@@ -8,6 +8,7 @@ use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\Backtrace\Arguments\Reducers\ArgumentReducer;
 use Spatie\ErrorSolutions\Contracts\HasSolutionsForThrowable;
 use Spatie\ErrorSolutions\SolutionProviderRepository;
+use Spatie\FlareClient\AttributesProviders\CommonEntitiesAttributesProvider;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\FlareMiddleware\AddConsoleInformation;
@@ -46,6 +47,7 @@ class FlareConfig
      * @param Closure(Resource):void|null $configureResourceCallable
      * @param array<string> $censorHeaders
      * @param array<string> $censorBodyFields
+     * @param class-string<CommonEntitiesAttributesProvider> $commonEntitiesAttributesProvider
      */
     public function __construct(
         public ?string $apiToken = null,
@@ -78,6 +80,7 @@ class FlareConfig
         public bool $censorClientIps = false,
         public array $censorHeaders = [],
         public array $censorBodyFields = [],
+        public string $commonEntitiesAttributesProvider = CommonEntitiesAttributesProvider::class
     ) {
     }
 

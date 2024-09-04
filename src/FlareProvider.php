@@ -126,7 +126,7 @@ class FlareProvider
         $this->container->singleton(Flare::class, function () {
             $recorders = array_combine(
                 array_map(
-                    /** @var class-string<Recorder> $recorder */
+                /** @var class-string<Recorder> $recorder */
                     fn ($recorder) => is_string($recorder::type()) ? $recorder::type() : $recorder::type()->value,
                     array_keys($this->config->recorders)
                 ),
@@ -167,6 +167,7 @@ class FlareProvider
                 withStackFrameArguments: $this->config->withStackFrameArguments,
                 resource: $this->container->get(Resource::class),
                 scope: $this->container->get(Scope::class),
+                commonEntitiesAttributesProvider: new $this->config->commonEntitiesAttributesProvider,
             );
         });
 
