@@ -6,7 +6,7 @@ trait PrefersHumanFormats
 {
     public function humanFilesize(?int $bytes): string
     {
-        if($bytes === null){
+        if ($bytes === null) {
             return '?';
         }
 

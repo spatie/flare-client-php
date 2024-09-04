@@ -34,7 +34,8 @@ class PendingSpansRecorder implements \Spatie\FlareClient\Contracts\Recorders\Sp
         return $this->startSpan(fn () => Span::build(
             traceId: $this->tracer->currentTraceId() ?? '',
             parentId: $this->tracer->currentSpanId(),
-            name: $name, start: $this->tracer->currentSpanId(),
+            name: $name,
+            start: $this->tracer->currentSpanId(),
         ));
     }
 

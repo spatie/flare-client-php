@@ -3,7 +3,6 @@
 namespace Spatie\FlareClient\Recorders\FilesystemRecorder;
 
 use Spatie\FlareClient\Concerns\Recorders\RecordsPendingSpans;
-use Spatie\FlareClient\Concerns\Recorders\RecordsSpans;
 use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Spans\Span;
@@ -21,7 +20,7 @@ class FilesystemRecorder implements SpansRecorder
         string $name,
         array $attributes,
     ) {
-        $this->startSpan(fn() => Span::build(
+        $this->startSpan(fn () => Span::build(
             $this->tracer->currentTraceId() ?? '',
             $this->tracer->currentSpanId(),
             name: "Filesystem - {$name}",
