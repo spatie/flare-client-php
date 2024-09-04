@@ -13,6 +13,7 @@ use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
+use Spatie\FlareClient\Recorders\FilesystemRecorder\FilesystemRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
 use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
 use Spatie\FlareClient\Recorders\NullRecorder;
@@ -139,6 +140,11 @@ class Flare
         return $this->recorders[RecorderType::Log->value] ?? NullRecorder::instance();
     }
 
+    public function filesystem(): FilesystemRecorder|NullRecorder
+    {
+        return $this->recorders[RecorderType::Filesystem->value] ?? NullRecorder::instance();
+    }
+
     public function query(): QueryRecorder|NullRecorder
     {
         return $this->recorders[RecorderType::Query->value] ?? NullRecorder::instance();
@@ -244,8 +250,11 @@ class Flare
     /**
      * @param callable(ReportFactory $report): void|null $callback
      */
-    public function reportMessage(string $message, string $logLevel, callable $callback = null): Report
-    {
+    public function reportMessage(
+        string $message,
+        string $logLevel,
+        callable $callback = null,
+    ): Report {
         $factory = $this->feedReportFactory(
             ReportFactory::createForMessage($message, $logLevel),
             $callback

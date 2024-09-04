@@ -112,7 +112,6 @@ class Tracer
     public function endTrace(): void
     {
         // TODO: should this add an end time on every span?
-
         $this->currentTraceId = null;
         $this->samplingType = SamplingType::Waiting;
 
@@ -203,9 +202,9 @@ class Tracer
     ): Span {
         $span = Span::build(
             traceId: $this->currentTraceId ?? '',
+            parentId: $this->currentSpanId,
             name: $name,
             start: $start ?? $this::getCurrentTime(),
-            parentId: $this->currentSpanId,
             attributes: $attributes,
         );
 

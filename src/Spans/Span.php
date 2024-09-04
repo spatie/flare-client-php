@@ -40,12 +40,12 @@ class Span implements WithAttributes
      */
     public static function build(
         ?string $traceId,
+        ?string $parentId,
         string $name,
         ?int $start = null,
         ?int $end = null,
         ?int $duration = null,
         ?string $id = null,
-        ?string $parentId = null,
         array $attributes = [],
         array $events = [],
         SpanStatus $status = null,

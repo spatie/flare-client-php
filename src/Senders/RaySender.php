@@ -26,26 +26,7 @@ class RaySender implements Sender
 
         ray($scope['scope'])->label('Scope');
 
-        $minUnixNanoTime = PHP_INT_MAX;
-
-        foreach ($scope['spans'] as $i => $span) {
-            $minUnixNanoTime = min($minUnixNanoTime, $span['startTimeUnixNano']);
-        }
-
-        foreach ($scope['spans'] as $i => $span) {
-            try {
-                $startDiff = $span['startTimeUnixNano'] - $minUnixNanoTime;
-                $endDiff = $span['endTimeUnixNano'] - $minUnixNanoTime;
-
-                $span['startTimeUnixNano'] = "{$span['startTimeUnixNano']} (+ ".number_format($startDiff).")";
-                $span['endTimeUnixNano'] = "{$span['endTimeUnixNano']} (+ ".number_format($endDiff).")";
-                $span['durationNano'] = number_format($endDiff - $startDiff);
-
-                ray($span)->label("Span $i");
-            } catch (\Exception $e) {
-                ray($e);
-            }
-        }
+        ray($scope['spans'])->label('Spans');
 
         return [];
     }

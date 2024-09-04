@@ -99,7 +99,7 @@ it('can trace span events', function () {
     ]);
 
     $flare->tracer->startTrace();
-    $flare->tracer->addSpan($span = Span::build($flare->tracer->currentTraceId(), 'Parent Span'), makeCurrent: true);
+    $flare->tracer->addSpan($span = Span::build($flare->tracer->currentTraceId(), 'Parent Span', 'Parent Span'), makeCurrent: true);
 
     $recorder->record('Hello World');
 
@@ -124,7 +124,7 @@ it('will not trace span events when no span is current', function () {
     ]);
 
     $flare->tracer->startTrace();
-    $flare->tracer->addSpan($span = Span::build($flare->tracer->currentTraceId(), 'Parent Span'), makeCurrent: false);
+    $flare->tracer->addSpan($span = Span::build($flare->tracer->currentTraceId(), 'Parent Span', 'Parent Span'), makeCurrent: false);
 
     $recorder->record('Hello World');
 
@@ -138,7 +138,7 @@ it('will not trace span events when not tracing', function () {
         'trace' => true,
     ]);
 
-    $flare->tracer->addSpan($span = Span::build('fake-trace-id', 'Parent Span'), makeCurrent: true);
+    $flare->tracer->addSpan($span = Span::build('fake-trace-id', 'Parent Span', 'Parent Span'), makeCurrent: true);
 
     $recorder->record('Hello World');
 
@@ -157,7 +157,7 @@ it('will not trace span events when the span events per span limit is reached', 
     ]);
 
     $flare->tracer->startTrace();
-    $flare->tracer->addSpan($span = Span::build($flare->tracer->currentTraceId(), 'Parent Span'), makeCurrent: true);
+    $flare->tracer->addSpan($span = Span::build($flare->tracer->currentTraceId(), 'Parent Span', 'Parent Span'), makeCurrent: true);
 
     foreach (range(1, 40) as $i) {
         $recorder->record("Hello {$i}");
@@ -174,7 +174,7 @@ it('is possible to disable the recorder for tracing', function () {
     ]);
 
     $flare->tracer->startTrace();
-    $flare->tracer->addSpan($span = Span::build($flare->tracer->currentTraceId(), 'Parent Span'), makeCurrent: true);
+    $flare->tracer->addSpan($span = Span::build($flare->tracer->currentTraceId(), 'Parent Span', 'Parent Span'), makeCurrent: true);
 
     $recorder->record('Hello World');
 

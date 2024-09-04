@@ -22,6 +22,7 @@ use Spatie\FlareClient\Support\Redactor;
 use Spatie\FlareClient\Support\SentReports;
 use Spatie\FlareClient\Support\Telemetry;
 use Spatie\FlareClient\Support\TraceLimits;
+use Spatie\LaravelFlare\Recorders\FilesystemRecorder\FilesystemRecorder;
 use Throwable;
 
 class FlareProvider
@@ -135,7 +136,7 @@ class FlareProvider
                         try {
                             return $this->container->get($recorder);
                         } catch (Throwable $t) {
-                            dd($t); // TODO: remove
+                            ray($t); // TODO: remove
                         }
                     },
                     array_keys($this->config->recorders)

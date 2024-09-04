@@ -182,6 +182,7 @@ class ReportFactory implements WithAttributes
 
         $stackTrace = $this->buildStacktrace();
 
+
         $exceptionClass = $this->throwable
             ? $this->getClassForThrowable($this->throwable)
             : $this->logLevel;
@@ -203,11 +204,13 @@ class ReportFactory implements WithAttributes
             );
         }
 
+        $resource = $this->resource ?? new Resource();
+
         return new Report(
             stacktrace: $stackTrace,
             exceptionClass: $exceptionClass,
             message: $message,
-            resource: $this->resource,
+            resource: $resource,
             attributes: $attributes,
             solutions: $this->solutions,
             throwable: $this->throwable,

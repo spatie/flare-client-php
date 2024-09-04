@@ -45,8 +45,9 @@ class CommandRecorder implements SpansRecorder
 
             return Span::build(
                 $this->tracer->currentTraceId(),
-                "Command - {$command}",
-                parentId: $this->tracer->currentSpanId(),
+                $this->tracer->currentSpanId(),
+                name: "Command - {$command}",
+                start: $this->tracer->currentSpanId(),
                 attributes: [
                     'flare.span_type' => SpanType::Command,
                     'process.command' => $command,

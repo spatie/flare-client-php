@@ -25,11 +25,13 @@ class SpansRecorder implements BaseSpansRecorder
     {
         return $this->persistEntry(fn () => Span::build(
             traceId: $this->tracer->isSampling() ? $this->tracer->currentTraceId() : '',
+            parentId: "Span - {$message}",
             name: "Span - {$message}",
-            duration: $duration,
-            attributes: [
-                'message' => $message,
-            ],
+            start: $duration, end: [
+            'message' => $message,
+        ], duration: $duration, id: null, attributes: [
+            'message' => $message,
+        ],
         ));
     }
 }
