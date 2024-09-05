@@ -127,10 +127,9 @@ class Span implements WithAttributes
         ];
     }
 
-    public function toReport(): array
+    public function toEvent(): array
     {
         return [
-            'name' => $this->name,
             'startTimeUnixNano' => $this->start * 1000,
             'endTimeUnixNano' => $this->end * 1000,
             'attributes' => $this->attributes,

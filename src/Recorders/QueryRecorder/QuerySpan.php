@@ -19,9 +19,10 @@ class QuerySpan extends Span
         public ?array $bindings = null,
         public ?string $databaseName = null,
         public ?string $driverName = null,
+        public ?int $end = null,
         public FlareSpanType $spanType = SpanType::Query,
     ) {
-        $end = static::getCurrentTime();
+        $end ??= static::getCurrentTime();
 
         parent::__construct(
             traceId: $traceId,

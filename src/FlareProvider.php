@@ -69,7 +69,7 @@ class FlareProvider
             $this->config->applicationStage,
             Telemetry::NAME,
             Telemetry::VERSION
-        ))->host()->operatingSystem()->processRuntime());
+        ))->host()->operatingSystem()->process()->processRuntime());
 
         $this->container->singleton(Scope::class, fn () => new Scope(
             Telemetry::NAME,

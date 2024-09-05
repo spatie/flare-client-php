@@ -10,6 +10,7 @@ use Spatie\ErrorSolutions\Contracts\HasSolutionsForThrowable;
 use Spatie\ErrorSolutions\SolutionProviderRepository;
 use Spatie\FlareClient\AttributesProviders\CommonEntitiesAttributesProvider;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
+use Spatie\FlareClient\Enums\CacheOperation;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\FlareMiddleware\AddConsoleInformation;
 use Spatie\FlareClient\FlareMiddleware\AddGitInformation;
@@ -162,14 +163,14 @@ class FlareConfig
         bool $trace = true,
         bool $report = true,
         ?int $maxReported = 100,
-        array $events = [SpanEventType::CacheHit, SpanEventType::CacheMiss, SpanEventType::CacheKeyWritten, SpanEventType::CacheKeyForgotten],
+        array $operations = [CacheOperation::Get, CacheOperation::Set, CacheOperation::Forget],
         string $recorder = CacheRecorder::class,
     ): static {
         $this->recorders[$recorder] = [
             'trace' => $trace,
             'report' => $report,
             'max_reported' => $maxReported,
-            'events' => $events,
+            'operations' => $operations,
         ];
 
         return $this;

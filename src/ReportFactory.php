@@ -34,7 +34,7 @@ class ReportFactory implements WithAttributes
     public bool $withStackTraceArguments = true;
 
     /** @var array<Span|SpanEvent> */
-    public array $spans = [];
+    public array $events = [];
 
     /** @var array<Solution> */
     public array $solutions = [];
@@ -86,14 +86,14 @@ class ReportFactory implements WithAttributes
 
     public function span(Span ...$span): self
     {
-        array_push($this->spans, ...$span);
+        array_push($this->events, ...$span);
 
         return $this;
     }
 
     public function spanEvent(SpanEvent ...$spanEvent): self
     {
-        array_push($this->spans, ...$spanEvent);
+        array_push($this->events, ...$spanEvent);
 
         return $this;
     }
@@ -177,7 +177,7 @@ class ReportFactory implements WithAttributes
             applicationPath: $this->applicationPath,
             openFrameIndex: $this->throwable ? null : $stackTrace->firstApplicationFrameIndex(),
             handled: $this->handled,
-            spans: $this->spans,
+            events: $this->events,
             trackingUuid: $this->trackingUuid ?? self::ids()->uuid(),
         );
     }

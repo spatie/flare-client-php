@@ -5,6 +5,8 @@ namespace Spatie\FlareClient\Recorders\CacheRecorder;
 use Spatie\FlareClient\Concerns\Recorders\RecordsSpanEvents;
 use Spatie\FlareClient\Contracts\FlareSpanEventType;
 use Spatie\FlareClient\Contracts\Recorders\SpanEventsRecorder;
+use Spatie\FlareClient\Enums\CacheOperation;
+use Spatie\FlareClient\Enums\CacheResult;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanEventType;
 
@@ -15,7 +17,10 @@ class CacheRecorder implements SpanEventsRecorder
 {
     use RecordsSpanEvents;
 
-    protected array $events = [];
+    /**
+     * @var array<CacheOperation|string>
+     */
+    protected array $operations = [];
 
     public static function type(): string|RecorderType
     {
@@ -26,44 +31,45 @@ class CacheRecorder implements SpanEventsRecorder
     {
         $this->configureRecorder($config);
 
-        $this->events = array_filter(array_map(
-            fn (string|FlareSpanEventType $spanEventType) => is_string($spanEventType) ? SpanEventType::tryFrom($spanEventType) : $spanEventType,
-            $config['events'] ?? [],
+        $this->operations = array_filter(array_map(
+            fn (string|CacheOperation $spanEventType) => is_string($spanEventType) ? CacheOperation::tryFrom($spanEventType) : $spanEventType,
+            $config['operations'] ?? [],
         ));
     }
 
     public function recordHit(string $key, ?string $store): ?CacheSpanEvent
     {
-        return $this->record($key, $store, SpanEventType::CacheHit);
+        return $this->record($key, $store, CacheOperation::Get, CacheResult::Hit);
     }
 
     public function recordMiss(string $key, ?string $store): ?CacheSpanEvent
     {
-        return $this->record($key, $store, SpanEventType::CacheMiss);
+        return $this->record($key, $store, CacheOperation::Get, CacheResult::Miss);
     }
 
     public function recordKeyWritten(string $key, ?string $store): ?CacheSpanEvent
     {
-        return $this->record($key, $store, SpanEventType::CacheKeyWritten);
+        return $this->record($key, $store, CacheOperation::Set, CacheResult::Success);
     }
 
     public function recordKeyForgotten(string $key, ?string $store): ?CacheSpanEvent
     {
-        return $this->record($key, $store, SpanEventType::CacheKeyForgotten);
+        return $this->record($key, $store, CacheOperation::Forget, CacheResult::Success);
     }
 
     public function record(
         string $key,
         ?string $store,
-        FlareSpanEventType $spanEventType,
+        CacheOperation $operation,
+        CacheResult $result,
         ?array $attributes = null,
     ): ?CacheSpanEvent {
-        if (! in_array($spanEventType, $this->events)) {
+        if (! in_array($operation, $this->operations)) {
             return null;
         }
 
         return $this->persistEntry(
-            fn () => (new CacheSpanEvent($key, $store, $spanEventType, $attributes))->addAttributes($attributes),
+            fn () => (new CacheSpanEvent($key, $store, $operation, $result, SpanEventType::Cache))->addAttributes($attributes),
         );
     }
 }

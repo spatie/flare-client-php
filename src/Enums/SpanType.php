@@ -12,15 +12,4 @@ enum SpanType: string implements FlareSpanType
     case Command = 'php_command';
     case View = 'php_view';
     case HttpRequest = 'php_http_request';
-
-    public function humanReadable(): string
-    {
-        return match ($this) {
-            self::Request => 'request',
-            self::Query => 'query',
-            self::Transaction => 'transaction',
-            self::Command => 'command',
-            self::HttpRequest => 'http request',
-        };
-    }
 }

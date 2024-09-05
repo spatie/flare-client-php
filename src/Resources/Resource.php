@@ -104,7 +104,7 @@ class Resource implements WithAttributes
 
         if ($_SERVER['argv'] ?? null) {
             $this->attributes['process.command'] = $_SERVER['argv'][0];
-            $this->attributes['process.command.args'] = $_SERVER['argv'];
+            $this->attributes['process.command_args'] = $_SERVER['argv'];
         }
 
         if (extension_loaded('posix') && ($user = \posix_getpwuid(\posix_geteuid())) !== false) {

@@ -47,10 +47,9 @@ class SpanEvent implements WithAttributes
         ];
     }
 
-    public function toReport(): array
+    public function toEvent(): array
     {
         return [
-            'name' => $this->name,
             'startTimeUnixNano' => $this->timestamp * 1000,
             'endTimeUnixNano' => null,
             'attributes' => $this->attributes,

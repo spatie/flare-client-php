@@ -1,7 +1,3 @@
-notifier: flare-client-php
-language: PHP
-framework_version: null
-language_version: 7.3.2
 exception_class: Log
 seen_at: 1546305825000000
 message: 'this is a message'
@@ -25,7 +21,12 @@ attributes:
     os.description: fake-os-description
     os.name: fake-os-name
     os.version: fake-os-version
+    process.pid: fake-process-pid
+    process.executable.path: fake-process-executable-path
+    process.command: fake-process-command
+    process.command_args: fake-process-command-args
+    process.owner: fake-process-owner
     process.runtime.name: fake-process-runtime-name
     process.runtime.version: fake-process-runtime-version
-spans: {  }
-span_events: {  }
+    flare.language: PHP
+events: {  }

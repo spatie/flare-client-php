@@ -2,9 +2,12 @@
 
 use PHPUnit\Framework\Exception;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
+use Spatie\FlareClient\Enums\CacheOperation;
+use Spatie\FlareClient\Enums\CacheResult;
 use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Enums\SpanType;
+use Spatie\FlareClient\Enums\TransactionStatus;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Report;
 use Spatie\FlareClient\ReportFactory;
@@ -183,43 +186,51 @@ it('can add cache events', function () {
 
     $payload = FakeSender::instance()->getLastPayload();
 
-    expect($payload['span_events'])->toHaveCount(4);
+    expect($payload['events'])->toHaveCount(4);
 
-    expect($payload['span_events'][0])
-        ->toHaveKey('name', 'Cache hit - key')
-        ->toHaveKey('timeUnixNano', 1546346096000000000)
+    expect($payload['events'][0])
+        ->toHaveKey('startTimeUnixNano', 1546346096000000000)
+        ->toHaveKey('endTimeUnixNano', null)
         ->attributes
-        ->toHaveCount(3)
+        ->toHaveCount(5)
         ->toHaveKey('cache.key', 'key')
         ->toHaveKey('cache.store', 'store')
-        ->toHaveKey('flare.span_event_type', SpanEventType::CacheHit);
+        ->toHaveKey('flare.span_event_type', SpanEventType::Cache)
+        ->toHaveKey('cache.operation', CacheOperation::Get)
+        ->toHaveKey('cache.result', CacheResult::Hit);
 
-    expect($payload['span_events'][1])
-        ->toHaveKey('name', 'Cache miss - key')
-        ->toHaveKey('timeUnixNano', 1546346097000000000)
+    expect($payload['events'][1])
+        ->toHaveKey('startTimeUnixNano', 1546346097000000000)
+        ->toHaveKey('endTimeUnixNano', null)
         ->attributes
-        ->toHaveCount(3)
+        ->toHaveCount(5)
         ->toHaveKey('cache.key', 'key')
         ->toHaveKey('cache.store', 'store')
-        ->toHaveKey('flare.span_event_type', SpanEventType::CacheMiss);
+        ->toHaveKey('flare.span_event_type', SpanEventType::Cache)
+        ->toHaveKey('cache.operation', CacheOperation::Get)
+        ->toHaveKey('cache.result', CacheResult::Miss);
 
-    expect($payload['span_events'][2])
-        ->toHaveKey('name', 'Cache key written - key')
-        ->toHaveKey('timeUnixNano', 1546346098000000000)
+    expect($payload['events'][2])
+        ->toHaveKey('startTimeUnixNano', 1546346098000000000)
+        ->toHaveKey('endTimeUnixNano', null)
         ->attributes
-        ->toHaveCount(3)
+        ->toHaveCount(5)
         ->toHaveKey('cache.key', 'key')
         ->toHaveKey('cache.store', 'store')
-        ->toHaveKey('flare.span_event_type', SpanEventType::CacheKeyWritten);
+        ->toHaveKey('flare.span_event_type', SpanEventType::Cache)
+        ->toHaveKey('cache.operation', CacheOperation::Set)
+        ->toHaveKey('cache.result', CacheResult::Success);
 
-    expect($payload['span_events'][3])
-        ->toHaveKey('name', 'Cache key forgotten - key')
-        ->toHaveKey('timeUnixNano', 1546346099000000000)
+    expect($payload['events'][3])
+        ->toHaveKey('startTimeUnixNano', 1546346099000000000)
+        ->toHaveKey('endTimeUnixNano', null)
         ->attributes
-        ->toHaveCount(3)
+        ->toHaveCount(5)
         ->toHaveKey('cache.key', 'key')
         ->toHaveKey('cache.store', 'store')
-        ->toHaveKey('flare.span_event_type', SpanEventType::CacheKeyForgotten);
+        ->toHaveKey('flare.span_event_type', SpanEventType::Cache)
+        ->toHaveKey('cache.operation', CacheOperation::Forget)
+        ->toHaveKey('cache.result', CacheResult::Success);
 });
 
 it('can add glows', function () {
@@ -245,26 +256,26 @@ it('can add glows', function () {
 
     $this->assertEquals([
         [
-            'name' => 'Glow - my glow',
             'attributes' => [
                 'flare.span_event_type' => SpanEventType::Glow,
                 'glow.name' => 'my glow',
                 'glow.level' => 'info',
                 'glow.context' => ['my key' => 'my value'],
             ],
-            'timeUnixNano' => 1546346096000000000,
+            'startTimeUnixNano' => 1546346096000000000,
+            'endTimeUnixNano' => null,
         ],
         [
-            'name' => 'Glow - another glow',
             'attributes' => [
                 'flare.span_event_type' => SpanEventType::Glow,
                 'glow.name' => 'another glow',
                 'glow.level' => 'error',
                 'glow.context' => ['another key' => 'another value'],
             ],
-            'timeUnixNano' => 1546346097000000000,
+            'startTimeUnixNano' => 1546346097000000000,
+            'endTimeUnixNano' => null,
         ],
-    ], $payload['span_events']);
+    ], $payload['events']);
 });
 
 it('can add logs', function () {
@@ -290,26 +301,26 @@ it('can add logs', function () {
 
     $this->assertEquals([
         [
-            'name' => 'Log entry',
             'attributes' => [
                 'flare.span_event_type' => SpanEventType::Log,
                 'log.message' => 'my log',
                 'log.level' => 'info',
                 'log.context' => ['my key' => 'my value'],
             ],
-            'timeUnixNano' => 1546346096000000000,
+            'startTimeUnixNano' => 1546346096000000000,
+            'endTimeUnixNano' => null,
         ],
         [
-            'name' => 'Log entry',
             'attributes' => [
                 'flare.span_event_type' => SpanEventType::Log,
                 'log.message' => 'another log',
                 'log.level' => 'error',
                 'log.context' => ['another key' => 'another value'],
             ],
-            'timeUnixNano' => 1546346097000000000,
+            'startTimeUnixNano' => 1546346097000000000,
+            'endTimeUnixNano' => null,
         ],
-    ], $payload['span_events']);
+    ], $payload['events']);
 });
 
 it('can add queries', function () {
@@ -337,10 +348,9 @@ it('can add queries', function () {
 
     $payload = FakeSender::instance()->getLastPayload();
 
-    expect($payload['spans'])->toHaveCount(2);
+    expect($payload['events'])->toHaveCount(2);
 
-    expect($payload['spans'][0])
-        ->toHaveKey('name', 'Query - select * from users where id = ?')
+    expect($payload['events'][0])
         ->toHaveKey('startTimeUnixNano', 1546346096000000000 - TimeHelper::milliseconds(250, asNano: true))
         ->toHaveKey('endTimeUnixNano', 1546346096000000000)
         ->attributes
@@ -350,8 +360,7 @@ it('can add queries', function () {
         ->toHaveKey('db.sql.bindings', ['id' => 1])
         ->toHaveKey('flare.span_type', SpanType::Query);
 
-    expect($payload['spans'][1])
-        ->toHaveKey('name', 'Query - select * from users where id = ?')
+    expect($payload['events'][1])
         ->toHaveKey('startTimeUnixNano', 1546346097000000000 - TimeHelper::milliseconds(125, asNano: true))
         ->toHaveKey('endTimeUnixNano', 1546346097000000000)
         ->attributes
@@ -375,14 +384,14 @@ it('can begin and commit transactions', function () {
 
     $payload = FakeSender::instance()->getLastPayload();
 
-    expect($payload['spans'])->toHaveCount(1);
+    expect($payload['events'])->toHaveCount(1);
 
-    expect($payload['spans'][0])
-        ->toHaveKey('name', 'DB Transaction')
+    expect($payload['events'][0])
         ->toHaveKey('startTimeUnixNano', 1546346096000000000)
         ->toHaveKey('endTimeUnixNano', 1546346097000000000)
         ->attributes
-        ->toHaveKey('flare.span_type', SpanType::Transaction);
+        ->toHaveKey('flare.span_type', SpanType::Transaction)
+        ->toHaveKey('db.transaction.status', TransactionStatus::Committed);
 });
 
 it('can begin and rollback transactions', function () {
@@ -398,14 +407,15 @@ it('can begin and rollback transactions', function () {
 
     $payload = FakeSender::instance()->getLastPayload();
 
-    expect($payload['spans'])->toHaveCount(1);
+    expect($payload['events'])->toHaveCount(1);
 
-    expect($payload['spans'][0])
-        ->toHaveKey('name', 'DB Transaction')
+    expect($payload['events'][0])
         ->toHaveKey('startTimeUnixNano', 1546346096000000000)
         ->toHaveKey('endTimeUnixNano', 1546346097000000000)
         ->attributes
-        ->toHaveKey('flare.span_type', SpanType::Transaction);
+        ->toHaveKey('flare.span_type', SpanType::Transaction)
+        ->toHaveKey('db.transaction.status', TransactionStatus::RolledBack);
+
 });
 
 test('a version is by default null', function () {
@@ -451,7 +461,7 @@ it('will add the php version to the report', function () {
 
     $payload = FakeSender::instance()->getLastPayload();
 
-    expect($payload['language_version'])->toEqual(phpversion());
+    expect($payload['attributes']['process.runtime.version'])->toEqual(phpversion());
 });
 
 it('can filter exceptions being reported', function () {

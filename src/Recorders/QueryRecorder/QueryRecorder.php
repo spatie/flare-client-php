@@ -37,9 +37,10 @@ class QueryRecorder implements SpansRecorder
         ?string $databaseName = null,
         ?string $driverName = null,
         FlareSpanType $spanType = SpanType::Query,
+        ?int $end = null,
         ?array $attributes = null,
     ): ?QuerySpan {
-        return $this->persistEntry(function () use ($attributes, $spanType, $driverName, $databaseName, $bindings, $duration, $sql) {
+        return $this->persistEntry(function () use ($end, $attributes, $spanType, $driverName, $databaseName, $bindings, $duration, $sql) {
             $span = new QuerySpan(
                 traceId: $this->tracer->currentTraceId() ?? '',
                 parentSpanId: $this->tracer->currentSpan()?->spanId,
@@ -48,6 +49,7 @@ class QueryRecorder implements SpansRecorder
                 bindings: $this->includeBindings ? $bindings : null,
                 databaseName: $databaseName,
                 driverName: $driverName,
+                end: $end,
                 spanType: $spanType
             );
 

@@ -27,15 +27,10 @@ class SpansRecorder implements BaseSpansRecorder
             traceId: $this->tracer->isSampling() ? $this->tracer->currentTraceId() : '',
             parentId: "Span - {$message}",
             name: "Span - {$message}",
-            start: $duration,
-            end: [
-            'message' => $message,
-        ],
             duration: $duration,
-            id: null,
             attributes: [
-            'message' => $message,
-        ],
+                'message' => $message,
+            ],
         ));
     }
 }

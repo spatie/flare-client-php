@@ -4,6 +4,7 @@ namespace Spatie\FlareClient\Recorders\TransactionRecorder;
 
 use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Enums\SpanType;
+use Spatie\FlareClient\Enums\TransactionStatus;
 use Spatie\FlareClient\Spans\Span;
 
 class TransactionSpan extends Span

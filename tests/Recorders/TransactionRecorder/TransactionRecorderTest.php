@@ -1,6 +1,7 @@
 <?php
 
 use Spatie\FlareClient\Enums\SpanType;
+use Spatie\FlareClient\Enums\TransactionStatus;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
 use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
 use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionSpan;
@@ -58,8 +59,9 @@ it('can trace a transaction', function () {
         ->end->toBe(1546346097000000)
         ->parentSpanId->toBeNull()
         ->attributes
-        ->toHaveCount(1)
-        ->toHaveKey('flare.span_type', SpanType::Transaction);
+        ->toHaveCount(2)
+        ->toHaveKey('flare.span_type', SpanType::Transaction)
+        ->toHaveKey('db.transaction.status', TransactionStatus::Committed);
 
     expect($querySpan)
         ->parentSpanId->toBe($transactionSpan->spanId);
@@ -91,8 +93,9 @@ it('can rollback a transaction', function () {
         ->end->toBe(1546346097000000)
         ->parentSpanId->toBeNull()
         ->attributes
-        ->toHaveCount(1)
-        ->toHaveKey('flare.span_type', SpanType::Transaction);
+        ->toHaveCount(2)
+        ->toHaveKey('flare.span_type', SpanType::Transaction)
+        ->toHaveKey('db.transaction.status', TransactionStatus::RolledBack);
 });
 
 it('can nest transaction spans', function () {

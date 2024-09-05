@@ -18,7 +18,7 @@ class Report
 
     /**
      * @param array<int, Solution> $solutions
-     * @param array<int|string, Span|SpanEvent> $spans
+     * @param array<int|string, Span|SpanEvent> $events
      */
     public function __construct(
         public readonly Backtrace $stacktrace,
@@ -30,7 +30,7 @@ class Report
         public readonly ?string $applicationPath = null,
         public readonly ?int $openFrameIndex = null,
         public readonly ?bool $handled = null,
-        public readonly array $spans = [],
+        public readonly array $events = [],
         public readonly ?string $trackingUuid = null,
     ) {
     }
@@ -54,7 +54,7 @@ class Report
             'tracking_uuid' => $this->trackingUuid,
             'handled' => $this->handled,
             'attributes' => $this->attributes,
-            'spans' => array_map(fn (Span|SpanEvent $span) => $span->toReport(), $this->spans),
+            'events' => array_map(fn (Span|SpanEvent $span) => $span->toEvent(), $this->events),
         ];
     }
 

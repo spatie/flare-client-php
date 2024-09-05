@@ -13,7 +13,6 @@ class ReportDriver extends YamlDriver
         $data = $this->removeTimeValues($data);
         $data = $this->emptyStacktrace($data);
         $data = $this->removePhpunitArguments($data);
-        $data = $this->freezeLanguageVersion($data);
         $data = $this->removeUuid($data);
         $data = $this->removeResourceAttributes($data);
 
@@ -27,10 +26,8 @@ class ReportDriver extends YamlDriver
         $actual = $this->removeTimeValues($actual);
         $actual = $this->emptyStacktrace($actual);
         $actual = $this->removePhpunitArguments($actual);
-        $actual = $this->freezeLanguageVersion($actual);
         $actual = $this->removeUuid($actual);
         $actual = $this->removeResourceAttributes($actual);
-
 
         if (is_array($actual)) {
             $actual = Yaml::dump($actual, PHP_INT_MAX);
@@ -66,12 +63,6 @@ class ReportDriver extends YamlDriver
         return $data;
     }
 
-    protected function freezeLanguageVersion(array $data): array
-    {
-        $data['language_version'] = '7.3.2';
-
-        return $data;
-    }
 
     protected function removeUuid(array $data): array
     {
@@ -94,6 +85,11 @@ class ReportDriver extends YamlDriver
         $data['attributes']['os.version'] = 'fake-os-version';
         $data['attributes']['process.runtime.name'] = 'fake-process-runtime-name';
         $data['attributes']['process.runtime.version'] = 'fake-process-runtime-version';
+        $data['attributes']['process.pid'] = 'fake-process-pid';
+        $data['attributes']['process.executable.path'] = 'fake-process-executable-path';
+        $data['attributes']['process.command'] = 'fake-process-command';
+        $data['attributes']['process.command_args'] = 'fake-process-command-args';
+        $data['attributes']['process.owner'] = 'fake-process-owner';
 
         return $data;
     }

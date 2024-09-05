@@ -1,5 +1,7 @@
 <?php
 
+use Spatie\FlareClient\Enums\CacheOperation;
+use Spatie\FlareClient\Enums\CacheResult;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheSpanEvent;
@@ -19,7 +21,7 @@ it('can record cache events', function () {
             'trace' => true,
             'report' => true,
             'max_reported' => 10,
-            'events' => [SpanEventType::CacheHit, SpanEventType::CacheMiss, SpanEventType::CacheKeyWritten, SpanEventType::CacheKeyForgotten],
+            'operations' => [CacheOperation::Get, CacheOperation::Set, CacheOperation::Forget],
         ]
     );
 
@@ -39,40 +41,48 @@ it('can record cache events', function () {
         ->name->toBe('Cache hit - key')
         ->timestamp->toBe(1546346096000000)
         ->attributes
-        ->toHaveCount(3)
-        ->toHaveKey('flare.span_event_type', SpanEventType::CacheHit)
+        ->toHaveCount(5)
+        ->toHaveKey('flare.span_event_type', SpanEventType::Cache)
         ->toHaveKey('cache.key', 'key')
-        ->toHaveKey('cache.store', 'store');
+        ->toHaveKey('cache.store', 'store')
+        ->toHaveKey('cache.operation', CacheOperation::Get)
+        ->toHaveKey('cache.result', CacheResult::Hit);
 
     expect($events[1])
         ->toBeInstanceOf(CacheSpanEvent::class)
         ->name->toBe('Cache miss - key')
         ->timestamp->toBe(1546346096000000)
         ->attributes
-        ->toHaveCount(3)
-        ->toHaveKey('flare.span_event_type', SpanEventType::CacheMiss)
+        ->toHaveCount(5)
+        ->toHaveKey('flare.span_event_type', SpanEventType::Cache)
         ->toHaveKey('cache.key', 'key')
-        ->toHaveKey('cache.store', 'store');
+        ->toHaveKey('cache.store', 'store')
+        ->toHaveKey('cache.operation', CacheOperation::Get)
+        ->toHaveKey('cache.result', CacheResult::Miss);
 
     expect($events[2])
         ->toBeInstanceOf(CacheSpanEvent::class)
         ->name->toBe('Cache key written - key')
         ->timestamp->toBe(1546346096000000)
         ->attributes
-        ->toHaveCount(3)
-        ->toHaveKey('flare.span_event_type', SpanEventType::CacheKeyWritten)
+        ->toHaveCount(5)
+        ->toHaveKey('flare.span_event_type', SpanEventType::Cache)
         ->toHaveKey('cache.key', 'key')
-        ->toHaveKey('cache.store', 'store');
+        ->toHaveKey('cache.store', 'store')
+        ->toHaveKey('cache.operation', CacheOperation::Set)
+        ->toHaveKey('cache.result', CacheResult::Success);
 
     expect($events[3])
         ->toBeInstanceOf(CacheSpanEvent::class)
         ->name->toBe('Cache key forgotten - key')
         ->timestamp->toBe(1546346096000000)
         ->attributes
-        ->toHaveCount(3)
-        ->toHaveKey('flare.span_event_type', SpanEventType::CacheKeyForgotten)
+        ->toHaveCount(5)
+        ->toHaveKey('flare.span_event_type', SpanEventType::Cache)
         ->toHaveKey('cache.key', 'key')
-        ->toHaveKey('cache.store', 'store');
+        ->toHaveKey('cache.store', 'store')
+        ->toHaveKey('cache.operation', CacheOperation::Forget)
+        ->toHaveKey('cache.result', CacheResult::Success);
 });
 
 it('can limit the kinds of events being recorder', function () {
@@ -84,18 +94,18 @@ it('can limit the kinds of events being recorder', function () {
             'trace' => true,
             'report' => true,
             'max_reported' => 10,
-            'events' => [SpanEventType::CacheHit],
+            'operations' => [CacheOperation::Set],
         ]
     );
 
     $recorder->start();
 
-    $cacheHitEvent = $recorder->recordHit('key', 'store');
+    $recorder->recordHit('key', 'store');
     $recorder->recordMiss('key', 'store');
-    $recorder->recordKeyWritten('key', 'store');
+    $keyWrite = $recorder->recordKeyWritten('key', 'store');
     $recorder->recordKeyForgotten('key', 'store');
 
     $events = $recorder->getSpanEvents();
 
-    expect($events)->toBe([$cacheHitEvent]);
+    expect($events)->toBe([$keyWrite]);
 });

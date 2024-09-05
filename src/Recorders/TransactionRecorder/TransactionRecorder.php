@@ -7,6 +7,7 @@ use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
+use Spatie\FlareClient\Enums\TransactionStatus;
 
 class TransactionRecorder implements SpansRecorder
 {
@@ -19,7 +20,7 @@ class TransactionRecorder implements SpansRecorder
 
     public function recordBegin(
         FlareSpanType $spanType = SpanType::Transaction,
-        ?array $attributes = null,
+        array $attributes = [],
     ): ?TransactionSpan {
         return $this->startSpan(fn () => (new TransactionSpan(
             traceId: $this->tracer->currentTraceId() ?? '',
@@ -29,22 +30,22 @@ class TransactionRecorder implements SpansRecorder
     }
 
     public function recordCommit(
-        ?array $attributes = null,
+        array $attributes = [],
     ): ?TransactionSpan {
         return $this->endSpan(
             fn (TransactionSpan $span) => $span->addAttributes([
-                'db.transaction.status' => 'committed',
+                'db.transaction.status' => TransactionStatus::Committed,
                 ...$attributes,
             ])
         );
     }
 
     public function recordRollback(
-        ?array $attributes = null,
+        array $attributes = [],
     ): ?TransactionSpan {
         return $this->endSpan(
             fn (TransactionSpan $span) => $span->addAttributes([
-                'db.transaction.status' => 'rolled back',
+                'db.transaction.status' => TransactionStatus::RolledBack,
                 ...$attributes,
             ])
         );
