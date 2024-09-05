@@ -3,7 +3,6 @@
 namespace Spatie\FlareClient\Recorders\CacheRecorder;
 
 use Spatie\FlareClient\Concerns\Recorders\RecordsSpanEvents;
-use Spatie\FlareClient\Contracts\FlareSpanEventType;
 use Spatie\FlareClient\Contracts\Recorders\SpanEventsRecorder;
 use Spatie\FlareClient\Enums\CacheOperation;
 use Spatie\FlareClient\Enums\CacheResult;

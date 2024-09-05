@@ -11,7 +11,6 @@ use Spatie\ErrorSolutions\SolutionProviderRepository;
 use Spatie\FlareClient\AttributesProviders\CommonEntitiesAttributesProvider;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\CacheOperation;
-use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\FlareMiddleware\AddConsoleInformation;
 use Spatie\FlareClient\FlareMiddleware\AddGitInformation;
 use Spatie\FlareClient\FlareMiddleware\AddRequestInformation;
