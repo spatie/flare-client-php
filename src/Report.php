@@ -10,8 +10,6 @@ use Spatie\FlareClient\Concerns\UsesTime;
 use Spatie\FlareClient\Contracts\FlareSpanEventType;
 use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Solutions\ReportSolution;
-use Spatie\FlareClient\Spans\Span;
-use Spatie\FlareClient\Spans\SpanEvent;
 use Throwable;
 
 class Report

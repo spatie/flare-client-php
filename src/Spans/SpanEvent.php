@@ -61,7 +61,7 @@ class SpanEvent implements WithAttributes
             'startTimeUnixNano' => $this->timestamp * 1000,
             'endTimeUnixNano' => null,
             'attributes' => $this->attributes,
-            'type' => $type
+            'type' => $type,
         ];
     }
 }
