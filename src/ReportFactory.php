@@ -14,8 +14,6 @@ use Spatie\FlareClient\Contracts\WithAttributes;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
-use Spatie\LaravelFlare\Exceptions\ViewException;
-use Spatie\LaravelIgnition\Exceptions\ViewException as IgnitionViewException;
 use Throwable;
 
 class ReportFactory implements WithAttributes
@@ -142,7 +140,7 @@ class ReportFactory implements WithAttributes
         $stackTrace = $this->buildStacktrace();
 
         $exceptionClass = $this->throwable
-            ? $this->getClassForThrowable($this->throwable)
+            ? $this->throwable::class
             : $this->logLevel;
 
         $exceptionContext = $this->throwable instanceof ProvidesFlareContext
@@ -194,19 +192,5 @@ class ReportFactory implements WithAttributes
             ->withArguments($this->withStackTraceArguments)
             ->reduceArguments($this->argumentReducers)
             ->applicationPath($applicationPath ?? '');
-    }
-
-    protected function getClassForThrowable(Throwable $throwable): string
-    {
-        // TODO: move to Laravel Client
-        /** @phpstan-ignore-next-line */
-        if ($throwable::class === IgnitionViewException::class || $throwable::class === ViewException::class) {
-            /** @phpstan-ignore-next-line */
-            if ($previous = $throwable->getPrevious()) {
-                return get_class($previous);
-            }
-        }
-
-        return get_class($throwable);
     }
 }
