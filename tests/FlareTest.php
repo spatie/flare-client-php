@@ -191,44 +191,44 @@ it('can add cache events', function () {
     expect($payload['events'][0])
         ->toHaveKey('startTimeUnixNano', 1546346096000000000)
         ->toHaveKey('endTimeUnixNano', null)
+        ->toHaveKey('type', SpanEventType::Cache)
         ->attributes
-        ->toHaveCount(5)
+        ->toHaveCount(4)
         ->toHaveKey('cache.key', 'key')
         ->toHaveKey('cache.store', 'store')
-        ->toHaveKey('flare.span_event_type', SpanEventType::Cache)
         ->toHaveKey('cache.operation', CacheOperation::Get)
         ->toHaveKey('cache.result', CacheResult::Hit);
 
     expect($payload['events'][1])
         ->toHaveKey('startTimeUnixNano', 1546346097000000000)
         ->toHaveKey('endTimeUnixNano', null)
+        ->toHaveKey('type', SpanEventType::Cache)
         ->attributes
-        ->toHaveCount(5)
+        ->toHaveCount(4)
         ->toHaveKey('cache.key', 'key')
         ->toHaveKey('cache.store', 'store')
-        ->toHaveKey('flare.span_event_type', SpanEventType::Cache)
         ->toHaveKey('cache.operation', CacheOperation::Get)
         ->toHaveKey('cache.result', CacheResult::Miss);
 
     expect($payload['events'][2])
         ->toHaveKey('startTimeUnixNano', 1546346098000000000)
         ->toHaveKey('endTimeUnixNano', null)
+        ->toHaveKey('type', SpanEventType::Cache)
         ->attributes
-        ->toHaveCount(5)
+        ->toHaveCount(4)
         ->toHaveKey('cache.key', 'key')
         ->toHaveKey('cache.store', 'store')
-        ->toHaveKey('flare.span_event_type', SpanEventType::Cache)
         ->toHaveKey('cache.operation', CacheOperation::Set)
         ->toHaveKey('cache.result', CacheResult::Success);
 
     expect($payload['events'][3])
         ->toHaveKey('startTimeUnixNano', 1546346099000000000)
         ->toHaveKey('endTimeUnixNano', null)
+        ->toHaveKey('type', SpanEventType::Cache)
         ->attributes
-        ->toHaveCount(5)
+        ->toHaveCount(4)
         ->toHaveKey('cache.key', 'key')
         ->toHaveKey('cache.store', 'store')
-        ->toHaveKey('flare.span_event_type', SpanEventType::Cache)
         ->toHaveKey('cache.operation', CacheOperation::Forget)
         ->toHaveKey('cache.result', CacheResult::Success);
 });
@@ -257,23 +257,23 @@ it('can add glows', function () {
     $this->assertEquals([
         [
             'attributes' => [
-                'flare.span_event_type' => SpanEventType::Glow,
                 'glow.name' => 'my glow',
                 'glow.level' => 'info',
                 'glow.context' => ['my key' => 'my value'],
             ],
             'startTimeUnixNano' => 1546346096000000000,
             'endTimeUnixNano' => null,
+            'type' => SpanEventType::Glow,
         ],
         [
             'attributes' => [
-                'flare.span_event_type' => SpanEventType::Glow,
                 'glow.name' => 'another glow',
                 'glow.level' => 'error',
                 'glow.context' => ['another key' => 'another value'],
             ],
             'startTimeUnixNano' => 1546346097000000000,
             'endTimeUnixNano' => null,
+            'type' => SpanEventType::Glow,
         ],
     ], $payload['events']);
 });
@@ -302,23 +302,23 @@ it('can add logs', function () {
     $this->assertEquals([
         [
             'attributes' => [
-                'flare.span_event_type' => SpanEventType::Log,
                 'log.message' => 'my log',
                 'log.level' => 'info',
                 'log.context' => ['my key' => 'my value'],
             ],
             'startTimeUnixNano' => 1546346096000000000,
             'endTimeUnixNano' => null,
+            'type' => SpanEventType::Log,
         ],
         [
             'attributes' => [
-                'flare.span_event_type' => SpanEventType::Log,
                 'log.message' => 'another log',
                 'log.level' => 'error',
                 'log.context' => ['another key' => 'another value'],
             ],
             'startTimeUnixNano' => 1546346097000000000,
             'endTimeUnixNano' => null,
+            'type' => SpanEventType::Log,
         ],
     ], $payload['events']);
 });
@@ -353,22 +353,22 @@ it('can add queries', function () {
     expect($payload['events'][0])
         ->toHaveKey('startTimeUnixNano', 1546346096000000000 - TimeHelper::milliseconds(250, asNano: true))
         ->toHaveKey('endTimeUnixNano', 1546346096000000000)
+        ->toHaveKey('type', SpanType::Query)
         ->attributes
         ->toHaveKey('db.system', 'mysql')
         ->toHaveKey('db.name', 'users')
         ->toHaveKey('db.statement', 'select * from users where id = ?')
-        ->toHaveKey('db.sql.bindings', ['id' => 1])
-        ->toHaveKey('flare.span_type', SpanType::Query);
+        ->toHaveKey('db.sql.bindings', ['id' => 1]);
 
     expect($payload['events'][1])
         ->toHaveKey('startTimeUnixNano', 1546346097000000000 - TimeHelper::milliseconds(125, asNano: true))
         ->toHaveKey('endTimeUnixNano', 1546346097000000000)
+        ->toHaveKey('type', SpanType::Query)
         ->attributes
         ->toHaveKey('db.system', 'mysql')
         ->toHaveKey('db.name', 'users')
         ->toHaveKey('db.statement', 'select * from users where id = ?')
-        ->toHaveKey('db.sql.bindings', ['id' => 2])
-        ->toHaveKey('flare.span_type', SpanType::Query);
+        ->toHaveKey('db.sql.bindings', ['id' => 2]);
 });
 
 it('can begin and commit transactions', function () {
@@ -389,8 +389,8 @@ it('can begin and commit transactions', function () {
     expect($payload['events'][0])
         ->toHaveKey('startTimeUnixNano', 1546346096000000000)
         ->toHaveKey('endTimeUnixNano', 1546346097000000000)
+        ->toHaveKey('type', SpanType::Transaction)
         ->attributes
-        ->toHaveKey('flare.span_type', SpanType::Transaction)
         ->toHaveKey('db.transaction.status', TransactionStatus::Committed);
 });
 
@@ -412,8 +412,8 @@ it('can begin and rollback transactions', function () {
     expect($payload['events'][0])
         ->toHaveKey('startTimeUnixNano', 1546346096000000000)
         ->toHaveKey('endTimeUnixNano', 1546346097000000000)
+        ->toHaveKey('type', SpanType::Transaction)
         ->attributes
-        ->toHaveKey('flare.span_type', SpanType::Transaction)
         ->toHaveKey('db.transaction.status', TransactionStatus::RolledBack);
 
 });

@@ -177,7 +177,9 @@ class ReportFactory implements WithAttributes
             applicationPath: $this->applicationPath,
             openFrameIndex: $this->throwable ? null : $stackTrace->firstApplicationFrameIndex(),
             handled: $this->handled,
-            events: $this->events,
+            events: array_values(array_filter(
+                array_map(fn (Span|SpanEvent $span) => $span->toEvent(), $this->events),
+            )),
             trackingUuid: $this->trackingUuid ?? self::ids()->uuid(),
         );
     }

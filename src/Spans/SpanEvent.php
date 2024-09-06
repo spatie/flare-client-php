@@ -47,12 +47,21 @@ class SpanEvent implements WithAttributes
         ];
     }
 
-    public function toEvent(): array
+    public function toEvent(): ?array
     {
+        $type = $this->attributes['flare.span_event_type'] ?? null;
+
+        if ($type === null) {
+            return null;
+        }
+
+        unset($this->attributes['flare.span_event_type']);
+
         return [
             'startTimeUnixNano' => $this->timestamp * 1000,
             'endTimeUnixNano' => null,
             'attributes' => $this->attributes,
+            'type' => $type
         ];
     }
 }

@@ -7,6 +7,8 @@ use Spatie\Backtrace\Backtrace;
 use Spatie\Backtrace\Frame as SpatieFrame;
 use Spatie\ErrorSolutions\Contracts\Solution;
 use Spatie\FlareClient\Concerns\UsesTime;
+use Spatie\FlareClient\Contracts\FlareSpanEventType;
+use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Solutions\ReportSolution;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
@@ -18,7 +20,7 @@ class Report
 
     /**
      * @param array<int, Solution> $solutions
-     * @param array<int|string, Span|SpanEvent> $events
+     * @param array<int|string, array{type: FlareSpanType|FlareSpanEventType, startTimeUnixNano: int, endTimeUnixNano: int|null, attributes: array}> $events
      */
     public function __construct(
         public readonly Backtrace $stacktrace,
@@ -54,7 +56,7 @@ class Report
             'tracking_uuid' => $this->trackingUuid,
             'handled' => $this->handled,
             'attributes' => $this->attributes,
-            'events' => array_map(fn (Span|SpanEvent $span) => $span->toEvent(), $this->events),
+            'events' => $this->events,
         ];
     }
 

@@ -127,12 +127,21 @@ class Span implements WithAttributes
         ];
     }
 
-    public function toEvent(): array
+    public function toEvent(): ?array
     {
+        $type = $this->attributes['flare.span_type'] ?? null;
+
+        if ($type === null) {
+            return null;
+        }
+
+        unset($this->attributes['flare.span_type']);
+
         return [
             'startTimeUnixNano' => $this->start * 1000,
             'endTimeUnixNano' => $this->end * 1000,
             'attributes' => $this->attributes,
+            'type' => $type,
         ];
     }
 }
