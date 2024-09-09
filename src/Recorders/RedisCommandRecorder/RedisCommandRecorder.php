@@ -2,14 +2,11 @@
 
 namespace Spatie\FlareClient\Recorders\RedisCommandRecorder;
 
-use Closure;
-use Psr\Container\ContainerInterface;
 use Spatie\FlareClient\Concerns\Recorders\RecordsSpans;
 use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
-use Spatie\FlareClient\Recorders\QueryRecorder\QuerySpan;
 use Spatie\FlareClient\Spans\Span;
 
 class RedisCommandRecorder implements SpansRecorder
