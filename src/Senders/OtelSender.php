@@ -24,7 +24,7 @@ class OtelSender implements Sender
         }
 
         try {
-            $this->reportSender()->post($this->otelEndpoint, $apiToken, $payload);
+            (new GuzzleSender())->post($this->otelEndpoint, $apiToken, $payload);
         } catch (\Exception $e) {
             ray($payload, $e);
         }
