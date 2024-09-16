@@ -65,7 +65,7 @@ class ReportDriver extends YamlDriver
 
     protected function removeUuid(array $data): array
     {
-        $data['tracking_uuid'] = 'fake-uuid';
+        $data['trackingUuid'] = 'fake-uuid';
 
         return $data;
     }

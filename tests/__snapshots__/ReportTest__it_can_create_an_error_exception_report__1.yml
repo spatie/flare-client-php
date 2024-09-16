@@ -1,9 +1,9 @@
-exceptionClass: Log
+exceptionClass: ErrorException
 seenAtUnixNano: 1546305825000000000
-message: 'this is a message'
+message: 'this is a custom error'
 solutions: {  }
 stacktrace: {  }
-openFrameIndex: 0
+openFrameIndex: null
 applicationPath: null
 trackingUuid: fake-uuid
 handled: null
@@ -30,4 +30,4 @@ attributes:
     process.runtime.version: fake-process-runtime-version
     flare.language: PHP
 events: {  }
-level: Error
+level: E_USER_ERROR

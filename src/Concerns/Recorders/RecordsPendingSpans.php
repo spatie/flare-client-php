@@ -4,6 +4,7 @@ namespace Spatie\FlareClient\Concerns\Recorders;
 
 use Closure;
 use Spatie\FlareClient\Spans\Span;
+use Spatie\FlareClient\Spans\SpanEvent;
 
 /**
  * @template T of Span
@@ -12,7 +13,9 @@ use Spatie\FlareClient\Spans\Span;
  */
 trait RecordsPendingSpans
 {
-    use RecordsEntries;
+    use RecordsEntries {
+        RecordsEntries::persistEntry as protected basePersistEntry;
+    }
 
     /** @var array<int, T> */
     protected array $stack = [];
@@ -23,24 +26,9 @@ trait RecordsPendingSpans
 
     protected function shouldTrace(): bool
     {
-        if ($this->trace === false) {
-            return false;
-        }
-
-        if ($this->tracer->isSampling()) {
-            return true;
-        }
-
-        if ($this->canStartTraces() === false) {
-            return false;
-        }
-
-        $this->tracer->potentialStartTrace();
-
-        $this->shouldEndTrace = true;
-
-        return $this->tracer->isSampling();
+        return $this->trace && $this->tracer->isSampling();
     }
+
 
     protected function shouldReport(): bool
     {
@@ -78,6 +66,27 @@ trait RecordsPendingSpans
 
             return $span;
         });
+    }
+
+    protected function persistEntry(Closure $entry): ?Span
+    {
+        if ($this->trace === true
+            && $this->tracer->isSampling() === false
+            && $this->canStartTraces()
+        ) {
+            $this->potentiallyStartTrace();
+        }
+
+        return $this->basePersistEntry($entry);
+    }
+
+    protected function potentiallyStartTrace(): void
+    {
+        $this->tracer->potentialStartTrace();
+
+        if ($this->tracer->isSampling()) {
+            $this->shouldEndTrace = true;
+        }
     }
 
     /**

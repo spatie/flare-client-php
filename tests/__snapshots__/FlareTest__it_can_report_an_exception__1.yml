@@ -1,11 +1,11 @@
-exception_class: PHPUnit\Framework\Exception
-seen_at: 1546346096000000
+exceptionClass: PHPUnit\Framework\Exception
+seenAtUnixNano: 1546346096000000000
 message: 'This is a test'
 solutions: {  }
 stacktrace: {  }
-open_frame_index: null
-application_path: null
-tracking_uuid: fake-uuid
+openFrameIndex: null
+applicationPath: null
+trackingUuid: fake-uuid
 handled: null
 attributes:
     service.name: 'My Application'

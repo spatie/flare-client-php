@@ -30,7 +30,7 @@ class ThrowableSpanEvent extends SpanEvent
     public static function fromReport(Report $report): self
     {
         $stackTrace = array_map(
-            fn (Frame $frame) => "{$frame->class}::{$frame->method} at {$frame->file}:{$frame->lineNumber}".PHP_EOL,
+            fn (Frame $frame) => static::flareFrameToLine($frame),
             $report->stacktrace->frames(),
         );
 
@@ -50,10 +50,36 @@ class ThrowableSpanEvent extends SpanEvent
             $throwable::class,
             null,
             array_map(
-                fn (Frame $frame) => "{$frame->class}::{$frame->method} at {$frame->file}:{$frame->lineNumber}".PHP_EOL,
+                fn (array $frame) => static::phpFrameToLine($frame),
                 $throwable->getTrace(),
             ),
         );
+    }
+
+    protected static function flareFrameToLine(
+        Frame $frame
+    ): string {
+        $location = match (true) {
+            $frame->class !== null && $frame->method !== null => "{$frame->class}::{$frame->method}",
+            $frame->class => "{$frame->class}",
+            $frame->method => "{$frame->method}",
+            default => "Unknown",
+        };
+
+        return "{$location} at {$frame->file}:{$frame->lineNumber}".PHP_EOL;
+    }
+
+    protected static function phpFrameToLine(
+        array $frame
+    ) {
+        $location = match (true) {
+            ($frame['class'] ?? null) !== null && ($frame['method'] ?? null) !== null => "{$frame['class']}::{$frame['method']}",
+            ($frame['class'] ?? null) !== null => "{$frame['class']}",
+            ($frame['method'] ?? null) !== null => "{$frame['method']}",
+            default => "Unknown",
+        };
+
+        return "{$location} at {$frame['file']}:{$frame['line']}".PHP_EOL;
     }
 
     protected function collectAttributes(): array

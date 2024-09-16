@@ -8,11 +8,11 @@ user_agent.original: null
 http.request.method: GET
 http.request.files:
     file-one:
-        pathname: /tests/stubs/file.txt
+        path: /tests/stubs/file.txt
         size: 4
         mime_type: text/plain
     file-two:
-        pathname: /tests/stubs/file.txt
+        path: /tests/stubs/file.txt
         size: 4
         mime_type: text/plain
 http.request.body.size: 10

@@ -21,12 +21,12 @@ class Frame
     {
         return [
             'file' => $this->frame->file,
-            'line_number' => $this->frame->lineNumber,
+            'lineNumber' => $this->frame->lineNumber,
             'method' => $this->frame->method,
             'class' => $this->frame->class,
-            'code_snippet' => $this->frame->getSnippet(30),
+            'codeSnippet' => $this->frame->getSnippet(30),
             'arguments' => $this->frame->arguments,
-            'application_frame' => $this->frame->applicationFrame,
+            'applicationFrame' => $this->frame->applicationFrame,
         ];
     }
 }

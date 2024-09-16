@@ -1,11 +1,11 @@
-exception_class: Exception
-seen_at: 1546305825000000
+exceptionClass: Exception
+seenAtUnixNano: 1546305825000000000
 message: 'this is an exception'
 solutions: {  }
 stacktrace: {  }
-open_frame_index: null
-application_path: null
-tracking_uuid: fake-uuid
+openFrameIndex: null
+applicationPath: null
+trackingUuid: fake-uuid
 handled: null
 attributes:
     service.name: 'My Application'

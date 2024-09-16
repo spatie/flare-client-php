@@ -10,6 +10,7 @@ use Spatie\FlareClient\Concerns\UsesTime;
 use Spatie\FlareClient\Contracts\FlareSpanEventType;
 use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Solutions\ReportSolution;
+use Spatie\FlareClient\Time\TimeHelper;
 use Throwable;
 
 class Report
@@ -24,6 +25,7 @@ class Report
         public readonly Backtrace $stacktrace,
         public readonly string $exceptionClass,
         public readonly string $message,
+        public readonly ?string $level = null,
         public readonly array $attributes = [],
         public readonly array $solutions = [],
         public readonly ?Throwable $throwable = null,
@@ -40,22 +42,28 @@ class Report
      */
     public function toArray(): array
     {
-        return [
-            'exception_class' => $this->exceptionClass,
-            'seen_at' => $this::getCurrentTime(),
+        $report = [
+            'exceptionClass' => $this->exceptionClass,
+            'seenAtUnixNano' => TimeHelper::microseconds($this::getCurrentTime(), asNano: true),
             'message' => $this->message,
             'solutions' => array_map(
                 fn (Solution $solution) => ReportSolution::fromSolution($solution)->toArray(),
                 $this->solutions,
             ),
             'stacktrace' => $this->stracktraceAsArray(),
-            'open_frame_index' => $this->openFrameIndex,
-            'application_path' => $this->applicationPath,
-            'tracking_uuid' => $this->trackingUuid,
+            'openFrameIndex' => $this->openFrameIndex,
+            'applicationPath' => $this->applicationPath,
+            'trackingUuid' => $this->trackingUuid,
             'handled' => $this->handled,
             'attributes' => $this->attributes,
             'events' => $this->events,
         ];
+
+        if ($this->level !== null) {
+            $report['level'] = $this->level;
+        }
+
+        return $report;
     }
 
     /**

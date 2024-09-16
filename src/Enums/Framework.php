@@ -12,4 +12,11 @@ enum Framework: string
     case Drupal = 'drupal';
     case Joomla = 'joomla';
     case Craft = 'craft';
+
+    case Vue = 'vue';
+    case React = 'react';
+    case Angular = 'angular';
+    case Ember = 'ember';
+    case Svelte = 'svelte';
+    case Alpine = 'alpine';
 }

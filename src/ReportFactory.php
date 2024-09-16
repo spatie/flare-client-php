@@ -2,6 +2,7 @@
 
 namespace Spatie\FlareClient;
 
+use ErrorException;
 use Exception;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\Backtrace\Backtrace;
@@ -46,19 +47,45 @@ class ReportFactory implements WithAttributes
     protected function __construct(
         public ?Throwable $throwable = null,
         public ?string $message = null,
-        public ?string $logLevel = null,
+        public ?string $level = null,
     ) {
     }
 
     public static function createForMessage(string $message, string $logLevel): ReportFactory
     {
-        return new self(message: $message, logLevel: $logLevel);
+        return new self(message: $message, level: $logLevel);
     }
 
     public static function createForThrowable(
         Throwable $throwable,
     ): ReportFactory {
-        return new self(throwable: $throwable);
+        if (! $throwable instanceof ErrorException) {
+            return new self(throwable: $throwable);
+        }
+
+        $level = match ($throwable->getSeverity()) {
+            E_ERROR => 'E_ERROR',
+            E_WARNING => 'E_WARNING',
+            E_PARSE => 'E_PARSE',
+            E_NOTICE => 'E_NOTICE',
+            E_CORE_ERROR => 'E_CORE_ERROR',
+            E_CORE_WARNING => 'E_CORE_WARNING',
+            E_COMPILE_ERROR => 'E_COMPILE_ERROR',
+            E_COMPILE_WARNING => 'E_COMPILE_WARNING',
+            E_USER_ERROR => 'E_USER_ERROR',
+            E_USER_WARNING => 'E_USER_WARNING',
+            E_USER_NOTICE => 'E_USER_NOTICE',
+            E_STRICT => 'E_STRICT',
+            E_RECOVERABLE_ERROR => 'E_RECOVERABLE_ERROR',
+            E_DEPRECATED => 'E_DEPRECATED',
+            E_USER_DEPRECATED => 'E_USER_DEPRECATED',
+            default => 'UNKNOWN',
+        };
+
+        return new self(
+            throwable: $throwable,
+            level: $level
+        );
     }
 
     public function resource(Resource $resource): self
@@ -133,7 +160,7 @@ class ReportFactory implements WithAttributes
 
     public function build(): Report
     {
-        if ($this->throwable === null && ($this->message === null || $this->logLevel === null)) {
+        if ($this->throwable === null && ($this->message === null || $this->level === null)) {
             throw new Exception('No throwable or message provided');
         }
 
@@ -141,7 +168,7 @@ class ReportFactory implements WithAttributes
 
         $exceptionClass = $this->throwable
             ? $this->throwable::class
-            : $this->logLevel;
+            : "Log";
 
         $exceptionContext = $this->throwable instanceof ProvidesFlareContext
             ? $this->throwable->context()
@@ -169,6 +196,7 @@ class ReportFactory implements WithAttributes
             stacktrace: $stackTrace,
             exceptionClass: $exceptionClass,
             message: $message,
+            level: $this->level,
             attributes: $attributes,
             solutions: $this->solutions,
             throwable: $this->throwable,

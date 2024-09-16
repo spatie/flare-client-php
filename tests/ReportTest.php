@@ -20,6 +20,21 @@ it('can create a report', function () {
     $this->assertMatchesReportSnapshot($report->toArray());
 });
 
+it('can create an error exception report', function () {
+    $flare = setupFlare(fn (FlareConfig $config) => $config);
+
+    $flare->registerFlareHandlers();
+
+    try {
+        trigger_error('this is a custom error', E_USER_ERROR);
+    } catch (Error $error) {
+
+    }
+
+    $this->assertMatchesReportSnapshot(FakeSender::instance()->getLastPayload());
+});
+
+
 it('will generate a uuid', function () {
     $flare = setupFlare();
 
@@ -27,13 +42,13 @@ it('will generate a uuid', function () {
 
     expect($report->trackingUuid)->toBeUuid();
 
-    expect($report->toArray()['tracking_uuid'])->toBeString();
+    expect($report->toArray()['trackingUuid'])->toBeString();
 });
 
 it('can create a report for a string message', function () {
     $flare = setupFlare();
 
-    $report = $flare->reportMessage('this is a message', 'Log');
+    $report = $flare->reportMessage('this is a message', 'Error');
 
     $this->assertMatchesReportSnapshot($report->toArray());
 });

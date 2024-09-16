@@ -107,7 +107,7 @@ class RequestAttributesProvider
             }
 
             return [
-                'pathname' => $file->getPathname(),
+                'path' => $file->getPathname(),
                 'size' => $fileSize,
                 'mime_type' => $mimeType,
             ];
