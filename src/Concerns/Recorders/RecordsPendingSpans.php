@@ -4,7 +4,6 @@ namespace Spatie\FlareClient\Concerns\Recorders;
 
 use Closure;
 use Spatie\FlareClient\Spans\Span;
-use Spatie\FlareClient\Spans\SpanEvent;
 
 /**
  * @template T of Span
@@ -28,7 +27,6 @@ trait RecordsPendingSpans
     {
         return $this->trace && $this->tracer->isSampling();
     }
-
 
     protected function shouldReport(): bool
     {
