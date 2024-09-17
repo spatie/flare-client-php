@@ -9,7 +9,7 @@ class TimeHelper
         return self::minutes(1);
     }
 
-    public static function minutes(int|float $minutes, ): int
+    public static function minutes(int|float $minutes): int
     {
         return $minutes * 60 * 1000_000_000;
     }
@@ -19,7 +19,7 @@ class TimeHelper
         return self::seconds(1);
     }
 
-    public static function seconds(int|float $seconds, ): int
+    public static function seconds(int|float $seconds): int
     {
         return $seconds * 1000_000_000;
     }
@@ -29,7 +29,7 @@ class TimeHelper
         return self::milliseconds(1);
     }
 
-    public static function milliseconds(int|float $milliseconds, ): int
+    public static function milliseconds(int|float $milliseconds): int
     {
         return $milliseconds * 1000_000;
     }
