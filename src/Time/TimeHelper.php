@@ -4,55 +4,48 @@ namespace Spatie\FlareClient\Time;
 
 class TimeHelper
 {
-    public static function minute(bool $asNano = false): int
+    public static function minute(): int
     {
-        return self::normalize(self::minutes(1),  $asNano);
+        return self::minutes(1);
     }
 
-    public static function minutes(int|float $minutes, bool $asNano = false): int
+    public static function minutes(int|float $minutes, ): int
     {
-        return self::normalize($minutes * 60 * 1000_000,  $asNano);
+        return $minutes * 60 * 1000_000_000;
     }
 
-    public static function second(bool $asNano = false): int
+    public static function second(): int
     {
-        return self::normalize(self::seconds(1),  $asNano);
+        return self::seconds(1);
     }
 
-    public static function seconds(int|float $seconds, bool $asNano = false): int
+    public static function seconds(int|float $seconds, ): int
     {
-        return self::normalize($seconds * 1000_000,  $asNano);
+        return $seconds * 1000_000_000;
     }
 
-    public static function millisecond(bool $asNano = false): int
+    public static function millisecond(): int
     {
-        return self::normalize(self::milliseconds(1),  $asNano);
+        return self::milliseconds(1);
     }
 
-    public static function milliseconds(int|float $milliseconds, bool $asNano = false): int
+    public static function milliseconds(int|float $milliseconds, ): int
     {
-        return self::normalize($milliseconds * 1000,  $asNano);
+        return $milliseconds * 1000_000;
     }
 
-    public static function microsecond(bool $asNano = false): int
+    public static function microsecond(): int
     {
-        return self::normalize(self::microseconds(1),  $asNano);
+        return self::microseconds(1);
     }
 
-    public static function microseconds(int|float $microseconds, bool $asNano = false): int
+    public static function microseconds(int|float $microseconds): int
     {
-        return self::normalize($microseconds,  $asNano);
+        return $microseconds * 1_000;
     }
 
-    public static function phpMicroTime(int|float $microseconds, bool $asNano = false): int
+    public static function phpMicroTime(int|float $microtime): int
     {
-        return self::normalize($microseconds * 1000_000,  $asNano);
-    }
-
-    protected static function normalize(
-        int|float $microseconds,
-        bool $asNano
-    ): int {
-        return (int) ($asNano ? $microseconds * 1000 : $microseconds);
+        return (int) ($microtime * 1000_000_000);
     }
 }

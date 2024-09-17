@@ -37,7 +37,7 @@ it('stores spans for reporting', function () {
     expect($spans[0])
         ->toBeInstanceOf(Span::class)
         ->name->toBe('Span - Hello World')
-        ->start->toBe(1546346096000000)
+        ->start->toBe(1546346096000000000)
         ->attributes
         ->toHaveCount(1)
         ->toHaveKey('message', 'Hello World');
@@ -110,7 +110,7 @@ it('can trace spans', function () {
     expect($span)
         ->toBeInstanceOf(Span::class)
         ->name->toBe('Span - Hello World')
-        ->start->toBe(1546346096000000)
+        ->start->toBe(1546346096000000000)
         ->attributes
         ->toHaveCount(1)
         ->toHaveKey('message', 'Hello World');

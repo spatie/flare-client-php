@@ -174,7 +174,7 @@ it('can start and end a span', function () {
     expect($span->name)->toEqual('Some span');
     expect($span->traceId)->toEqual('fake-trace-id');
     expect($span->spanId)->toEqual('fake-span-id');
-    expect($span->start)->toBe(1546346096000000);
+    expect($span->start)->toBe(1546346096000000000);
     expect($span->end)->toBeNull();
 
     FakeTime::setup('2019-01-01 12:35:56');
@@ -185,14 +185,14 @@ it('can start and end a span', function () {
     expect($span2->traceId)->toEqual('fake-trace-id');
     expect($span2->spanId)->toEqual('fake-span-id-2');
     expect($span2->parentSpanId)->toEqual('fake-span-id');
-    expect($span2->start)->toBe(1546346156000000);
+    expect($span2->start)->toBe(1546346156000000000);
     expect($span2->end)->toBeNull();
 
     FakeTime::setup('2019-01-01 12:36:56');
 
     $tracer->endCurrentSpan();
 
-    expect($span2->end)->toBe(1546346216000000);
+    expect($span2->end)->toBe(1546346216000000000);
     expect($tracer->currentSpanId())->toBe('fake-span-id');
 
 
@@ -200,7 +200,7 @@ it('can start and end a span', function () {
 
     $tracer->endCurrentSpan();
 
-    expect($span->end)->toBe(1546346276000000);
+    expect($span->end)->toBe(1546346276000000000);
     expect($tracer->currentSpanId())->toBeNull();
 });
 

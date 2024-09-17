@@ -41,7 +41,7 @@ class SpanEvent implements WithAttributes
     {
         return [
             'name' => $this->name,
-            'timeUnixNano' => $this->timestamp * 1000,
+            'timeUnixNano' => $this->timestamp,
             'attributes' => $this->attributesAsArray(),
             'droppedAttributesCount' => $this->droppedAttributesCount,
         ];
@@ -58,7 +58,7 @@ class SpanEvent implements WithAttributes
         unset($this->attributes['flare.span_event_type']);
 
         return [
-            'startTimeUnixNano' => $this->timestamp * 1000,
+            'startTimeUnixNano' => $this->timestamp,
             'endTimeUnixNano' => null,
             'attributes' => $this->attributes,
             'type' => $type,

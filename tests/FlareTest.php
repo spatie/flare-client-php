@@ -351,7 +351,7 @@ it('can add queries', function () {
     expect($payload['events'])->toHaveCount(2);
 
     expect($payload['events'][0])
-        ->toHaveKey('startTimeUnixNano', 1546346096000000000 - TimeHelper::milliseconds(250, asNano: true))
+        ->toHaveKey('startTimeUnixNano', 1546346096000000000 - TimeHelper::milliseconds(250))
         ->toHaveKey('endTimeUnixNano', 1546346096000000000)
         ->toHaveKey('type', SpanType::Query)
         ->attributes
@@ -361,7 +361,7 @@ it('can add queries', function () {
         ->toHaveKey('db.sql.bindings', ['id' => 1]);
 
     expect($payload['events'][1])
-        ->toHaveKey('startTimeUnixNano', 1546346097000000000 - TimeHelper::milliseconds(125, asNano: true))
+        ->toHaveKey('startTimeUnixNano', 1546346097000000000 - TimeHelper::milliseconds(125))
         ->toHaveKey('endTimeUnixNano', 1546346097000000000)
         ->toHaveKey('type', SpanType::Query)
         ->attributes

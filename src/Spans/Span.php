@@ -115,8 +115,8 @@ class Span implements WithAttributes
             'spanId' => $this->spanId,
             'parentSpanId' => $this->parentSpanId,
             'name' => $this->name,
-            'startTimeUnixNano' => $this->start * 1000,
-            'endTimeUnixNano' => $this->end * 1000,
+            'startTimeUnixNano' => $this->start,
+            'endTimeUnixNano' => $this->end,
             'attributes' => $this->attributesAsArray(),
             'droppedAttributesCount' => $this->droppedAttributesCount,
             'events' => array_map(fn (SpanEvent $event) => $event->toTrace(), $this->events),
@@ -138,8 +138,8 @@ class Span implements WithAttributes
         unset($this->attributes['flare.span_type']);
 
         return [
-            'startTimeUnixNano' => $this->start * 1000,
-            'endTimeUnixNano' => $this->end * 1000,
+            'startTimeUnixNano' => $this->start,
+            'endTimeUnixNano' => $this->end,
             'attributes' => $this->attributes,
             'type' => $type,
         ];

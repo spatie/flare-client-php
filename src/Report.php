@@ -44,7 +44,7 @@ class Report
     {
         $report = [
             'exceptionClass' => $this->exceptionClass,
-            'seenAtUnixNano' => TimeHelper::microseconds($this::getCurrentTime(), asNano: true),
+            'seenAtUnixNano' => $this::getCurrentTime(),
             'message' => $this->message,
             'solutions' => array_map(
                 fn (Solution $solution) => ReportSolution::fromSolution($solution)->toArray(),

@@ -38,7 +38,7 @@ class FakeTime implements Time
 
     public function getCurrentTime(): int
     {
-        return $this->dateTime->getTimestamp() * 1000_000; // Microseconds
+        return $this->dateTime->getTimestamp() * 1000_000_000; // Nano seconds
     }
 
     public function setCurrentTime(string $dateTime, $format = 'Y-m-d H:i:s'): void

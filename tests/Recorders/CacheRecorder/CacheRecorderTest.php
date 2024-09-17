@@ -39,7 +39,7 @@ it('can record cache events', function () {
     expect($events[0])
         ->toBeInstanceOf(CacheSpanEvent::class)
         ->name->toBe('Cache hit - key')
-        ->timestamp->toBe(1546346096000000)
+        ->timestamp->toBe(1546346096000000000)
         ->attributes
         ->toHaveCount(5)
         ->toHaveKey('flare.span_event_type', SpanEventType::Cache)
@@ -51,7 +51,7 @@ it('can record cache events', function () {
     expect($events[1])
         ->toBeInstanceOf(CacheSpanEvent::class)
         ->name->toBe('Cache miss - key')
-        ->timestamp->toBe(1546346096000000)
+        ->timestamp->toBe(1546346096000000000)
         ->attributes
         ->toHaveCount(5)
         ->toHaveKey('flare.span_event_type', SpanEventType::Cache)
@@ -63,7 +63,7 @@ it('can record cache events', function () {
     expect($events[2])
         ->toBeInstanceOf(CacheSpanEvent::class)
         ->name->toBe('Cache key written - key')
-        ->timestamp->toBe(1546346096000000)
+        ->timestamp->toBe(1546346096000000000)
         ->attributes
         ->toHaveCount(5)
         ->toHaveKey('flare.span_event_type', SpanEventType::Cache)
@@ -75,7 +75,7 @@ it('can record cache events', function () {
     expect($events[3])
         ->toBeInstanceOf(CacheSpanEvent::class)
         ->name->toBe('Cache key forgotten - key')
-        ->timestamp->toBe(1546346096000000)
+        ->timestamp->toBe(1546346096000000000)
         ->attributes
         ->toHaveCount(5)
         ->toHaveKey('flare.span_event_type', SpanEventType::Cache)

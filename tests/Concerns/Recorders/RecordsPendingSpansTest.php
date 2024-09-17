@@ -27,7 +27,7 @@ it('can start and end a span when reporting', function () {
     expect($spans[0])
         ->toBeInstanceOf(Span::class)
         ->name->toBe('Pending Span')
-        ->start->toBe(1546346096000000)
+        ->start->toBe(1546346096000000000)
         ->attributes->toHaveCount(0);
 });
 
@@ -105,7 +105,7 @@ it('can trace spans', function () {
     expect($span)
         ->toBeInstanceOf(Span::class)
         ->name->toBe('Pending Span')
-        ->start->toBe(1546346096000000)
+        ->start->toBe(1546346096000000000)
         ->attributes->toHaveCount(0);
 });
 

@@ -12,9 +12,11 @@ trait HasAttributes
 
     protected static ?OpenTelemetryAttributeMapper $openTelemetryAttributesMapper = null;
 
-    public function addAttribute(string $key, mixed $value): void
+    public function addAttribute(string $key, mixed $value): static
     {
         $this->attributes[$key] = $value;
+
+        return $this;
     }
 
     public function addAttributes(?array $attributes): static

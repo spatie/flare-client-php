@@ -55,8 +55,8 @@ it('can trace a transaction', function () {
     expect($transactionSpan)
         ->toBeInstanceOf(TransactionSpan::class)
         ->name->toBe('DB Transaction')
-        ->start->toBe(1546346096000000)
-        ->end->toBe(1546346097000000)
+        ->start->toBe(1546346096000000000)
+        ->end->toBe(1546346097000000000)
         ->parentSpanId->toBeNull()
         ->attributes
         ->toHaveCount(2)
@@ -89,8 +89,8 @@ it('can rollback a transaction', function () {
     expect($transactionSpan)
         ->toBeInstanceOf(TransactionSpan::class)
         ->name->toBe('DB Transaction')
-        ->start->toBe(1546346096000000)
-        ->end->toBe(1546346097000000)
+        ->start->toBe(1546346096000000000)
+        ->end->toBe(1546346097000000000)
         ->parentSpanId->toBeNull()
         ->attributes
         ->toHaveCount(2)
@@ -126,12 +126,12 @@ it('can nest transaction spans', function () {
     expect($flare->tracer->currentTrace())->toHaveCount(2);
 
     expect($transactionSpanA)
-        ->start->toBe(1546346096000000)
-        ->end->toBe(1546346099000000)
+        ->start->toBe(1546346096000000000)
+        ->end->toBe(1546346099000000000)
         ->parentSpanId->toBeNull();
 
     expect($transactionSpanB)
-        ->start->toBe(1546346097000000)
-        ->end->toBe(1546346098000000)
+        ->start->toBe(1546346097000000000)
+        ->end->toBe(1546346098000000000)
         ->parentSpanId->toBe($transactionSpanA->spanId);
 });

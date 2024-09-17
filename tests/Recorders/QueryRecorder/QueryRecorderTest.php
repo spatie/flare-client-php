@@ -38,8 +38,8 @@ it('can trace queries', function () {
         ->spanId->not()->toBeNull()
         ->traceId->toBe($flare->tracer->currentTraceId())
         ->parentSpanId->toBeNull()
-        ->start->toBe(1546346096000000 - TimeHelper::milliseconds(300))
-        ->end->toBe(1546346096000000)
+        ->start->toBe(1546346096000000000 - TimeHelper::milliseconds(300))
+        ->end->toBe(1546346096000000000)
         ->name->toBe('Query - select * from users where id = ?');
 
     expect($span->attributes)
@@ -78,8 +78,8 @@ it('can report queries without tracing', function () {
         ->spanId->not()->toBeNull()
         ->traceId->toBe('')
         ->parentSpanId->toBeNull()
-        ->start->toBe(1546346096000000 - TimeHelper::milliseconds(300))
-        ->end->toBe(1546346096000000)
+        ->start->toBe(1546346096000000000 - TimeHelper::milliseconds(300))
+        ->end->toBe(1546346096000000000)
         ->name->toBe('Query - select * from users where id = ?');
 
     expect($span->attributes)

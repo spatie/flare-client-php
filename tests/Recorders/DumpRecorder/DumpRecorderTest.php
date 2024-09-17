@@ -32,7 +32,7 @@ it('can symphony record dumps', function () {
     expect($dumps[0])
         ->toBeInstanceOf(DumpSpanEvent::class)
         ->name->toBe('Dump entry')
-        ->timestamp->toBe(1546346096000000);
+        ->timestamp->toBe(1546346096000000000);
 
     expect($dumps[0]->attributes)
         ->toHaveCount(2)

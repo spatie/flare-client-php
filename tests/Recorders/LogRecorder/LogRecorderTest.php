@@ -32,7 +32,7 @@ it('stores glows for reporting and tracing', function () {
     expect($logs[0])
         ->toBeInstanceOf(LogMessageSpanEvent::class)
         ->name->toBe('Log entry')
-        ->timestamp->toBe(1546346096000000)
+        ->timestamp->toBe(1546346096000000000)
         ->attributes
         ->toHaveCount(4)
         ->toHaveKey('flare.span_event_type', SpanEventType::Log)

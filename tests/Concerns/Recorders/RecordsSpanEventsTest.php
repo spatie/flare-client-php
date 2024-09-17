@@ -38,7 +38,7 @@ it('stores span events for reporting', function () {
     expect($spanEvents[0])
         ->toBeInstanceOf(SpanEvent::class)
         ->name->toBe('Span Event - Hello World')
-        ->timestamp->toBe(1546346096000000)
+        ->timestamp->toBe(1546346096000000000)
         ->attributes
         ->toHaveCount(1)
         ->toHaveKey('message', 'Hello World');
@@ -110,7 +110,7 @@ it('can trace span events', function () {
     expect($spanEvent)
         ->toBeInstanceOf(SpanEvent::class)
         ->name->toBe('Span Event - Hello World')
-        ->timestamp->toBe(1546346096000000)
+        ->timestamp->toBe(1546346096000000000)
         ->attributes
         ->toHaveCount(1)
         ->toHaveKey('message', 'Hello World');

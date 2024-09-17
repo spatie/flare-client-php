@@ -4,6 +4,6 @@ namespace Spatie\FlareClient\Time;
 
 interface Time
 {
-    // In microseconds
+    // In nano seconds
     public function getCurrentTime(): int;
 }

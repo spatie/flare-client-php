@@ -4,7 +4,7 @@ namespace Spatie\FlareClient\Contracts;
 
 interface WithAttributes
 {
-    public function addAttribute(string $key, mixed $value): void;
+    public function addAttribute(string $key, mixed $value): static;
 
     public function addAttributes(?array $attributes): static;
 

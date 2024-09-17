@@ -36,7 +36,7 @@ it('stores glows for reporting and tracing', function () {
     expect($glow)
         ->toBeInstanceOf(GlowSpanEvent::class)
         ->name->toBe('Glow - Some name')
-        ->timestamp->toBe(1546346096000000);
+        ->timestamp->toBe(1546346096000000000);
 
     expect($glow->attributes)
         ->toHaveCount(4)
