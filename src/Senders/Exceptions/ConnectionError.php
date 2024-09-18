@@ -3,7 +3,6 @@
 namespace Spatie\FlareClient\Senders\Exceptions;
 
 use Exception;
-use Spatie\FlareClient\Senders\Support\Response;
 
 class ConnectionError extends Exception
 {
