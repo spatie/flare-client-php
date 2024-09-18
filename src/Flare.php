@@ -271,9 +271,8 @@ class Flare
 
     public function sendTestReport(Throwable $throwable): void
     {
-        $this->api->report(
+        $this->api->test(
             ReportFactory::createForThrowable($throwable)->resource($this->resource)->build(),
-            immediately: true
         );
     }
 

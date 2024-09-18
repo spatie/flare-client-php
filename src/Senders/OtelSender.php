@@ -2,6 +2,8 @@
 
 namespace Spatie\FlareClient\Senders;
 
+use Spatie\FlareClient\Senders\Support\Response;
+
 class OtelSender implements Sender
 {
     protected Sender|null $reportSender = null;
@@ -17,19 +19,17 @@ class OtelSender implements Sender
     ) {
     }
 
-    public function post(string $endpoint, string $apiToken, array $payload): array
+    public function post(string $endpoint, string $apiToken, array $payload): Response
     {
         if (! array_key_exists('resourceSpans', $payload)) {
             return $this->reportSender()->post($endpoint, $apiToken, $payload);
         }
 
         try {
-            (new GuzzleSender())->post($this->otelEndpoint, $apiToken, $payload);
+            return (new GuzzleSender())->post($this->otelEndpoint, $apiToken, $payload);
         } catch (\Exception $e) {
             ray($payload, $e);
         }
-
-        return [];
     }
 
     protected function reportSender(): Sender

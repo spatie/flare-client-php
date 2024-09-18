@@ -425,7 +425,7 @@ test('a version is by default null', function () {
 
     $payload = FakeSender::instance()->getLastPayload();
 
-    expect($payload['application_version'])->toBeNull();
+    expect($payload['attributes']['service.version'])->toBeNull();
 });
 
 it('will add the version to the report', function () {

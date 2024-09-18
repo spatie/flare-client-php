@@ -1,8 +1,8 @@
 <?php
 
-namespace Spatie\FlareClient\Http\Exceptions;
+namespace Spatie\FlareClient\Senders\Exceptions;
 
-use Spatie\FlareClient\Http\Response;
+use Spatie\FlareClient\Senders\Support\Response;
 
 class InvalidData extends BadResponseCode
 {

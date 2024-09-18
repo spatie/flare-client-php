@@ -98,16 +98,14 @@ it('can disable the inclusion of bindings', function () {
         $flare->tracer,
         $flare->backTracer,
         config: [
-            'trace' => true,
-            'report' => false,
+            'trace' => false,
+            'report' => true,
             'max_reported' => null,
             'include_bindings' => false,
             'find_origin' => false,
             'find_origin_threshold' => null,
         ]
     );
-
-    $flare->tracer->startTrace();
 
     $recorder->record('select * from users where id = ?', TimeHelper::milliseconds(300), ['id' => 1], 'users', 'mysql');
 

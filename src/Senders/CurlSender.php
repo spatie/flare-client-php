@@ -2,14 +2,12 @@
 
 namespace Spatie\FlareClient\Senders;
 
-use Spatie\FlareClient\Http\Exceptions\BadResponseCode;
-use Spatie\FlareClient\Http\Exceptions\InvalidData;
-use Spatie\FlareClient\Http\Exceptions\NotFound;
-use Spatie\FlareClient\Http\Response;
+use Spatie\FlareClient\Senders\Exceptions\ConnectionError;
+use Spatie\FlareClient\Senders\Support\Response;
 
 class CurlSender implements Sender
 {
-    public function post(string $endpoint, string $apiToken, array $payload): array
+    public function post(string $endpoint, string $apiToken, array $payload): Response
     {
         $queryString = http_build_query([
             'key' => $apiToken,
@@ -30,21 +28,13 @@ class CurlSender implements Sender
         $headers = curl_getinfo($curlHandle);
         $error = curl_error($curlHandle);
 
-        $response = new Response($headers, $body, $error);
-
-        if ($response->getHttpResponseCode() === 422) {
-            throw InvalidData::createForResponse($response);
+        if ($error) {
+            throw new ConnectionError($error);
         }
 
-        if ($response->getHttpResponseCode() === 404) {
-            throw NotFound::createForResponse($response);
-        }
+        $code = ! isset($headers['http_code']) ? (int) $headers['http_code'] : 422;
 
-        if ($response->getHttpResponseCode() !== 200 && $response->getHttpResponseCode() !== 204) {
-            throw BadResponseCode::createForResponse($response);
-        }
-
-        return $response->getBody();
+        return new Response($code, $body);
     }
 
     protected function getCurlHandle(string $fullUrl, array $headers = [])

@@ -4,6 +4,9 @@ namespace Spatie\FlareClient;
 
 use Exception;
 use Spatie\FlareClient\Senders\CurlSender;
+use Spatie\FlareClient\Senders\Exceptions\BadResponseCode;
+use Spatie\FlareClient\Senders\Exceptions\InvalidData;
+use Spatie\FlareClient\Senders\Exceptions\NotFound;
 use Spatie\FlareClient\Senders\Sender;
 use Spatie\FlareClient\Truncation\ReportTrimmer;
 
@@ -32,26 +35,36 @@ class Api
         return $this;
     }
 
-    public function report(Report $report, bool $immediately = false): void
-    {
+    public function report(
+        Report $report,
+        bool $immediately = false,
+    ): void {
         try {
             $immediately || $this->sendReportsImmediately
                 ? $this->sendReportToApi($report)
                 : $this->addReportToQueue($report);
         } catch (Exception $e) {
-            //
+
         }
     }
 
-    public function trace(array $trace, bool $immediately = false): void
-    {
+    public function trace(
+        array $trace,
+        bool $immediately = false,
+    ): void {
         try {
             $immediately || $this->sendReportsImmediately
                 ? $this->sendTraceToApi($trace)
                 : $this->addTraceToQueue($trace);
         } catch (Exception $e) {
-            //
+
         }
+    }
+
+    public function test(
+        Report $report
+    ): void {
+        $this->sendReportToApi($report);
     }
 
     protected function addReportToQueue(Report $report): self
@@ -75,7 +88,7 @@ class Api
                 $this->sendReportToApi($report);
             }
         } catch (Exception $e) {
-            ray($e, $report);
+
         } finally {
             $this->reportQueue = [];
         }
@@ -85,7 +98,7 @@ class Api
                 $this->sendTraceToApi($trace);
             }
         } catch (Exception $e) {
-            ray($e, $trace);
+
         } finally {
             $this->traceQueue = [];
         }
@@ -95,20 +108,41 @@ class Api
     {
         $payload = $this->truncateReport($report->toArray());
 
-        $this->sender->post(
+        $this->post(
             "{$this->baseUrl}/reports",
-            $this->apiToken,
             $payload,
         );
     }
 
     protected function sendTraceToApi(array $trace): void
     {
-        $this->sender->post(
+        $this->post(
             "{$this->baseUrl}/traces",
-            $this->apiToken,
             $trace,
         );
+    }
+
+    protected function post(
+        string $endpoint,
+        array $payload
+    ): void {
+        $response = $this->sender->post(
+            $endpoint,
+            $this->apiToken,
+            $payload,
+        );
+
+        if ($response->code === 422) {
+            throw new InvalidData($response);
+        }
+
+        if ($response->code === 404) {
+            throw new NotFound($response);
+        }
+
+        if ($response->code !== 200 && $response->code !== 204) {
+            throw new BadResponseCode($response);
+        }
     }
 
     /**

@@ -4,6 +4,7 @@ namespace Spatie\FlareClient\Tests\Shared;
 
 use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 use Spatie\FlareClient\Senders\Sender;
+use Spatie\FlareClient\Senders\Support\Response;
 
 class FakeSender implements Sender
 {
@@ -26,7 +27,7 @@ class FakeSender implements Sender
         string $endpoint,
         string $apiToken,
         array $payload
-    ): array {
+    ): Response {
         self::$requests[] = [
             'verb' => 'POST',
             'fullUrl' => $endpoint,
@@ -34,7 +35,7 @@ class FakeSender implements Sender
             'arguments' => $payload,
         ];
 
-        return [];
+        return new Response(200, []);
     }
 
     public function assertRequestsSent(int $expectedCount): void

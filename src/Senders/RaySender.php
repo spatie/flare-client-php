@@ -2,6 +2,8 @@
 
 namespace Spatie\FlareClient\Senders;
 
+use Spatie\FlareClient\Senders\Support\Response;
+
 class RaySender implements Sender
 {
     public function __construct(
@@ -9,7 +11,7 @@ class RaySender implements Sender
     ) {
     }
 
-    public function post(string $endpoint, string $apiToken, array $payload): array
+    public function post(string $endpoint, string $apiToken, array $payload): Response
     {
         if ($this->raw) {
             ray($payload)->label($endpoint);
@@ -39,6 +41,6 @@ class RaySender implements Sender
 
         ray($scope['spans'])->label('Spans');
 
-        return [];
+        return new Response(200, []);
     }
 }
