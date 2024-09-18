@@ -7,7 +7,6 @@ use Error;
 use ErrorException;
 use Exception;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
-use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\Concerns\HasUserProvidedContext;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\RecorderType;
