@@ -7,7 +7,7 @@ use Error;
 use ErrorException;
 use Exception;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
-use Spatie\FlareClient\AttributesProviders\CommonEntitiesAttributesProvider;
+use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\Concerns\HasUserProvidedContext;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\RecorderType;
@@ -59,7 +59,6 @@ class Flare
         protected readonly bool $withStackFrameArguments,
         protected Resource $resource,
         protected Scope $scope,
-        public readonly CommonEntitiesAttributesProvider $commonEntitiesAttributesProvider,
     ) {
     }
 

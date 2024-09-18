@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Contracts\Container\Container as IlluminateContainer;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\ErrorSolutions\Contracts\SolutionProviderRepository as SolutionProviderRepositoryContract;
+use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\SamplingType;
 use Spatie\FlareClient\Exporters\JsonExporter;
@@ -22,7 +23,6 @@ use Spatie\FlareClient\Support\Redactor;
 use Spatie\FlareClient\Support\SentReports;
 use Spatie\FlareClient\Support\Telemetry;
 use Spatie\FlareClient\Support\TraceLimits;
-use Throwable;
 
 class FlareProvider
 {
@@ -57,7 +57,7 @@ class FlareProvider
             ...$this->config->samplerConfig
         ));
 
-        $this->container->singleton(JsonExporter::class, fn () => new JsonExporter());
+        $this->container->singleton(JsonExporter::class);
 
         $this->container->singleton(BackTracer::class, fn () => new BackTracer(
             $this->config->applicationPath
@@ -103,7 +103,7 @@ class FlareProvider
             return $repository;
         });
 
-        $this->container->singleton(SentReports::class, fn () => new SentReports());
+        $this->container->singleton(SentReports::class);
 
         $this->container->singleton(ThrowableRecorder::class, fn () => new ThrowableRecorder(
             $this->container->get(Tracer::class),
@@ -114,6 +114,8 @@ class FlareProvider
             censorHeaders: $this->config->censorHeaders,
             censorBodyFields: $this->config->censorBodyFields,
         ));
+
+        $this->container->singleton(UserAttributesProvider::class);
 
         foreach ($this->config->recorders as $recorderClass => $config) {
             ($this->registerRecorderAndMiddlewaresCallback)($this->container, $recorderClass, $config);
@@ -126,18 +128,12 @@ class FlareProvider
         $this->container->singleton(Flare::class, function () {
             $recorders = array_combine(
                 array_map(
-                    /** @var class-string<Recorder> $recorder */
+                /** @var class-string<Recorder> $recorder */
                     fn ($recorder) => is_string($recorder::type()) ? $recorder::type() : $recorder::type()->value,
                     array_keys($this->config->recorders)
                 ),
                 array_map(
-                    function ($recorder) {
-                        try {
-                            return $this->container->get($recorder);
-                        } catch (Throwable $t) {
-                            ray($t); // TODO: remove
-                        }
-                    },
+                    fn ($recorder) => $this->container->get($recorder),
                     array_keys($this->config->recorders)
                 )
             );
@@ -167,7 +163,6 @@ class FlareProvider
                 withStackFrameArguments: $this->config->withStackFrameArguments,
                 resource: $this->container->get(Resource::class),
                 scope: $this->container->get(Scope::class),
-                commonEntitiesAttributesProvider: new $this->config->commonEntitiesAttributesProvider,
             );
         });
 

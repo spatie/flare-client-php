@@ -33,9 +33,9 @@ class Container implements ContainerInterface
      * @param class-string<T> $class
      * @param Closure():T $builder
      */
-    public function singleton(string $class, Closure $builder): void
+    public function singleton(string $class, ?Closure $builder = null): void
     {
-        $this->singletons[$class] = $builder;
+        $this->singletons[$class] = $builder ?? fn () => new $class();
     }
 
     /**

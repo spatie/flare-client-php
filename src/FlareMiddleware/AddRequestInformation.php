@@ -5,6 +5,7 @@ namespace Spatie\FlareClient\FlareMiddleware;
 use Closure;
 use Psr\Container\ContainerInterface;
 use Spatie\FlareClient\AttributesProviders\RequestAttributesProvider;
+use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\ReportFactory;
 use Spatie\FlareClient\Support\Redactor;
 use Spatie\FlareClient\Support\Runtime;
@@ -15,7 +16,10 @@ class AddRequestInformation implements FlareMiddleware
     public static function register(ContainerInterface $container, array $config): Closure
     {
         return fn () => new self(
-            new RequestAttributesProvider($container->get(Redactor::class)),
+            new RequestAttributesProvider(
+                $container->get(Redactor::class),
+                $container->get(UserAttributesProvider::class)
+            ),
             $config
         );
     }

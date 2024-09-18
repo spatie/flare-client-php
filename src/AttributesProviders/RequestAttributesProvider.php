@@ -15,16 +15,20 @@ class RequestAttributesProvider
 {
     public function __construct(
         protected Redactor $redactor,
+        protected UserAttributesProvider $userAttributesProvider
     ) {
     }
 
     public function toArray(Request $request): array
     {
+        $user = $this->getUser($request);
+
         return [
             ...$this->getRequest($request),
             ...$this->getHeaders($request),
             ...$this->getCookies($request),
             ...$this->getSession($request),
+            ...$user ? $this->userAttributesProvider->toArray($user) : [],
         ];
     }
 
@@ -159,5 +163,10 @@ class RequestAttributesProvider
         return [
             'http.request.headers' => $this->redactor->censorHeaders($headers),
         ];
+    }
+
+    protected function getUser(Request $request): mixed
+    {
+        return null;
     }
 }
