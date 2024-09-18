@@ -37,16 +37,6 @@ class SpanEvent implements WithAttributes
         );
     }
 
-    public function toTrace(): array
-    {
-        return [
-            'name' => $this->name,
-            'timeUnixNano' => $this->timestamp,
-            'attributes' => $this->attributesAsArray(),
-            'droppedAttributesCount' => $this->droppedAttributesCount,
-        ];
-    }
-
     public function toEvent(): ?array
     {
         $type = $this->attributes['flare.span_event_type'] ?? null;

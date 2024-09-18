@@ -34,14 +34,4 @@ class Scope implements WithAttributes
 
         return $this;
     }
-
-    public function toArray(): array
-    {
-        return [
-            'name' => $this->name,
-            'version' => $this->version,
-            'attributes' => $this->attributesAsArray(),
-            'droppedAttributesCount' => $this->droppedAttributesCount,
-        ];
-    }
 }

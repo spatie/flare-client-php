@@ -110,6 +110,7 @@ trait RecordsPendingSpans
             return null;
         }
 
+
         if ($closure !== null) {
             $closure($span);
         }

@@ -142,12 +142,4 @@ class Resource implements WithAttributes
 
         return $this;
     }
-
-    public function toArray(): array
-    {
-        return [
-            'attributes' => $this->attributesAsArray(),
-            'droppedAttributesCount' => $this->droppedAttributesCount,
-        ];
-    }
 }

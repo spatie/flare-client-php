@@ -79,7 +79,11 @@ class ThrowableSpanEvent extends SpanEvent
             default => "Unknown",
         };
 
-        return "{$location} at {$frame['file']}:{$frame['line']}".PHP_EOL;
+        $file = $frame['file'] ?? 'Unknown';
+
+        $line = $frame['line'] ?? '?';
+
+        return "{$location} at {$file}:{$line}".PHP_EOL;
     }
 
     protected function collectAttributes(): array

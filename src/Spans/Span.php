@@ -108,25 +108,6 @@ class Span implements WithAttributes
         return $this;
     }
 
-    public function toTrace(): array
-    {
-        return [
-            'traceId' => $this->traceId,
-            'spanId' => $this->spanId,
-            'parentSpanId' => $this->parentSpanId,
-            'name' => $this->name,
-            'startTimeUnixNano' => $this->start,
-            'endTimeUnixNano' => $this->end,
-            'attributes' => $this->attributesAsArray(),
-            'droppedAttributesCount' => $this->droppedAttributesCount,
-            'events' => array_map(fn (SpanEvent $event) => $event->toTrace(), $this->events),
-            'droppedEventsCount' => $this->droppedEventsCount,
-            'links' => [],
-            'droppedLinksCount' => 0,
-            'status' => $this->status?->toArray() ?? SpanStatus::default(),
-        ];
-    }
-
     public function toEvent(): ?array
     {
         $type = $this->attributes['flare.span_type'] ?? null;

@@ -9,7 +9,7 @@ use Spatie\ErrorSolutions\Contracts\SolutionProviderRepository as SolutionProvid
 use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\SamplingType;
-use Spatie\FlareClient\Exporters\JsonExporter;
+use Spatie\FlareClient\TraceExporters\OpenTelemetryJsonTraceExporter;
 use Spatie\FlareClient\FlareMiddleware\AddRecordedEntries;
 use Spatie\FlareClient\Recorders\ThrowableRecorder\ThrowableRecorder;
 use Spatie\FlareClient\Resources\Resource;
@@ -23,6 +23,7 @@ use Spatie\FlareClient\Support\Redactor;
 use Spatie\FlareClient\Support\SentReports;
 use Spatie\FlareClient\Support\Telemetry;
 use Spatie\FlareClient\Support\TraceLimits;
+use Spatie\FlareClient\TraceExporters\TraceExporter;
 
 class FlareProvider
 {
@@ -57,7 +58,7 @@ class FlareProvider
             ...$this->config->samplerConfig
         ));
 
-        $this->container->singleton(JsonExporter::class);
+        $this->container->singleton(TraceExporter::class, fn() => new $this->config->traceExporter);
 
         $this->container->singleton(BackTracer::class, fn () => new BackTracer(
             $this->config->applicationPath
@@ -78,7 +79,7 @@ class FlareProvider
 
         $this->container->singleton(Tracer::class, fn () => new Tracer(
             api: $this->container->get(Api::class),
-            exporter: $this->container->get(JsonExporter::class),
+            exporter: $this->container->get(TraceExporter::class),
             limits: $this->config->traceLimits ?? new TraceLimits(),
             resource: $this->container->get(Resource::class),
             scope: $this->container->get(Scope::class),

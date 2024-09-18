@@ -8,8 +8,6 @@ interface WithAttributes
 
     public function addAttributes(?array $attributes): static;
 
-    public function attributesAsArray(): array;
-
     public function dropAttributes(): static;
 
     public function increaseDroppedAttributes(): static;

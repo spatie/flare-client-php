@@ -9,6 +9,11 @@ class ExpectTrace
 {
     protected int $spanAssertCounter = 0;
 
+    public static function create(array $trace): self
+    {
+        return new self($trace);
+    }
+
     public function __construct(
         public array $trace
     ) {

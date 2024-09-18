@@ -4,6 +4,7 @@ use Spatie\FlareClient\Flare;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Support\Container;
 use Spatie\FlareClient\Tests\Shared\FakeSender;
+use Spatie\FlareClient\Tests\Shared\FakeTraceExporter;
 
 uses()->beforeEach(function () {
     Container::instance()->reset();
@@ -21,7 +22,8 @@ function makePathsRelative(string $text): string
 function setupFlare(
     ?Closure $closure = null,
     bool $sendReportsImmediately = true,
-    bool $useFakeSender = true
+    bool $useFakeSender = true,
+    bool $useFakeTraceExporter = true
 ): Flare {
     $config = new FlareConfig(
         apiToken: 'fake-api-key',
@@ -30,6 +32,10 @@ function setupFlare(
 
     if ($useFakeSender) {
         $config->sender = FakeSender::class;
+    }
+
+    if ($useFakeTraceExporter) {
+        $config->traceExporter = FakeTraceExporter::class;
     }
 
     if ($closure) {

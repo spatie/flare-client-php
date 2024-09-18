@@ -7,13 +7,14 @@ use Spatie\FlareClient\Concerns\UsesIds;
 use Spatie\FlareClient\Concerns\UsesTime;
 use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Enums\SamplingType;
-use Spatie\FlareClient\Exporters\JsonExporter;
+use Spatie\FlareClient\TraceExporters\OpenTelemetryJsonTraceExporter;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Sampling\RateSampler;
 use Spatie\FlareClient\Sampling\Sampler;
 use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Support\TraceLimits;
+use Spatie\FlareClient\TraceExporters\TraceExporter;
 
 class Tracer
 {
@@ -27,16 +28,9 @@ class Tracer
 
     protected ?string $currentSpanId = null;
 
-    /**
-     * @param Api $api
-     * @param JsonExporter $exporter
-     * @param TraceLimits $limits
-     * @param SamplingType $samplingType
-     * @param Sampler $sampler
-     */
     public function __construct(
         protected readonly Api $api,
-        protected readonly JsonExporter $exporter,
+        protected readonly TraceExporter $exporter,
         public readonly TraceLimits $limits,
         protected Resource $resource,
         protected Scope $scope,

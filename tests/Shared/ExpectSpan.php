@@ -13,7 +13,7 @@ class ExpectSpan
     protected int $spanEventAssertCounter = 0;
 
     public function __construct(
-        public Span $span
+        protected Span $span
     ) {
     }
 

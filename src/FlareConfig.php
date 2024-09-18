@@ -31,6 +31,7 @@ use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Senders\CurlSender;
 use Spatie\FlareClient\Senders\Sender;
 use Spatie\FlareClient\Support\TraceLimits;
+use Spatie\FlareClient\TraceExporters\OpenTelemetryJsonTraceExporter;
 
 class FlareConfig
 {
@@ -80,7 +81,8 @@ class FlareConfig
         public bool $censorClientIps = false,
         public array $censorHeaders = [],
         public array $censorBodyFields = [],
-        public string $userAttributesProvider = UserAttributesProvider::class
+        public string $userAttributesProvider = UserAttributesProvider::class,
+        public string $traceExporter = OpenTelemetryJsonTraceExporter::class,
     ) {
     }
 
