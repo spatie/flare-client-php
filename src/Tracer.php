@@ -7,7 +7,6 @@ use Spatie\FlareClient\Concerns\UsesIds;
 use Spatie\FlareClient\Concerns\UsesTime;
 use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Enums\SamplingType;
-use Spatie\FlareClient\TraceExporters\OpenTelemetryJsonTraceExporter;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Sampling\RateSampler;
 use Spatie\FlareClient\Sampling\Sampler;

@@ -9,7 +9,6 @@ use Spatie\ErrorSolutions\Contracts\SolutionProviderRepository as SolutionProvid
 use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\SamplingType;
-use Spatie\FlareClient\TraceExporters\OpenTelemetryJsonTraceExporter;
 use Spatie\FlareClient\FlareMiddleware\AddRecordedEntries;
 use Spatie\FlareClient\Recorders\ThrowableRecorder\ThrowableRecorder;
 use Spatie\FlareClient\Resources\Resource;
@@ -58,7 +57,7 @@ class FlareProvider
             ...$this->config->samplerConfig
         ));
 
-        $this->container->singleton(TraceExporter::class, fn() => new $this->config->traceExporter);
+        $this->container->singleton(TraceExporter::class, fn () => new $this->config->traceExporter);
 
         $this->container->singleton(BackTracer::class, fn () => new BackTracer(
             $this->config->applicationPath
