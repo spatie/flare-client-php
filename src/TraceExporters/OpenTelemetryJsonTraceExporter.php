@@ -50,7 +50,7 @@ class OpenTelemetryJsonTraceExporter implements TraceExporter
     protected function exportResource(Resource $resource): array
     {
         return [
-            'attributes' => $resource->attributes,
+            'attributes' => $this->attributeMapper->attributesToOpenTelemetry($resource->attributes),
             'droppedAttributesCount' => $resource->droppedAttributesCount,
         ];
     }
@@ -60,7 +60,7 @@ class OpenTelemetryJsonTraceExporter implements TraceExporter
         return [
             'name' => $scope->name,
             'version' => $scope->version,
-            'attributes' => $scope->attributes,
+            'attributes' => $this->attributeMapper->attributesToOpenTelemetry($scope->attributes),
             'droppedAttributesCount' => $scope->droppedAttributesCount,
         ];
     }
