@@ -117,7 +117,7 @@ class Api
     protected function sendTraceToApi(array $trace): void
     {
         $this->post(
-            "{$this->baseUrl}/traces",
+            "{$this->baseUrl}/v1/traces",
             $trace,
         );
     }
