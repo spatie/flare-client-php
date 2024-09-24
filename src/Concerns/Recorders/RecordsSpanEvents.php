@@ -32,7 +32,7 @@ trait RecordsSpanEvents
     {
         $span = $this->tracer->currentSpan();
 
-        if($span === null) {
+        if ($span === null) {
             return;
         }
 
