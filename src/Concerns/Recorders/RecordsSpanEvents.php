@@ -32,6 +32,10 @@ trait RecordsSpanEvents
     {
         $span = $this->tracer->currentSpan();
 
+        if($span === null) {
+            return;
+        }
+
         if (count($span->events) >= $this->tracer->limits->maxSpanEventsPerSpan) {
             $span->droppedEventsCount++;
 
