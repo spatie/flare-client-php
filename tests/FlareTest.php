@@ -11,7 +11,17 @@ use Spatie\FlareClient\Enums\TransactionStatus;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Report;
 use Spatie\FlareClient\ReportFactory;
+use Spatie\FlareClient\Resources\Resource;
+use Spatie\FlareClient\Scopes\Scope;
+use Spatie\FlareClient\Spans\Span;
+use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Tests\Concerns\MatchesReportSnapshots;
+use Spatie\FlareClient\Tests\Shared\ExpectResource;
+use Spatie\FlareClient\Tests\Shared\ExpectScope;
+use Spatie\FlareClient\Tests\Shared\ExpectSpan;
+use Spatie\FlareClient\Tests\Shared\ExpectSpanEvent;
+use Spatie\FlareClient\Tests\Shared\ExpectTrace;
+use Spatie\FlareClient\Tests\Shared\ExpectTracer;
 use Spatie\FlareClient\Tests\Shared\FakeSender;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
 use Spatie\FlareClient\Tests\TestClasses\ExceptionWithContext;
@@ -603,6 +613,110 @@ it('can report a handled error', function () {
     expect($report['handled'])->toBeTrue();
 });
 
+it('is possible to manually add spans and span events', function () {
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config->alwaysSampleTraces()
+    );
+
+    $flare->tracer->startTrace();
+
+    $flare->span('Test Span', function () use ($flare) {
+        $flare->span('Test Child Span', function () use ($flare) {
+            $flare->spanEvent('Test Child Span Event');
+        });
+
+        $flare->spanEvent('Test Span Event');
+    });
+
+    ExpectTracer::create($flare)
+        ->trace(fn (ExpectTrace $trace) => $trace
+            ->hasSpanCount(2)
+            ->span(
+                fn (ExpectSpan $span) => $span
+                    ->hasName('Test Span')
+                    ->missingParent()
+                    ->hasSpanEventCount(1)
+                    ->spanEvent(fn (ExpectSpanEvent $spanEvent) => $spanEvent->hasName('Test Span Event'))
+                , $parentSpan
+            )
+            ->span(fn (ExpectSpan $span) => $span
+                ->hasName('Test Child Span')
+                ->hasParent($parentSpan)
+                ->hasSpanEventCount(1)
+                ->spanEvent(fn (ExpectSpanEvent $spanEvent) => $spanEvent->hasName('Test Child Span Event'))
+            )
+        );
+});
+
+it('is possible to configure a tracing resource', function () {
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config
+            ->configureResource(fn (Resource $resource) => $resource->addAttribute('custom_attribute', 'test'))
+            ->alwaysSampleTraces()
+    );
+
+    $flare->tracer->startTrace();
+
+    $flare->span('Test Span', fn () => null);
+
+    ExpectTracer::create($flare)->resource(
+        fn (ExpectResource $resource) => $resource->hasAttribute('custom_attribute', 'test')
+    );
+});
+
+it('it is possible to configure a tracing scope', function (){
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config
+            ->configureScope(fn (Scope $scope) => $scope->addAttribute('custom_attribute', 'test'))
+            ->alwaysSampleTraces()
+    );
+
+    $flare->tracer->startTrace();
+
+    $flare->span('Test Span', fn () => null);
+
+    ExpectTracer::create($flare)->scope(
+        fn (ExpectScope $scope) => $scope->hasAttribute('custom_attribute', 'test')
+    );
+});
+
+it('is possible to configure a span when ended', function (){
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config
+            ->configureSpans(fn (Span $span) => $span->addAttribute('custom_attribute', 'test'))
+            ->alwaysSampleTraces()
+    );
+
+    $flare->tracer->startTrace();
+
+    $flare->span('Test Span', fn () => null);
+
+    ExpectTracer::create($flare)->trace(
+        fn (ExpectTrace $trace) => $trace->span(
+            fn (ExpectSpan $span) => $span->hasAttribute('custom_attribute', 'test')
+        )
+    );
+});
+
+it('is possible to configure a span event when ended', function (){
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config
+            ->configureSpanEvents(fn (SpanEvent $spanEvent) => $spanEvent->addAttribute('custom_attribute', 'test'))
+            ->alwaysSampleTraces()
+    );
+
+    $flare->tracer->startTrace();
+
+    $flare->span('Test Span', fn () => $flare->spanEvent('Test Span Event'));
+
+    ExpectTracer::create($flare)->trace(
+        fn (ExpectTrace $trace) => $trace->span(
+            fn (ExpectSpan $span) => $span->spanEvent(
+                fn (ExpectSpanEvent $spanEvent) => $spanEvent->hasAttribute('custom_attribute', 'test')
+            )
+        )
+    );
+});
 
 // Helpers
 function reportException()

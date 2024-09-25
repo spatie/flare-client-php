@@ -30,6 +30,8 @@ use Spatie\FlareClient\Sampling\Sampler;
 use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Senders\CurlSender;
 use Spatie\FlareClient\Senders\Sender;
+use Spatie\FlareClient\Spans\Span;
+use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Support\TraceLimits;
 use Spatie\FlareClient\TraceExporters\OpenTelemetryJsonTraceExporter;
 
@@ -46,6 +48,8 @@ class FlareConfig
      * @param array<class-string<HasSolutionsForThrowable>> $solutionsProviders
      * @param Closure(Scope):void|null $configureScopeCallable
      * @param Closure(Resource):void|null $configureResourceCallable
+     * @param Closure(Span):void|null  $configureSpansCallable
+     * @param Closure(SpanEvent):void|null  $configureSpanEventsCallable
      * @param array<string> $censorHeaders
      * @param array<string> $censorBodyFields
      * @param class-string<UserAttributesProvider> $userAttributesProvider
@@ -78,6 +82,8 @@ class FlareConfig
         public bool $traceThrowables = true,
         public ?Closure $configureScopeCallable = null,
         public ?Closure $configureResourceCallable = null,
+        public ?Closure $configureSpansCallable = null,
+        public ?Closure $configureSpanEventsCallable = null,
         public bool $censorClientIps = false,
         public array $censorHeaders = [],
         public array $censorBodyFields = [],
@@ -390,8 +396,6 @@ class FlareConfig
         int $maxAttributesPerSpan = 128,
         int $maxSpanEventsPerSpan = 128,
         int $maxAttributesPerSpanEvent = 128,
-        ?Closure $configureScope = null,
-        ?Closure $configureResource = null,
     ): static {
         $this->trace = $trace;
         $this->traceLimits = new TraceLimits(
@@ -401,8 +405,45 @@ class FlareConfig
             $maxAttributesPerSpanEvent,
         );
 
-        $this->configureScopeCallable = $configureScope;
-        $this->configureResourceCallable = $configureResource;
+        return $this;
+    }
+
+    /**
+     * @param Closure(Scope):void $configureScopeCallable
+     */
+    public function configureScope(Closure $configureScopeCallable): static
+    {
+        $this->configureScopeCallable = $configureScopeCallable;
+
+        return $this;
+    }
+
+    /**
+     * @param Closure(Resource):void $configureResourceCallable
+     */
+    public function configureResource(Closure $configureResourceCallable): static
+    {
+        $this->configureResourceCallable = $configureResourceCallable;
+
+        return $this;
+    }
+
+    /**
+     * @param Closure(Span):bool $configureSpansCallable
+     */
+    public function configureSpans(Closure $configureSpansCallable): static
+    {
+        $this->configureSpansCallable = $configureSpansCallable;
+
+        return $this;
+    }
+
+    /**
+     * @param Closure(SpanEvent):bool $configureSpanEventsCallable
+     */
+    public function configureSpanEvents(Closure $configureSpanEventsCallable): static
+    {
+        $this->configureSpanEventsCallable = $configureSpanEventsCallable;
 
         return $this;
     }

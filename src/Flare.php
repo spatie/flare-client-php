@@ -22,6 +22,8 @@ use Spatie\FlareClient\Recorders\ThrowableRecorder\ThrowableRecorder;
 use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Scopes\Scope;
+use Spatie\FlareClient\Spans\Span;
+use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Support\BackTracer;
 use Spatie\FlareClient\Support\Container;
 use Spatie\FlareClient\Support\SentReports;
@@ -153,6 +155,35 @@ class Flare
     public function transaction(): TransactionRecorder|NullRecorder
     {
         return $this->recorders[RecorderType::Transaction->value] ?? NullRecorder::instance();
+    }
+
+    public function span(
+        string $name,
+        Closure $closure,
+        array $attributes = [],
+    ): Span {
+        $this->tracer->startSpan($name, attributes: $attributes);
+
+        $closure();
+
+        return $this->tracer->endCurrentSpan();
+    }
+
+    public function spanEvent(
+        string $name,
+        array $attributes = [],
+    ): ?SpanEvent {
+        if ($this->tracer->currentSpan() === null) {
+            return null;
+        }
+
+        $event = SpanEvent::build($name, attributes: $attributes);
+
+        $this->tracer->currentSpan()->addEvent(
+            $event
+        );
+
+        return $event;
     }
 
     public function handleException(Throwable $throwable): void

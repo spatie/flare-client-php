@@ -96,7 +96,7 @@ it('can trace spans', function () {
 
     $recorder->popSpan();
 
-    $spans = $flare->tracer->traces[$flare->tracer->currentTraceId()];
+    $spans = $flare->tracer->getTraces()[$flare->tracer->currentTraceId()];
 
     expect($spans)->toHaveCount(1);
 
@@ -119,7 +119,7 @@ it('will not trace span when not tracing', function () {
     $recorder->pushSpan('Hello World');
     $recorder->popSpan();
 
-    expect($flare->tracer->traces)->toHaveCount(0);
+    expect($flare->tracer->getTraces())->toHaveCount(0);
 });
 
 it('will not trace a span when the span limit is reached', function () {
@@ -138,7 +138,7 @@ it('will not trace a span when the span limit is reached', function () {
         $recorder->popSpan();
     }
 
-    expect($flare->tracer->traces[$flare->tracer->currentTraceId()])->toHaveCount(35);
+    expect($flare->tracer->getTraces()[$flare->tracer->currentTraceId()])->toHaveCount(35);
 });
 
 it('is possible to disable the recorder for tracing', function () {
@@ -153,7 +153,7 @@ it('is possible to disable the recorder for tracing', function () {
     $recorder->pushSpan('Hello World');
     $recorder->popSpan();
 
-    expect($flare->tracer->traces[$flare->tracer->currentTraceId()] ?? [])->toHaveCount(0);
+    expect($flare->tracer->getTraces()[$flare->tracer->currentTraceId()] ?? [])->toHaveCount(0);
 });
 
 it('a closure passed span will not be executed when not tracing or reporting', function () {
@@ -247,22 +247,22 @@ it('can start and end traces when not present (nested)', function () {
     $recorder->pushSpan('Pending Span A');
 
     expect($flare->tracer->isSampling())->toBeTrue();
-    expect($flare->tracer->traces)->toHaveCount(1);
+    expect($flare->tracer->getTraces())->toHaveCount(1);
 
     $recorder->pushSpan('Pending Span B');
 
     expect($flare->tracer->isSampling())->toBeTrue();
-    expect($flare->tracer->traces)->toHaveCount(1);
+    expect($flare->tracer->getTraces())->toHaveCount(1);
 
     $recorder->popSpan();
 
     expect($flare->tracer->isSampling())->toBeTrue();
-    expect($flare->tracer->traces)->toHaveCount(1);
+    expect($flare->tracer->getTraces())->toHaveCount(1);
 
     $recorder->popSpan();
 
     expect($flare->tracer->isSampling())->toBeFalse();
-    expect($flare->tracer->traces)->toHaveCount(0); // trace was sent to API
+    expect($flare->tracer->getTraces())->toHaveCount(0); // trace was sent to API
 });
 
 it('will not start and end a trace when already sampling', function () {
@@ -280,12 +280,12 @@ it('will not start and end a trace when already sampling', function () {
     $recorder->pushSpan('Pending Span A');
 
     expect($flare->tracer->isSampling())->toBeTrue();
-    expect($flare->tracer->traces)->toHaveCount(1);
+    expect($flare->tracer->getTraces())->toHaveCount(1);
 
     $recorder->popSpan();
 
     expect($flare->tracer->isSampling())->toBeTrue();
-    expect($flare->tracer->traces)->toHaveCount(1);
+    expect($flare->tracer->getTraces())->toHaveCount(1);
 });
 
 it('will not start a trace when tracing is completely disabled', function () {
@@ -301,10 +301,10 @@ it('will not start a trace when tracing is completely disabled', function () {
     $recorder->pushSpan('Pending Span A');
 
     expect($flare->tracer->isSampling())->toBeFalse();
-    expect($flare->tracer->traces)->toHaveCount(0);
+    expect($flare->tracer->getTraces())->toHaveCount(0);
 
     $recorder->popSpan();
 
     expect($flare->tracer->isSampling())->toBeFalse();
-    expect($flare->tracer->traces)->toHaveCount(0);
+    expect($flare->tracer->getTraces())->toHaveCount(0);
 });

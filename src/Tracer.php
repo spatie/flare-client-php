@@ -2,6 +2,7 @@
 
 namespace Spatie\FlareClient;
 
+use Closure;
 use Exception;
 use Spatie\FlareClient\Concerns\UsesIds;
 use Spatie\FlareClient\Concerns\UsesTime;
@@ -12,6 +13,7 @@ use Spatie\FlareClient\Sampling\RateSampler;
 use Spatie\FlareClient\Sampling\Sampler;
 use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Spans\Span;
+use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Support\TraceLimits;
 use Spatie\FlareClient\TraceExporters\TraceExporter;
 
@@ -21,12 +23,16 @@ class Tracer
     use UsesIds;
 
     /** @var array<string, Span[]> */
-    public array $traces = [];
+    protected array $traces = [];
 
     protected ?string $currentTraceId = null;
 
     protected ?string $currentSpanId = null;
 
+    /**
+     * @param Closure(Span):void|null $configureSpansCallable
+     * @param Closure(SpanEvent):void|null $configureSpanEventsCallable
+     */
     public function __construct(
         protected readonly Api $api,
         protected readonly TraceExporter $exporter,
@@ -34,6 +40,8 @@ class Tracer
         protected Resource $resource,
         protected Scope $scope,
         public readonly Sampler $sampler = new RateSampler(),
+        public ?Closure $configureSpansCallable = null,
+        public ?Closure $configureSpanEventsCallable = null,
         public SamplingType $samplingType = SamplingType::Waiting,
         public bool $clearTracesAfterExport = true,
     ) {
@@ -184,6 +192,10 @@ class Tracer
             $this->setCurrentSpanId($span->spanId);
         }
 
+        if ($span->end !== null) {
+            $this->configureSpan($span);
+        }
+
         return $span;
     }
 
@@ -216,6 +228,8 @@ class Tracer
 
         $span->end = $endUs ?? $this::getCurrentTime();
 
+        $this->configureSpan($span);
+
         $this->setCurrentSpanId($span->parentSpanId);
 
         return $span;
@@ -233,5 +247,23 @@ class Tracer
         $this->currentTraceId = null;
         $this->currentSpanId = null;
         $this->samplingType = $samplingType;
+    }
+
+    public function getTraces(): array
+    {
+        return $this->traces;
+    }
+
+    protected function configureSpan(Span $span): void
+    {
+        if ($this->configureSpansCallable) {
+            ($this->configureSpansCallable)($span);
+        }
+
+        if ($this->configureSpanEventsCallable) {
+            foreach ($span->events as $event) {
+                ($this->configureSpanEventsCallable)($event);
+            }
+        }
     }
 }

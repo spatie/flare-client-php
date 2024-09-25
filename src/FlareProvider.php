@@ -63,18 +63,36 @@ class FlareProvider
             $this->config->applicationPath
         ));
 
-        $this->container->singleton(Resource::class, fn () => (new Resource(
-            $this->config->applicationName,
-            $this->config->applicationVersion,
-            $this->config->applicationStage,
-            Telemetry::NAME,
-            Telemetry::VERSION
-        ))->host()->operatingSystem()->process()->processRuntime());
+        $this->container->singleton(Resource::class, function () {
+            $resource = new Resource(
+                $this->config->applicationName,
+                $this->config->applicationVersion,
+                $this->config->applicationStage,
+                Telemetry::NAME,
+                Telemetry::VERSION
+            );
 
-        $this->container->singleton(Scope::class, fn () => new Scope(
-            Telemetry::NAME,
-            Telemetry::VERSION
-        ));
+            $resource->host()->operatingSystem()->process()->processRuntime();
+
+            if ($this->config->configureResourceCallable) {
+                ($this->config->configureResourceCallable)($resource);
+            }
+
+            return $resource;
+        });
+
+        $this->container->singleton(Scope::class, function () {
+            $scope =  new Scope(
+                Telemetry::NAME,
+                Telemetry::VERSION
+            );
+
+            if ($this->config->configureScopeCallable) {
+                ($this->config->configureScopeCallable)($scope);
+            }
+
+            return $scope;
+        });
 
         $this->container->singleton(Tracer::class, fn () => new Tracer(
             api: $this->container->get(Api::class),
@@ -83,6 +101,8 @@ class FlareProvider
             resource: $this->container->get(Resource::class),
             scope: $this->container->get(Scope::class),
             sampler: $this->container->get(Sampler::class),
+            configureSpansCallable: $this->config->configureSpansCallable,
+            configureSpanEventsCallable: $this->config->configureSpanEventsCallable,
             samplingType: $this->config->trace
                 ? SamplingType::Waiting
                 : SamplingType::Disabled,
@@ -128,7 +148,7 @@ class FlareProvider
         $this->container->singleton(Flare::class, function () {
             $recorders = array_combine(
                 array_map(
-                    /** @var class-string<Recorder> $recorder */
+                /** @var class-string<Recorder> $recorder */
                     fn ($recorder) => is_string($recorder::type()) ? $recorder::type() : $recorder::type()->value,
                     array_keys($this->config->recorders)
                 ),

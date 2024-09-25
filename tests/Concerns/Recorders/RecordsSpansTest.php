@@ -101,7 +101,7 @@ it('can trace spans', function () {
 
     $recorder->record('Hello World');
 
-    $spans = $flare->tracer->traces[$flare->tracer->currentTraceId()];
+    $spans = $flare->tracer->getTraces()[$flare->tracer->currentTraceId()];
 
     expect($spans)->toHaveCount(1);
 
@@ -125,7 +125,7 @@ it('will not trace span when not tracing', function () {
 
     $recorder->record('Hello World');
 
-    expect($flare->tracer->traces)->toHaveCount(0);
+    expect($flare->tracer->getTraces())->toHaveCount(0);
 });
 
 it('will not trace a span when the span limit is reached', function () {
@@ -143,7 +143,7 @@ it('will not trace a span when the span limit is reached', function () {
         $recorder->record("Hello {$i}");
     }
 
-    expect($flare->tracer->traces[$flare->tracer->currentTraceId()])->toHaveCount(35);
+    expect($flare->tracer->getTraces()[$flare->tracer->currentTraceId()])->toHaveCount(35);
 });
 
 it('is possible to disable the recorder for tracing', function () {
@@ -157,7 +157,7 @@ it('is possible to disable the recorder for tracing', function () {
 
     $recorder->record('Hello World');
 
-    expect($flare->tracer->traces[$flare->tracer->currentTraceId()] ?? [])->toHaveCount(0);
+    expect($flare->tracer->getTraces()[$flare->tracer->currentTraceId()] ?? [])->toHaveCount(0);
 });
 
 it('a closure passed span will not be executed when not tracing or reporting', function () {

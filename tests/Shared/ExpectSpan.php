@@ -4,12 +4,16 @@ namespace Spatie\FlareClient\Tests\Shared;
 
 use Closure;
 use Exception;
+use ReflectionFunction;
 use Spatie\FlareClient\Contracts\FlareSpanType;
+use Spatie\FlareClient\Contracts\WithAttributes;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
 
 class ExpectSpan
 {
+    use Concerns\ExpectAttributes;
+
     protected int $spanEventAssertCounter = 0;
 
     public function __construct(
@@ -24,12 +28,12 @@ class ExpectSpan
         return $this;
     }
 
-    public function hasParent(Span|ExpectSpan|string $span): self
+    public function hasParent(Span|ExpectSpan|string &$expectedSpan): self
     {
         $id = match (true) {
-            $span instanceof Span => $span->spanId,
-            $span instanceof ExpectSpan => $span->span->spanId,
-            default => $span,
+            $expectedSpan instanceof Span => $expectedSpan->spanId,
+            $expectedSpan instanceof ExpectSpan => $expectedSpan->span->spanId,
+            default => $expectedSpan,
         };
 
         expect($this->span->parentSpanId)->toEqual($id);
@@ -51,19 +55,7 @@ class ExpectSpan
         return $this;
     }
 
-    public function hasAttributeCount(int $count): self
-    {
-        expect($this->span->attributes)->toHaveCount($count);
 
-        return $this;
-    }
-
-    public function hasAttribute(string $name, mixed $value): self
-    {
-        expect($this->span->attributes[$name])->toEqual($value);
-
-        return $this;
-    }
 
     public function isEnded(): self
     {
@@ -94,5 +86,10 @@ class ExpectSpan
         $this->spanEventAssertCounter++;
 
         return $this;
+    }
+
+    protected function entity(): WithAttributes
+    {
+        return $this->span;
     }
 }

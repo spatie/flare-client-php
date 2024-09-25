@@ -55,7 +55,7 @@ it('is possible to end a trace and send it to the API', function () {
 
     expect($tracer->samplingType)->toEqual(SamplingType::Waiting);
     expect($tracer->currentTraceId())->toBeNull();
-    expect($tracer->traces)->toHaveCount(0);
+    expect($tracer->getTraces())->toHaveCount(0);
 
     FakeSender::instance()->assertRequestsSent(1);
 });
