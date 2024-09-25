@@ -2,7 +2,6 @@
 
 namespace Spatie\FlareClient\Tests\Shared;
 
-use Closure;
 use Spatie\FlareClient\Contracts\FlareSpanEventType;
 use Spatie\FlareClient\Contracts\WithAttributes;
 use Spatie\FlareClient\Spans\SpanEvent;

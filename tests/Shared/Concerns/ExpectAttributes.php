@@ -7,7 +7,7 @@ use Spatie\FlareClient\Contracts\WithAttributes;
 
 trait ExpectAttributes
 {
-    protected abstract function entity(): WithAttributes;
+    abstract protected function entity(): WithAttributes;
 
     public function hasAttributeCount(int $count): self
     {

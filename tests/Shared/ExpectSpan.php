@@ -4,7 +4,6 @@ namespace Spatie\FlareClient\Tests\Shared;
 
 use Closure;
 use Exception;
-use ReflectionFunction;
 use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Contracts\WithAttributes;
 use Spatie\FlareClient\Spans\Span;
@@ -54,8 +53,6 @@ class ExpectSpan
 
         return $this;
     }
-
-
 
     public function isEnded(): self
     {

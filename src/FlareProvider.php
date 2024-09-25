@@ -82,7 +82,7 @@ class FlareProvider
         });
 
         $this->container->singleton(Scope::class, function () {
-            $scope =  new Scope(
+            $scope = new Scope(
                 Telemetry::NAME,
                 Telemetry::VERSION
             );
@@ -148,7 +148,7 @@ class FlareProvider
         $this->container->singleton(Flare::class, function () {
             $recorders = array_combine(
                 array_map(
-                /** @var class-string<Recorder> $recorder */
+                    /** @var class-string<Recorder> $recorder */
                     fn ($recorder) => is_string($recorder::type()) ? $recorder::type() : $recorder::type()->value,
                     array_keys($this->config->recorders)
                 ),

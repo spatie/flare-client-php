@@ -629,17 +629,19 @@ it('is possible to manually add spans and span events', function () {
     });
 
     ExpectTracer::create($flare)
-        ->trace(fn (ExpectTrace $trace) => $trace
+        ->trace(
+            fn (ExpectTrace $trace) => $trace
             ->hasSpanCount(2)
             ->span(
                 fn (ExpectSpan $span) => $span
                     ->hasName('Test Span')
                     ->missingParent()
                     ->hasSpanEventCount(1)
-                    ->spanEvent(fn (ExpectSpanEvent $spanEvent) => $spanEvent->hasName('Test Span Event'))
-                , $parentSpan
+                    ->spanEvent(fn (ExpectSpanEvent $spanEvent) => $spanEvent->hasName('Test Span Event')),
+                $parentSpan
             )
-            ->span(fn (ExpectSpan $span) => $span
+            ->span(
+                fn (ExpectSpan $span) => $span
                 ->hasName('Test Child Span')
                 ->hasParent($parentSpan)
                 ->hasSpanEventCount(1)
@@ -664,7 +666,7 @@ it('is possible to configure a tracing resource', function () {
     );
 });
 
-it('it is possible to configure a tracing scope', function (){
+it('it is possible to configure a tracing scope', function () {
     $flare = setupFlare(
         fn (FlareConfig $config) => $config
             ->configureScope(fn (Scope $scope) => $scope->addAttribute('custom_attribute', 'test'))
@@ -680,7 +682,7 @@ it('it is possible to configure a tracing scope', function (){
     );
 });
 
-it('is possible to configure a span when ended', function (){
+it('is possible to configure a span when ended', function () {
     $flare = setupFlare(
         fn (FlareConfig $config) => $config
             ->configureSpans(fn (Span $span) => $span->addAttribute('custom_attribute', 'test'))
@@ -698,7 +700,7 @@ it('is possible to configure a span when ended', function (){
     );
 });
 
-it('is possible to configure a span event when ended', function (){
+it('is possible to configure a span event when ended', function () {
     $flare = setupFlare(
         fn (FlareConfig $config) => $config
             ->configureSpanEvents(fn (SpanEvent $spanEvent) => $spanEvent->addAttribute('custom_attribute', 'test'))
