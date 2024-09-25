@@ -97,19 +97,19 @@ class FlareConfig
         return new static($apiToken);
     }
 
-    public function censorClientIps(bool $censorClientIps = true): self
+    public function censorClientIps(bool $censorClientIps = true): static
     {
         $this->censorClientIps = $censorClientIps;
     }
 
-    public function censorHeaders(string ...$headers): self
+    public function censorHeaders(string ...$headers): static
     {
         array_push($this->censorHeaders, ...$headers);
 
         return $this;
     }
 
-    public function censorBodyFields(string ...$fields): self
+    public function censorBodyFields(string ...$fields): static
     {
         array_push($this->censorBodyFields, ...$fields);
 
@@ -144,7 +144,7 @@ class FlareConfig
 
     public function addRequestInfo(
         string $middleware = AddRequestInformation::class,
-    ): self {
+    ): static {
         $this->middleware[$middleware] = [];
 
         return $this;
@@ -152,7 +152,7 @@ class FlareConfig
 
     public function addConsoleInfo(
         string $middleware = AddConsoleInformation::class,
-    ): self {
+    ): static {
         $this->middleware[$middleware] = [];
 
         return $this;
@@ -484,7 +484,7 @@ class FlareConfig
     /**
      * @param class-string<FlareMiddleware> ...$middlewareClasses
      */
-    public function removeMiddleware(string ...$middlewareClasses): self
+    public function removeMiddleware(string ...$middlewareClasses): static
     {
         foreach ($middlewareClasses as $middlewareClass) {
             unset($this->middleware[$middlewareClass]);
@@ -493,7 +493,7 @@ class FlareConfig
         return $this;
     }
 
-    public function removeAllMiddleware(): self
+    public function removeAllMiddleware(): static
     {
         $this->middleware = [];
 
@@ -503,7 +503,7 @@ class FlareConfig
     /**
      * @param class-string<Recorder> ...$recorderClasses
      */
-    public function removeRecorder(string ...$recorderClasses): self
+    public function removeRecorder(string ...$recorderClasses): static
     {
         foreach ($recorderClasses as $recorderClass) {
             unset($this->recorders[$recorderClass]);
@@ -512,7 +512,7 @@ class FlareConfig
         return $this;
     }
 
-    public function removeAllRecorders(): self
+    public function removeAllRecorders(): static
     {
         $this->recorders = [];
 
@@ -525,7 +525,7 @@ class FlareConfig
     public function sendUsing(
         string $senderClass,
         array $config = []
-    ): self {
+    ): static {
         $this->sender = $senderClass;
         $this->senderConfig = $config;
 
