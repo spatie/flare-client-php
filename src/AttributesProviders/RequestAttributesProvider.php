@@ -13,9 +13,6 @@ use Throwable;
 
 class RequestAttributesProvider
 {
-    /**
-     * @param UserAttributesProvider<object> $userAttributesProvider
-     */
     public function __construct(
         protected Redactor $redactor,
         protected UserAttributesProvider $userAttributesProvider

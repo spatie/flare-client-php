@@ -52,7 +52,7 @@ class FlareConfig
      * @param Closure(SpanEvent):void|null  $configureSpanEventsCallable
      * @param array<string> $censorHeaders
      * @param array<string> $censorBodyFields
-     * @param class-string<UserAttributesProvider<object>> $userAttributesProvider
+     * @param class-string<UserAttributesProvider> $userAttributesProvider
      */
     public function __construct(
         public ?string $apiToken = null,

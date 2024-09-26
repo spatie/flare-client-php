@@ -2,38 +2,27 @@
 
 namespace Spatie\FlareClient\AttributesProviders;
 
-/**
- * @template T
- */
 class UserAttributesProvider
 {
-    /**
-     * @param T $user
-     */
+
     public function id(mixed $user): string|int|null
     {
         return null;
     }
 
-    /**
-     * @param T $user
-     */
+
     public function fullName(mixed $user): string|null
     {
         return null;
     }
 
-    /**
-     * @param T $user
-     */
+
     public function email(mixed $user): string|null
     {
         return null;
     }
 
-    /**
-     * @param T $user
-     */
+
     public function attributes(mixed $user): array
     {
         return [];
