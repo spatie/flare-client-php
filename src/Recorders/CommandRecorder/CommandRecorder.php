@@ -88,6 +88,8 @@ class CommandRecorder implements SpansRecorder
 
             if (is_bool($option) && $option === true) {
                 $options[] = "--{$key}";
+
+                continue;
             }
 
             if (is_array($option)) {
@@ -96,6 +98,7 @@ class CommandRecorder implements SpansRecorder
 
             $options[] = "--{$key}={$option}";
         }
+
 
         return array_merge($arguments, $options);
     }
