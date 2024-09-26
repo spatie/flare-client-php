@@ -23,7 +23,7 @@
     },
     "require-dev": {
         "dms/phpunit-arraysubset-asserts": "^0.5.0",
-        "pestphp/pest": "^2.0",
+        "pestphp/pest": "^2.29",
         "phpstan/extension-installer": "^1.1",
         "phpstan/phpstan-deprecation-rules": "^1.0",
         "phpstan/phpstan-phpunit": "^1.0",
