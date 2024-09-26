@@ -14,7 +14,7 @@
         "ext-curl": "*",
         "guzzlehttp/guzzle": "^7.9",
         "psr/container": "^2.0",
-        "spatie/backtrace": "^1.6.1",
+        "spatie/backtrace": "^1.6.2",
         "spatie/error-solutions": "^1.0",
         "symfony/http-foundation": "^5.2|^6.0|^7.0",
         "symfony/mime": "^5.2|^6.0|^7.0",
