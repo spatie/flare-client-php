@@ -8,7 +8,7 @@ applicationPath: null
 trackingUuid: fake-uuid
 handled: null
 attributes:
-    service.name: 'My Application'
+    service.name: 'PHP application'
     service.version: null
     service.stage: null
     telemetry.sdk.language: fake-telemetry-sdk-language

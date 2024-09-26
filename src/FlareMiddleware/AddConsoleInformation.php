@@ -12,7 +12,7 @@ class AddConsoleInformation implements FlareMiddleware
     // TODO: Since we can add command spans, why not use these spans to add more information to the report?
     // And provide the entry point with the span uuid?
 
-    public function handle(ReportFactory $report, Closure $next)
+    public function handle(ReportFactory $report, Closure $next): Closure|ReportFactory
     {
         if (! $this->isRunningInConsole()) {
             return $next($report);

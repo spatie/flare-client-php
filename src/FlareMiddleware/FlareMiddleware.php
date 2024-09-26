@@ -7,5 +7,5 @@ use Spatie\FlareClient\ReportFactory;
 
 interface FlareMiddleware
 {
-    public function handle(ReportFactory $report, Closure $next);
+    public function handle(ReportFactory $report, Closure $next): Closure|ReportFactory;
 }

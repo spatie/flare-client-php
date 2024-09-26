@@ -20,17 +20,15 @@ class AddRequestInformation implements FlareMiddleware
                 $container->get(Redactor::class),
                 $container->get(UserAttributesProvider::class)
             ),
-            $config
         );
     }
 
     public function __construct(
         protected RequestAttributesProvider $attributesProvider,
-        array $config
     ) {
     }
 
-    public function handle(ReportFactory $report, Closure $next)
+    public function handle(ReportFactory $report, Closure $next): Closure|ReportFactory
     {
         if ($this->isRunningInConsole()) {
             return $next($report);
