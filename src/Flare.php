@@ -124,7 +124,7 @@ class Flare
 
     public function command(): CommandRecorder|NullRecorder
     {
-         return$this->recorders[RecorderType::Command->value] ?? NullRecorder::instance();
+        return$this->recorders[RecorderType::Command->value] ?? NullRecorder::instance();
     }
 
     public function cache(): CacheRecorder|NullRecorder

@@ -71,7 +71,6 @@ class OpenTelemetryJsonTraceExporter implements TraceExporter
         ];
     }
 
-
     protected function exportSpan(Span $span): array
     {
         return [

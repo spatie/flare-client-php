@@ -80,7 +80,7 @@ class Resource implements WithAttributes
 
     public function host(): self
     {
-        if($hostname = gethostname()){
+        if ($hostname = gethostname()) {
             $this->attributes['host.ip'] = gethostbyname($hostname);
         }
 
