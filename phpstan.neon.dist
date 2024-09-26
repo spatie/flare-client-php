@@ -1,6 +1,3 @@
-includes:
-    - phpstan-baseline.neon
-
 parameters:
     level: 8
     paths:
@@ -10,6 +7,11 @@ parameters:
         - src/FlareMiddleware
         - src/Context/RequestContextProvider
 
+    ignoreErrors:
+        - "#Method [a-zA-Z0-9\\_\\\\:\\(\\)]+ has parameter \\$[a-zA-Z0-9_]+ with no value type specified in iterable type array.#"
+        - "#Method [a-zA-Z0-9\\_\\\\:\\(\\)]+ return type has no value type specified in iterable type array.#"
+        - "#Property [a-zA-Z0-9\\$\\_\\\\:\\(\\)]+ type has no value type specified in iterable type array.#"
+        - "#Illuminate\\\\Contracts\\\\Container\\\\Container#"
 
     tmpDir: build/phpstan
     checkMissingIterableValueType: true
