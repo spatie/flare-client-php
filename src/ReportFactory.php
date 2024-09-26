@@ -195,7 +195,7 @@ class ReportFactory implements WithAttributes
         return new Report(
             stacktrace: $stackTrace,
             exceptionClass: $exceptionClass,
-            message: $message,
+            message: $message ?? '',
             level: $this->level,
             attributes: $attributes,
             solutions: $this->solutions,
@@ -219,6 +219,6 @@ class ReportFactory implements WithAttributes
         return $stacktrace
             ->withArguments($this->withStackTraceArguments)
             ->reduceArguments($this->argumentReducers)
-            ->applicationPath($applicationPath ?? '');
+            ->applicationPath($this->applicationPath ?? '');
     }
 }

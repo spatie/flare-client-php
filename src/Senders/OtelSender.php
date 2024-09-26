@@ -29,6 +29,8 @@ class OtelSender implements Sender
             return (new GuzzleSender())->post($this->otelEndpoint, $apiToken, $payload);
         } catch (\Exception $e) {
             ray($payload, $e);
+
+            return new Response(500, 'Failed to send traces to Otel');
         }
     }
 

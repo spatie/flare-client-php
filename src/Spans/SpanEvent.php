@@ -4,6 +4,7 @@ namespace Spatie\FlareClient\Spans;
 
 use Spatie\FlareClient\Concerns\HasAttributes;
 use Spatie\FlareClient\Concerns\UsesTime;
+use Spatie\FlareClient\Contracts\FlareSpanEventType;
 use Spatie\FlareClient\Contracts\WithAttributes;
 
 class SpanEvent implements WithAttributes
@@ -37,6 +38,9 @@ class SpanEvent implements WithAttributes
         );
     }
 
+    /**
+     * @return array{startTimeUnixNano: int, endTimeUnixNano: null, attributes: array, type: FlareSpanEventType}|null
+     */
     public function toEvent(): ?array
     {
         $type = $this->attributes['flare.span_event_type'] ?? null;

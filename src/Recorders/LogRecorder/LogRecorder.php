@@ -11,6 +11,7 @@ use Spatie\FlareClient\Enums\SpanEventType;
 
 class LogRecorder implements SpanEventsRecorder
 {
+    /** @use RecordsSpanEvents<LogMessageSpanEvent> */
     use RecordsSpanEvents;
 
     public static function type(): string|RecorderType

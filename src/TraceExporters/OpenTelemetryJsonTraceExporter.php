@@ -47,6 +47,9 @@ class OpenTelemetryJsonTraceExporter implements TraceExporter
         ];
     }
 
+    /**
+     * @return array{attributes: array<string, mixed>, droppedAttributesCount: int}
+     */
     protected function exportResource(Resource $resource): array
     {
         return [
@@ -55,6 +58,9 @@ class OpenTelemetryJsonTraceExporter implements TraceExporter
         ];
     }
 
+    /**
+     * @return array{name: string, version: string, attributes: array<string, mixed>, droppedAttributesCount: int}
+     */
     protected function exportScope(Scope $scope): array
     {
         return [
@@ -64,6 +70,7 @@ class OpenTelemetryJsonTraceExporter implements TraceExporter
             'droppedAttributesCount' => $scope->droppedAttributesCount,
         ];
     }
+
 
     protected function exportSpan(Span $span): array
     {
@@ -84,6 +91,11 @@ class OpenTelemetryJsonTraceExporter implements TraceExporter
         ];
     }
 
+    /**
+     * @param SpanEvent $spanEvent
+     *
+     * @return array{name: string, timeUnixNano: int, attributes: array<string, mixed>, droppedAttributesCount: int}
+     */
     protected function exportSpanEvent(SpanEvent $spanEvent): array
     {
         return [

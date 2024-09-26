@@ -83,7 +83,7 @@ trait RecordsEntries
      *
      * @return ?T
      */
-    protected function persistEntry(Closure $entry): null|Span|SpanEvent
+    protected function persistEntry(Closure $entry)
     {
         $shouldTrace = $this->shouldTrace();
         $shouldReport = $this->shouldReport();
@@ -114,14 +114,12 @@ trait RecordsEntries
     }
 
     /**
-     * @template T of Span|SpanEvent
-     *
      * @param T $entry
      *
      * @return T
      */
     protected function setOrigin(
-        Span|SpanEvent $entry,
+        mixed $entry,
         ?Closure $frameAfter = null
     ): Span|SpanEvent {
         $duration = match (true) {

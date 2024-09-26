@@ -17,7 +17,7 @@ class Resource implements WithAttributes
      * @param array $attributes <string, mixed>
      */
     public function __construct(
-        string $serviceName = 'PHP application',
+        string $serviceName,
         ?string $serviceVersion = null,
         ?string $serviceStage = null,
         string $telemetrySdkName = Telemetry::NAME,
@@ -80,7 +80,10 @@ class Resource implements WithAttributes
 
     public function host(): self
     {
-        $this->attributes['host.ip'] = gethostbyname(gethostname());
+        if($hostname = gethostname()){
+            $this->attributes['host.ip'] = gethostbyname($hostname);
+        }
+
         $this->attributes['host.name'] = php_uname('n');
         $this->attributes['host.arch'] = php_uname('m');
 
@@ -132,12 +135,12 @@ class Resource implements WithAttributes
 
         $this->addAttributes($attributes);
 
-        if ($this->serviceVersion === null && isset($attributes['git.tag'])) {
-            $this->serviceVersion = $attributes['git.tag'];
+        if (isset($attributes['service.version']) === false && isset($attributes['git.tag'])) {
+            $this->addAttribute('service.version', $attributes['git.tag']);
         }
 
-        if ($this->serviceVersion === null && isset($attributes['git.hash'])) {
-            $this->serviceVersion = $attributes['git.hash'];
+        if (isset($attributes['service.version']) === false && isset($attributes['git.hash'])) {
+            $this->addAttribute('service.version', $attributes['git.hash']);
         }
 
         return $this;

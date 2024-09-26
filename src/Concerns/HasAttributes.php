@@ -2,6 +2,7 @@
 
 namespace Spatie\FlareClient\Concerns;
 
+
 trait HasAttributes
 {
     public array $attributes = [];

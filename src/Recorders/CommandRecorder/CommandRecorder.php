@@ -13,6 +13,7 @@ use Symfony\Component\Console\Input\InputInterface;
 
 class CommandRecorder implements SpansRecorder
 {
+    /** @use RecordsPendingSpans<Span> */
     use RecordsPendingSpans;
 
     public static function type(): string|RecorderType
@@ -76,25 +77,26 @@ class CommandRecorder implements SpansRecorder
             return [];
         }
 
-        $arguments = collect($input->getArguments())
-            ->filter()
-            ->values();
+        $arguments = array_values(array_filter($input->getArguments()));
 
-        $options = collect($input->getOptions())
-            ->reject(fn (mixed $option) => $option === null || $option === false)
-            ->map(function (mixed $option, string $key) {
-                if (is_bool($option) && $option) {
-                    return "--{$key}";
-                }
+        $options = [];
 
-                if (is_array($option)) {
-                    $option = implode(',', $option);
-                }
+        foreach ($input->getOptions() as $key => $option) {
+            if ($option === null || $option === false) {
+                continue;
+            }
 
-                return "--{$key}={$option}";
-            })
-            ->values();
+            if (is_bool($option) && $option === true) {
+                $options[] = "--{$key}";
+            }
 
-        return $arguments->merge($options)->toArray();
+            if (is_array($option)) {
+                $option = implode(',', $option);
+            }
+
+            $options[] = "--{$key}={$option}";
+        }
+
+        return array_merge($arguments, $options);
     }
 }

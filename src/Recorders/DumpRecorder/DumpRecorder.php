@@ -13,6 +13,7 @@ use Symfony\Component\VarDumper\VarDumper;
 
 class DumpRecorder implements SpanEventsRecorder
 {
+    /** @use RecordsSpanEvents<DumpSpanEvent> */
     use RecordsSpanEvents;
 
     protected static MultiDumpHandler $multiDumpHandler;

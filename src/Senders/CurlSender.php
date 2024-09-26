@@ -2,11 +2,20 @@
 
 namespace Spatie\FlareClient\Senders;
 
+use CurlHandle;
 use Spatie\FlareClient\Senders\Exceptions\ConnectionError;
 use Spatie\FlareClient\Senders\Support\Response;
 
 class CurlSender implements Sender
 {
+    protected int $timeout;
+
+    public function __construct(
+        protected array $config = []
+    ) {
+        $this->timeout = $this->config['timeout'] ?? 10;
+    }
+
     public function post(string $endpoint, string $apiToken, array $payload): Response
     {
         $queryString = http_build_query([
@@ -21,9 +30,25 @@ class CurlSender implements Sender
 
         $curlHandle = $this->getCurlHandle($fullUrl, $headers);
 
-        $this->attachRequestPayload($curlHandle, $payload);
+        $encoded = json_encode($payload);
 
-        $body = json_decode(curl_exec($curlHandle), true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new ConnectionError('Invalid JSON payload provided');
+        }
+
+        curl_setopt($curlHandle, CURLOPT_POSTFIELDS, $encoded);
+
+        $json = curl_exec($curlHandle);
+
+        if (is_bool($json)) {
+            throw new ConnectionError(curl_error($curlHandle));
+        }
+
+        $body = json_decode($json, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new ConnectionError('Invalid JSON response received');
+        }
 
         $headers = curl_getinfo($curlHandle);
         $error = curl_error($curlHandle);
@@ -32,12 +57,10 @@ class CurlSender implements Sender
             throw new ConnectionError($error);
         }
 
-        $code = ! isset($headers['http_code']) ? (int) $headers['http_code'] : 422;
-
-        return new Response($code, $body);
+        return new Response($headers['http_code'], $body);
     }
 
-    protected function getCurlHandle(string $fullUrl, array $headers = [])
+    protected function getCurlHandle(string $fullUrl, array $headers = []): CurlHandle
     {
         $curlHandle = curl_init();
 
@@ -61,13 +84,5 @@ class CurlSender implements Sender
         curl_setopt($curlHandle, CURLOPT_POST, true);
 
         return $curlHandle;
-    }
-
-    protected function attachRequestPayload(&$curlHandle, array $data)
-    {
-        $encoded = json_encode($data);
-
-        $this->lastRequest['body'] = $encoded;
-        curl_setopt($curlHandle, CURLOPT_POSTFIELDS, $encoded);
     }
 }

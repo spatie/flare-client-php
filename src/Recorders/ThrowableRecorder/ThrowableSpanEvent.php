@@ -71,7 +71,7 @@ class ThrowableSpanEvent extends SpanEvent
 
     protected static function phpFrameToLine(
         array $frame
-    ) {
+    ): string {
         $location = match (true) {
             ($frame['class'] ?? null) !== null && ($frame['method'] ?? null) !== null => "{$frame['class']}::{$frame['method']}",
             ($frame['class'] ?? null) !== null => "{$frame['class']}",

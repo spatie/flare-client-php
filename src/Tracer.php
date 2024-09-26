@@ -47,6 +47,9 @@ class Tracer
     ) {
     }
 
+    /**
+     * @param array{traceparent?: string} $context
+     */
     public function potentialStartTrace(array $context = []): SamplingType
     {
         if ($this->samplingType !== SamplingType::Waiting) {
@@ -199,6 +202,9 @@ class Tracer
         return $span;
     }
 
+    /**
+     * @param array<string, mixed> $attributes
+     */
     public function startSpan(
         string $name,
         ?int $start = null,
@@ -216,15 +222,19 @@ class Tracer
         $span = $this->addSpan($span, makeCurrent: true);
 
         if ($end !== null) {
-            $this->endCurrentSpan($end);
+            $this->endSpan($span, $end);
         }
 
         return $span;
     }
 
-    public function endCurrentSpan(?int $endUs = null): Span
+    public function endSpan(?Span $span = null, ?int $endUs = null): Span
     {
-        $span = $this->currentSpan();
+        $span ??= $this->currentSpan();
+
+        if ($span === null) {
+            throw new Exception('No span to end');
+        }
 
         $span->end = $endUs ?? $this::getCurrentTime();
 
@@ -249,6 +259,9 @@ class Tracer
         $this->samplingType = $samplingType;
     }
 
+    /**
+     * @return array<string, Span[]>
+     */
     public function getTraces(): array
     {
         return $this->traces;

@@ -5,6 +5,8 @@ namespace Spatie\FlareClient\Spans;
 use Spatie\FlareClient\Concerns\HasAttributes;
 use Spatie\FlareClient\Concerns\UsesIds;
 use Spatie\FlareClient\Concerns\UsesTime;
+use Spatie\FlareClient\Contracts\FlareSpanEventType;
+use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Contracts\WithAttributes;
 use Spatie\FlareClient\Enums\SpanStatusCode;
 
@@ -94,13 +96,6 @@ class Span implements WithAttributes
         return $this;
     }
 
-    public function end(?int $endUs = null): self
-    {
-        $this->end = $endUs ?? self::getCurrentTime();
-
-        return $this;
-    }
-
     public function setStatus(SpanStatusCode $code, ?string $message = null): self
     {
         $this->status = new SpanStatus($code, $message);
@@ -108,6 +103,9 @@ class Span implements WithAttributes
         return $this;
     }
 
+    /**
+     * @return array{startTimeUnixNano: int, endTimeUnixNano: int|null, attributes: array, type: FlareSpanType}|null
+     */
     public function toEvent(): ?array
     {
         $type = $this->attributes['flare.span_type'] ?? null;

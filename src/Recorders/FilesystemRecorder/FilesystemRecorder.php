@@ -9,6 +9,7 @@ use Spatie\FlareClient\Spans\Span;
 
 class FilesystemRecorder implements SpansRecorder
 {
+    /** @use RecordsPendingSpans<Span> */
     use RecordsPendingSpans;
 
     public static function type(): string|RecorderType
@@ -19,8 +20,8 @@ class FilesystemRecorder implements SpansRecorder
     public function recordOperationStart(
         string $name,
         array $attributes,
-    ) {
-        $this->startSpan(fn () => Span::build(
+    ): ?Span {
+        return $this->startSpan(fn () => Span::build(
             $this->tracer->currentTraceId() ?? '',
             $this->tracer->currentSpanId(),
             name: "Filesystem - {$name}",
@@ -30,7 +31,7 @@ class FilesystemRecorder implements SpansRecorder
 
     public function recordOperationEnd(
         ?array $attributes = null,
-    ) {
-        $this->endSpan(attributes: $attributes);
+    ): ?Span {
+        return $this->endSpan(attributes: $attributes);
     }
 }

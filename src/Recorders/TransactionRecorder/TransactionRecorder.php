@@ -9,8 +9,10 @@ use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Enums\TransactionStatus;
 
+
 class TransactionRecorder implements SpansRecorder
 {
+    /** @use RecordsPendingSpans<TransactionSpan> */
     use RecordsPendingSpans;
 
     public static function type(): string|RecorderType
@@ -22,7 +24,7 @@ class TransactionRecorder implements SpansRecorder
         FlareSpanType $spanType = SpanType::Transaction,
         array $attributes = [],
     ): ?TransactionSpan {
-        return $this->startSpan(fn () => (new TransactionSpan(
+        return $this->startSpan(fn (): TransactionSpan => (new TransactionSpan(
             traceId: $this->tracer->currentTraceId() ?? '',
             parentSpanId: $this->tracer->currentSpan()?->spanId,
             spanType: $spanType,

@@ -15,7 +15,7 @@ class HtmlDumper extends BaseHtmlDumper
         $this->setDumpHeader('');
     }
 
-    public function dumpVariable($variable): string
+    public function dumpVariable(mixed $variable): string
     {
         $cloner = new VarCloner();
 

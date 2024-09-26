@@ -10,6 +10,7 @@ use Spatie\FlareClient\Enums\SpanType;
 
 class QueryRecorder implements SpansRecorder
 {
+    /** @use RecordsSpans<QuerySpan> */
     use RecordsSpans;
 
     protected bool $includeBindings = true;

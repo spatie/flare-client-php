@@ -49,7 +49,9 @@ it('is possible to end a trace and send it to the API', function () {
 
     $tracer->startTrace();
 
-    $tracer->startSpan('Some span')->end();
+    $tracer->startSpan('Some span');
+
+    $tracer->endSpan();
 
     $tracer->endTrace();
 
@@ -190,7 +192,7 @@ it('can start and end a span', function () {
 
     FakeTime::setup('2019-01-01 12:36:56');
 
-    $tracer->endCurrentSpan();
+    $tracer->endSpan();
 
     expect($span2->end)->toBe(1546346216000000000);
     expect($tracer->currentSpanId())->toBe('fake-span-id');
@@ -198,7 +200,7 @@ it('can start and end a span', function () {
 
     FakeTime::setup('2019-01-01 12:37:56');
 
-    $tracer->endCurrentSpan();
+    $tracer->endSpan();
 
     expect($span->end)->toBe(1546346276000000000);
     expect($tracer->currentSpanId())->toBeNull();

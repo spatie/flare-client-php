@@ -124,7 +124,7 @@ class Flare
 
     public function command(): CommandRecorder|NullRecorder
     {
-        return $this->recorders[RecorderType::Command->value] ?? NullRecorder::instance();
+         return$this->recorders[RecorderType::Command->value] ?? NullRecorder::instance();
     }
 
     public function cache(): CacheRecorder|NullRecorder
@@ -162,11 +162,11 @@ class Flare
         Closure $closure,
         array $attributes = [],
     ): Span {
-        $this->tracer->startSpan($name, attributes: $attributes);
+        $span = $this->tracer->startSpan($name, attributes: $attributes);
 
         $closure();
 
-        return $this->tracer->endCurrentSpan();
+        return $this->tracer->endSpan($span);
     }
 
     public function spanEvent(
@@ -388,14 +388,7 @@ class Flare
             ->argumentReducers($this->argumentReducers)
             ->context($this->userProvidedContext);
 
-        /** @var array<FlareMiddleware> $middlewares */
-        $middlewares = array_map(function ($singleMiddleware) {
-            return is_string($singleMiddleware)
-                ? new $singleMiddleware
-                : $singleMiddleware;
-        }, $this->middleware);
-
-        foreach ($middlewares as $middleware) {
+        foreach ($this->middleware as $middleware) {
             $factory = $middleware->handle($factory, function ($factory) {
                 return $factory;
             });

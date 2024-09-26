@@ -19,16 +19,15 @@ class Api
     protected array $traceQueue = [];
 
     public function __construct(
-        protected ?string $apiToken = null,
+        protected string $apiToken,
         protected string $baseUrl = 'https://reporting.flareapp.io/api',
-        protected int $timeout = 10,
         protected Sender $sender = new CurlSender(),
         protected bool $sendReportsImmediately = false,
     ) {
         register_shutdown_function([$this, 'sendQueue']);
     }
 
-    public function sendReportsImmediately($sendReportsImmediately = true): self
+    public function sendReportsImmediately(bool $sendReportsImmediately = true): self
     {
         $this->sendReportsImmediately = $sendReportsImmediately;
 

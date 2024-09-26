@@ -1,106 +1,896 @@
 parameters:
 	ignoreErrors:
 		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Api\\:\\:addTraceToQueue\\(\\) has parameter \\$trace with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Api.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Api\\:\\:post\\(\\) has parameter \\$payload with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Api.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Api\\:\\:sendTraceToApi\\(\\) has parameter \\$trace with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Api.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Api\\:\\:trace\\(\\) has parameter \\$trace with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Api.php
+
+		-
+			message: "#^Property Spatie\\\\FlareClient\\\\Api\\:\\:\\$traceQueue type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Api.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\AttributesProviders\\\\ConsoleAttributesProvider\\:\\:toArray\\(\\) has parameter \\$arguments with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/AttributesProviders/ConsoleAttributesProvider.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\AttributesProviders\\\\ConsoleAttributesProvider\\:\\:toArray\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/AttributesProviders/ConsoleAttributesProvider.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\AttributesProviders\\\\GitAttributesProvider\\:\\:toArray\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/AttributesProviders/GitAttributesProvider.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\AttributesProviders\\\\RequestAttributesProvider\\:\\:getCookies\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/AttributesProviders/RequestAttributesProvider.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\AttributesProviders\\\\RequestAttributesProvider\\:\\:getHeaders\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/AttributesProviders/RequestAttributesProvider.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\AttributesProviders\\\\RequestAttributesProvider\\:\\:getRequest\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/AttributesProviders/RequestAttributesProvider.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\AttributesProviders\\\\RequestAttributesProvider\\:\\:getSession\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/AttributesProviders/RequestAttributesProvider.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\AttributesProviders\\\\RequestAttributesProvider\\:\\:mapFiles\\(\\) has parameter \\$files with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/AttributesProviders/RequestAttributesProvider.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\AttributesProviders\\\\RequestAttributesProvider\\:\\:mapFiles\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/AttributesProviders/RequestAttributesProvider.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\AttributesProviders\\\\RequestAttributesProvider\\:\\:toArray\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/AttributesProviders/RequestAttributesProvider.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\AttributesProviders\\\\UserAttributesProvider\\:\\:attributes\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/AttributesProviders/UserAttributesProvider.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\AttributesProviders\\\\UserAttributesProvider\\:\\:toArray\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/AttributesProviders/UserAttributesProvider.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Contracts\\\\WithAttributes\\:\\:addAttributes\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Contracts/WithAttributes.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:cache\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\CacheRecorder\\\\CacheRecorder\\|Spatie\\\\FlareClient\\\\Recorders\\\\NullRecorder but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\.$#"
+			count: 1
+			path: src/Flare.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:command\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\CommandRecorder\\\\CommandRecorder\\|Spatie\\\\FlareClient\\\\Recorders\\\\NullRecorder but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\.$#"
+			count: 1
+			path: src/Flare.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:context\\(\\) has parameter \\$key with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Flare.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:filesystem\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\FilesystemRecorder\\\\FilesystemRecorder\\|Spatie\\\\FlareClient\\\\Recorders\\\\NullRecorder but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\.$#"
+			count: 1
+			path: src/Flare.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:glow\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\GlowRecorder\\\\GlowRecorder\\|Spatie\\\\FlareClient\\\\Recorders\\\\NullRecorder but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\.$#"
+			count: 1
+			path: src/Flare.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:log\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\LogRecorder\\\\LogRecorder\\|Spatie\\\\FlareClient\\\\Recorders\\\\NullRecorder but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\.$#"
+			count: 1
+			path: src/Flare.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:query\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\NullRecorder\\|Spatie\\\\FlareClient\\\\Recorders\\\\QueryRecorder\\\\QueryRecorder but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\.$#"
+			count: 1
+			path: src/Flare.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:span\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Flare.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:spanEvent\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Flare.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:transaction\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\NullRecorder\\|Spatie\\\\FlareClient\\\\Recorders\\\\TransactionRecorder\\\\TransactionRecorder but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\.$#"
+			count: 1
+			path: src/Flare.php
+
+		-
+			message: "#^Parameter \\#1 \\$callback of function set_error_handler expects \\(callable\\(int, string, string, int\\)\\: bool\\)\\|null, array\\{\\$this\\(Spatie\\\\FlareClient\\\\Flare\\), 'handleError'\\} given\\.$#"
+			count: 2
+			path: src/Flare.php
+
+		-
+			message: "#^Property Spatie\\\\FlareClient\\\\Flare\\:\\:\\$userProvidedContext type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Flare.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\FlareConfig\\:\\:__construct\\(\\) has parameter \\$middleware with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/FlareConfig.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\FlareConfig\\:\\:__construct\\(\\) has parameter \\$recorders with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/FlareConfig.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\FlareConfig\\:\\:__construct\\(\\) has parameter \\$samplerConfig with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/FlareConfig.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\FlareConfig\\:\\:__construct\\(\\) has parameter \\$senderConfig with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/FlareConfig.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\FlareConfig\\:\\:addCacheEvents\\(\\) has parameter \\$operations with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/FlareConfig.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\FlareConfig\\:\\:addStackFrameArguments\\(\\) has parameter \\$argumentReducers with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/FlareConfig.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\FlareConfig\\:\\:sampler\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/FlareConfig.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\FlareConfig\\:\\:sendUsing\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/FlareConfig.php
+
+		-
+			message: "#^Unsafe usage of new static\\(\\)\\.$#"
+			count: 1
+			path: src/FlareConfig.php
+
+		-
+			message: "#^Call to method get\\(\\) on an unknown class Illuminate\\\\Contracts\\\\Container\\\\Container\\.$#"
+			count: 18
+			path: src/FlareProvider.php
+
+		-
+			message: "#^Call to method singleton\\(\\) on an unknown class Illuminate\\\\Contracts\\\\Container\\\\Container\\.$#"
+			count: 16
+			path: src/FlareProvider.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\FlareProvider\\:\\:__construct\\(\\) has parameter \\$registerRecorderAndMiddlewaresCallback with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/FlareProvider.php
+
+		-
+			message: "#^Parameter \\$container of anonymous function has invalid type Illuminate\\\\Contracts\\\\Container\\\\Container\\.$#"
+			count: 1
+			path: src/FlareProvider.php
+
+		-
+			message: "#^Parameter \\$container of method Spatie\\\\FlareClient\\\\FlareProvider\\:\\:__construct\\(\\) has invalid type Illuminate\\\\Contracts\\\\Container\\\\Container\\.$#"
+			count: 1
+			path: src/FlareProvider.php
+
+		-
+			message: "#^Parameter \\$registerRecorderAndMiddlewaresCallback of method Spatie\\\\FlareClient\\\\FlareProvider\\:\\:__construct\\(\\) has invalid type Illuminate\\\\Contracts\\\\Container\\\\Container\\.$#"
+			count: 1
+			path: src/FlareProvider.php
+
+		-
+			message: "#^Property Spatie\\\\FlareClient\\\\FlareProvider\\:\\:\\$container has unknown class Illuminate\\\\Contracts\\\\Container\\\\Container as its type\\.$#"
+			count: 1
+			path: src/FlareProvider.php
+
+		-
+			message: "#^Property Spatie\\\\FlareClient\\\\FlareProvider\\:\\:\\$registerRecorderAndMiddlewaresCallback has unknown class Illuminate\\\\Contracts\\\\Container\\\\Container as its type\\.$#"
+			count: 1
+			path: src/FlareProvider.php
+
+		-
+			message: "#^Trying to invoke \\(Closure\\(Illuminate\\\\Contracts\\\\Container\\\\Container\\|Spatie\\\\FlareClient\\\\Support\\\\Container, class\\-string\\<Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\>, array\\)\\: void\\)\\|null but it might not be a callable\\.$#"
+			count: 2
+			path: src/FlareProvider.php
+
+		-
 			message: "#^Method Spatie\\\\FlareClient\\\\Frame\\:\\:toArray\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Frame.php
 
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Glows\\\\Glow\\:\\:toArray\\(\\) return type has no value type specified in iterable type array\\.$#"
+			message: "#^Instanceof between Spatie\\\\FlareClient\\\\Recorders\\\\CacheRecorder\\\\CacheSpanEvent and Spatie\\\\FlareClient\\\\Spans\\\\Span will always evaluate to false\\.$#"
 			count: 1
-			path: src/Glows/Glow.php
+			path: src/Recorders/CacheRecorder/CacheRecorder.php
 
 		-
-			message: "#^Parameter \\$solution of method Spatie\\\\FlareClient\\\\Report\\:\\:addSolution\\(\\) has invalid type Spatie\\\\ErrorSolutions\\\\Contracts\\\\Solution\\.$#"
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\CacheRecorder\\\\CacheRecorder\\:\\:__construct\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/CacheRecorder/CacheRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\CacheRecorder\\\\CacheRecorder\\:\\:configure\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/CacheRecorder/CacheRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\CacheRecorder\\\\CacheRecorder\\:\\:configureRecorder\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/CacheRecorder/CacheRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\CacheRecorder\\\\CacheRecorder\\:\\:record\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/CacheRecorder/CacheRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\CacheRecorder\\\\CacheRecorder\\:\\:register\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/CacheRecorder/CacheRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\CacheRecorder\\\\CacheSpanEvent\\:\\:collectAttributes\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/CacheRecorder/CacheSpanEvent.php
+
+		-
+			message: "#^Instanceof between \\*NEVER\\* and Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent will always evaluate to false\\.$#"
+			count: 1
+			path: src/Recorders/CommandRecorder/CommandRecorder.php
+
+		-
+			message: "#^Match arm is unreachable because previous comparison is always true\\.$#"
+			count: 1
+			path: src/Recorders/CommandRecorder/CommandRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\CommandRecorder\\\\CommandRecorder\\:\\:__construct\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/CommandRecorder/CommandRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\CommandRecorder\\\\CommandRecorder\\:\\:configure\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/CommandRecorder/CommandRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\CommandRecorder\\\\CommandRecorder\\:\\:configureRecorder\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/CommandRecorder/CommandRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\CommandRecorder\\\\CommandRecorder\\:\\:endSpan\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/CommandRecorder/CommandRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\CommandRecorder\\\\CommandRecorder\\:\\:getArguments\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/CommandRecorder/CommandRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\CommandRecorder\\\\CommandRecorder\\:\\:recordEnd\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/CommandRecorder/CommandRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\CommandRecorder\\\\CommandRecorder\\:\\:recordStart\\(\\) has parameter \\$arguments with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/CommandRecorder/CommandRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\CommandRecorder\\\\CommandRecorder\\:\\:recordStart\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/CommandRecorder/CommandRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\CommandRecorder\\\\CommandRecorder\\:\\:register\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/CommandRecorder/CommandRecorder.php
+
+		-
+			message: "#^Instanceof between Spatie\\\\FlareClient\\\\Recorders\\\\DumpRecorder\\\\DumpSpanEvent and Spatie\\\\FlareClient\\\\Spans\\\\Span will always evaluate to false\\.$#"
+			count: 1
+			path: src/Recorders/DumpRecorder/DumpRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\DumpRecorder\\\\DumpRecorder\\:\\:__construct\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/DumpRecorder/DumpRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\DumpRecorder\\\\DumpRecorder\\:\\:configure\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/DumpRecorder/DumpRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\DumpRecorder\\\\DumpRecorder\\:\\:configureRecorder\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/DumpRecorder/DumpRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\DumpRecorder\\\\DumpRecorder\\:\\:register\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/DumpRecorder/DumpRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\DumpRecorder\\\\DumpSpanEvent\\:\\:collectAttributes\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/DumpRecorder/DumpSpanEvent.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\DumpRecorder\\\\HtmlDumper\\:\\:dump\\(\\) has parameter \\$extraDisplayOptions with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/DumpRecorder/HtmlDumper.php
+
+		-
+			message: "#^Instanceof between \\*NEVER\\* and Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent will always evaluate to false\\.$#"
+			count: 1
+			path: src/Recorders/FilesystemRecorder/FilesystemRecorder.php
+
+		-
+			message: "#^Match arm is unreachable because previous comparison is always true\\.$#"
+			count: 1
+			path: src/Recorders/FilesystemRecorder/FilesystemRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\FilesystemRecorder\\\\FilesystemRecorder\\:\\:__construct\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/FilesystemRecorder/FilesystemRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\FilesystemRecorder\\\\FilesystemRecorder\\:\\:configure\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/FilesystemRecorder/FilesystemRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\FilesystemRecorder\\\\FilesystemRecorder\\:\\:configureRecorder\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/FilesystemRecorder/FilesystemRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\FilesystemRecorder\\\\FilesystemRecorder\\:\\:endSpan\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/FilesystemRecorder/FilesystemRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\FilesystemRecorder\\\\FilesystemRecorder\\:\\:recordOperationEnd\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/FilesystemRecorder/FilesystemRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\FilesystemRecorder\\\\FilesystemRecorder\\:\\:recordOperationStart\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/FilesystemRecorder/FilesystemRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\FilesystemRecorder\\\\FilesystemRecorder\\:\\:register\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/FilesystemRecorder/FilesystemRecorder.php
+
+		-
+			message: "#^Instanceof between Spatie\\\\FlareClient\\\\Recorders\\\\GlowRecorder\\\\GlowSpanEvent and Spatie\\\\FlareClient\\\\Spans\\\\Span will always evaluate to false\\.$#"
+			count: 1
+			path: src/Recorders/GlowRecorder/GlowRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\GlowRecorder\\\\GlowRecorder\\:\\:__construct\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/GlowRecorder/GlowRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\GlowRecorder\\\\GlowRecorder\\:\\:configure\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/GlowRecorder/GlowRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\GlowRecorder\\\\GlowRecorder\\:\\:configureRecorder\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/GlowRecorder/GlowRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\GlowRecorder\\\\GlowRecorder\\:\\:record\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/GlowRecorder/GlowRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\GlowRecorder\\\\GlowRecorder\\:\\:record\\(\\) has parameter \\$context with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/GlowRecorder/GlowRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\GlowRecorder\\\\GlowRecorder\\:\\:register\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/GlowRecorder/GlowRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\GlowRecorder\\\\GlowSpanEvent\\:\\:collectAttributes\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/GlowRecorder/GlowSpanEvent.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\LogRecorder\\\\LogMessageSpanEvent\\:\\:collectAttributes\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/LogRecorder/LogMessageSpanEvent.php
+
+		-
+			message: "#^Instanceof between Spatie\\\\FlareClient\\\\Recorders\\\\LogRecorder\\\\LogMessageSpanEvent and Spatie\\\\FlareClient\\\\Spans\\\\Span will always evaluate to false\\.$#"
+			count: 1
+			path: src/Recorders/LogRecorder/LogRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\LogRecorder\\\\LogRecorder\\:\\:__construct\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/LogRecorder/LogRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\LogRecorder\\\\LogRecorder\\:\\:configure\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/LogRecorder/LogRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\LogRecorder\\\\LogRecorder\\:\\:configureRecorder\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/LogRecorder/LogRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\LogRecorder\\\\LogRecorder\\:\\:record\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/LogRecorder/LogRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\LogRecorder\\\\LogRecorder\\:\\:record\\(\\) has parameter \\$context with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/LogRecorder/LogRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\LogRecorder\\\\LogRecorder\\:\\:register\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/LogRecorder/LogRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\NullRecorder\\:\\:__call\\(\\) has parameter \\$arguments with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/NullRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\NullRecorder\\:\\:configure\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/NullRecorder.php
+
+		-
+			message: "#^Instanceof between \\*NEVER\\* and Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent will always evaluate to false\\.$#"
+			count: 1
+			path: src/Recorders/QueryRecorder/QueryRecorder.php
+
+		-
+			message: "#^Match arm is unreachable because previous comparison is always true\\.$#"
+			count: 1
+			path: src/Recorders/QueryRecorder/QueryRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\QueryRecorder\\\\QueryRecorder\\:\\:__construct\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/QueryRecorder/QueryRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\QueryRecorder\\\\QueryRecorder\\:\\:configure\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/QueryRecorder/QueryRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\QueryRecorder\\\\QueryRecorder\\:\\:configureRecorder\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/QueryRecorder/QueryRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\QueryRecorder\\\\QueryRecorder\\:\\:record\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/QueryRecorder/QueryRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\QueryRecorder\\\\QueryRecorder\\:\\:record\\(\\) has parameter \\$bindings with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/QueryRecorder/QueryRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\QueryRecorder\\\\QueryRecorder\\:\\:register\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/QueryRecorder/QueryRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\QueryRecorder\\\\QuerySpan\\:\\:collectAttributes\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/QueryRecorder/QuerySpan.php
+
+		-
+			message: "#^Instanceof between \\*NEVER\\* and Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent will always evaluate to false\\.$#"
+			count: 1
+			path: src/Recorders/RedisCommandRecorder/RedisCommandRecorder.php
+
+		-
+			message: "#^Match arm is unreachable because previous comparison is always true\\.$#"
+			count: 1
+			path: src/Recorders/RedisCommandRecorder/RedisCommandRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\RedisCommandRecorder\\\\RedisCommandRecorder\\:\\:__construct\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/RedisCommandRecorder/RedisCommandRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\RedisCommandRecorder\\\\RedisCommandRecorder\\:\\:configure\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/RedisCommandRecorder/RedisCommandRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\RedisCommandRecorder\\\\RedisCommandRecorder\\:\\:configureRecorder\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/RedisCommandRecorder/RedisCommandRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\RedisCommandRecorder\\\\RedisCommandRecorder\\:\\:record\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/RedisCommandRecorder/RedisCommandRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\RedisCommandRecorder\\\\RedisCommandRecorder\\:\\:record\\(\\) has parameter \\$parameters with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/RedisCommandRecorder/RedisCommandRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\RedisCommandRecorder\\\\RedisCommandRecorder\\:\\:register\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/RedisCommandRecorder/RedisCommandRecorder.php
+
+		-
+			message: "#^Instanceof between Spatie\\\\FlareClient\\\\Recorders\\\\ThrowableRecorder\\\\ThrowableSpanEvent and Spatie\\\\FlareClient\\\\Spans\\\\Span will always evaluate to false\\.$#"
+			count: 1
+			path: src/Recorders/ThrowableRecorder/ThrowableRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\ThrowableRecorder\\\\ThrowableRecorder\\:\\:configure\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/ThrowableRecorder/ThrowableRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\ThrowableRecorder\\\\ThrowableRecorder\\:\\:configureRecorder\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/ThrowableRecorder/ThrowableRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\ThrowableRecorder\\\\ThrowableRecorder\\:\\:register\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/ThrowableRecorder/ThrowableRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\ThrowableRecorder\\\\ThrowableSpanEvent\\:\\:collectAttributes\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/ThrowableRecorder/ThrowableSpanEvent.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\ThrowableRecorder\\\\ThrowableSpanEvent\\:\\:phpFrameToLine\\(\\) has parameter \\$frame with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/ThrowableRecorder/ThrowableSpanEvent.php
+
+		-
+			message: "#^Instanceof between \\*NEVER\\* and Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent will always evaluate to false\\.$#"
+			count: 1
+			path: src/Recorders/TransactionRecorder/TransactionRecorder.php
+
+		-
+			message: "#^Match arm is unreachable because previous comparison is always true\\.$#"
+			count: 1
+			path: src/Recorders/TransactionRecorder/TransactionRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\TransactionRecorder\\\\TransactionRecorder\\:\\:__construct\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/TransactionRecorder/TransactionRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\TransactionRecorder\\\\TransactionRecorder\\:\\:configure\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/TransactionRecorder/TransactionRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\TransactionRecorder\\\\TransactionRecorder\\:\\:configureRecorder\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/TransactionRecorder/TransactionRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\TransactionRecorder\\\\TransactionRecorder\\:\\:endSpan\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/TransactionRecorder/TransactionRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\TransactionRecorder\\\\TransactionRecorder\\:\\:recordBegin\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/TransactionRecorder/TransactionRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\TransactionRecorder\\\\TransactionRecorder\\:\\:recordCommit\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/TransactionRecorder/TransactionRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\TransactionRecorder\\\\TransactionRecorder\\:\\:recordRollback\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/TransactionRecorder/TransactionRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\TransactionRecorder\\\\TransactionRecorder\\:\\:register\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/TransactionRecorder/TransactionRecorder.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Recorders\\\\TransactionRecorder\\\\TransactionSpan\\:\\:collectAttributes\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Recorders/TransactionRecorder/TransactionSpan.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Report\\:\\:__construct\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Report.php
 
 		-
-			message: "#^Parameter \\$solution of method Spatie\\\\FlareClient\\\\Report\\:\\:addSolution\\(\\) has invalid type Spatie\\\\Ignition\\\\Contracts\\\\Solution\\.$#"
+			message: "#^Method Spatie\\\\FlareClient\\\\Report\\:\\:__construct\\(\\) has parameter \\$events with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Report.php
 
 		-
-			message: "#^Property Spatie\\\\FlareClient\\\\Report\\:\\:\\$glows type has no value type specified in iterable type array\\.$#"
+			message: "#^Method Spatie\\\\FlareClient\\\\ReportFactory\\:\\:addAttributes\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
 			count: 1
-			path: src/Report.php
+			path: src/ReportFactory.php
 
 		-
-			message: "#^Access to property \\$aiGenerated on an unknown class Spatie\\\\ErrorSolutions\\\\Contracts\\\\Solution\\.$#"
+			message: "#^Method Spatie\\\\FlareClient\\\\ReportFactory\\:\\:context\\(\\) has parameter \\$key with no value type specified in iterable type array\\.$#"
 			count: 1
-			path: src/Solutions/ReportSolution.php
+			path: src/ReportFactory.php
 
 		-
-			message: "#^Access to property \\$aiGenerated on an unknown class Spatie\\\\Ignition\\\\Contracts\\\\Solution\\.$#"
+			message: "#^Property Spatie\\\\FlareClient\\\\ReportFactory\\:\\:\\$attributes type has no value type specified in iterable type array\\.$#"
 			count: 1
-			path: src/Solutions/ReportSolution.php
+			path: src/ReportFactory.php
 
 		-
-			message: "#^Call to method getDocumentationLinks\\(\\) on an unknown class Spatie\\\\ErrorSolutions\\\\Contracts\\\\Solution\\.$#"
+			message: "#^Property Spatie\\\\FlareClient\\\\ReportFactory\\:\\:\\$userProvidedContext type has no value type specified in iterable type array\\.$#"
 			count: 1
-			path: src/Solutions/ReportSolution.php
+			path: src/ReportFactory.php
 
 		-
-			message: "#^Call to method getDocumentationLinks\\(\\) on an unknown class Spatie\\\\Ignition\\\\Contracts\\\\Solution\\.$#"
+			message: "#^Method Spatie\\\\FlareClient\\\\Resources\\\\Resource\\:\\:__construct\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
 			count: 1
-			path: src/Solutions/ReportSolution.php
+			path: src/Resources/Resource.php
 
 		-
-			message: "#^Call to method getSolutionDescription\\(\\) on an unknown class Spatie\\\\ErrorSolutions\\\\Contracts\\\\Solution\\.$#"
+			message: "#^Method Spatie\\\\FlareClient\\\\Resources\\\\Resource\\:\\:addAttributes\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
 			count: 1
-			path: src/Solutions/ReportSolution.php
+			path: src/Resources/Resource.php
 
 		-
-			message: "#^Call to method getSolutionDescription\\(\\) on an unknown class Spatie\\\\Ignition\\\\Contracts\\\\Solution\\.$#"
+			message: "#^Property Spatie\\\\FlareClient\\\\Resources\\\\Resource\\:\\:\\$attributes type has no value type specified in iterable type array\\.$#"
 			count: 1
-			path: src/Solutions/ReportSolution.php
+			path: src/Resources/Resource.php
 
 		-
-			message: "#^Call to method getSolutionTitle\\(\\) on an unknown class Spatie\\\\ErrorSolutions\\\\Contracts\\\\Solution\\.$#"
+			message: "#^Method Spatie\\\\FlareClient\\\\Sampling\\\\AlwaysSampler\\:\\:shouldSample\\(\\) has parameter \\$context with no value type specified in iterable type array\\.$#"
 			count: 1
-			path: src/Solutions/ReportSolution.php
+			path: src/Sampling/AlwaysSampler.php
 
 		-
-			message: "#^Call to method getSolutionTitle\\(\\) on an unknown class Spatie\\\\Ignition\\\\Contracts\\\\Solution\\.$#"
+			message: "#^Method Spatie\\\\FlareClient\\\\Sampling\\\\NeverSampler\\:\\:shouldSample\\(\\) has parameter \\$context with no value type specified in iterable type array\\.$#"
 			count: 1
-			path: src/Solutions/ReportSolution.php
+			path: src/Sampling/NeverSampler.php
 
 		-
-			message: "#^Class Spatie\\\\ErrorSolutions\\\\Contracts\\\\RunnableSolution not found\\.$#"
+			message: "#^Method Spatie\\\\FlareClient\\\\Sampling\\\\RateSampler\\:\\:shouldSample\\(\\) has parameter \\$context with no value type specified in iterable type array\\.$#"
 			count: 1
-			path: src/Solutions/ReportSolution.php
+			path: src/Sampling/RateSampler.php
 
 		-
-			message: "#^Class Spatie\\\\Ignition\\\\Contracts\\\\RunnableSolution not found\\.$#"
+			message: "#^Method Spatie\\\\FlareClient\\\\Sampling\\\\Sampler\\:\\:shouldSample\\(\\) has parameter \\$context with no value type specified in iterable type array\\.$#"
 			count: 1
-			path: src/Solutions/ReportSolution.php
+			path: src/Sampling/Sampler.php
 
 		-
-			message: "#^Parameter \\$solution of method Spatie\\\\FlareClient\\\\Solutions\\\\ReportSolution\\:\\:__construct\\(\\) has invalid type Spatie\\\\ErrorSolutions\\\\Contracts\\\\Solution\\.$#"
+			message: "#^Method Spatie\\\\FlareClient\\\\Scopes\\\\Scope\\:\\:addAttributes\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
 			count: 1
-			path: src/Solutions/ReportSolution.php
+			path: src/Scopes/Scope.php
 
 		-
-			message: "#^Parameter \\$solution of method Spatie\\\\FlareClient\\\\Solutions\\\\ReportSolution\\:\\:__construct\\(\\) has invalid type Spatie\\\\Ignition\\\\Contracts\\\\Solution\\.$#"
+			message: "#^Property Spatie\\\\FlareClient\\\\Scopes\\\\Scope\\:\\:\\$attributes type has no value type specified in iterable type array\\.$#"
 			count: 1
-			path: src/Solutions/ReportSolution.php
+			path: src/Scopes/Scope.php
 
 		-
-			message: "#^Parameter \\$solution of method Spatie\\\\FlareClient\\\\Solutions\\\\ReportSolution\\:\\:fromSolution\\(\\) has invalid type Spatie\\\\ErrorSolutions\\\\Contracts\\\\Solution\\.$#"
+			message: "#^Method Spatie\\\\FlareClient\\\\Senders\\\\CurlSender\\:\\:__construct\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
 			count: 1
-			path: src/Solutions/ReportSolution.php
+			path: src/Senders/CurlSender.php
 
 		-
-			message: "#^Parameter \\$solution of method Spatie\\\\FlareClient\\\\Solutions\\\\ReportSolution\\:\\:fromSolution\\(\\) has invalid type Spatie\\\\Ignition\\\\Contracts\\\\Solution\\.$#"
+			message: "#^Method Spatie\\\\FlareClient\\\\Senders\\\\CurlSender\\:\\:getCurlHandle\\(\\) has parameter \\$headers with no value type specified in iterable type array\\.$#"
 			count: 1
-			path: src/Solutions/ReportSolution.php
+			path: src/Senders/CurlSender.php
 
 		-
-			message: "#^Property Spatie\\\\FlareClient\\\\Solutions\\\\ReportSolution\\:\\:\\$solution has unknown class Spatie\\\\ErrorSolutions\\\\Contracts\\\\Solution as its type\\.$#"
+			message: "#^Method Spatie\\\\FlareClient\\\\Senders\\\\CurlSender\\:\\:post\\(\\) has parameter \\$payload with no value type specified in iterable type array\\.$#"
 			count: 1
-			path: src/Solutions/ReportSolution.php
+			path: src/Senders/CurlSender.php
 
 		-
-			message: "#^Property Spatie\\\\FlareClient\\\\Solutions\\\\ReportSolution\\:\\:\\$solution has unknown class Spatie\\\\Ignition\\\\Contracts\\\\Solution as its type\\.$#"
+			message: "#^Method Spatie\\\\FlareClient\\\\Senders\\\\GuzzleSender\\:\\:__construct\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
 			count: 1
-			path: src/Solutions/ReportSolution.php
+			path: src/Senders/GuzzleSender.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Senders\\\\GuzzleSender\\:\\:post\\(\\) has parameter \\$payload with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Senders/GuzzleSender.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Senders\\\\NullSender\\:\\:post\\(\\) has parameter \\$payload with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Senders/NullSender.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Senders\\\\OtelSender\\:\\:__construct\\(\\) has parameter \\$reportSenderConfig with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Senders/OtelSender.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Senders\\\\OtelSender\\:\\:post\\(\\) has parameter \\$payload with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Senders/OtelSender.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Senders\\\\Sender\\:\\:post\\(\\) has parameter \\$payload with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Senders/Sender.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Spans\\\\Span\\:\\:addAttributes\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Spans/Span.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Spans\\\\Span\\:\\:toEvent\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Spans/Span.php
+
+		-
+			message: "#^Property Spatie\\\\FlareClient\\\\Spans\\\\Span\\:\\:\\$attributes type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Spans/Span.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent\\:\\:addAttributes\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Spans/SpanEvent.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent\\:\\:toEvent\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Spans/SpanEvent.php
+
+		-
+			message: "#^Property Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent\\:\\:\\$attributes type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Spans/SpanEvent.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Spans\\\\SpanStatus\\:\\:default\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Spans/SpanStatus.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Spans\\\\SpanStatus\\:\\:toArray\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Spans/SpanStatus.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Support\\\\BackTracer\\:\\:frames\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Support/BackTracer.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Support\\\\OpenTelemetryAttributeMapper\\:\\:attributesToOpenTelemetry\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Support/OpenTelemetryAttributeMapper.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Support\\\\OpenTelemetryAttributeMapper\\:\\:attributesToOpenTelemetry\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Support/OpenTelemetryAttributeMapper.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Support\\\\OpenTelemetryAttributeMapper\\:\\:attributesToPHP\\(\\) has parameter \\$attributes with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Support/OpenTelemetryAttributeMapper.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Support\\\\OpenTelemetryAttributeMapper\\:\\:attributesToPHP\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Support/OpenTelemetryAttributeMapper.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Support\\\\OpenTelemetryAttributeMapper\\:\\:valueToOpenTelemetry\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Support/OpenTelemetryAttributeMapper.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Support\\\\OpenTelemetryAttributeMapper\\:\\:valueToPHP\\(\\) has parameter \\$value with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Support/OpenTelemetryAttributeMapper.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Support\\\\Redactor\\:\\:censorBody\\(\\) has parameter \\$body with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Support/Redactor.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Support\\\\Redactor\\:\\:censorBody\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Support/Redactor.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Support\\\\Redactor\\:\\:censorHeaders\\(\\) has parameter \\$headers with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Support/Redactor.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Support\\\\Redactor\\:\\:censorHeaders\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Support/Redactor.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\TraceExporters\\\\OpenTelemetryJsonTraceExporter\\:\\:exportSpan\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/TraceExporters/OpenTelemetryJsonTraceExporter.php

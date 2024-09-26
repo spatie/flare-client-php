@@ -6,11 +6,10 @@ use Spatie\FlareClient\Spans\SpanEvent;
 
 /**
  * @template T of SpanEvent
- *
- * @uses  RecordsEntries<T>
  */
 trait RecordsSpanEvents
 {
+    /** @use RecordsEntries<T> */
     use RecordsEntries;
 
     protected function shouldTrace(): bool
@@ -26,7 +25,7 @@ trait RecordsSpanEvents
     }
 
     /**
-     * @param SpanEvent $entry
+     * @param T $entry
      */
     protected function traceEntry(mixed $entry): void
     {

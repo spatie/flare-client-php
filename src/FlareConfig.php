@@ -52,12 +52,11 @@ class FlareConfig
      * @param Closure(SpanEvent):void|null  $configureSpanEventsCallable
      * @param array<string> $censorHeaders
      * @param array<string> $censorBodyFields
-     * @param class-string<UserAttributesProvider> $userAttributesProvider
+     * @param class-string<UserAttributesProvider<object>> $userAttributesProvider
      */
     public function __construct(
         public ?string $apiToken = null,
         public string $baseUrl = 'https://reporting.flareapp.io/api',
-        public int $timeout = 10,
         public bool $sendReportsImmediately = false,
         public array $middleware = [],
         public array $recorders = [],
@@ -65,7 +64,7 @@ class FlareConfig
         public ?Closure $filterExceptionsCallable = null,
         public ?Closure $filterReportsCallable = null,
         public ?string $applicationPath = null,
-        public ?string $applicationName = 'My Application',
+        public string $applicationName = 'PHP application',
         public ?string $applicationVersion = null,
         public ?string $applicationStage = null,
         public null|array|ArgumentReducers $argumentReducers = [],
@@ -100,6 +99,8 @@ class FlareConfig
     public function censorClientIps(bool $censorClientIps = true): static
     {
         $this->censorClientIps = $censorClientIps;
+
+        return $this;
     }
 
     public function censorHeaders(string ...$headers): static
@@ -142,6 +143,9 @@ class FlareConfig
             );
     }
 
+    /**
+     * @param class-string<FlareMiddleware> $middleware
+     */
     public function addRequestInfo(
         string $middleware = AddRequestInformation::class,
     ): static {
@@ -150,6 +154,9 @@ class FlareConfig
         return $this;
     }
 
+    /**
+     * @param class-string<FlareMiddleware> $middleware
+     */
     public function addConsoleInfo(
         string $middleware = AddConsoleInformation::class,
     ): static {
@@ -158,6 +165,9 @@ class FlareConfig
         return $this;
     }
 
+    /**
+     * @param class-string<FlareMiddleware> $middleware
+     */
     public function addGitInfo(
         string $middleware = AddGitInformation::class,
     ): static {
@@ -166,6 +176,9 @@ class FlareConfig
         return $this;
     }
 
+    /**
+     * @param class-string<Recorder> $recorder
+     */
     public function addCacheEvents(
         bool $trace = true,
         bool $report = true,
@@ -183,6 +196,9 @@ class FlareConfig
         return $this;
     }
 
+    /**
+     * @param class-string<Recorder> $recorder
+     */
     public function addGlows(
         bool $trace = true,
         bool $report = true,
@@ -198,6 +214,9 @@ class FlareConfig
         return $this;
     }
 
+    /**
+     * @param class-string<Recorder> $recorder
+     */
     public function addLogs(
         bool $trace = true,
         bool $report = true,
@@ -213,6 +232,9 @@ class FlareConfig
         return $this;
     }
 
+    /**
+     * @param class-string<Recorder> $recorder
+     */
     public function addCommands(
         bool $trace = true,
         bool $report = true,
@@ -228,6 +250,9 @@ class FlareConfig
         return $this;
     }
 
+    /**
+     * @param class-string<FlareMiddleware> $middleware
+     */
     public function addSolutions(
         string $middleware = AddSolutions::class,
     ): static {
@@ -236,6 +261,9 @@ class FlareConfig
         return $this;
     }
 
+    /**
+     * @param class-string<Recorder> $recorder
+     */
     public function addDumps(
         bool $trace = false,
         bool $report = true,
@@ -261,6 +289,9 @@ class FlareConfig
         return $this;
     }
 
+    /**
+     * @param class-string<Recorder> $recorder
+     */
     public function addQueries(
         bool $trace = true,
         bool $report = true,
@@ -282,6 +313,9 @@ class FlareConfig
         return $this;
     }
 
+    /**
+     * @param class-string<Recorder> $recorder
+     */
     public function addTransactions(
         bool $trace = true,
         bool $report = true,
@@ -429,7 +463,7 @@ class FlareConfig
     }
 
     /**
-     * @param Closure(Span):bool $configureSpansCallable
+     * @param Closure(Span):(void|null) $configureSpansCallable
      */
     public function configureSpans(Closure $configureSpansCallable): static
     {
@@ -439,7 +473,7 @@ class FlareConfig
     }
 
     /**
-     * @param Closure(SpanEvent):bool $configureSpanEventsCallable
+     * @param Closure(SpanEvent):(void|null) $configureSpanEventsCallable
      */
     public function configureSpanEvents(Closure $configureSpanEventsCallable): static
     {

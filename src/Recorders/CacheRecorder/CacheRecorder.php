@@ -9,11 +9,9 @@ use Spatie\FlareClient\Enums\CacheResult;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanEventType;
 
-/**
- * @uses RecordsSpanEvents<CacheSpanEvent>
- */
 class CacheRecorder implements SpanEventsRecorder
 {
+    /** @use RecordsSpanEvents<CacheSpanEvent> */
     use RecordsSpanEvents;
 
     /**

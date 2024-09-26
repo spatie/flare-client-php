@@ -6,11 +6,10 @@ use Spatie\FlareClient\Spans\Span;
 
 /**
  * @template T of Span
- *
- * @uses  RecordsEntries<T>
  */
 trait RecordsSpans
 {
+    /** @use RecordsEntries<T> */
     use RecordsEntries;
 
     protected function shouldTrace(): bool
@@ -24,7 +23,7 @@ trait RecordsSpans
     }
 
     /**
-     * @param Span $entry
+     * @param T $entry
      */
     protected function traceEntry(mixed $entry): void
     {
@@ -33,7 +32,7 @@ trait RecordsSpans
         $this->tracer->addSpan($entry);
     }
 
-    /** @return Span */
+    /** @return array<T> */
     public function getSpans(): array
     {
         return $this->entries;

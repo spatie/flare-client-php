@@ -13,6 +13,9 @@ use Throwable;
 
 class RequestAttributesProvider
 {
+    /**
+     * @param UserAttributesProvider<object> $userAttributesProvider
+     */
     public function __construct(
         protected Redactor $redactor,
         protected UserAttributesProvider $userAttributesProvider
@@ -48,7 +51,7 @@ class RequestAttributesProvider
             'user_agent.original' => $request->headers->get('User-Agent'),
 
             'http.request.method' => strtoupper($request->getMethod()),
-            'http.request.files' => $this->getFiles($request),
+            'http.request.files' => $this->mapFiles($request->files->all()),
             'http.request.body.size' => strlen($request->getContent()),
         ];
 
@@ -65,7 +68,7 @@ class RequestAttributesProvider
 
     protected function getInputBag(Request $request): InputBag|ParameterBag
     {
-        $contentType = $request->headers->get('CONTENT_TYPE', 'text/html');
+        $contentType = $request->headers->get('CONTENT_TYPE') ?? 'text/html';
 
         $isJson = str_contains($contentType, '/json') || str_contains($contentType, '+json');
 
@@ -76,15 +79,6 @@ class RequestAttributesProvider
         return in_array($request->getMethod(), ['GET', 'HEAD'])
             ? $request->query
             : $request->request;
-    }
-
-    protected function getFiles(Request $request): array
-    {
-        if (is_null($request->files)) {
-            return [];
-        }
-
-        return $this->mapFiles($request->files->all());
     }
 
     protected function mapFiles(array $files): array

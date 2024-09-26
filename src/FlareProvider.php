@@ -46,9 +46,8 @@ class FlareProvider
         ));
 
         $this->container->singleton(Api::class, fn () => new Api(
-            apiToken: $this->config->apiToken,
+            apiToken: $this->config->apiToken ?? 'No Api Token provided',
             baseUrl: $this->config->baseUrl,
-            timeout: $this->config->timeout,
             sender: $this->container->get(Sender::class),
             sendReportsImmediately: $this->config->sendReportsImmediately
         ));
@@ -148,8 +147,16 @@ class FlareProvider
         $this->container->singleton(Flare::class, function () {
             $recorders = array_combine(
                 array_map(
-                    /** @var class-string<Recorder> $recorder */
-                    fn ($recorder) => is_string($recorder::type()) ? $recorder::type() : $recorder::type()->value,
+                    function ($recorder) {
+                        /** @var class-string<Recorder> $recorder */
+                        $recorderType = $recorder::type();
+
+                        if (is_string($recorderType)) {
+                            return $recorderType;
+                        }
+
+                        return $recorderType->value;
+                    },
                     array_keys($this->config->recorders)
                 ),
                 array_map(

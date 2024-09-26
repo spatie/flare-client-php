@@ -11,6 +11,7 @@ use Spatie\FlareClient\Spans\Span;
 
 class RedisCommandRecorder implements SpansRecorder
 {
+    /** @use RecordsSpans<Span> */
     use RecordsSpans;
 
     public static function type(): string|RecorderType
@@ -37,7 +38,7 @@ class RedisCommandRecorder implements SpansRecorder
                 end: $end,
                 duration: $duration,
                 attributes: [
-                    'flare.span_type' => SpanType::RedisCommand,
+                    'flare.span_type' => $spanType,
                     'db.system' => 'redis',
                     'db.namespace' => $namespace,
                     'db.operation.name' => $command,

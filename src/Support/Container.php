@@ -16,9 +16,11 @@ class Container implements ContainerInterface
     }
 
     /**
-     * @param array<class-string, Closure(): object> $definitions
-     * @param array<class-string, Closure(): object> $singletons
-     * @param array<class-string, object> $initializedSingletons
+     * @template T
+     *
+     * @param array<class-string<T>, Closure(): T> $definitions
+     * @param array<class-string<T>, Closure(): T> $singletons
+     * @param array<class-string<T>, T> $initializedSingletons
      */
     protected function __construct(
         protected array $definitions = [],

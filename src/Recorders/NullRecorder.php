@@ -45,7 +45,7 @@ class NullRecorder implements SpansRecorder, SpanEventsRecorder
         return [];
     }
 
-    public function __call(string $name, array $arguments)
+    public function __call(string $name, array $arguments): void
     {
         // Ignore recording calls
     }

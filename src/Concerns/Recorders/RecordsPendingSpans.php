@@ -7,11 +7,10 @@ use Spatie\FlareClient\Spans\Span;
 
 /**
  * @template T of Span
- *
- * @uses  RecordsEntries<T>
  */
 trait RecordsPendingSpans
 {
+    /** @use RecordsEntries<T> */
     use RecordsEntries {
         RecordsEntries::persistEntry as protected basePersistEntry;
     }
@@ -39,7 +38,7 @@ trait RecordsPendingSpans
     }
 
     /**
-     * @param Span $entry
+     * @param T $entry
      */
     protected function traceEntry(mixed $entry): void
     {
@@ -47,14 +46,15 @@ trait RecordsPendingSpans
     }
 
     /**
-     * @param Closure(): T $entry
+     * @param Closure():T $span
      *
-     * @return T
+     * @return T|null
      */
     protected function startSpan(
         Closure $span
-    ): ?Span {
-        return $this->persistEntry(function () use ($span) {
+    ) {
+        /** @var ?T */
+        $entry = $this->persistEntry(function () use ($span) {
             if ($span instanceof Closure) {
                 $span = $span();
             }
@@ -64,6 +64,8 @@ trait RecordsPendingSpans
 
             return $span;
         });
+
+        return $entry;
     }
 
     protected function persistEntry(Closure $entry): ?Span
@@ -88,15 +90,15 @@ trait RecordsPendingSpans
     }
 
     /**
-     * @param Closure(T): void|null $closure
+     * @param Closure(T):(void|T|null)|null $closure
      *
-     * @return Span|T|null
+     * @return T|null
      */
     protected function endSpan(
         ?Closure $closure = null,
         ?int $time = null,
         ?array $attributes = null
-    ): ?Span {
+    ): mixed {
         $shouldTrace = $this->trace && $this->tracer->isSampling();
         $shouldReport = $this->shouldReport();
 
@@ -110,12 +112,11 @@ trait RecordsPendingSpans
             return null;
         }
 
-
         if ($closure !== null) {
             $closure($span);
         }
 
-        $span->end($time);
+        $this->tracer->endSpan($span, $time);
 
         if ($attributes !== null) {
             $span->addAttributes($attributes);
@@ -133,7 +134,7 @@ trait RecordsPendingSpans
         return $span;
     }
 
-    /** @return Span */
+    /** @return array<T> */
     public function getSpans(): array
     {
         return $this->entries;
