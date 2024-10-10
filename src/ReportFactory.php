@@ -8,7 +8,7 @@ use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\Backtrace\Backtrace;
 use Spatie\ErrorSolutions\Contracts\Solution;
 use Spatie\FlareClient\Concerns\HasAttributes;
-use Spatie\FlareClient\Concerns\HasUserProvidedContext;
+use Spatie\FlareClient\Concerns\HasCustomContext;
 use Spatie\FlareClient\Concerns\UsesIds;
 use Spatie\FlareClient\Contracts\ProvidesFlareContext;
 use Spatie\FlareClient\Contracts\WithAttributes;
@@ -20,7 +20,7 @@ use Throwable;
 class ReportFactory implements WithAttributes
 {
     use HasAttributes;
-    use HasUserProvidedContext;
+    use HasCustomContext;
     use UsesIds;
 
     protected Resource $resource;
@@ -169,11 +169,6 @@ class ReportFactory implements WithAttributes
         $exceptionClass = $this->throwable
             ? $this->throwable::class
             : "Log";
-
-        $exceptionContext = $this->throwable instanceof ProvidesFlareContext
-            ? $this->throwable->context()
-            : [];
-
         $message = $this->throwable
             ? $this->throwable->getMessage()
             : $this->message;
@@ -183,11 +178,15 @@ class ReportFactory implements WithAttributes
             $this->attributes
         );
 
-        if (! empty($this->userProvidedContext) || ! empty($exceptionContext)) {
-            $attributes['context.user'] = array_merge_recursive_distinct(
-                $this->userProvidedContext,
-                $exceptionContext,
+        if ($this->throwable instanceof ProvidesFlareContext) {
+            $attributes['context.exception'] = array_merge(
+                $attributes['context.exception'] ?? [],
+                $this->throwable->context()
             );
+        }
+
+        if (! empty($this->customContext)) {
+            $attributes['context.custom'] = $this->customContext;
         }
 
         $attributes['flare.language'] = 'PHP';

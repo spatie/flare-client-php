@@ -2,22 +2,22 @@
 
 namespace Spatie\FlareClient\Concerns;
 
-trait HasUserProvidedContext
+trait HasCustomContext
 {
-    public array $userProvidedContext = [];
+    public array $customContext = [];
 
     public function context(string|array $key, mixed $value = null): self
     {
         if (is_array($key)) {
-            $this->userProvidedContext = array_merge_recursive_distinct(
-                $this->userProvidedContext,
+            $this->customContext = array_merge_recursive_distinct(
+                $this->customContext,
                 $key
             );
 
             return $this;
         }
 
-        $this->userProvidedContext[$key] = $value;
+        $this->customContext[$key] = $value;
 
         return $this;
     }

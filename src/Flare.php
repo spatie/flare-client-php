@@ -7,7 +7,7 @@ use Error;
 use ErrorException;
 use Exception;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
-use Spatie\FlareClient\Concerns\HasUserProvidedContext;
+use Spatie\FlareClient\Concerns\HasCustomContext;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
@@ -31,7 +31,7 @@ use Throwable;
 
 class Flare
 {
-    use HasUserProvidedContext;
+    use HasCustomContext;
 
     protected mixed $previousExceptionHandler = null;
 
@@ -357,7 +357,7 @@ class Flare
     {
         $this->api->sendQueue();
 
-        $this->userProvidedContext = [];
+        $this->customContext = [];
 
         $this->resetRecorders();
         $this->sentReports->clear();
@@ -386,7 +386,7 @@ class Flare
             ->resource($this->resource)
             ->withStackTraceArguments($this->withStackFrameArguments)
             ->argumentReducers($this->argumentReducers)
-            ->context($this->userProvidedContext);
+            ->context($this->customContext);
 
         foreach ($this->middleware as $middleware) {
             $factory = $middleware->handle($factory, function ($factory) {

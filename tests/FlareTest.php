@@ -68,7 +68,7 @@ it('can add user provided context', function () {
 
     reportException();
 
-    FakeSender::instance()->assertLastRequestAttribute('context.user', ['my key' => 'my value']);
+    FakeSender::instance()->assertLastRequestAttribute('context.custom', ['my key' => 'my value']);
 });
 
 it('can add user provided context easily as an array', function () {
@@ -80,7 +80,7 @@ it('can add user provided context easily as an array', function () {
 
     reportException();
 
-    FakeSender::instance()->assertLastRequestAttribute('context.user', ['my key' => 'my value']);
+    FakeSender::instance()->assertLastRequestAttribute('context.custom', ['my key' => 'my value']);
 });
 
 test('callbacks can modify the report', function () {
@@ -97,7 +97,7 @@ test('callbacks can modify the report', function () {
         $report->handled = true;
     });
 
-    FakeSender::instance()->assertLastRequestAttribute('context.user', ['my key' => 'new value']);
+    FakeSender::instance()->assertLastRequestAttribute('context.custom', ['my key' => 'new value']);
 
     expect(FakeSender::instance()->getLastPayload()['handled'])->toBeTrue();
 });
@@ -130,7 +130,7 @@ it('can merge user provided context', function () {
 
     reportException();
 
-    FakeSender::instance()->assertLastRequestAttribute('context.user', [
+    FakeSender::instance()->assertLastRequestAttribute('context.custom', [
         'my key' => 'my value',
         'another key' => 'another value',
     ]);
@@ -145,8 +145,11 @@ it('can add custom exception context', function () {
 
     $flare->report($throwable);
 
-    FakeSender::instance()->assertLastRequestAttribute('context.user', [
+    FakeSender::instance()->assertLastRequestAttribute('context.custom', [
         'my key' => 'my value',
+    ]);
+
+    FakeSender::instance()->assertLastRequestAttribute('context.exception', [
         'another key' => 'another value',
     ]);
 });
@@ -161,7 +164,7 @@ it('can merge groups', function () {
 
     reportException();
 
-    FakeSender::instance()->assertLastRequestAttribute('context.user', [
+    FakeSender::instance()->assertLastRequestAttribute('context.custom', [
         'my key' => 'my value',
         'another key' => 'another value',
     ]);
