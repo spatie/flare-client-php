@@ -2,6 +2,9 @@ url.full: 'http://example.com/test'
 url.scheme: http
 url.path: /test
 url.query: 'get-key-1=get-value-1&get-key-2=get-value-2'
+flare.entry_point.type: !php/const Spatie\FlareClient\Enums\EntryPointType::Web
+flare.entry_point.value: 'http://example.com/test'
+flare.entry_point.class: null
 server.address: null
 server.port: '80'
 user_agent.original: null

@@ -122,8 +122,8 @@ class FlareConfig
         return $this
             ->addDumps()
             ->addCommands()
-            ->addRequestInfo()
             ->addConsoleInfo()
+            ->addRequestInfo()
             ->addGitInfo()
             ->addGlows()
             ->addSolutions()

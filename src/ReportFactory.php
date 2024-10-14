@@ -158,7 +158,7 @@ class ReportFactory implements WithAttributes
 
     public function build(): Report
     {
-        if ($this->throwable === null && ($this->message === null || $this->level === null)) {
+        if ($this->throwable === null && $this->isLog === false) {
             throw new Exception('No throwable or message provided');
         }
 
@@ -167,10 +167,6 @@ class ReportFactory implements WithAttributes
         $exceptionClass = $this->throwable
             ? $this->throwable::class
             : "Log";
-
-        $message = $this->throwable
-            ? $this->throwable->getMessage()
-            : $this->message;
 
         $attributes = array_merge(
             isset($this->resource) ? $this->resource->attributes : [],
@@ -193,7 +189,7 @@ class ReportFactory implements WithAttributes
         return new Report(
             stacktrace: $stackTrace,
             exceptionClass: $exceptionClass,
-            message: $message ?? '',
+            message: $this->message,
             isLog: $this->isLog,
             level: $this->level,
             attributes: $attributes,

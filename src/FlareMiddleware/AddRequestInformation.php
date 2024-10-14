@@ -50,7 +50,6 @@ class AddRequestInformation implements FlareMiddleware
     {
         $request = Request::createFromGlobals();
 
-
         return $this->attributesProvider->toArray($request);
     }
 }
