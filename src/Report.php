@@ -24,6 +24,7 @@ class Report
         public readonly Backtrace $stacktrace,
         public readonly string $exceptionClass,
         public readonly string $message,
+        public readonly bool $isLog,
         public readonly ?string $level = null,
         public readonly array $attributes = [],
         public readonly array $solutions = [],
@@ -56,6 +57,7 @@ class Report
             'handled' => $this->handled,
             'attributes' => $this->attributes,
             'events' => $this->events,
+            'isLog' => $this->isLog,
         ];
 
         if ($this->level !== null) {

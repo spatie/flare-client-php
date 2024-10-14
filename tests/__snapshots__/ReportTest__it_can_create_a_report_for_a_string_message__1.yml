@@ -30,4 +30,5 @@ attributes:
     process.runtime.version: fake-process-runtime-version
     flare.language: PHP
 events: {  }
+isLog: true
 level: Error

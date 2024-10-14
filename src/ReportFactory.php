@@ -45,47 +45,45 @@ class ReportFactory implements WithAttributes
     public ?string $trackingUuid = null;
 
     protected function __construct(
-        public ?Throwable $throwable = null,
-        public ?string $message = null,
-        public ?string $level = null,
+        public ?Throwable $throwable,
+        public string $message,
+        public ?string $level,
+        public bool $isLog,
     ) {
     }
 
     public static function createForMessage(string $message, string $logLevel): ReportFactory
     {
-        return new self(message: $message, level: $logLevel);
+        return new self(throwable: null, message: $message, level: $logLevel, isLog: true);
     }
 
     public static function createForThrowable(
         Throwable $throwable,
     ): ReportFactory {
-        if (! $throwable instanceof ErrorException) {
-            return new self(throwable: $throwable);
+        $level = null;
+
+        if ($throwable instanceof ErrorException) {
+            $level = match ($throwable->getSeverity()) {
+                E_ERROR => 'E_ERROR',
+                E_WARNING => 'E_WARNING',
+                E_PARSE => 'E_PARSE',
+                E_NOTICE => 'E_NOTICE',
+                E_CORE_ERROR => 'E_CORE_ERROR',
+                E_CORE_WARNING => 'E_CORE_WARNING',
+                E_COMPILE_ERROR => 'E_COMPILE_ERROR',
+                E_COMPILE_WARNING => 'E_COMPILE_WARNING',
+                E_USER_ERROR => 'E_USER_ERROR',
+                E_USER_WARNING => 'E_USER_WARNING',
+                E_USER_NOTICE => 'E_USER_NOTICE',
+                E_STRICT => 'E_STRICT',
+                E_RECOVERABLE_ERROR => 'E_RECOVERABLE_ERROR',
+                E_DEPRECATED => 'E_DEPRECATED',
+                E_USER_DEPRECATED => 'E_USER_DEPRECATED',
+                default => 'UNKNOWN',
+            };
         }
 
-        $level = match ($throwable->getSeverity()) {
-            E_ERROR => 'E_ERROR',
-            E_WARNING => 'E_WARNING',
-            E_PARSE => 'E_PARSE',
-            E_NOTICE => 'E_NOTICE',
-            E_CORE_ERROR => 'E_CORE_ERROR',
-            E_CORE_WARNING => 'E_CORE_WARNING',
-            E_COMPILE_ERROR => 'E_COMPILE_ERROR',
-            E_COMPILE_WARNING => 'E_COMPILE_WARNING',
-            E_USER_ERROR => 'E_USER_ERROR',
-            E_USER_WARNING => 'E_USER_WARNING',
-            E_USER_NOTICE => 'E_USER_NOTICE',
-            E_STRICT => 'E_STRICT',
-            E_RECOVERABLE_ERROR => 'E_RECOVERABLE_ERROR',
-            E_DEPRECATED => 'E_DEPRECATED',
-            E_USER_DEPRECATED => 'E_USER_DEPRECATED',
-            default => 'UNKNOWN',
-        };
-
-        return new self(
-            throwable: $throwable,
-            level: $level
-        );
+        return new self(throwable: $throwable, message: $throwable->getMessage(), level: $level, isLog: false);
     }
 
     public function resource(Resource $resource): self
@@ -169,6 +167,7 @@ class ReportFactory implements WithAttributes
         $exceptionClass = $this->throwable
             ? $this->throwable::class
             : "Log";
+
         $message = $this->throwable
             ? $this->throwable->getMessage()
             : $this->message;
@@ -195,6 +194,7 @@ class ReportFactory implements WithAttributes
             stacktrace: $stackTrace,
             exceptionClass: $exceptionClass,
             message: $message ?? '',
+            isLog: $this->isLog,
             level: $this->level,
             attributes: $attributes,
             solutions: $this->solutions,

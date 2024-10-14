@@ -135,22 +135,7 @@ trait RecordsEntries
             ? $this->backTracer->after($frameAfter, 20)
             : $this->backTracer->firstApplicationFrame(20);
 
-        if ($frame === null) {
-            return $entry;
-        }
-
-        $function = match (true) {
-            $frame->class && $frame->method => "{$frame->class}::{$frame->method}",
-            $frame->method => $frame->method,
-            $frame->class => $frame->class,
-            default => 'unknown',
-        };
-
-        $entry->addAttributes([
-            'code.filepath' => $frame->file,
-            'code.lineno' => $frame->lineNumber,
-            'code.function' => $function,
-        ]);
+        $entry->addAttributes($this->backTracer->frameToAttributes($frame));
 
         return $entry;
     }

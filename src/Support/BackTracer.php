@@ -57,4 +57,24 @@ class BackTracer
 
         return null;
     }
+
+    public function frameToAttributes(?Frame $frame): array
+    {
+        if ($frame === null) {
+            return [];
+        }
+
+        $function = match (true) {
+            $frame->class !== null && $frame->method !== null => "{$frame->class}::{$frame->method}",
+            $frame->method !== null => $frame->method,
+            $frame->class !== null => $frame->class,
+            default => 'unknown',
+        };
+
+        return [
+            'code.filepath' => $frame->file,
+            'code.lineno' => $frame->lineNumber,
+            'code.function' => $function,
+        ];
+    }
 }
