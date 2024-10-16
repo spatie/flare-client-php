@@ -26,7 +26,7 @@ class Frame
             'class' => $this->frame->class,
             'codeSnippet' => $this->frame->getSnippet(30),
             'arguments' => $this->frame->arguments,
-            'applicationFrame' => $this->frame->applicationFrame,
+            'isApplicationFrame' => $this->frame->applicationFrame,
         ];
     }
 }
