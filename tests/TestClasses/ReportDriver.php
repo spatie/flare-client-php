@@ -89,6 +89,7 @@ class ReportDriver extends YamlDriver
         $data['attributes']['process.command'] = 'fake-process-command';
         $data['attributes']['process.command_args'] = 'fake-process-command-args';
         $data['attributes']['process.owner'] = 'fake-process-owner';
+        $data['attributes']['flare.language.version'] = '8.3.1';
 
         return $data;
     }

@@ -184,7 +184,8 @@ class ReportFactory implements WithAttributes
             $attributes['context.custom'] = $this->customContext;
         }
 
-        $attributes['flare.language'] = 'PHP';
+        $attributes['flare.language.name'] = 'PHP';
+        $attributes['flare.language.version'] = PHP_VERSION;
 
         return new Report(
             stacktrace: $stackTrace,

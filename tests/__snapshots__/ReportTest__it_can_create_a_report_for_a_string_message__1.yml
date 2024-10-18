@@ -28,7 +28,8 @@ attributes:
     process.owner: fake-process-owner
     process.runtime.name: fake-process-runtime-name
     process.runtime.version: fake-process-runtime-version
-    flare.language: PHP
+    flare.language.name: PHP
+    flare.language.version: 8.3.1
 events: {  }
 isLog: true
 level: Error
