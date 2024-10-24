@@ -53,17 +53,26 @@ class RequestAttributesProvider
             'user_agent.original' => $request->headers->get('User-Agent'),
 
             'http.request.method' => strtoupper($request->getMethod()),
-            'http.request.files' => $this->mapFiles($request->files->all()),
             'http.request.body.size' => strlen($request->getContent()),
         ];
+
+        $files = $this->mapFiles($request->files->all());
+
+        if (! empty($files)) {
+            $payload['http.request.files'] = $files;
+        }
 
         if ($this->redactor->shouldCensorClientIps() === false) {
             $payload['client.address'] = $request->getClientIp();
         }
 
-        $payload['http.request.body.contents'] = $this->redactor->censorBody(
+        $body = $this->redactor->censorBody(
             $this->getInputBag($request)->all() + $request->query->all()
         );
+
+        if(! empty($body)){
+            $payload['http.request.body.contents'] = $body;
+        }
 
         return $payload;
     }
@@ -126,11 +135,15 @@ class RequestAttributesProvider
             return [];
         }
 
-        try {
-            $session = json_encode($session->all());
+        $sessionEntries = $session->all();
 
+        if (empty($sessionEntries)) {
+            return [];
+        }
+
+        try {
             return [
-                'http.request.session' => $session,
+                'http.request.session' => $sessionEntries,
             ];
         } catch (Throwable $e) {
             return [];
@@ -139,8 +152,14 @@ class RequestAttributesProvider
 
     protected function getCookies(Request $request): array
     {
+        $cookies = $request->cookies->all();
+
+        if (empty($cookies)) {
+            return [];
+        }
+
         return [
-            'http.request.cookies' => $request->cookies->all(),
+            'http.request.cookies' => $cookies,
         ];
     }
 

@@ -197,7 +197,7 @@ it('will not crash when a json body is invalid', function () {
         new Redactor(),
         new UserAttributesProvider()
     );
-    expect($provider->toArray($request)['http.request.body.contents'])->toBe([]);
+    expect($provider->toArray($request))->not()->toHaveKey('http.request.body.contents');
 });
 
 it('can retrieve the body contents of a POST request', function () {

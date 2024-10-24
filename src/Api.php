@@ -20,7 +20,7 @@ class Api
 
     public function __construct(
         protected string $apiToken,
-        protected string $baseUrl = 'https://reporting.flareapp.io/api',
+        protected string $baseUrl = 'https://reporting.flareapp.io',
         protected Sender $sender = new CurlSender(),
         protected bool $sendReportsImmediately = false,
     ) {
@@ -108,7 +108,7 @@ class Api
         $payload = $this->truncateReport($report->toArray());
 
         $this->post(
-            "{$this->baseUrl}/reports",
+            "{$this->baseUrl}/v1/errors",
             $payload,
         );
     }

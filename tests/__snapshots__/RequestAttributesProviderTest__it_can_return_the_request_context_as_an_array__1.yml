@@ -9,6 +9,7 @@ server.address: null
 server.port: '80'
 user_agent.original: null
 http.request.method: GET
+http.request.body.size: 10
 http.request.files:
     file-one:
         path: /tests/stubs/file.txt
@@ -18,7 +19,6 @@ http.request.files:
         path: /tests/stubs/file.txt
         size: 4
         mime_type: text/plain
-http.request.body.size: 10
 client.address: 1.2.3.4
 http.request.body.contents:
     get-key-1: get-value-1
