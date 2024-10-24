@@ -70,7 +70,7 @@ class RequestAttributesProvider
             $this->getInputBag($request)->all() + $request->query->all()
         );
 
-        if(! empty($body)){
+        if (! empty($body)) {
             $payload['http.request.body.contents'] = $body;
         }
 
