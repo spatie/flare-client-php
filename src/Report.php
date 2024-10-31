@@ -2,15 +2,9 @@
 
 namespace Spatie\FlareClient;
 
-use ErrorException;
-use Spatie\Backtrace\Backtrace;
-use Spatie\Backtrace\Frame as SpatieFrame;
-use Spatie\ErrorSolutions\Contracts\Solution;
 use Spatie\FlareClient\Concerns\UsesTime;
 use Spatie\FlareClient\Contracts\FlareSpanEventType;
 use Spatie\FlareClient\Contracts\FlareSpanType;
-use Spatie\FlareClient\Solutions\ReportSolution;
-use Throwable;
 
 class Report
 {

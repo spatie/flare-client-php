@@ -2,7 +2,6 @@
 
 namespace Spatie\FlareClient\Recorders\ThrowableRecorder;
 
-use Spatie\Backtrace\Frame;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Report;
 use Spatie\FlareClient\Spans\SpanEvent;
