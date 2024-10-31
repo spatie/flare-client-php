@@ -30,8 +30,8 @@ class ThrowableSpanEvent extends SpanEvent
     public static function fromReport(Report $report): self
     {
         $stackTrace = array_map(
-            fn (Frame $frame) => static::flareFrameToLine($frame),
-            $report->stacktrace->frames(),
+            fn (array $frame) => static::flareFrameToLine($frame),
+            $report->stacktrace
         );
 
         return new self(
@@ -57,16 +57,16 @@ class ThrowableSpanEvent extends SpanEvent
     }
 
     protected static function flareFrameToLine(
-        Frame $frame
+        array $frame
     ): string {
         $location = match (true) {
-            $frame->class !== null && $frame->method !== null => "{$frame->class}::{$frame->method}",
-            $frame->class => "{$frame->class}",
-            $frame->method => "{$frame->method}",
+            $frame['class'] !== null && $frame['method'] !== null => "{$frame['class']}::{$frame['method']}",
+            $frame['class'] => "{$frame['class']}",
+            $frame['method'] => "{$frame['method']}",
             default => "Unknown",
         };
 
-        return "{$location} at {$frame->file}:{$frame->lineNumber}".PHP_EOL;
+        return "{$location} at {$frame['file']}:{$frame['lineNumber']}".PHP_EOL;
     }
 
     protected static function phpFrameToLine(

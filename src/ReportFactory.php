@@ -6,6 +6,7 @@ use ErrorException;
 use Exception;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\Backtrace\Backtrace;
+use Spatie\ErrorSolutions\Contracts\RunnableSolution;
 use Spatie\ErrorSolutions\Contracts\Solution;
 use Spatie\FlareClient\Concerns\HasAttributes;
 use Spatie\FlareClient\Concerns\HasCustomContext;
@@ -15,6 +16,9 @@ use Spatie\FlareClient\Contracts\WithAttributes;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
+use Spatie\FlareClient\Support\StacktraceMapper;
+use Spatie\Ignition\Contracts\RunnableSolution as IgnitionRunnableSolution;
+use Spatie\Ignition\Contracts\Solution as IgnitionSolution;
 use Throwable;
 
 class ReportFactory implements WithAttributes
@@ -64,22 +68,22 @@ class ReportFactory implements WithAttributes
 
         if ($throwable instanceof ErrorException) {
             $level = match ($throwable->getSeverity()) {
-                E_ERROR => 'E_ERROR',
-                E_WARNING => 'E_WARNING',
-                E_PARSE => 'E_PARSE',
-                E_NOTICE => 'E_NOTICE',
-                E_CORE_ERROR => 'E_CORE_ERROR',
-                E_CORE_WARNING => 'E_CORE_WARNING',
-                E_COMPILE_ERROR => 'E_COMPILE_ERROR',
-                E_COMPILE_WARNING => 'E_COMPILE_WARNING',
-                E_USER_ERROR => 'E_USER_ERROR',
-                E_USER_WARNING => 'E_USER_WARNING',
-                E_USER_NOTICE => 'E_USER_NOTICE',
-                E_STRICT => 'E_STRICT',
-                E_RECOVERABLE_ERROR => 'E_RECOVERABLE_ERROR',
-                E_DEPRECATED => 'E_DEPRECATED',
-                E_USER_DEPRECATED => 'E_USER_DEPRECATED',
-                default => 'UNKNOWN',
+                E_ERROR => 'error',
+                E_WARNING => 'warning',
+                E_PARSE => 'parse',
+                E_NOTICE => 'notice',
+                E_CORE_ERROR => 'core_error',
+                E_CORE_WARNING => 'core_warning',
+                E_COMPILE_ERROR => 'compile_error',
+                E_COMPILE_WARNING => 'compile_warning',
+                E_USER_ERROR => 'user_error',
+                E_USER_WARNING => 'user_warning',
+                E_USER_NOTICE => 'user_notice',
+                E_STRICT => 'strict',
+                E_RECOVERABLE_ERROR => 'recoverable_error',
+                E_DEPRECATED => 'deprecated',
+                E_USER_DEPRECATED => 'user_deprecated',
+                default => 'unknown',
             };
         }
 
@@ -156,8 +160,9 @@ class ReportFactory implements WithAttributes
         return $this;
     }
 
-    public function build(): Report
-    {
+    public function build(
+        StacktraceMapper $stacktraceMapper
+    ): Report {
         if ($this->throwable === null && $this->isLog === false) {
             throw new Exception('No throwable or message provided');
         }
@@ -188,14 +193,13 @@ class ReportFactory implements WithAttributes
         $attributes['flare.language.version'] = PHP_VERSION;
 
         return new Report(
-            stacktrace: $stackTrace,
+            stacktrace: $stacktraceMapper->map($stackTrace->frames(), $this->throwable),
             exceptionClass: $exceptionClass,
             message: $this->message,
             isLog: $this->isLog,
             level: $this->level,
             attributes: $attributes,
-            solutions: $this->solutions,
-            throwable: $this->throwable,
+            solutions: $this->mapSolutions(),
             applicationPath: $this->applicationPath,
             openFrameIndex: $this->throwable ? null : $stackTrace->firstApplicationFrameIndex(),
             handled: $this->handled,
@@ -216,5 +220,26 @@ class ReportFactory implements WithAttributes
             ->withArguments($this->withStackTraceArguments)
             ->reduceArguments($this->argumentReducers)
             ->applicationPath($this->applicationPath ?? '');
+    }
+
+    protected function mapSolutions(): array
+    {
+        return array_map(
+            function (Solution|IgnitionSolution $solution) {
+                $isRunnable = ($solution instanceof RunnableSolution || $solution instanceof IgnitionRunnableSolution);
+
+                return [
+                    'class' => get_class($solution),
+                    'title' => $solution->getSolutionTitle(),
+                    'description' => $solution->getSolutionDescription(),
+                    'links' => $solution->getDocumentationLinks(),
+                    /** @phpstan-ignore-next-line */
+                    'actionDescription' => $isRunnable ? $solution->getSolutionActionDescription() : null,
+                    'isRunnable' => $isRunnable,
+                    'aiGenerated' => $solution->aiGenerated ?? false,
+                ];
+            },
+            $this->solutions
+        );
     }
 }

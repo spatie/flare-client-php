@@ -32,6 +32,7 @@ use Spatie\FlareClient\Senders\CurlSender;
 use Spatie\FlareClient\Senders\Sender;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
+use Spatie\FlareClient\Support\StacktraceMapper;
 use Spatie\FlareClient\Support\TraceLimits;
 use Spatie\FlareClient\TraceExporters\OpenTelemetryJsonTraceExporter;
 
@@ -88,6 +89,7 @@ class FlareConfig
         public array $censorBodyFields = [],
         public string $userAttributesProvider = UserAttributesProvider::class,
         public string $traceExporter = OpenTelemetryJsonTraceExporter::class,
+        public string $stacktraceMapper = StacktraceMapper::class,
     ) {
     }
 

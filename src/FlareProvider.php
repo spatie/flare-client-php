@@ -20,6 +20,7 @@ use Spatie\FlareClient\Support\Container;
 use Spatie\FlareClient\Support\PhpStackFrameArgumentsFixer;
 use Spatie\FlareClient\Support\Redactor;
 use Spatie\FlareClient\Support\SentReports;
+use Spatie\FlareClient\Support\StacktraceMapper;
 use Spatie\FlareClient\Support\Telemetry;
 use Spatie\FlareClient\Support\TraceLimits;
 use Spatie\FlareClient\TraceExporters\TraceExporter;
@@ -57,6 +58,8 @@ class FlareProvider
         ));
 
         $this->container->singleton(TraceExporter::class, fn () => new $this->config->traceExporter);
+
+        $this->container->singleton(StacktraceMapper::class, fn () => new $this->config->stacktraceMapper);
 
         $this->container->singleton(BackTracer::class, fn () => new BackTracer(
             $this->config->applicationPath
@@ -190,6 +193,7 @@ class FlareProvider
                 withStackFrameArguments: $this->config->withStackFrameArguments,
                 resource: $this->container->get(Resource::class),
                 scope: $this->container->get(Scope::class),
+                stacktraceMapper: $this->container->get(StacktraceMapper::class),
             );
         });
 

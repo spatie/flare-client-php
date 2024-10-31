@@ -27,6 +27,7 @@ use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Support\BackTracer;
 use Spatie\FlareClient\Support\Container;
 use Spatie\FlareClient\Support\SentReports;
+use Spatie\FlareClient\Support\StacktraceMapper;
 use Throwable;
 
 class Flare
@@ -60,6 +61,7 @@ class Flare
         protected readonly bool $withStackFrameArguments,
         protected Resource $resource,
         protected Scope $scope,
+        protected StacktraceMapper $stacktraceMapper,
     ) {
     }
 
@@ -253,7 +255,7 @@ class Flare
             $factory->handled();
         }
 
-        return $factory->build();
+        return $factory->build($this->stacktraceMapper);
     }
 
     public function reportHandled(Throwable $throwable): ?Report
@@ -291,7 +293,7 @@ class Flare
             $callback
         );
 
-        $report = $factory->build();
+        $report = $factory->build($this->stacktraceMapper);
 
         $this->sendReportToApi($report);
 
@@ -301,7 +303,7 @@ class Flare
     public function sendTestReport(Throwable $throwable): void
     {
         $this->api->test(
-            ReportFactory::createForThrowable($throwable)->resource($this->resource)->build(),
+            ReportFactory::createForThrowable($throwable)->resource($this->resource)->build($this->stacktraceMapper),
         );
     }
 
