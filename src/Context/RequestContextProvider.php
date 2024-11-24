@@ -14,7 +14,7 @@ class RequestContextProvider implements ContextProvider
 {
     protected ?Request $request;
 
-    public function __construct(Request $request = null)
+    public function __construct(?Request $request = null)
     {
         $this->request = $request ?? Request::createFromGlobals();
     }
