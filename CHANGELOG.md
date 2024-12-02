@@ -2,6 +2,10 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 1.10.0 - 2024-12-02
+
+- Add support for overriding grouping
+
 ## 1.9.0 - 2024-12-02
 
 ### What's Changed
