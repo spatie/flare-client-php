@@ -21,4 +21,5 @@ application_path: null
 application_version: null
 tracking_uuid: fake-uuid
 handled: null
+overridden_grouping: null
 uuid: fake-uuid

@@ -2,6 +2,7 @@
 
 use PHPUnit\Framework\Exception;
 use Spatie\FlareClient\Enums\MessageLevels;
+use Spatie\FlareClient\Enums\OverriddenGrouping;
 use Spatie\FlareClient\Flare;
 use Spatie\FlareClient\Tests\Concerns\MatchesReportSnapshots;
 use Spatie\FlareClient\Tests\Mocks\FakeClient;
@@ -360,6 +361,23 @@ it('can report a handled error', function () {
     $report = $this->fakeClient->getLastPayload();
 
     expect($report['handled'])->toBeTrue();
+});
+
+it('can override the grouping algorithm for specific classes', function (){
+    $throwable = new RuntimeException('This is a test');
+
+    $this->flare->overrideGrouping(
+        RuntimeException::class,
+        OverriddenGrouping::ExceptionMessageAndClass
+    );
+
+    $this->flare->reportHandled($throwable);
+
+    $this->fakeClient->assertRequestsSent(1);
+
+    $report = $this->fakeClient->getLastPayload();
+
+    expect($report['overridden_grouping'])->toBe('exception_message_and_class');
 });
 
 // Helpers

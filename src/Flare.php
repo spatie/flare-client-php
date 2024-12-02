@@ -13,6 +13,7 @@ use Spatie\FlareClient\Concerns\HasContext;
 use Spatie\FlareClient\Context\BaseContextProviderDetector;
 use Spatie\FlareClient\Context\ContextProviderDetector;
 use Spatie\FlareClient\Enums\MessageLevels;
+use Spatie\FlareClient\Enums\OverriddenGrouping;
 use Spatie\FlareClient\FlareMiddleware\AddEnvironmentInformation;
 use Spatie\FlareClient\FlareMiddleware\AddGlows;
 use Spatie\FlareClient\FlareMiddleware\CensorRequestBodyFields;
@@ -67,6 +68,9 @@ class Flare
     protected null|array|ArgumentReducers $argumentReducers = null;
 
     protected bool $withStackFrameArguments = true;
+
+    /** @var array<class-string, string>  */
+    protected array $overriddenGroupings = [];
 
     public static function make(
         ?string $apiKey = null,
@@ -155,6 +159,19 @@ class Flare
         if ($forcePHPIniSetting) {
             (new PhpStackFrameArgumentsFixer())->enable();
         }
+
+        return $this;
+    }
+
+    /**
+     * @param class-string $exceptionClass
+     */
+    public function overrideGrouping(
+        string $exceptionClass,
+        string $type = OverriddenGrouping::ExceptionMessageAndClass,
+    ): self
+    {
+        $this->overriddenGroupings[$exceptionClass] = $type;
 
         return $this;
     }
@@ -437,7 +454,8 @@ class Flare
             $this->applicationPath,
             $this->version(),
             $this->argumentReducers,
-            $this->withStackFrameArguments
+            $this->withStackFrameArguments,
+            $this->overriddenGroupings,
         );
 
         return $this->applyMiddlewareToReport($report);
