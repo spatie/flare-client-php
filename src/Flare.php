@@ -69,7 +69,7 @@ class Flare
 
     protected bool $withStackFrameArguments = true;
 
-    /** @var array<class-string, string>  */
+    /** @var array<class-string, string> */
     protected array $overriddenGroupings = [];
 
     public static function make(
@@ -169,8 +169,7 @@ class Flare
     public function overrideGrouping(
         string $exceptionClass,
         string $type = OverriddenGrouping::ExceptionMessageAndClass,
-    ): self
-    {
+    ): self {
         $this->overriddenGroupings[$exceptionClass] = $type;
 
         return $this;

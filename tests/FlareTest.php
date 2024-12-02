@@ -363,7 +363,7 @@ it('can report a handled error', function () {
     expect($report['handled'])->toBeTrue();
 });
 
-it('can override the grouping algorithm for specific classes', function (){
+it('can override the grouping algorithm for specific classes', function () {
     $throwable = new RuntimeException('This is a test');
 
     $this->flare->overrideGrouping(
