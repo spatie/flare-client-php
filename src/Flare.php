@@ -69,8 +69,8 @@ class Flare
     protected bool $withStackFrameArguments = true;
 
     public static function make(
-        string $apiKey = null,
-        ContextProviderDetector $contextDetector = null
+        ?string $apiKey = null,
+        ?ContextProviderDetector $contextDetector = null
     ): self {
         $client = new Client($apiKey);
 
@@ -175,7 +175,7 @@ class Flare
      */
     public function __construct(
         Client $client,
-        ContextProviderDetector $contextDetector = null,
+        ?ContextProviderDetector $contextDetector = null,
         array $middleware = [],
     ) {
         $this->client = $client;
@@ -317,7 +317,7 @@ class Flare
         return $this;
     }
 
-    public function report(Throwable $throwable, callable $callback = null, Report $report = null, ?bool $handled = null): ?Report
+    public function report(Throwable $throwable, ?callable $callback = null, ?Report $report = null, ?bool $handled = null): ?Report
     {
         if (! $this->shouldSendReport($throwable)) {
             return null;
@@ -362,7 +362,7 @@ class Flare
         return true;
     }
 
-    public function reportMessage(string $message, string $logLevel, callable $callback = null): void
+    public function reportMessage(string $message, string $logLevel, ?callable $callback = null): void
     {
         $report = $this->createReportFromMessage($message, $logLevel);
 

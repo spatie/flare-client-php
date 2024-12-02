@@ -10,7 +10,7 @@ class FakeTime implements Time
     /** @var \DateTimeImmutable */
     protected $dateTime;
 
-    public function __construct(string $dateTime = null, $format = 'Y-m-d H:i:s')
+    public function __construct(?string $dateTime = null, $format = 'Y-m-d H:i:s')
     {
         if (! is_null($dateTime)) {
             $this->setCurrentTime($dateTime, $format);
