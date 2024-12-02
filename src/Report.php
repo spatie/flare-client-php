@@ -71,7 +71,10 @@ class Report
 
     protected ?string $overriddenGrouping = null;
 
-    /** @param array<class-string<ArgumentReducer>|ArgumentReducer>|ArgumentReducers|null $argumentReducers */
+    /**
+     * @param array<class-string<ArgumentReducer>|ArgumentReducer>|ArgumentReducers|null $argumentReducers
+     * @param array<class-string, string> $overriddenGroupings
+     */
     public static function createForThrowable(
         Throwable $throwable,
         ContextProvider $context,
