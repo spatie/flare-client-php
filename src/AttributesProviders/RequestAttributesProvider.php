@@ -41,7 +41,7 @@ class RequestAttributesProvider
             'url.path' => $request->getPathInfo(),
             'url.query' => http_build_query($request->query->all()),
 
-            'flare.entry_point.type' => EntryPointType::Web,
+            'flare.entry_point.type' => EntryPointType::Web->value,
             'flare.entry_point.value' => $request->getUri(),
             'flare.entry_point.class' => null,
 
