@@ -730,7 +730,8 @@ it('can override the grouping algorithm for specific classes', function () {
             ->configureSpanEvents(fn (SpanEvent $spanEvent) => $spanEvent->addAttribute('custom_attribute', 'test'))
             ->overrideGrouping(
                 RuntimeException::class,
-                OverriddenGrouping::ExceptionMessageAndClass)
+                OverriddenGrouping::ExceptionMessageAndClass
+            )
             ->alwaysSampleTraces()
     );
 
