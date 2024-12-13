@@ -194,6 +194,7 @@ class FlareProvider
                 resource: $this->container->get(Resource::class),
                 scope: $this->container->get(Scope::class),
                 stacktraceMapper: $this->container->get(StacktraceMapper::class),
+                overriddenGroupings: $this->config->overriddenGroupings,
             );
         });
 

@@ -33,3 +33,4 @@ attributes:
 events: {  }
 isLog: true
 overriddenGrouping: null
+level: Error

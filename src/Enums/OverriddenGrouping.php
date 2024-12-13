@@ -2,9 +2,9 @@
 
 namespace Spatie\FlareClient\Enums;
 
-class OverriddenGrouping
+enum OverriddenGrouping: string
 {
-    const ExceptionClass = 'exception_class';
-    const ExceptionMessage = 'exception_message';
-    const ExceptionMessageAndClass = 'exception_message_and_class';
+    case ExceptionClass = 'exception_class';
+    case ExceptionMessage = 'exception_message';
+    case ExceptionMessageAndClass = 'exception_message_and_class';
 }

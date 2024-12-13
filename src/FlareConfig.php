@@ -11,6 +11,7 @@ use Spatie\ErrorSolutions\SolutionProviderRepository;
 use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\CacheOperation;
+use Spatie\FlareClient\Enums\OverriddenGrouping;
 use Spatie\FlareClient\FlareMiddleware\AddConsoleInformation;
 use Spatie\FlareClient\FlareMiddleware\AddGitInformation;
 use Spatie\FlareClient\FlareMiddleware\AddRequestInformation;
@@ -49,11 +50,12 @@ class FlareConfig
      * @param array<class-string<HasSolutionsForThrowable>> $solutionsProviders
      * @param Closure(Scope):void|null $configureScopeCallable
      * @param Closure(Resource):void|null $configureResourceCallable
-     * @param Closure(Span):void|null  $configureSpansCallable
-     * @param Closure(SpanEvent):void|null  $configureSpanEventsCallable
+     * @param Closure(Span):void|null $configureSpansCallable
+     * @param Closure(SpanEvent):void|null $configureSpanEventsCallable
      * @param array<string> $censorHeaders
      * @param array<string> $censorBodyFields
      * @param class-string<UserAttributesProvider> $userAttributesProvider
+     * @param array<class-string, OverriddenGrouping> $overriddenGroupings
      */
     public function __construct(
         public ?string $apiToken = null,
@@ -90,6 +92,7 @@ class FlareConfig
         public string $userAttributesProvider = UserAttributesProvider::class,
         public string $traceExporter = OpenTelemetryJsonTraceExporter::class,
         public string $stacktraceMapper = StacktraceMapper::class,
+        public array $overriddenGroupings = [],
     ) {
     }
 
@@ -564,6 +567,15 @@ class FlareConfig
     ): static {
         $this->sender = $senderClass;
         $this->senderConfig = $config;
+
+        return $this;
+    }
+
+    public function overrideGrouping(
+        string $class,
+        OverriddenGrouping $override
+    ): static {
+        $this->overriddenGroupings[$class] = $override;
 
         return $this;
     }

@@ -9,6 +9,7 @@ use Exception;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\FlareClient\Concerns\HasCustomContext;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
+use Spatie\FlareClient\Enums\OverriddenGrouping;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
@@ -44,7 +45,7 @@ class Flare
      * @param null|Closure(Exception): bool $filterExceptionsCallable
      * @param null|Closure(Report): bool $filterReportsCallable
      * @param ArgumentReducers|null $argumentReducers
-     * @param array<class-string, string> $overriddenGroupings
+     * @param array<class-string, OverriddenGrouping> $overriddenGroupings
      */
     public function __construct(
         protected readonly Api $api,
@@ -390,6 +391,7 @@ class Flare
             ->resource($this->resource)
             ->withStackTraceArguments($this->withStackFrameArguments)
             ->argumentReducers($this->argumentReducers)
+            ->overriddenGroupings($this->overriddenGroupings)
             ->context($this->customContext);
 
         foreach ($this->middleware as $middleware) {

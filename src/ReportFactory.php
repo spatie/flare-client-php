@@ -13,6 +13,7 @@ use Spatie\FlareClient\Concerns\HasCustomContext;
 use Spatie\FlareClient\Concerns\UsesIds;
 use Spatie\FlareClient\Contracts\ProvidesFlareContext;
 use Spatie\FlareClient\Contracts\WithAttributes;
+use Spatie\FlareClient\Enums\OverriddenGrouping;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
@@ -47,6 +48,9 @@ class ReportFactory implements WithAttributes
     public ?bool $handled = null;
 
     public ?string $trackingUuid = null;
+
+    /** @var array<class-string, OverriddenGrouping> */
+    public array $overriddenGroupings = [];
 
     protected function __construct(
         public ?Throwable $throwable,
@@ -160,6 +164,13 @@ class ReportFactory implements WithAttributes
         return $this;
     }
 
+    public function overriddenGroupings(array $overriddenGroupings): self
+    {
+        $this->overriddenGroupings = $overriddenGroupings;
+
+        return $this;
+    }
+
     public function build(
         StacktraceMapper $stacktraceMapper
     ): Report {
@@ -207,6 +218,7 @@ class ReportFactory implements WithAttributes
                 array_map(fn (Span|SpanEvent $span) => $span->toEvent(), $this->events),
             )),
             trackingUuid: $this->trackingUuid ?? self::ids()->uuid(),
+            overriddenGrouping: $this->throwable ? $this->overriddenGroupings[$this->throwable::class] ?? null : null,
         );
     }
 

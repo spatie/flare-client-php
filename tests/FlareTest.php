@@ -5,6 +5,7 @@ use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\FlareClient\Enums\CacheOperation;
 use Spatie\FlareClient\Enums\CacheResult;
 use Spatie\FlareClient\Enums\MessageLevels;
+use Spatie\FlareClient\Enums\OverriddenGrouping;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Enums\TransactionStatus;
@@ -727,23 +728,21 @@ it('can override the grouping algorithm for specific classes', function () {
     $flare = setupFlare(
         fn (FlareConfig $config) => $config
             ->configureSpanEvents(fn (SpanEvent $spanEvent) => $spanEvent->addAttribute('custom_attribute', 'test'))
+            ->overrideGrouping(
+                RuntimeException::class,
+                OverriddenGrouping::ExceptionMessageAndClass)
             ->alwaysSampleTraces()
     );
 
     $throwable = new RuntimeException('This is a test');
 
-    $flare->overrideGrouping(
-        RuntimeException::class,
-        OverriddenGrouping::ExceptionMessageAndClass
-    );
-
     $flare->reportHandled($throwable);
 
-    $this->fakeClient->assertRequestsSent(1);
+    FakeSender::instance()->assertRequestsSent(1);
 
     $payload = FakeSender::instance()->getLastPayload();
 
-    expect($payload['overridden_grouping'])->toBe('exception_message_and_class');
+    expect($payload['overriddenGrouping'])->toBe('exception_message_and_class');
 });
 
 // Helpers

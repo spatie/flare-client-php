@@ -51,7 +51,7 @@ class Report
             'attributes' => $this->attributes,
             'events' => $this->events,
             'isLog' => $this->isLog,
-            'overriddenGrouping' => $this->overriddenGrouping,
+            'overriddenGrouping' => $this->overriddenGrouping?->value,
         ];
 
         if ($this->level !== null) {
