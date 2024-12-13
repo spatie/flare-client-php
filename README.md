@@ -5,11 +5,9 @@
 [![PHPStan](https://github.com/spatie/flare-client-php/actions/workflows/phpstan.yml/badge.svg)](https://github.com/spatie/flare-client-php/actions/workflows/phpstan.yml)
 [![Total Downloads](https://img.shields.io/packagist/dt/spatie/flare-client-php.svg?style=flat-square)](https://packagist.org/packages/spatie/flare-client-php)
 
-This repository contains the PHP client to send errors and exceptions to [Flare](https://flareapp.io). The client can be installed using composer and works for PHP 8.0 and above.
+This repository contains the PHP client to send errors and exceptions to [Flare](https://flareapp.io). The client can be installed using composer and works for PHP 8.1 and above.
 
-Using Laravel? You probably want to use [Ignition for Laravel](https://github.com/spatie/laravel-ignition). It comes with a beautiful error page and has the Flare client built in.
-
-![Screenshot of error in Flare](https://facade.github.io/flare-client-php/screenshot.png)
+Using Laravel? You probably want to use [Laravel Flare client](https://github.com/spatie/laravel-flare). It comes with a beautiful error page and has the Flare client built in.
 
 ## Documentation
 
