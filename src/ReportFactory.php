@@ -245,7 +245,6 @@ class ReportFactory implements WithAttributes
                     'title' => $solution->getSolutionTitle(),
                     'description' => $solution->getSolutionDescription(),
                     'links' => $solution->getDocumentationLinks(),
-                    /** @phpstan-ignore-next-line */
                     'actionDescription' => $isRunnable ? $solution->getSolutionActionDescription() : null,
                     'isRunnable' => $isRunnable,
                     'aiGenerated' => $solution->aiGenerated ?? false,

@@ -571,6 +571,9 @@ class FlareConfig
         return $this;
     }
 
+    /**
+     * @param class-string $class
+     */
     public function overrideGrouping(
         string $class,
         OverriddenGrouping $override

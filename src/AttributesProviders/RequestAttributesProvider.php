@@ -141,13 +141,9 @@ class RequestAttributesProvider
             return [];
         }
 
-        try {
-            return [
-                'http.request.session' => $sessionEntries,
-            ];
-        } catch (Throwable $e) {
-            return [];
-        }
+        return [
+            'http.request.session' => $sessionEntries,
+        ];
     }
 
     protected function getCookies(Request $request): array

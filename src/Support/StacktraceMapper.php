@@ -11,7 +11,7 @@ class StacktraceMapper
     /**
      * @param array<Frame> $frames
      *
-     * @return array<array{file: string, lineNumber: int, method: string, class: string|null, codeSnippet: array<string>, arguments: array|null, isApplicationFrame: bool}>
+     * @return array<array{file: string, lineNumber: int, method: string|null, class: string|null, codeSnippet: array<string>, arguments: array|null, isApplicationFrame: bool}>
      */
     public function map(array $frames, ?Throwable $throwable): array
     {
@@ -29,7 +29,7 @@ class StacktraceMapper
         array $frames,
         Throwable $throwable,
     ): array {
-        if ($throwable === null || get_class($throwable) !== ErrorException::class) {
+        if ($throwable::class !== ErrorException::class) {
             return $frames;
         }
 
@@ -54,6 +54,9 @@ class StacktraceMapper
         return array_values(array_slice($restructuredFrames, $firstErrorFrameIndex));
     }
 
+    /**
+     * @return array{file: string, lineNumber: int, method: string|null, class: string|null, codeSnippet: array<string>, arguments: array|null, isApplicationFrame: bool}
+     */
     protected function mapFrame(Frame $frame): array
     {
         return [

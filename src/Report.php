@@ -12,7 +12,7 @@ class Report
     use UsesTime;
 
     /**
-     * @param array<int, array{file: string, lineNumber: int, method: string, class: string|null, codeSnippet: array<string>, arguments: array|null, isApplicationFrame: bool}> $stacktrace
+     * @param array<int, array{file: string, lineNumber: int, method: string|null, class: string|null, codeSnippet: array<string>, arguments: array|null, isApplicationFrame: bool}> $stacktrace
      * @param array<int, array{class: string, title: string, description: string, links: string[], actionDescription: string|null, isRunnable: bool, aiGenerated: bool}> $solutions
      * @param array<int|string, array{type: FlareSpanType|FlareSpanEventType, startTimeUnixNano: int, endTimeUnixNano: int|null, attributes: array}> $events
      */

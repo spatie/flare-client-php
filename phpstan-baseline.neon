@@ -129,3 +129,8 @@ parameters:
 			message: "#^Match arm is unreachable because previous comparison is always true\\.$#"
 			count: 1
 			path: src/Recorders/TransactionRecorder/TransactionRecorder.php
+
+		-
+			message: "#^Access to an undefined property Spatie\\\\FlareClient\\\\Contracts\\\\FlareSpanType\\:\\:\\$value\\.$#"
+			count: 2
+			path: src/Tracer.php
