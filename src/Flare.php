@@ -44,6 +44,7 @@ class Flare
      * @param null|Closure(Exception): bool $filterExceptionsCallable
      * @param null|Closure(Report): bool $filterReportsCallable
      * @param ArgumentReducers|null $argumentReducers
+     * @param array<class-string, string> $overriddenGroupings
      */
     public function __construct(
         protected readonly Api $api,
@@ -62,6 +63,7 @@ class Flare
         protected Resource $resource,
         protected Scope $scope,
         protected StacktraceMapper $stacktraceMapper,
+        protected array $overriddenGroupings
     ) {
     }
 

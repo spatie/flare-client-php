@@ -2,6 +2,36 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 1.10.0 - 2024-12-02
+
+- Add support for overriding grouping
+
+## 1.9.0 - 2024-12-02
+
+### What's Changed
+
+* Fix PHP 8.4 deprecation errors by @Nationalcat in https://github.com/spatie/flare-client-php/pull/33
+* Fix implicitly nullable parameters for PHP 8.4 by @maximal in https://github.com/spatie/flare-client-php/pull/34
+
+### New Contributors
+
+* @Nationalcat made their first contribution in https://github.com/spatie/flare-client-php/pull/33
+* @maximal made their first contribution in https://github.com/spatie/flare-client-php/pull/34
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/1.8.0...1.9.0
+
+## 1.8.0 - 2024-08-01
+
+- Fix issues with symphony request payloads not behaving like they should.
+
+## 1.7.0 - 2024-06-12
+
+### What's Changed
+
+* Refactor solutions by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/30
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/1.6.0...1.7.0
+
 ## 1.6.0 - 2024-05-22
 
 ### What's Changed

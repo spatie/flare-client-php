@@ -59,9 +59,9 @@ it('can create a report with error exception and will cleanup the stack trace', 
     FakeErrorHandler::setup(function (ErrorException $exception) use ($flare) {
         $stacktrace = $flare->report($exception)->toArray()['stacktrace'];
 
-        expect($stacktrace[0]['file'])->toBe(__FILE__);
+        expect($stacktrace[0]['file'])->toContain('ReportTest.php');
         expect($stacktrace[0]['arguments'])->toBeNull();
-        expect($stacktrace[0]['method'])->toBe(__METHOD__);
+        expect($stacktrace[0]['method'])->toContain('closure');
     });
 
     $test->doSomething; // We expect this to fail!

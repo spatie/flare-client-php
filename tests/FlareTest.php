@@ -723,6 +723,29 @@ it('is possible to configure a span event when ended', function () {
     );
 });
 
+it('can override the grouping algorithm for specific classes', function () {
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config
+            ->configureSpanEvents(fn (SpanEvent $spanEvent) => $spanEvent->addAttribute('custom_attribute', 'test'))
+            ->alwaysSampleTraces()
+    );
+
+    $throwable = new RuntimeException('This is a test');
+
+    $flare->overrideGrouping(
+        RuntimeException::class,
+        OverriddenGrouping::ExceptionMessageAndClass
+    );
+
+    $flare->reportHandled($throwable);
+
+    $this->fakeClient->assertRequestsSent(1);
+
+    $payload = FakeSender::instance()->getLastPayload();
+
+    expect($payload['overridden_grouping'])->toBe('exception_message_and_class');
+});
+
 // Helpers
 function reportException()
 {

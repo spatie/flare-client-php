@@ -5,6 +5,7 @@ namespace Spatie\FlareClient;
 use Spatie\FlareClient\Concerns\UsesTime;
 use Spatie\FlareClient\Contracts\FlareSpanEventType;
 use Spatie\FlareClient\Contracts\FlareSpanType;
+use Spatie\FlareClient\Enums\OverriddenGrouping;
 
 class Report
 {
@@ -28,6 +29,7 @@ class Report
         public readonly ?bool $handled = null,
         public readonly array $events = [],
         public readonly ?string $trackingUuid = null,
+        public readonly ?OverriddenGrouping $overriddenGrouping = null,
     ) {
     }
 
@@ -49,6 +51,7 @@ class Report
             'attributes' => $this->attributes,
             'events' => $this->events,
             'isLog' => $this->isLog,
+            'overriddenGrouping' => $this->overriddenGrouping,
         ];
 
         if ($this->level !== null) {

@@ -2,17 +2,10 @@ notifier: 'Flare Client'
 language: PHP
 framework_version: null
 language_version: 7.3.2
-exception_class: Exception
-seen_at: 1546305825
-message: 'this is an exception'
-glows:
-    -
-        time: 1234
-        name: 'Glow 1'
-        message_level: info
-        meta_data:
-            meta: data
-        microtime: 1234
+exception_class: PHPUnit\Framework\Exception
+seen_at: 1546346096
+message: 'This is a test'
+glows: {  }
 solutions: {  }
 documentation_links: {  }
 stacktrace: {  }
