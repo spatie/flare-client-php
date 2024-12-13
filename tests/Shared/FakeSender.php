@@ -2,7 +2,6 @@
 
 namespace Spatie\FlareClient\Tests\Shared;
 
-use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 use Spatie\FlareClient\Senders\Sender;
 use Spatie\FlareClient\Senders\Support\Response;
 
