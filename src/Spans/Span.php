@@ -49,7 +49,7 @@ class Span implements WithAttributes
         ?string $id = null,
         array $attributes = [],
         array $events = [],
-        SpanStatus $status = null,
+        ?SpanStatus $status = null,
     ): self {
         $id ??= self::ids()->span();
 

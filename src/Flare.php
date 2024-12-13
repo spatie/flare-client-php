@@ -222,7 +222,7 @@ class Flare
      */
     public function report(
         Throwable $throwable,
-        callable $callback = null,
+        ?callable $callback = null,
         ?bool $handled = null
     ): ?Report {
         if (! $this->shouldSendReport($throwable)) {
@@ -246,7 +246,7 @@ class Flare
 
     public function createReport(
         Throwable $throwable,
-        callable $callback = null,
+        ?callable $callback = null,
         ?bool $handled = null
     ): Report {
         $factory = $this->feedReportFactory(
@@ -289,7 +289,7 @@ class Flare
     public function reportMessage(
         string $message,
         string $logLevel,
-        callable $callback = null,
+        ?callable $callback = null,
     ): Report {
         $factory = $this->feedReportFactory(
             ReportFactory::createForMessage($message, $logLevel),

@@ -13,7 +13,7 @@ class BackTracer
     ) {
     }
 
-    public function frames(int $limit = null): array
+    public function frames(?int $limit = null): array
     {
         $backTracer = Backtrace::create()
             ->offset(1);
