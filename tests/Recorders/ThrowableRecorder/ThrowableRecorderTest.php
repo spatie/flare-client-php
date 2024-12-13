@@ -39,7 +39,8 @@ it('can trace throwables', function () {
                         expect($stacktrace)->toBeArray();
 
                         expect($stacktrace[0])->toContain('at '.__FILE__.':'.(__LINE__ - 21));
-                        expect($stacktrace[0])->toContain('ThrowableRecorderTest::{closure}');
+                        // {closure} in PHP < 8.4 {closure:1} in PHP >= 8.4
+                        expect($stacktrace[0])->toContain('ThrowableRecorderTest::{closure');
                     })
                     ->hasAttribute('exception.id')
                 )
