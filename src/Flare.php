@@ -129,7 +129,7 @@ class Flare
 
     public function command(): CommandRecorder|NullRecorder
     {
-        return$this->recorders[RecorderType::Command->value] ?? NullRecorder::instance();
+        return $this->recorders[RecorderType::Command->value] ?? NullRecorder::instance();
     }
 
     public function cache(): CacheRecorder|NullRecorder
@@ -225,7 +225,7 @@ class Flare
         ?callable $callback = null,
         ?bool $handled = null
     ): ?Report {
-        if (! $this->shouldSendReport($throwable)) {
+        if (!$this->shouldSendReport($throwable)) {
             return null;
         }
 
@@ -269,15 +269,15 @@ class Flare
     protected function shouldSendReport(Throwable $throwable): bool
     {
         if (isset($this->reportErrorLevels) && $throwable instanceof Error) {
-            return (bool) ($this->reportErrorLevels & $throwable->getCode());
+            return (bool)($this->reportErrorLevels & $throwable->getCode());
         }
 
         if (isset($this->reportErrorLevels) && $throwable instanceof ErrorException) {
-            return (bool) ($this->reportErrorLevels & $throwable->getSeverity());
+            return (bool)($this->reportErrorLevels & $throwable->getSeverity());
         }
 
         if ($this->filterExceptionsCallable && $throwable instanceof Exception) {
-            return (bool) (call_user_func($this->filterExceptionsCallable, $throwable));
+            return (bool)(call_user_func($this->filterExceptionsCallable, $throwable));
         }
 
         return true;
@@ -313,7 +313,7 @@ class Flare
     protected function sendReportToApi(Report $report): void
     {
         if ($this->filterReportsCallable) {
-            if (! call_user_func($this->filterReportsCallable, $report)) {
+            if (!call_user_func($this->filterReportsCallable, $report)) {
                 return;
             }
         }
@@ -400,7 +400,7 @@ class Flare
             });
         }
 
-        if (! is_null($callback)) {
+        if (!is_null($callback)) {
             call_user_func($callback, $factory);
         }
 
