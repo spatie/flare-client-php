@@ -225,7 +225,7 @@ class Flare
         ?callable $callback = null,
         ?bool $handled = null
     ): ?Report {
-        if (!$this->shouldSendReport($throwable)) {
+        if (! $this->shouldSendReport($throwable)) {
             return null;
         }
 
@@ -313,7 +313,7 @@ class Flare
     protected function sendReportToApi(Report $report): void
     {
         if ($this->filterReportsCallable) {
-            if (!call_user_func($this->filterReportsCallable, $report)) {
+            if (! call_user_func($this->filterReportsCallable, $report)) {
                 return;
             }
         }
@@ -400,7 +400,7 @@ class Flare
             });
         }
 
-        if (!is_null($callback)) {
+        if (! is_null($callback)) {
             call_user_func($callback, $factory);
         }
 
