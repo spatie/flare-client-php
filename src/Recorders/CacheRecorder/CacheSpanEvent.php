@@ -5,6 +5,7 @@ namespace Spatie\FlareClient\Recorders\CacheRecorder;
 use Spatie\FlareClient\Contracts\FlareSpanEventType;
 use Spatie\FlareClient\Enums\CacheOperation;
 use Spatie\FlareClient\Enums\CacheResult;
+use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Spans\SpanEvent;
 
 class CacheSpanEvent extends SpanEvent
@@ -14,7 +15,7 @@ class CacheSpanEvent extends SpanEvent
         public ?string $store,
         public CacheOperation $operation,
         public CacheResult $result,
-        public FlareSpanEventType $spanEventType,
+        public FlareSpanEventType $spanEventType =  SpanEventType::Cache,
         ?int $time = null,
     ) {
         $name = match ([$this->operation, $this->result]) {

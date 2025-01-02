@@ -7,7 +7,6 @@ use Spatie\FlareClient\Contracts\Recorders\SpanEventsRecorder;
 use Spatie\FlareClient\Enums\CacheOperation;
 use Spatie\FlareClient\Enums\CacheResult;
 use Spatie\FlareClient\Enums\RecorderType;
-use Spatie\FlareClient\Enums\SpanEventType;
 
 class CacheRecorder implements SpanEventsRecorder
 {
@@ -66,7 +65,7 @@ class CacheRecorder implements SpanEventsRecorder
         }
 
         return $this->persistEntry(
-            fn () => (new CacheSpanEvent($key, $store, $operation, $result, SpanEventType::Cache))->addAttributes($attributes),
+            fn () => (new CacheSpanEvent($key, $store, $operation, $result))->addAttributes($attributes),
         );
     }
 }
