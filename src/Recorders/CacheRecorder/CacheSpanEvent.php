@@ -15,7 +15,7 @@ class CacheSpanEvent extends SpanEvent
         public ?string $store,
         public CacheOperation $operation,
         public CacheResult $result,
-        public FlareSpanEventType $spanEventType =  SpanEventType::Cache,
+        public FlareSpanEventType $spanEventType = SpanEventType::Cache,
         ?int $time = null,
     ) {
         $name = match ([$this->operation, $this->result]) {
