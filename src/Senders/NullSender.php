@@ -2,9 +2,8 @@
 
 namespace Spatie\FlareClient\Senders;
 
-use Spatie\FlareClient\Senders\Support\Response;
 use Closure;
-
+use Spatie\FlareClient\Senders\Support\Response;
 
 class NullSender implements Sender
 {

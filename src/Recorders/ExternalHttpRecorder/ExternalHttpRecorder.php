@@ -23,8 +23,7 @@ class ExternalHttpRecorder implements SpansRecorder
         protected BackTracer $backTracer,
         protected array $config,
         protected Redactor $redactor,
-    )
-    {
+    ) {
         $this->configure($config);
     }
 

@@ -2,10 +2,9 @@
 
 namespace Spatie\FlareClient\Senders;
 
+use Closure;
 use GuzzleHttp\Client;
 use Spatie\FlareClient\Senders\Support\Response;
-use Closure;
-
 
 class GuzzleSender implements Sender
 {

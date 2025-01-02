@@ -2,10 +2,10 @@
 
 namespace Spatie\FlareClient\Senders;
 
+use Closure;
 use CurlHandle;
 use Spatie\FlareClient\Senders\Exceptions\ConnectionError;
 use Spatie\FlareClient\Senders\Support\Response;
-use Closure;
 
 class CurlSender implements Sender
 {
