@@ -28,7 +28,7 @@ class AddRequestInformation implements FlareMiddleware
     ) {
     }
 
-    public function handle(ReportFactory $report, Closure $next): Closure|ReportFactory
+    public function handle(ReportFactory $report, Closure $next): ReportFactory
     {
         if ($this->isRunningInConsole()) {
             return $next($report);

@@ -18,7 +18,7 @@ class AddRecordedEntries implements FlareMiddleware
     ) {
     }
 
-    public function handle(ReportFactory $report, Closure $next): Closure|ReportFactory
+    public function handle(ReportFactory $report, Closure $next): ReportFactory
     {
         foreach ($this->recorders as $recorder) {
             if ($recorder instanceof SpanEventsRecorder) {

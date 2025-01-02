@@ -22,7 +22,7 @@ class AddSolutions implements FlareMiddleware
     ) {
     }
 
-    public function handle(ReportFactory $report, Closure $next): Closure|ReportFactory
+    public function handle(ReportFactory $report, Closure $next): ReportFactory
     {
         if ($report->throwable === null) {
             return $next($report);

@@ -8,7 +8,7 @@ use Spatie\FlareClient\ReportFactory;
 
 class AddGitInformation implements FlareMiddleware
 {
-    public function handle(ReportFactory $report, Closure $next): Closure|ReportFactory
+    public function handle(ReportFactory $report, Closure $next): ReportFactory
     {
         $provider = new GitAttributesProvider();
 
