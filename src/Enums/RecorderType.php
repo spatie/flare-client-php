@@ -12,7 +12,7 @@ enum RecorderType: string
     case Exception = 'exception';
     case Filesystem = 'filesystem';
     case Glow = 'glow';
-    case Http = 'http';
+    case ExternalHttp = 'external_http';
     case Job = 'job';
     case Log = 'log';
     case Notification = 'notification';

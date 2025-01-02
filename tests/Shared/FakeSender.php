@@ -2,6 +2,7 @@
 
 namespace Spatie\FlareClient\Tests\Shared;
 
+use Closure;
 use Spatie\FlareClient\Senders\Sender;
 use Spatie\FlareClient\Senders\Support\Response;
 
@@ -23,8 +24,9 @@ class FakeSender implements Sender
     public function post(
         string $endpoint,
         string $apiToken,
-        array $payload
-    ): Response {
+        array $payload,
+        Closure $callback
+    ): void {
         self::$requests[] = [
             'verb' => 'POST',
             'fullUrl' => $endpoint,
@@ -32,7 +34,7 @@ class FakeSender implements Sender
             'arguments' => $payload,
         ];
 
-        return new Response(200, []);
+        $callback(new Response(200, []));
     }
 
     public function assertRequestsSent(int $expectedCount): void

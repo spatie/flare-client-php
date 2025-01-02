@@ -4,6 +4,8 @@ namespace Spatie\FlareClient\Senders;
 
 use GuzzleHttp\Client;
 use Spatie\FlareClient\Senders\Support\Response;
+use Closure;
+
 
 class GuzzleSender implements Sender
 {
@@ -15,7 +17,7 @@ class GuzzleSender implements Sender
         $this->client = new Client($config);
     }
 
-    public function post(string $endpoint, string $apiToken, array $payload): Response
+    public function post(string $endpoint, string $apiToken, array $payload, Closure $callback): void
     {
         $response = $this->client->post($endpoint, [
             'headers' => [
@@ -26,9 +28,9 @@ class GuzzleSender implements Sender
             'json' => $payload,
         ]);
 
-        return new Response(
+        $callback(new Response(
             $response->getStatusCode(),
             json_decode($response->getBody()->getContents(), true),
-        );
+        ));
     }
 }

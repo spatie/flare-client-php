@@ -14,11 +14,6 @@ class RateSampler implements Sampler
 
     public function shouldSample(array $context): bool
     {
-        // TODO: add a laravel lottery sampler
-        // TODO: add support for propagation
-        // TODO: do not sample testing purposes + local?
-        // TODO: make sure we slow down sampling from the server when too much?
-
         return mt_rand(0, 100) / 100 <= $this->rate;
     }
 }

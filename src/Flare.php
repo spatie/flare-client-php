@@ -14,13 +14,16 @@ use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
+use Spatie\FlareClient\Recorders\ExternalHttpRecorder\ExternalHttpRecorder;
 use Spatie\FlareClient\Recorders\FilesystemRecorder\FilesystemRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
 use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
 use Spatie\FlareClient\Recorders\NullRecorder;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
+use Spatie\FlareClient\Recorders\RedisCommandRecorder\RedisCommandRecorder;
 use Spatie\FlareClient\Recorders\ThrowableRecorder\ThrowableRecorder;
 use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
+use Spatie\FlareClient\Recorders\ViewRecorder\ViewRecorder;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Spans\Span;
@@ -125,16 +128,24 @@ class Flare
         return $this;
     }
 
-    // TODO: ensure we've got all the recorders here
+    public function cache(): CacheRecorder|NullRecorder
+    {
+        return $this->recorders[RecorderType::Cache->value] ?? NullRecorder::instance();
+    }
 
     public function command(): CommandRecorder|NullRecorder
     {
         return $this->recorders[RecorderType::Command->value] ?? NullRecorder::instance();
     }
 
-    public function cache(): CacheRecorder|NullRecorder
+    public function externalHttp(): ExternalHttpRecorder|NullRecorder
     {
-        return $this->recorders[RecorderType::Cache->value] ?? NullRecorder::instance();
+        return $this->recorders[RecorderType::ExternalHttp->value] ?? NullRecorder::instance();
+    }
+
+    public function filesystem(): FilesystemRecorder|NullRecorder
+    {
+        return $this->recorders[RecorderType::Filesystem->value] ?? NullRecorder::instance();
     }
 
     public function glow(): GlowRecorder|NullRecorder
@@ -147,19 +158,24 @@ class Flare
         return $this->recorders[RecorderType::Log->value] ?? NullRecorder::instance();
     }
 
-    public function filesystem(): FilesystemRecorder|NullRecorder
-    {
-        return $this->recorders[RecorderType::Filesystem->value] ?? NullRecorder::instance();
-    }
-
     public function query(): QueryRecorder|NullRecorder
     {
         return $this->recorders[RecorderType::Query->value] ?? NullRecorder::instance();
     }
 
+    public function redisCommand(): RedisCommandRecorder|NullRecorder
+    {
+        return $this->recorders[RecorderType::RedisCommand->value] ?? NullRecorder::instance();
+    }
+
     public function transaction(): TransactionRecorder|NullRecorder
     {
         return $this->recorders[RecorderType::Transaction->value] ?? NullRecorder::instance();
+    }
+
+    public function view(): ViewRecorder|NullRecorder
+    {
+        return $this->recorders[RecorderType::View->value] ?? NullRecorder::instance();
     }
 
     public function span(

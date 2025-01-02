@@ -5,6 +5,7 @@ namespace Spatie\FlareClient\Senders;
 use CurlHandle;
 use Spatie\FlareClient\Senders\Exceptions\ConnectionError;
 use Spatie\FlareClient\Senders\Support\Response;
+use Closure;
 
 class CurlSender implements Sender
 {
@@ -16,7 +17,7 @@ class CurlSender implements Sender
         $this->timeout = $this->config['timeout'] ?? 10;
     }
 
-    public function post(string $endpoint, string $apiToken, array $payload): Response
+    public function post(string $endpoint, string $apiToken, array $payload, Closure $callback): void
     {
         $queryString = http_build_query([
             'key' => $apiToken,
@@ -57,7 +58,7 @@ class CurlSender implements Sender
             throw new ConnectionError($error);
         }
 
-        return new Response($headers['http_code'], $body);
+        $callback(new Response($headers['http_code'], $body));
     }
 
     protected function getCurlHandle(string $fullUrl, array $headers = []): CurlHandle

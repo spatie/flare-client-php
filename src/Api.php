@@ -8,6 +8,7 @@ use Spatie\FlareClient\Senders\Exceptions\BadResponseCode;
 use Spatie\FlareClient\Senders\Exceptions\InvalidData;
 use Spatie\FlareClient\Senders\Exceptions\NotFound;
 use Spatie\FlareClient\Senders\Sender;
+use Spatie\FlareClient\Senders\Support\Response;
 use Spatie\FlareClient\Truncation\ReportTrimmer;
 
 class Api
@@ -123,25 +124,26 @@ class Api
 
     protected function post(
         string $endpoint,
-        array $payload
+        array $payload,
     ): void {
-        $response = $this->sender->post(
+        $this->sender->post(
             $endpoint,
             $this->apiToken,
             $payload,
+            function (Response $response) {
+                if ($response->code === 422) {
+                    throw new InvalidData($response);
+                }
+
+                if ($response->code === 404) {
+                    throw new NotFound($response);
+                }
+
+                if ($response->code !== 200 && $response->code !== 204) {
+                    throw new BadResponseCode($response);
+                }
+            }
         );
-
-        if ($response->code === 422) {
-            throw new InvalidData($response);
-        }
-
-        if ($response->code === 404) {
-            throw new NotFound($response);
-        }
-
-        if ($response->code !== 200 && $response->code !== 204) {
-            throw new BadResponseCode($response);
-        }
     }
 
     /**

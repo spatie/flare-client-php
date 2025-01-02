@@ -115,7 +115,6 @@ class Tracer
 
     public function endTrace(): void
     {
-        // TODO: should this add an end time on every span?
         $this->currentTraceId = null;
         $this->samplingType = SamplingType::Waiting;
 

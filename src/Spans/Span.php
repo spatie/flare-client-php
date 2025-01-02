@@ -62,8 +62,6 @@ class Span implements WithAttributes
             default => [self::getCurrentTime(), null],
         };
 
-        // TODO: add span types
-        // TODO:maybe we should always have a trace id?
         $span = new self(
             traceId: $traceId ?? '', // In case of an error only
             spanId: $id,
