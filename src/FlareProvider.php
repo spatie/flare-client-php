@@ -43,7 +43,7 @@ class FlareProvider
         $this->container ??= Container::instance();
 
         $this->container->singleton(Sender::class, fn () => new $this->config->sender(
-            ...$this->config->senderConfig
+            $this->config->senderConfig
         ));
 
         $this->container->singleton(Api::class, fn () => new Api(
@@ -54,7 +54,7 @@ class FlareProvider
         ));
 
         $this->container->singleton(Sampler::class, fn () => new $this->config->sampler(
-            ...$this->config->samplerConfig
+            $this->config->samplerConfig
         ));
 
         $this->container->singleton(TraceExporter::class, fn () => new $this->config->traceExporter);
