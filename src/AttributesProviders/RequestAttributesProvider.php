@@ -20,12 +20,12 @@ class RequestAttributesProvider
     ) {
     }
 
-    public function toArray(Request $request): array
+    public function toArray(Request $request, bool $includeContents = true): array
     {
         $user = $this->getUser($request);
 
         return [
-            ...$this->getRequest($request),
+            ...$this->getRequest($request, $includeContents),
             ...$this->getHeaders($request),
             ...$this->getCookies($request),
             ...$this->getSession($request),
@@ -33,7 +33,7 @@ class RequestAttributesProvider
         ];
     }
 
-    protected function getRequest(Request $request): array
+    protected function getRequest(Request $request, bool $includeContents): array
     {
         $payload = [
             'url.full' => $request->getUri(),
@@ -70,7 +70,7 @@ class RequestAttributesProvider
             $this->getInputBag($request)->all() + $request->query->all()
         );
 
-        if (! empty($body)) {
+        if (! empty($body) && $includeContents) {
             $payload['http.request.body.contents'] = $body;
         }
 

@@ -39,7 +39,7 @@ class Tracer
         public readonly TraceLimits $limits,
         protected Resource $resource,
         protected Scope $scope,
-        public readonly Sampler $sampler = new RateSampler(),
+        public readonly Sampler $sampler = new RateSampler([]),
         public ?Closure $configureSpansCallable = null,
         public ?Closure $configureSpanEventsCallable = null,
         public SamplingType $samplingType = SamplingType::Waiting,

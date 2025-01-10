@@ -7,6 +7,7 @@ use Psr\Container\ContainerInterface;
 use Spatie\FlareClient\Concerns\Recorders\RecordsSpanEvents;
 use Spatie\FlareClient\Contracts\Recorders\SpanEventsRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
+use Spatie\FlareClient\Enums\SpanStatusCode;
 use Spatie\FlareClient\Report;
 use Spatie\FlareClient\Tracer;
 
@@ -35,6 +36,23 @@ class ThrowableRecorder implements SpanEventsRecorder
 
     public function record(Report $report): void
     {
-        $this->persistEntry(fn () => ThrowableSpanEvent::fromReport($report));
+        $this->persistEntry(function () use ($report) {
+            $event = ThrowableSpanEvent::fromReport($report);
+
+            $currentSpan = $this->tracer->currentSpan();
+
+            if ($currentSpan === null) {
+                return $event;
+            }
+
+            if ($event->handled !== true) {
+                $currentSpan->setStatus(
+                    SpanStatusCode::Error,
+                    $event->message,
+                );
+            }
+
+            return $event;
+        });
     }
 }
