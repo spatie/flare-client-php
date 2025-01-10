@@ -39,7 +39,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Spatie\\FlareClient\\Tests\\": "tests"
+            "Spatie\\FlareClient\\Tests\\": "tests",
+            "Spatie\\FlareClient\\Tests\\Shared\\": "shared"
         }
     },
     "scripts": {
