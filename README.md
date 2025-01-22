@@ -139,7 +139,7 @@ $flare->group('Custom information', [
 ]);
 ```
 
-## Adding glows
+### Adding glows
 
 In addition to custom context items, you can also add "Glows" to your application.
 Glows allow you to add little pieces of information, that can later be found in a chronological order in the "Debug" tab of your application.
@@ -149,7 +149,7 @@ You can think of glows as breadcrumbs that can help you track down which parts o
 The Flare PHP client allows you to add a glows to your application like this:
 
 
-## Stacktrace arguments
+### Stacktrace arguments
 
 
 When an error occurs in your application, Flare will send the stacktrace of the error to Flare. This stacktrace contains the file and line number where the error occurred and the argument values passed to the function or method that caused the error.
