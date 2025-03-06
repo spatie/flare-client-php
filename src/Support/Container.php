@@ -33,7 +33,7 @@ class Container implements ContainerInterface
      * @template T
      *
      * @param class-string<T> $class
-     * @param Closure():T $builder
+     * @param null|Closure():T $builder
      */
     public function singleton(string $class, ?Closure $builder = null): void
     {
@@ -44,11 +44,11 @@ class Container implements ContainerInterface
      * @template T
      *
      * @param class-string<T> $class
-     * @param Closure():T $builder
+     * @param null|Closure():T $builder
      */
-    public function bind(string $class, Closure $builder): void
+    public function bind(string $class, ?Closure $builder = null): void
     {
-        $this->definitions[$class] = $builder;
+        $this->definitions[$class] =  $builder ?? fn () => new $class();
     }
 
     /**

@@ -4,6 +4,8 @@ namespace Spatie\FlareClient\Support;
 
 class Ids
 {
+    const FLARE_TRACE_PARENT = '_flare_trace_parent';
+
     public function trace(): string
     {
         return bin2hex(random_bytes(16));

@@ -69,7 +69,7 @@ class Tracer
         return SamplingType::Sampling;
     }
 
-    protected function potentiallyResumeTrace(
+    public function potentiallyResumeTrace(
         string $traceParent
     ): SamplingType {
         $parsed = static::ids()->parseTraceParent($traceParent);
@@ -134,6 +134,15 @@ class Tracer
     public function currentTraceId(): ?string
     {
         return $this->currentTraceId;
+    }
+
+    public function traceParent(): string
+    {
+        return static::ids()->traceParent(
+            $this->currentTraceId ?? '',
+            $this->currentSpanId ?? '',
+            $this->isSampling(),
+        );
     }
 
     /** @return array<Span> */
