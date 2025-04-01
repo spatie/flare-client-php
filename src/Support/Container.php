@@ -48,7 +48,7 @@ class Container implements ContainerInterface
      */
     public function bind(string $class, ?Closure $builder = null): void
     {
-        $this->definitions[$class] =  $builder ?? fn () => new $class();
+        $this->definitions[$class] = $builder ?? fn () => new $class();
     }
 
     /**
