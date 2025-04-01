@@ -2,6 +2,18 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 1.10.1 - 2025-02-14
+
+### What's Changed
+
+* Supports Laravel 12 by @duncanmcclean in https://github.com/spatie/flare-client-php/pull/38
+
+### New Contributors
+
+* @duncanmcclean made their first contribution in https://github.com/spatie/flare-client-php/pull/38
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/1.10.0...1.10.1
+
 ## 1.10.0 - 2024-12-02
 
 - Add support for overriding grouping
