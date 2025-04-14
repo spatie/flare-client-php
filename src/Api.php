@@ -84,9 +84,8 @@ class Api
     public function sendQueue(
         bool $reports = true,
         bool $traces = true,
-    ): void
-    {
-        if($reports){
+    ): void {
+        if ($reports) {
             try {
                 foreach ($this->reportQueue as $report) {
                     $this->sendReportToApi($report);
@@ -98,7 +97,7 @@ class Api
             }
         }
 
-        if($traces){
+        if ($traces) {
             try {
                 foreach ($this->traceQueue as $trace) {
                     $this->sendTraceToApi($trace);
