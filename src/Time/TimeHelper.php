@@ -2,8 +2,6 @@
 
 namespace Spatie\FlareClient\Time;
 
-use Carbon\CarbonImmutable;
-
 class TimeHelper
 {
     public static function minute(): int
