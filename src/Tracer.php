@@ -146,7 +146,7 @@ class Tracer
     }
 
     /** @return array<Span> */
-    public function &currentTrace(): array
+    public function currentTrace(): array
     {
         return $this->traces[$this->currentTraceId];
     }

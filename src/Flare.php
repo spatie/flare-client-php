@@ -285,15 +285,15 @@ class Flare
     protected function shouldSendReport(Throwable $throwable): bool
     {
         if (isset($this->reportErrorLevels) && $throwable instanceof Error) {
-            return (bool)($this->reportErrorLevels & $throwable->getCode());
+            return (bool) ($this->reportErrorLevels & $throwable->getCode());
         }
 
         if (isset($this->reportErrorLevels) && $throwable instanceof ErrorException) {
-            return (bool)($this->reportErrorLevels & $throwable->getSeverity());
+            return (bool) ($this->reportErrorLevels & $throwable->getSeverity());
         }
 
         if ($this->filterExceptionsCallable && $throwable instanceof Exception) {
-            return (bool)(call_user_func($this->filterExceptionsCallable, $throwable));
+            return (bool) (call_user_func($this->filterExceptionsCallable, $throwable));
         }
 
         return true;
@@ -376,7 +376,7 @@ class Flare
 
     public function resetReporting(): void
     {
-        $this->api->sendQueue();
+        $this->api->sendQueue(reports: true, traces: false);
 
         $this->customContext = [];
 

@@ -81,26 +81,33 @@ class Api
         return $this;
     }
 
-    public function sendQueue(): void
+    public function sendQueue(
+        bool $reports = true,
+        bool $traces = true,
+    ): void
     {
-        try {
-            foreach ($this->reportQueue as $report) {
-                $this->sendReportToApi($report);
-            }
-        } catch (Exception $e) {
+        if($reports){
+            try {
+                foreach ($this->reportQueue as $report) {
+                    $this->sendReportToApi($report);
+                }
+            } catch (Exception $e) {
 
-        } finally {
-            $this->reportQueue = [];
+            } finally {
+                $this->reportQueue = [];
+            }
         }
 
-        try {
-            foreach ($this->traceQueue as $trace) {
-                $this->sendTraceToApi($trace);
-            }
-        } catch (Exception $e) {
+        if($traces){
+            try {
+                foreach ($this->traceQueue as $trace) {
+                    $this->sendTraceToApi($trace);
+                }
+            } catch (Exception $e) {
 
-        } finally {
-            $this->traceQueue = [];
+            } finally {
+                $this->traceQueue = [];
+            }
         }
     }
 

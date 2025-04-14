@@ -2,6 +2,8 @@
 
 namespace Spatie\FlareClient\Time;
 
+use Carbon\CarbonImmutable;
+
 class TimeHelper
 {
     public static function minute(): int
@@ -47,5 +49,10 @@ class TimeHelper
     public static function phpMicroTime(int|float $microtime): int
     {
         return (int) ($microtime * 1000_000_000);
+    }
+
+    public static function carbonToNano(CarbonImmutable $carbonImmutable): int
+    {
+        return $carbonImmutable->timestamp * 1_000_000_000 + $carbonImmutable->micro * 1_000;
     }
 }
