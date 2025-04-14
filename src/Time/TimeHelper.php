@@ -50,9 +50,4 @@ class TimeHelper
     {
         return (int) ($microtime * 1000_000_000);
     }
-
-    public static function carbonToNano(CarbonImmutable $carbonImmutable): int
-    {
-        return $carbonImmutable->timestamp * 1_000_000_000 + $carbonImmutable->micro * 1_000;
-    }
 }
