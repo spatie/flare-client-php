@@ -66,7 +66,7 @@ class TrimAttributesStrategy extends AbstractTruncationStrategy
 
     protected function trimAttributes(mixed &$value, mixed $key, int $threshold): mixed
     {
-        if(in_array($key, $this->attributesToIgnore)) {
+        if (in_array($key, $this->attributesToIgnore)) {
             return $value;
         }
 

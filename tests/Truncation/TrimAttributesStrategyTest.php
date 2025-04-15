@@ -1,10 +1,8 @@
 <?php
 
 
-use Pest\Support\Arr;
 use Spatie\FlareClient\Truncation\ReportTrimmer;
 use Spatie\FlareClient\Truncation\TrimAttributesStrategy;
-
 
 it('can trim long attributes in payload', function () {
     ReportTrimmer::setMaxPayloadSize(52428);
@@ -35,7 +33,7 @@ it('does not trim short attribute payloads', function () {
     expect($trimmedPayload)->toBe($payload);
 });
 
-it('will keep certain keys in the payload', function (){
+it('will keep certain keys in the payload', function () {
     ReportTrimmer::setMaxPayloadSize(10);
 
     $payload = [
