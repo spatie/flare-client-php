@@ -1,14 +1,14 @@
 <?php
 
 
+use Pest\Support\Arr;
 use Spatie\FlareClient\Truncation\ReportTrimmer;
 use Spatie\FlareClient\Truncation\TrimAttributesStrategy;
 
-beforeEach(function () {
-    ReportTrimmer::setMaxPayloadSize(52428);
-});
 
 it('can trim long attributes in payload', function () {
+    ReportTrimmer::setMaxPayloadSize(52428);
+
     foreach (TrimAttributesStrategy::thresholds() as $threshold) {
         [$payload, $expected] = createLargePayloadWithAttributes($threshold);
 
@@ -18,6 +18,8 @@ it('can trim long attributes in payload', function () {
 });
 
 it('does not trim short attribute payloads', function () {
+    ReportTrimmer::setMaxPayloadSize(52428);
+
     $payload = [
         'context' => [
             'queries' => [
@@ -31,6 +33,24 @@ it('does not trim short attribute payloads', function () {
     $trimmedPayload = $strategy->execute($payload);
 
     expect($trimmedPayload)->toBe($payload);
+});
+
+it('will keep certain keys in the payload', function (){
+    ReportTrimmer::setMaxPayloadSize(10);
+
+    $payload = [
+        'attributes' => [
+            'http.request.method' => array_fill(0, 100, 'RANDOM'),
+            'trimmable' => array_fill(0, 100, 'RANDOM'),
+        ],
+    ];
+
+    $strategy = new TrimAttributesStrategy(new ReportTrimmer());
+
+    $trimmedPayload = $strategy->execute($payload);
+
+    expect($trimmedPayload['attributes']['http.request.method'])->toHaveCount(100);
+    expect($trimmedPayload['attributes']['trimmable'])->toHaveCount(10);
 });
 
 // Helpers

@@ -4,6 +4,27 @@ namespace Spatie\FlareClient\Truncation;
 
 class TrimAttributesStrategy extends AbstractTruncationStrategy
 {
+    protected array $attributesToIgnore = [
+        'flare.entry_point.type',
+        'flare.entry_point.value',
+        'flare.entry_point.class',
+
+        'process.command_args',
+
+        'laravel.job.class',
+        'laravel.job.queue.name',
+        'laravel.job.queue.connection_name',
+
+        'http.request.method',
+        'url.full',
+        'laravel.route.name',
+        'http.route',
+
+        'user.id',
+        'user.full_name',
+        'user.email',
+    ];
+
     /**
      * @return array<int, int>
      */
@@ -45,6 +66,10 @@ class TrimAttributesStrategy extends AbstractTruncationStrategy
 
     protected function trimAttributes(mixed &$value, mixed $key, int $threshold): mixed
     {
+        if(in_array($key, $this->attributesToIgnore)) {
+            return $value;
+        }
+
         if (is_array($value)) {
             if (count($value) > $threshold) {
                 $value = array_slice($value, $threshold * -1, $threshold);
