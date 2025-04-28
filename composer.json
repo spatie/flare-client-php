@@ -10,7 +10,7 @@
     "homepage": "https://github.com/spatie/flare-client-php",
     "license": "MIT",
     "require": {
-        "php": "^8.1",
+        "php": "^8.2",
         "ext-curl": "*",
         "guzzlehttp/guzzle": "^7.9",
         "psr/container": "^2.0",

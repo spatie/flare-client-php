@@ -42,6 +42,8 @@ class Tracer
         public readonly Sampler $sampler = new RateSampler([]),
         public ?Closure $configureSpansCallable = null,
         public ?Closure $configureSpanEventsCallable = null,
+        public ?Closure $filterSpansCallable = null,
+        public ?Closure $filterSpanEventsCallable = null,
         public SamplingType $samplingType = SamplingType::Waiting,
         public bool $clearTracesAfterExport = true,
     ) {

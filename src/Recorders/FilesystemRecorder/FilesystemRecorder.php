@@ -5,9 +5,10 @@ namespace Spatie\FlareClient\Recorders\FilesystemRecorder;
 use Spatie\FlareClient\Concerns\Recorders\RecordsPendingSpans;
 use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
+use Spatie\FlareClient\Recorders\Recorder;
 use Spatie\FlareClient\Spans\Span;
 
-class FilesystemRecorder implements SpansRecorder
+class FilesystemRecorder  extends Recorder  implements SpansRecorder
 {
     /** @use RecordsPendingSpans<Span> */
     use RecordsPendingSpans;

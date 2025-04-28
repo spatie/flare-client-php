@@ -8,8 +8,9 @@ use Spatie\FlareClient\Contracts\Recorders\SpanEventsRecorder;
 use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanEventType;
+use Spatie\FlareClient\Recorders\Recorder;
 
-class GlowRecorder implements SpanEventsRecorder
+class GlowRecorder  extends Recorder  implements SpanEventsRecorder
 {
     /**  @use RecordsSpanEvents<GlowSpanEvent> */
     use RecordsSpanEvents;
@@ -21,7 +22,7 @@ class GlowRecorder implements SpanEventsRecorder
 
     public function record(
         string $name,
-        string $level = MessageLevels::INFO,
+        MessageLevels $level = MessageLevels::Info,
         array $context = [],
         ?int $time = null,
         FlareSpanEventType $spanEventType = SpanEventType::Glow,

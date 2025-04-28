@@ -14,14 +14,14 @@ it('stores glows for reporting and tracing', function () {
     $flare = setupFlare();
 
     $recorder = new LogRecorder($flare->tracer, $flare->backTracer, config: [
-        'trace' => true,
-        'report' => true,
-        'max_reported' => 10,
+        'with_traces' => true,
+        'with_errors' => true,
+        'max_items_with_errors' => 10,
     ]);
 
     $recorder->record(
         'Some name',
-        MessageLevels::INFO,
+        MessageLevels::Info,
         ['some' => 'metadata'],
     );
 

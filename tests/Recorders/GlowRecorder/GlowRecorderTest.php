@@ -14,18 +14,18 @@ it('stores glows for reporting and tracing', function () {
     $flare = setupFlare();
 
     $recorder = new GlowRecorder($flare->tracer, $flare->backTracer, config: [
-        'trace' => true,
-        'report' => true,
-        'max_reported' => 10,
+        'with_traces' => true,
+        'with_errors' => true,
+        'max_items_with_errors' => 10,
     ]);
 
-    $glow = new GlowSpanEvent('Some name', 'info', [
+    $glow = new GlowSpanEvent('Some name', MessageLevels::Info, [
         'some' => 'metadata',
     ]);
 
     $recorder->record(
         name: 'Some name',
-        level: MessageLevels::INFO,
+        level: MessageLevels::Info,
         context: ['some' => 'metadata'],
     );
 

@@ -14,12 +14,12 @@ trait RecordsSpans
 
     protected function shouldTrace(): bool
     {
-        return $this->trace && $this->tracer->isSampling();
+        return $this->withTraces && $this->tracer->isSampling();
     }
 
     protected function shouldReport(): bool
     {
-        return $this->report;
+        return $this->withErrors;
     }
 
     /**

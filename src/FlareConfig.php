@@ -8,22 +8,23 @@ use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\Backtrace\Arguments\Reducers\ArgumentReducer;
 use Spatie\ErrorSolutions\Contracts\HasSolutionsForThrowable;
 use Spatie\ErrorSolutions\SolutionProviderRepository;
+use Spatie\FlareClient\AttributesProviders\EmptyUserAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
-use Spatie\FlareClient\Enums\CacheOperation;
+use Spatie\FlareClient\Enums\CollectType;
 use Spatie\FlareClient\Enums\OverriddenGrouping;
-use Spatie\FlareClient\FlareMiddleware\AddConsoleInformation;
-use Spatie\FlareClient\FlareMiddleware\AddGitInformation;
-use Spatie\FlareClient\FlareMiddleware\AddRequestInformation;
-use Spatie\FlareClient\FlareMiddleware\AddSolutions;
 use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
 use Spatie\FlareClient\Recorders\DumpRecorder\DumpRecorder;
+use Spatie\FlareClient\Recorders\ExternalHttpRecorder\ExternalHttpRecorder;
+use Spatie\FlareClient\Recorders\FilesystemRecorder\FilesystemRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
 use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
+use Spatie\FlareClient\Recorders\RedisCommandRecorder\RedisCommandRecorder;
 use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
+use Spatie\FlareClient\Recorders\ViewRecorder\ViewRecorder;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Sampling\AlwaysSampler;
 use Spatie\FlareClient\Sampling\RateSampler;
@@ -33,6 +34,7 @@ use Spatie\FlareClient\Senders\CurlSender;
 use Spatie\FlareClient\Senders\Sender;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
+use Spatie\FlareClient\Support\CollectsResolver;
 use Spatie\FlareClient\Support\StacktraceMapper;
 use Spatie\FlareClient\Support\TraceLimits;
 use Spatie\FlareClient\TraceExporters\OpenTelemetryJsonTraceExporter;
@@ -44,6 +46,7 @@ class FlareConfig
      * @param null|Closure(Report): bool $filterReportsCallable
      * @param array<class-string<FlareMiddleware>, array> $middleware
      * @param array<class-string<Recorder>, array> $recorders
+     * @param array<string, array{type: CollectType, ignored: ?bool, options: array}> $collects
      * @param array<class-string<ArgumentReducer>|ArgumentReducer>|ArgumentReducers|null $argumentReducers
      * @param class-string<Sender> $sender
      * @param class-string<SolutionProviderRepository> $solutionsProviderRepository
@@ -56,6 +59,7 @@ class FlareConfig
      * @param array<string> $censorBodyFields
      * @param class-string<UserAttributesProvider> $userAttributesProvider
      * @param array<class-string, OverriddenGrouping> $overriddenGroupings
+     * @param class-string<CollectsResolver> $collectsResolver
      */
     public function __construct(
         public ?string $apiToken = null,
@@ -63,6 +67,7 @@ class FlareConfig
         public bool $sendReportsImmediately = false,
         public array $middleware = [],
         public array $recorders = [],
+        public array $collects = [],
         public ?int $reportErrorLevels = null,
         public ?Closure $filterExceptionsCallable = null,
         public ?Closure $filterReportsCallable = null,
@@ -89,9 +94,10 @@ class FlareConfig
         public bool $censorClientIps = false,
         public array $censorHeaders = [],
         public array $censorBodyFields = [],
-        public string $userAttributesProvider = UserAttributesProvider::class,
+        public string $userAttributesProvider = EmptyUserAttributesProvider::class,
         public string $traceExporter = OpenTelemetryJsonTraceExporter::class,
         public string $stacktraceMapper = StacktraceMapper::class,
+        public string $collectsResolver = CollectsResolver::class,
         public array $overriddenGroupings = [],
     ) {
     }
@@ -125,15 +131,22 @@ class FlareConfig
     public function useDefaults(): static
     {
         return $this
-            ->addDumps()
-            ->addCommands()
-            ->addConsoleInfo()
-            ->addRequestInfo()
-            ->addGitInfo()
-            ->addGlows()
-            ->addSolutions()
-            ->addThrowables()
-            ->addStackFrameArguments()
+            ->collectDumps()
+            ->collectCommands()
+            ->collectRequests()
+            ->collectCacheEvents()
+            ->collectLogs()
+            ->collectQueries()
+            ->collectTransactions()
+            ->collectExternalHttp()
+            ->collectFilesystemOperations()
+            ->collectGitInfo()
+            ->collectViews()
+            ->collectGlows()
+            ->collectSolutions()
+            ->collectThrowablesWithTraces()
+            ->collectStackFrameArguments()
+            ->collectServerInfo()
             ->censorHeaders(
                 'API-KEY',
                 'Authorization',
@@ -148,192 +161,277 @@ class FlareConfig
             );
     }
 
-    /**
-     * @param class-string<FlareMiddleware> $middleware
-     */
-    public function addRequestInfo(
-        string $middleware = AddRequestInformation::class,
-    ): static {
-        $this->middleware[$middleware] = [];
-
-        return $this;
+    public function collectRequests(array $extra = []): static
+    {
+        return $this->addCollect(CollectType::Requests, $extra);
     }
 
-    /**
-     * @param class-string<FlareMiddleware> $middleware
-     */
-    public function addConsoleInfo(
-        string $middleware = AddConsoleInformation::class,
-    ): static {
-        $this->middleware[$middleware] = [];
-
-        return $this;
+    public function ignoreRequestInfo(): static
+    {
+        return $this->ignoreCollect(CollectType::Requests);
     }
 
-    /**
-     * @param class-string<FlareMiddleware> $middleware
-     */
-    public function addGitInfo(
-        string $middleware = AddGitInformation::class,
+    public function collectCommands(
+        bool $withTraces = CommandRecorder::DEFAULT_WITH_TRACES,
+        bool $withErrors = CommandRecorder::DEFAULT_WITH_ERRORS,
+        ?int $maxItemsWithErrors = CommandRecorder::DEFAULT_MAX_ITEMS_WITH_ERRORS,
+        array $extra = [],
     ): static {
-        $this->middleware[$middleware] = [];
-
-        return $this;
+        return $this->addCollect(CollectType::Commands, [
+            'with_traces' => $withTraces,
+            'with_errors' => $withErrors,
+            'max_items_with_errors' => $maxItemsWithErrors,
+            ...$extra,
+        ]);
     }
 
-    /**
-     * @param class-string<Recorder> $recorder
-     */
-    public function addCacheEvents(
-        bool $trace = true,
-        bool $report = true,
-        ?int $maxReported = 100,
-        array $operations = [CacheOperation::Get, CacheOperation::Set, CacheOperation::Forget],
-        string $recorder = CacheRecorder::class,
+    public function ignoreCommands(): static
+    {
+        return $this->ignoreCollect(CollectType::Commands);
+    }
+
+    public function collectGitInfo(array $extra = []): static
+    {
+        return $this->addCollect(CollectType::GitInfo, $extra);
+    }
+
+    public function ignoreGitInfo(): static
+    {
+        return $this->ignoreCollect(CollectType::GitInfo);
+    }
+
+    public function collectCacheEvents(
+        bool $withTraces = CacheRecorder::DEFAULT_WITH_TRACES,
+        bool $withErrors = CacheRecorder::DEFAULT_WITH_ERRORS,
+        ?int $maxItemsWithErrors = CacheRecorder::DEFAULT_MAX_ITEMS_WITH_ERRORS,
+        array $operations = CacheRecorder::DEFAULT_OPERATIONS,
+        array $extra = [],
     ): static {
-        $this->recorders[$recorder] = [
-            'trace' => $trace,
-            'report' => $report,
-            'max_reported' => $maxReported,
+        return $this->addCollect(CollectType::Cache, [
+            'with_traces' => $withTraces,
+            'with_errors' => $withErrors,
+            'max_items_with_errors' => $maxItemsWithErrors,
             'operations' => $operations,
-        ];
-
-        return $this;
+            ...$extra,
+        ]);
     }
 
-    /**
-     * @param class-string<Recorder> $recorder
-     */
-    public function addGlows(
-        bool $trace = true,
-        bool $report = true,
-        ?int $maxReported = 10,
-        string $recorder = GlowRecorder::class,
-    ): static {
-        $this->recorders[$recorder] = [
-            'trace' => $trace,
-            'report' => $report,
-            'max_reported' => $maxReported,
-        ];
-
-        return $this;
+    public function ignoreCacheEvents(): static
+    {
+        return $this->ignoreCollect(CollectType::Cache);
     }
 
-    /**
-     * @param class-string<Recorder> $recorder
-     */
-    public function addLogs(
-        bool $trace = true,
-        bool $report = true,
-        ?int $maxReported = 10,
-        string $recorder = LogRecorder::class,
+    public function collectGlows(
+        bool $withTraces = GlowRecorder::DEFAULT_WITH_TRACES,
+        bool $withErrors = GlowRecorder::DEFAULT_WITH_ERRORS,
+        ?int $maxItemsWithErrors = GlowRecorder::DEFAULT_MAX_ITEMS_WITH_ERRORS,
     ): static {
-        $this->recorders[$recorder] = [
-            'trace' => $trace,
-            'report' => $report,
-            'max_reported' => $maxReported,
-        ];
-
-        return $this;
+        return $this->addCollect(CollectType::Glows, [
+            'with_traces' => $withTraces,
+            'with_errors' => $withErrors,
+            'max_items_with_errors' => $maxItemsWithErrors,
+        ]);
     }
 
-    /**
-     * @param class-string<Recorder> $recorder
-     */
-    public function addCommands(
-        bool $trace = true,
-        bool $report = true,
-        ?int $maxReported = 10,
-        string $recorder = CommandRecorder::class,
-    ): static {
-        $this->recorders[$recorder] = [
-            'trace' => $trace,
-            'report' => $report,
-            'max_reported' => $maxReported,
-        ];
-
-        return $this;
+    public function ignoreGlows(): static
+    {
+        return $this->ignoreCollect(CollectType::Glows);
     }
 
-    /**
-     * @param class-string<FlareMiddleware> $middleware
-     */
-    public function addSolutions(
-        string $middleware = AddSolutions::class,
+    public function collectLogs(
+        bool $withTraces = LogRecorder::DEFAULT_WITH_TRACES,
+        bool $withErrors = LogRecorder::DEFAULT_WITH_ERRORS,
+        ?int $maxItemsWithErrors = LogRecorder::DEFAULT_MAX_ITEMS_WITH_ERRORS,
     ): static {
-        $this->middleware[$middleware] = [];
-
-        return $this;
+        return $this->addCollect(CollectType::Logs, [
+            'with_traces' => $withTraces,
+            'with_errors' => $withErrors,
+            'max_items_with_errors' => $maxItemsWithErrors,
+        ]);
     }
 
-    /**
-     * @param class-string<Recorder> $recorder
-     */
-    public function addDumps(
-        bool $trace = false,
-        bool $report = true,
-        ?int $maxReported = 25,
-        bool $findOrigin = false,
-        string $recorder = DumpRecorder::class
+    public function ignoreLogs(): static
+    {
+        return $this->ignoreCollect(CollectType::Logs);
+    }
+
+    public function collectSolutions(
+        array $extra = [],
     ): static {
-        $this->recorders[$recorder] = [
-            'trace' => $trace,
-            'report' => $report,
-            'max_reported' => $maxReported,
+        return $this->addCollect(CollectType::Solutions, $extra);
+    }
+
+    public function ignoreSolutions(): static
+    {
+        return $this->ignoreCollect(CollectType::Solutions);
+    }
+
+    public function collectDumps(
+        bool $withTraces = DumpRecorder::DEFAULT_WITH_TRACES,
+        bool $withErrors = DumpRecorder::DEFAULT_WITH_ERRORS,
+        ?int $maxItemsWithErrors = DumpRecorder::DEFAULT_MAX_ITEMS_WITH_ERRORS,
+        bool $findOrigin = DumpRecorder::DEFAULT_FIND_ORIGIN,
+        array $extra = [],
+    ): static {
+        return $this->addCollect(CollectType::Dumps, [
+            'with_traces' => $withTraces,
+            'with_errors' => $withErrors,
+            'max_items_with_errors' => $maxItemsWithErrors,
             'find_dump' => $findOrigin,
-        ];
+            ...$extra,
+        ]);
+    }
+
+    public function ignoreDumps(): static
+    {
+        return $this->ignoreCollect(CollectType::Dumps);
+    }
+
+    public function collectThrowablesWithTraces(
+        bool $withTraces = true,
+    ): static {
+        $this->traceThrowables = $withTraces;
 
         return $this;
     }
 
-    public function addThrowables(
-        bool $trace = true,
+    public function collectQueries(
+        bool $withTraces = QueryRecorder::DEFAULT_WITH_TRACES,
+        bool $withErrors = QueryRecorder::DEFAULT_WITH_ERRORS,
+        ?int $maxItemsWithErrors = QueryRecorder::DEFAULT_MAX_ITEMS_WITH_ERRORS,
+        bool $includeBindings = QueryRecorder::DEFAULT_INCLUDE_BINDINGS,
+        bool $findOrigin = QueryRecorder::DEFAULT_FIND_ORIGIN,
+        ?int $findOriginThreshold = QueryRecorder::DEFAULT_FIND_ORIGIN_THRESHOLD,
+        array $extra = [],
     ): static {
-        $this->traceThrowables = $trace;
-
-        return $this;
-    }
-
-    /**
-     * @param class-string<Recorder> $recorder
-     */
-    public function addQueries(
-        bool $trace = true,
-        bool $report = true,
-        ?int $maxReported = 100,
-        bool $includeBindings = true,
-        bool $findOrigin = true,
-        ?int $findOriginThreshold = 300_000,
-        string $recorder = QueryRecorder::class,
-    ): static {
-        $this->recorders[$recorder] = [
-            'trace' => $trace,
-            'report' => $report,
-            'max_reported' => $maxReported,
+        return $this->addCollect(CollectType::Queries, [
+            'with_traces' => $withTraces,
+            'with_errors' => $withErrors,
+            'max_items_with_errors' => $maxItemsWithErrors,
             'include_bindings' => $includeBindings,
             'find_origin' => $findOrigin,
             'find_origin_threshold' => $findOriginThreshold,
-        ];
-
-        return $this;
+            ...$extra,
+        ]);
     }
 
-    /**
-     * @param class-string<Recorder> $recorder
-     */
-    public function addTransactions(
-        bool $trace = true,
-        bool $report = true,
-        ?int $maxReported = 100,
-        string $recorder = TransactionRecorder::class
-    ): static {
-        $this->recorders[$recorder] = [
-            'trace' => $trace,
-            'report' => $report,
-            'max_reported' => $maxReported,
-        ];
+    public function ignoreQueries(): static
+    {
+        return $this->ignoreCollect(CollectType::Queries);
+    }
 
-        return $this;
+    public function collectTransactions(
+        bool $withTraces = TransactionRecorder::DEFAULT_WITH_TRACES,
+        bool $withErrors = TransactionRecorder::DEFAULT_WITH_ERRORS,
+        ?int $maxItemsWithErrors = TransactionRecorder::DEFAULT_MAX_ITEMS_WITH_ERRORS,
+        array $extra = [],
+    ): static {
+        return $this->addCollect(CollectType::Transactions, [
+            'with_traces' => $withTraces,
+            'with_errors' => $withErrors,
+            'max_items_with_errors' => $maxItemsWithErrors,
+            ...$extra,
+        ]);
+    }
+
+    public function ignoreTransactions(): static
+    {
+        return $this->ignoreCollect(CollectType::Transactions);
+    }
+
+    public function collectExternalHttp(
+        bool $withTraces = ExternalHttpRecorder::DEFAULT_WITH_TRACES,
+        bool $withErrors = ExternalHttpRecorder::DEFAULT_WITH_ERRORS,
+        ?int $maxItemsWithErrors = ExternalHttpRecorder::DEFAULT_MAX_ITEMS_WITH_ERRORS,
+        array $extra = [],
+    ): static {
+        return $this->addCollect(CollectType::ExternalHttp, [
+            'with_traces' => $withTraces,
+            'with_errors' => $withErrors,
+            'max_items_with_errors' => $maxItemsWithErrors,
+            ...$extra,
+        ]);
+    }
+
+    public function ignoreExternalHttp(): static
+    {
+        return $this->ignoreCollect(CollectType::ExternalHttp);
+    }
+
+    public function collectFilesystemOperations(
+        bool $withTraces = FilesystemRecorder::DEFAULT_WITH_TRACES,
+        bool $withErrors = FilesystemRecorder::DEFAULT_WITH_ERRORS,
+        ?int $maxItemsWithErrors = FilesystemRecorder::DEFAULT_MAX_ITEMS_WITH_ERRORS,
+        array $extra = [],
+    ): static {
+        return $this->addCollect(CollectType::Filesystem, [
+            'with_traces' => $withTraces,
+            'with_errors' => $withErrors,
+            'max_items_with_errors' => $maxItemsWithErrors,
+            ...$extra,
+        ]);
+    }
+
+    public function ignoreFilesystemOperations(): static
+    {
+        return $this->ignoreCollect(CollectType::Filesystem);
+    }
+
+    public function collectRedisCommands(
+        bool $withTraces = true,
+        bool $withErrors = true,
+        ?int $maxItemsWithErrors = RedisCommandRecorder::DEFAULT_MAX_ITEMS_WITH_ERRORS,
+        array $extra = [],
+    ): static {
+        return $this->addCollect(CollectType::RedisCommands, [
+            'with_traces' => $withTraces,
+            'with_errors' => $withErrors,
+            'max_items_with_errors' => $maxItemsWithErrors,
+            ...$extra,
+        ]);
+    }
+
+    public function ignoreRedisCommands(): static
+    {
+        return $this->ignoreCollect(CollectType::RedisCommands);
+    }
+
+    public function collectViews(
+        bool $withTraces = ViewRecorder::DEFAULT_WITH_TRACES,
+        bool $withErrors = ViewRecorder::DEFAULT_WITH_ERRORS,
+        array $extra = [],
+    ): static {
+        return $this->addCollect(CollectType::Views, [
+            'with_traces' => $withTraces,
+            'with_errors' => $withErrors,
+            ...$extra,
+        ]);
+    }
+
+    public function ignoreViews(): static
+    {
+        return $this->ignoreCollect(CollectType::Views);
+    }
+
+    public function collectServerInfo(
+        bool $host = true,
+        bool $os = true,
+        bool $php = true,
+        bool $composer = true,
+        array $extra = [],
+    ): static {
+        return $this->addCollect(CollectType::ServerInfo, [
+            'host' => $host,
+            'os' => $os,
+            'php' => $php,
+            'composer' => $composer,
+            ...$extra,
+        ]);
+    }
+
+    public function ignoreServerInfo(): static
+    {
+        return $this->ignoreCollect(CollectType::ServerInfo);
     }
 
     /**
@@ -373,12 +471,11 @@ class FlareConfig
         return $this;
     }
 
-    public function addStackFrameArguments(
-        bool $withStackFrameArguments = true,
+    public function collectStackFrameArguments(
         string|ArgumentReducers|ArgumentReducer|array|null $argumentReducers = null,
         bool $forcePHPIniSetting = true
     ): static {
-        $this->withStackFrameArguments = $withStackFrameArguments;
+        $this->withStackFrameArguments = true;
         $this->forcePHPStackFrameArgumentsIniSetting = $forcePHPIniSetting;
 
         $argumentReducers = match (true) {
@@ -388,6 +485,14 @@ class FlareConfig
         };
 
         $this->argumentReducers = $argumentReducers;
+
+        return $this;
+    }
+
+    public function ignoreStackFrameArguments(): static
+    {
+        $this->withStackFrameArguments = false;
+        $this->forcePHPStackFrameArgumentsIniSetting = false;
 
         return $this;
     }
@@ -521,6 +626,18 @@ class FlareConfig
     }
 
     /**
+     * @param class-string<FlareMiddleware> $middleware
+     */
+    public function middleware(
+        string $middleware,
+        array $options = []
+    ): static {
+        $this->middleware[$middleware] = $options;
+
+        return $this;
+    }
+
+    /**
      * @param class-string<FlareMiddleware> ...$middlewareClasses
      */
     public function removeMiddleware(string ...$middlewareClasses): static
@@ -532,9 +649,14 @@ class FlareConfig
         return $this;
     }
 
-    public function removeAllMiddleware(): static
-    {
-        $this->middleware = [];
+    /**
+     * @param class-string<Recorder> $recorder
+     */
+    public function recorder(
+        string $recorder,
+        array $options = []
+    ): static {
+        $this->recorders[$recorder] = $options;
 
         return $this;
     }
@@ -547,13 +669,6 @@ class FlareConfig
         foreach ($recorderClasses as $recorderClass) {
             unset($this->recorders[$recorderClass]);
         }
-
-        return $this;
-    }
-
-    public function removeAllRecorders(): static
-    {
-        $this->recorders = [];
 
         return $this;
     }
@@ -579,6 +694,35 @@ class FlareConfig
         OverriddenGrouping $override
     ): static {
         $this->overriddenGroupings[$class] = $override;
+
+        return $this;
+    }
+
+    /**
+     * @param class-string<UserAttributesProvider> $userAttributesProvider
+     */
+    public function userAttributesProvider(
+        string $userAttributesProvider
+    ): static {
+        $this->userAttributesProvider = $userAttributesProvider;
+
+        return $this;
+    }
+
+    protected function addCollect(
+        CollectType $type,
+        array $options = [],
+    ): static {
+        $this->collects[$type->value]['type'] = $type;
+        $this->collects[$type->value]['options'] = $options;
+
+        return $this;
+    }
+
+    protected function ignoreCollect(CollectType $type): static
+    {
+        $this->collects[$type->value]['type'] = $type;
+        $this->collects[$type->value]['ignored'] = true;
 
         return $this;
     }

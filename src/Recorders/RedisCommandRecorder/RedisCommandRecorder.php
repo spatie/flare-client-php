@@ -7,9 +7,10 @@ use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
+use Spatie\FlareClient\Recorders\Recorder;
 use Spatie\FlareClient\Spans\Span;
 
-class RedisCommandRecorder implements SpansRecorder
+class RedisCommandRecorder  extends Recorder  implements SpansRecorder
 {
     /** @use RecordsSpans<Span> */
     use RecordsSpans;

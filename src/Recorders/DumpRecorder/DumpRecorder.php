@@ -8,13 +8,16 @@ use Spatie\Backtrace\Frame;
 use Spatie\FlareClient\Concerns\Recorders\RecordsSpanEvents;
 use Spatie\FlareClient\Contracts\Recorders\SpanEventsRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
+use Spatie\FlareClient\Recorders\Recorder;
 use Symfony\Component\VarDumper\Cloner\Data;
 use Symfony\Component\VarDumper\VarDumper;
 
-class DumpRecorder implements SpanEventsRecorder
+class DumpRecorder extends Recorder implements SpanEventsRecorder
 {
     /** @use RecordsSpanEvents<DumpSpanEvent> */
     use RecordsSpanEvents;
+
+    public const DEFAULT_MAX_ITEMS_WITH_ERRORS = 25;
 
     protected static MultiDumpHandler $multiDumpHandler;
 

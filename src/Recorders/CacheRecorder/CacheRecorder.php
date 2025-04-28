@@ -7,8 +7,9 @@ use Spatie\FlareClient\Contracts\Recorders\SpanEventsRecorder;
 use Spatie\FlareClient\Enums\CacheOperation;
 use Spatie\FlareClient\Enums\CacheResult;
 use Spatie\FlareClient\Enums\RecorderType;
+use Spatie\FlareClient\Recorders\Recorder;
 
-class CacheRecorder implements SpanEventsRecorder
+class CacheRecorder extends Recorder implements SpanEventsRecorder
 {
     /** @use RecordsSpanEvents<CacheSpanEvent> */
     use RecordsSpanEvents;
@@ -17,6 +18,8 @@ class CacheRecorder implements SpanEventsRecorder
      * @var array<CacheOperation|string>
      */
     protected array $operations = [];
+
+    public const DEFAULT_OPERATIONS = [CacheOperation::Get, CacheOperation::Set, CacheOperation::Forget];
 
     public static function type(): string|RecorderType
     {

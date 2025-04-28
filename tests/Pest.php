@@ -42,7 +42,7 @@ function setupFlare(
         $closure($config);
     }
 
-    return test()->flare = Flare::makeFromConfig($config);
+    return test()->flare = Flare::make($config);
 }
 
 function getStubPath(string $stubName): string

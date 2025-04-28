@@ -8,10 +8,11 @@ use Spatie\FlareClient\Concerns\Recorders\RecordsSpanEvents;
 use Spatie\FlareClient\Contracts\Recorders\SpanEventsRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanStatusCode;
+use Spatie\FlareClient\Recorders\Recorder;
 use Spatie\FlareClient\Report;
 use Spatie\FlareClient\Tracer;
 
-class ThrowableRecorder implements SpanEventsRecorder
+class ThrowableRecorder  extends Recorder  implements SpanEventsRecorder
 {
     /** @use RecordsSpanEvents<ThrowableSpanEvent> */
     use RecordsSpanEvents;
@@ -19,7 +20,7 @@ class ThrowableRecorder implements SpanEventsRecorder
     public function __construct(
         protected Tracer $tracer,
     ) {
-        $this->trace = true;
+        $this->withTraces = true;
     }
 
     public static function register(ContainerInterface $container, array $config): Closure

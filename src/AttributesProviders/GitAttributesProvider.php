@@ -7,13 +7,19 @@ use Throwable;
 
 class GitAttributesProvider
 {
+    static protected array $cached;
+
     public function toArray(): array
     {
+        if (isset(static::$cached)) {
+            return static::$cached;
+        }
+
         try {
             $baseDir = $this->getGitBaseDirectory();
 
             if (! $baseDir) {
-                return [];
+                return static::$cached = [];
             }
 
             return array_filter([
@@ -26,7 +32,7 @@ class GitAttributesProvider
         } catch (Throwable) {
         }
 
-        return [];
+        return static::$cached = [];
     }
 
     protected function hash(string $baseDir): ?string

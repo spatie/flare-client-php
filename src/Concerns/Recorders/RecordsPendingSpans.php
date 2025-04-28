@@ -24,12 +24,12 @@ trait RecordsPendingSpans
 
     protected function shouldTrace(): bool
     {
-        return $this->trace && $this->tracer->isSampling();
+        return $this->withTraces && $this->tracer->isSampling();
     }
 
     protected function shouldReport(): bool
     {
-        return $this->report;
+        return $this->withErrors;
     }
 
     protected function canStartTraces(): bool
@@ -70,7 +70,7 @@ trait RecordsPendingSpans
 
     protected function persistEntry(Closure $entry): ?Span
     {
-        if ($this->trace === true
+        if ($this->withTraces === true
             && $this->tracer->isSampling() === false
             && $this->canStartTraces()
         ) {
@@ -99,7 +99,7 @@ trait RecordsPendingSpans
         ?int $time = null,
         ?array $attributes = null
     ): mixed {
-        $shouldTrace = $this->trace && $this->tracer->isSampling();
+        $shouldTrace = $this->withTraces && $this->tracer->isSampling();
         $shouldReport = $this->shouldReport();
 
         if ($shouldTrace === false && $shouldReport === false) {

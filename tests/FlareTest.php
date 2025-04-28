@@ -105,7 +105,7 @@ test('callbacks can modify the report', function () {
 
 it('can censor request data', function () {
     setupFlare(
-        fn (FlareConfig $config) => $config->censorBodyFields('user', 'password')->addRequestInfo()
+        fn (FlareConfig $config) => $config->censorBodyFields('user', 'password')->collectRequests()
     );
 
     $_ENV['FLARE_FAKE_WEB_REQUEST'] = true;
@@ -180,7 +180,7 @@ it('can set stages', function () {
 });
 
 it('can add cache events', function () {
-    $flare = setupFlare(fn (FlareConfig $config) => $config->addCacheEvents());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectCacheEvents());
 
     $flare->cache()->recordHit('key', 'store');
 
@@ -248,11 +248,11 @@ it('can add cache events', function () {
 });
 
 it('can add glows', function () {
-    $flare = setupFlare(fn (FlareConfig $config) => $config->addGlows());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectGlows());
 
     $flare->glow()->record(
         'my glow',
-        MessageLevels::INFO,
+        MessageLevels::Info,
         ['my key' => 'my value']
     );
 
@@ -260,7 +260,7 @@ it('can add glows', function () {
 
     $flare->glow()->record(
         'another glow',
-        MessageLevels::ERROR,
+        MessageLevels::Error,
         ['another key' => 'another value']
     );
 
@@ -293,11 +293,11 @@ it('can add glows', function () {
 });
 
 it('can add logs', function () {
-    $flare = setupFlare(fn (FlareConfig $config) => $config->addLogs());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectLogs());
 
     $flare->log()->record(
         'my log',
-        MessageLevels::INFO,
+        MessageLevels::Info,
         ['my key' => 'my value']
     );
 
@@ -305,7 +305,7 @@ it('can add logs', function () {
 
     $flare->log()->record(
         'another log',
-        MessageLevels::ERROR,
+        MessageLevels::Error,
         ['another key' => 'another value']
     );
 
@@ -338,7 +338,7 @@ it('can add logs', function () {
 });
 
 it('can add queries', function () {
-    $flare = setupFlare(fn (FlareConfig $config) => $config->addQueries());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectQueries());
 
     $flare->query()->record(
         'select * from users where id = ?',
@@ -386,7 +386,7 @@ it('can add queries', function () {
 });
 
 it('can begin and commit transactions', function () {
-    $flare = setupFlare(fn (FlareConfig $config) => $config->addTransactions());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectTransactions());
 
     $flare->transaction()->recordBegin();
 
@@ -409,7 +409,7 @@ it('can begin and commit transactions', function () {
 });
 
 it('can begin and rollback transactions', function () {
-    $flare = setupFlare(fn (FlareConfig $config) => $config->addTransactions());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectTransactions());
 
     $flare->transaction()->recordBegin();
 
@@ -454,6 +454,18 @@ it('will add the version to the report', function () {
     expect($payload['attributes']['service.version'])->toEqual('123');
 });
 
+it('will add the application name to the report', function () {
+    setupFlare(fn (FlareConfig $config) => $config->applicationName(function () {
+        return 'Flare';
+    }));
+
+    reportException();
+
+    $payload = FakeSender::instance()->getLastPayload();
+
+    expect($payload['attributes']['service.name'])->toEqual('Flare');
+});
+
 it('is possible to configure the version on the flare instance', function () {
     $flare = setupFlare();
 
@@ -468,8 +480,36 @@ it('is possible to configure the version on the flare instance', function () {
     expect($payload['attributes']['service.version'])->toEqual('123');
 });
 
+it('is possible to configure the application name on the flare instance', function () {
+    $flare = setupFlare();
+
+    $flare->withApplicationName(function () {
+        return 'Flare';
+    });
+
+    reportException();
+
+    $payload = FakeSender::instance()->getLastPayload();
+
+    expect($payload['attributes']['service.name'])->toEqual('Flare');
+});
+
+it('is possible to configure the application stage on the flare instance', function () {
+    $flare = setupFlare();
+
+    $flare->withApplicationStage(function () {
+        return 'Development';
+    });
+
+    reportException();
+
+    $payload = FakeSender::instance()->getLastPayload();
+
+    expect($payload['attributes']['service.stage'])->toEqual('Development');
+});
+
 it('will add the php version to the report', function () {
-    setupFlare();
+    setupFlare(fn(FlareConfig $config) => $config->collectServerInfo());
 
     reportException();
 
@@ -542,7 +582,7 @@ it('can filter error exceptions based on their severity', function () {
 
 it('will add arguments to a stack trace by default', function () {
     // Todo: add some default argument reducers in the config
-    $flare = setupFlare(fn (FlareConfig $config) => $config->addStackFrameArguments(argumentReducers: ArgumentReducers::default()));
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectStackFrameArguments(argumentReducers: ArgumentReducers::default()));
 
     $exception = TraceArguments::create()->exception(
         'a message',
@@ -576,7 +616,7 @@ it('will add arguments to a stack trace by default', function () {
 it('is possible to disable stack frame arguments', function () {
     ini_set('zend.exception_ignore_args', 0); // Enabled on GH actions
 
-    $flare = setupFlare(fn (FlareConfig $config) => $config->addStackFrameArguments(false));
+    $flare = setupFlare(fn (FlareConfig $config) => $config->ignoreStackFrameArguments());
 
     $exception = TraceArguments::create()->exception(
         'a message',
@@ -591,7 +631,7 @@ it('is possible to disable stack frame arguments', function () {
 it('is possible to disable stack frame arguments with zend.exception_ignore_args', function () {
     ini_set('zend.exception_ignore_args', 1);
 
-    $flare = setupFlare(fn (FlareConfig $config) => $config->addStackFrameArguments(false));
+    $flare = setupFlare(fn (FlareConfig $config) => $config->ignoreStackFrameArguments());
 
     $exception = TraceArguments::create()->exception(
         'a message',

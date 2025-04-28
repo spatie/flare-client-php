@@ -65,37 +65,6 @@ class FlareProvider
             $this->config->applicationPath
         ));
 
-        $this->container->singleton(Resource::class, function () {
-            $resource = new Resource(
-                $this->config->applicationName,
-                $this->config->applicationVersion,
-                $this->config->applicationStage,
-                Telemetry::NAME,
-                Telemetry::VERSION
-            );
-
-            $resource->host()->operatingSystem()->process()->processRuntime();
-
-            if ($this->config->configureResourceCallable) {
-                ($this->config->configureResourceCallable)($resource);
-            }
-
-            return $resource;
-        });
-
-        $this->container->singleton(Scope::class, function () {
-            $scope = new Scope(
-                Telemetry::NAME,
-                Telemetry::VERSION
-            );
-
-            if ($this->config->configureScopeCallable) {
-                ($this->config->configureScopeCallable)($scope);
-            }
-
-            return $scope;
-        });
-
         $this->container->singleton(Tracer::class, fn () => new Tracer(
             api: $this->container->get(Api::class),
             exporter: $this->container->get(TraceExporter::class),
@@ -137,17 +106,67 @@ class FlareProvider
             censorBodyFields: $this->config->censorBodyFields,
         ));
 
-        $this->container->singleton(UserAttributesProvider::class);
+        $this->container->singleton(UserAttributesProvider::class, $this->config->userAttributesProvider);
 
-        foreach ($this->config->recorders as $recorderClass => $config) {
+        [
+            'middlewares' => $middlewares,
+            'recorders' => $recorders,
+            'resourceModifiers' => $resourceModifiers,
+        ] = (new $this->config->collectsResolver)->execute($this->config->collects);
+
+        $this->container->singleton(Resource::class, function () use ($resourceModifiers) {
+            $resource = new Resource(
+                $this->config->applicationName,
+                $this->config->applicationVersion,
+                $this->config->applicationStage,
+                Telemetry::NAME,
+                Telemetry::VERSION
+            );
+
+            foreach ($resourceModifiers as $resourceModifier){
+                $resource = $resourceModifier($resource);
+            }
+
+            if ($this->config->configureResourceCallable) {
+                ($this->config->configureResourceCallable)($resource);
+            }
+
+            return $resource;
+        });
+
+        $this->container->singleton(Scope::class, function () {
+            $scope = new Scope(
+                Telemetry::NAME,
+                Telemetry::VERSION
+            );
+
+            if ($this->config->configureScopeCallable) {
+                ($this->config->configureScopeCallable)($scope);
+            }
+
+            return $scope;
+        });
+
+
+        $middlewares = array_merge(
+            $middlewares,
+            $this->config->middleware
+        );
+
+        $recorders = array_merge(
+            $recorders,
+            $this->config->recorders
+        );
+
+        foreach ($recorders as $recorderClass => $config) {
             ($this->registerRecorderAndMiddlewaresCallback)($this->container, $recorderClass, $config);
         }
 
-        foreach ($this->config->middleware as $middlewareClass => $config) {
+        foreach ($middlewares as $middlewareClass => $config) {
             ($this->registerRecorderAndMiddlewaresCallback)($this->container, $middlewareClass, $config);
         }
 
-        $this->container->singleton(Flare::class, function () {
+        $this->container->singleton(Flare::class, function () use ($middlewares, $recorders) {
             $recorders = array_combine(
                 array_map(
                     function ($recorder) {
@@ -160,17 +179,17 @@ class FlareProvider
 
                         return $recorderType->value;
                     },
-                    array_keys($this->config->recorders)
+                    array_keys($recorders)
                 ),
                 array_map(
                     fn ($recorder) => $this->container->get($recorder),
-                    array_keys($this->config->recorders)
+                    array_keys($recorders)
                 )
             );
 
             $middleware = array_map(
                 fn ($middleware) => $this->container->get($middleware),
-                array_keys($this->config->middleware)
+                array_keys($middlewares)
             );
 
             array_unshift($middleware, new AddRecordedEntries($recorders));

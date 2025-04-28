@@ -7,8 +7,9 @@ use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
+use Spatie\FlareClient\Recorders\Recorder;
 
-class QueryRecorder implements SpansRecorder
+class QueryRecorder  extends Recorder  implements SpansRecorder
 {
     /** @use RecordsSpans<QuerySpan> */
     use RecordsSpans;
@@ -18,6 +19,12 @@ class QueryRecorder implements SpansRecorder
     protected bool $findOrigin = false;
 
     protected ?int $findOriginThreshold = null;
+
+    public const DEFAULT_INCLUDE_BINDINGS = true;
+
+    public const DEFAULT_FIND_ORIGIN = true;
+
+    public const DEFAULT_FIND_ORIGIN_THRESHOLD = 300_000;
 
     public static function type(): string|RecorderType
     {

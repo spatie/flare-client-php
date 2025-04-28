@@ -16,7 +16,7 @@ class GlowSpanEvent extends SpanEvent
      */
     public function __construct(
         string $name,
-        public string $level = MessageLevels::INFO,
+        public MessageLevels $level = MessageLevels::Info,
         public array $context = [],
         ?int $time = null,
         public FlareSpanEventType $spanEventType = SpanEventType::Glow,
@@ -35,7 +35,7 @@ class GlowSpanEvent extends SpanEvent
         return [
             'flare.span_event_type' => $this->spanEventType,
             'glow.name' => $this->glowName,
-            'glow.level' => $this->level,
+            'glow.level' => $this->level->value,
             'glow.context' => $this->context,
         ];
     }

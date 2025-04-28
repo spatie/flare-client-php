@@ -14,6 +14,8 @@ attributes:
     telemetry.sdk.language: fake-telemetry-sdk-language
     telemetry.sdk.name: fake-telemetry-sdk-name
     telemetry.sdk.version: fake-telemetry-sdk-version
+    flare.language.name: PHP
+    flare.language.version: 8.3.1
     host.ip: fake-ip
     host.name: fake-host-name
     host.arch: fake-arch
@@ -21,15 +23,13 @@ attributes:
     os.description: fake-os-description
     os.name: fake-os-name
     os.version: fake-os-version
+    process.runtime.name: fake-process-runtime-name
+    process.runtime.version: fake-process-runtime-version
     process.pid: fake-process-pid
     process.executable.path: fake-process-executable-path
     process.command: fake-process-command
     process.command_args: fake-process-command-args
     process.owner: fake-process-owner
-    process.runtime.name: fake-process-runtime-name
-    process.runtime.version: fake-process-runtime-version
-    flare.language.name: PHP
-    flare.language.version: 8.3.1
 events: {  }
 isLog: false
 overriddenGrouping: null

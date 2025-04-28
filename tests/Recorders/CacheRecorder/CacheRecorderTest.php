@@ -18,9 +18,9 @@ it('can record cache events', function () {
         tracer: $flare->tracer,
         backTracer: $flare->backTracer,
         config: [
-            'trace' => true,
-            'report' => true,
-            'max_reported' => 10,
+            'with_traces' => true,
+            'with_errors' => true,
+            'max_items_with_errors' => 10,
             'operations' => [CacheOperation::Get, CacheOperation::Set, CacheOperation::Forget],
         ]
     );
@@ -91,9 +91,9 @@ it('can limit the kinds of events being recorder', function () {
         tracer: $flare->tracer,
         backTracer: $flare->backTracer,
         config: [
-            'trace' => true,
-            'report' => true,
-            'max_reported' => 10,
+            'with_traces' => true,
+            'with_errors' => true,
+            'max_items_with_errors' => 10,
             'operations' => [CacheOperation::Set],
         ]
     );

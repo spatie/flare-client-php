@@ -17,11 +17,11 @@ trait RecordsEntries
     /** @var array<T> */
     protected array $entries = [];
 
-    protected bool $trace = false;
+    protected bool $withTraces = false;
 
-    protected bool $report = false;
+    protected bool $withErrors = false;
 
-    protected ?int $maxReported = null;
+    protected ?int $maxItemsWithErrors = null;
 
     protected bool $findOrigin = false;
 
@@ -70,9 +70,9 @@ trait RecordsEntries
 
     protected function configureRecorder(array $config): void
     {
-        $this->trace = $config['trace'] ?? false;
-        $this->report = $config['report'] ?? false;
-        $this->maxReported = $config['max_reported'] ?? null;
+        $this->withTraces = $config['with_traces'] ?? false;
+        $this->withErrors = $config['with_errors'] ?? false;
+        $this->maxItemsWithErrors = $config['max_items_with_errors'] ?? null;
 
         $this->findOrigin = $config['find_origin'] ?? false;
         $this->findOriginThreshold = $config['find_origin_threshold'] ?? null;
@@ -106,7 +106,7 @@ trait RecordsEntries
 
         $this->entries[] = $entry;
 
-        if ($this->maxReported && count($this->entries) > $this->maxReported) {
+        if ($this->maxItemsWithErrors && count($this->entries) > $this->maxItemsWithErrors) {
             array_shift($this->entries);
         }
 

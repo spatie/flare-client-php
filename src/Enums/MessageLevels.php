@@ -2,11 +2,14 @@
 
 namespace Spatie\FlareClient\Enums;
 
-class MessageLevels
+enum MessageLevels: string
 {
-    const INFO = 'info';
-    const DEBUG = 'debug';
-    const WARNING = 'warning';
-    const ERROR = 'error';
-    const CRITICAL = 'critical';
+    case Emergency = 'emergency';
+    case Alert     = 'alert';
+    case Critical  = 'critical';
+    case Error     = 'error';
+    case Warning   = 'warning';
+    case Notice    = 'notice';
+    case Info      = 'info';
+    case Debug     = 'debug';
 }

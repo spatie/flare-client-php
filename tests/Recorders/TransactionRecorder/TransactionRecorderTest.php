@@ -18,16 +18,16 @@ it('can trace a transaction', function () {
     $transactionRecorder = new TransactionRecorder(
         $flare->tracer,
         $flare->backTracer,
-        config: ['trace' => true]
+        config: ['with_traces' => true]
     );
 
     $queryRecorder = new QueryRecorder(
         $flare->tracer,
         $flare->backTracer,
         config: [
-            'trace' => true,
-            'report' => true,
-            'max_reported' => 10,
+            'with_traces' => true,
+            'with_errors' => true,
+            'max_items_with_errors' => 10,
             'include_bindings' => true,
             'find_origin' => true,
             'find_origin_threshold' => 0,
@@ -73,7 +73,7 @@ it('can rollback a transaction', function () {
     $transactionRecorder = new TransactionRecorder(
         $flare->tracer,
         $flare->backTracer,
-        config: ['trace' => true]
+        config: ['with_traces' => true]
     );
 
     $flare->tracer->startTrace();
@@ -104,7 +104,7 @@ it('can nest transaction spans', function () {
     $transactionRecorder = new TransactionRecorder(
         $flare->tracer,
         $flare->backTracer,
-        config: ['trace' => true]
+        config: ['with_traces' => true]
     );
 
     $flare->tracer->startTrace();

@@ -3,6 +3,7 @@
 namespace Spatie\FlareClient\Recorders\LogRecorder;
 
 use Spatie\FlareClient\Contracts\FlareSpanEventType;
+use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Spans\SpanEvent;
 
@@ -13,7 +14,7 @@ class LogMessageSpanEvent extends SpanEvent
      */
     public function __construct(
         public ?string $message,
-        public string $level,
+        public MessageLevels $level,
         public array $context,
         ?int $time = null,
         public FlareSpanEventType $spanEventType = SpanEventType::Log,
@@ -30,7 +31,7 @@ class LogMessageSpanEvent extends SpanEvent
         return [
             'flare.span_event_type' => $this->spanEventType,
             'log.message' => $this->message,
-            'log.level' => $this->level,
+            'log.level' => $this->level->value,
             'log.context' => $this->context,
         ];
     }

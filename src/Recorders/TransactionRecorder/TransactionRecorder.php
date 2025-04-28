@@ -8,8 +8,9 @@ use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Enums\TransactionStatus;
+use Spatie\FlareClient\Recorders\Recorder;
 
-class TransactionRecorder implements SpansRecorder
+class TransactionRecorder  extends Recorder  implements SpansRecorder
 {
     /** @use RecordsPendingSpans<TransactionSpan> */
     use RecordsPendingSpans;

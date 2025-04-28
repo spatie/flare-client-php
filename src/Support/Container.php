@@ -33,11 +33,15 @@ class Container implements ContainerInterface
      * @template T
      *
      * @param class-string<T> $class
-     * @param null|Closure():T $builder
+     * @param null|Closure():T|class-string<T> $builder
      */
-    public function singleton(string $class, ?Closure $builder = null): void
+    public function singleton(string $class, null|string|Closure $builder = null): void
     {
-        $this->singletons[$class] = $builder ?? fn () => new $class();
+        $this->singletons[$class] = match (true) {
+            $builder === null => fn () => new $class(),
+            is_string($builder) => fn () => new $builder(),
+            default => $builder,
+        };
     }
 
     /**

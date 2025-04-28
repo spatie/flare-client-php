@@ -9,11 +9,12 @@ use Spatie\FlareClient\Concerns\Recorders\RecordsPendingSpans;
 use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
+use Spatie\FlareClient\Recorders\Recorder;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Support\BackTracer;
 use Spatie\FlareClient\Tracer;
 
-class ViewRecorder implements SpansRecorder
+class ViewRecorder  extends Recorder  implements SpansRecorder
 {
     /** @use RecordsPendingSpans<Span> */
     use RecordsPendingSpans;
@@ -25,7 +26,7 @@ class ViewRecorder implements SpansRecorder
         array $config
     ) {
         $this->configure([
-            'trace' => $config['trace'] ?? false,
+            'with_traces' => $config['with_traces'] ?? false,
         ]);
     }
 

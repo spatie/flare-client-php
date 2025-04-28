@@ -14,14 +14,14 @@ trait RecordsSpanEvents
 
     protected function shouldTrace(): bool
     {
-        return $this->trace
+        return $this->withTraces
             && $this->tracer->isSampling()
             && $this->tracer->currentSpanId();
     }
 
     protected function shouldReport(): bool
     {
-        return $this->report;
+        return $this->withErrors;
     }
 
     /**

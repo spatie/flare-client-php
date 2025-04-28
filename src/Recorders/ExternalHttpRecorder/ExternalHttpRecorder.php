@@ -8,12 +8,13 @@ use Spatie\FlareClient\Concerns\Recorders\RecordsPendingSpans;
 use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
+use Spatie\FlareClient\Recorders\Recorder;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Support\BackTracer;
 use Spatie\FlareClient\Support\Redactor;
 use Spatie\FlareClient\Tracer;
 
-class ExternalHttpRecorder implements SpansRecorder
+class ExternalHttpRecorder  extends Recorder implements SpansRecorder
 {
     /** @use RecordsPendingSpans<Span> */
     use RecordsPendingSpans;

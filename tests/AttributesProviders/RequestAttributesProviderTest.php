@@ -1,7 +1,7 @@
 <?php
 
 use Spatie\FlareClient\AttributesProviders\RequestAttributesProvider;
-use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
+use Spatie\FlareClient\AttributesProviders\EmptyUserAttributesProvider;
 use Spatie\FlareClient\Support\Redactor;
 use Spatie\FlareClient\Tests\Concerns\MatchesCodeSnippetSnapshots;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -49,7 +49,7 @@ it('can return the request context as an array', function () {
 
     $provider = new RequestAttributesProvider(
         new Redactor(),
-        new UserAttributesProvider()
+        new EmptyUserAttributesProvider()
     );
 
     $attributes = $provider->toArray($request);
@@ -66,7 +66,7 @@ it('can hide the IP', function () {
 
     $provider = new RequestAttributesProvider(
         new Redactor(),
-        new UserAttributesProvider()
+        new EmptyUserAttributesProvider()
     );
 
     $attributes = $provider->toArray($request);
@@ -75,7 +75,7 @@ it('can hide the IP', function () {
 
     $provider = new RequestAttributesProvider(
         new Redactor(censorClientIps: true),
-        new UserAttributesProvider()
+        new EmptyUserAttributesProvider()
     );
 
     $attributes = $provider->toArray($request);
@@ -95,7 +95,7 @@ it('can strip headers', function () {
 
     $provider = new RequestAttributesProvider(
         new Redactor(),
-        new UserAttributesProvider()
+        new EmptyUserAttributesProvider()
     );
 
     $attributes = $provider->toArray($request);
@@ -111,7 +111,7 @@ it('can strip headers', function () {
         new Redactor(
             censorHeaders: ['AUTHORIZATION', 'other-header', 'lower_case_header'],
         ),
-        new UserAttributesProvider()
+        new EmptyUserAttributesProvider()
     );
 
     $attributes = $provider->toArray($request);
@@ -140,7 +140,7 @@ it('can strip body fields', function () {
 
     $provider = new RequestAttributesProvider(
         new Redactor(),
-        new UserAttributesProvider()
+        new EmptyUserAttributesProvider()
     );
 
     $attributes = $provider->toArray($request);
@@ -154,7 +154,7 @@ it('can strip body fields', function () {
 
     $provider = new RequestAttributesProvider(
         new Redactor(censorBodyFields: ['password', 'api_key', 'token']),
-        new UserAttributesProvider()
+        new EmptyUserAttributesProvider()
     );
 
     $attributes = $provider->toArray($request);
@@ -178,7 +178,7 @@ it('can retrieve the body contents of a json request', function () {
 
     $provider = new RequestAttributesProvider(
         new Redactor(),
-        new UserAttributesProvider()
+        new EmptyUserAttributesProvider()
     );
 
     expect($provider->toArray($request)['http.request.body.contents'])->toBe(['key' => 'value']);
@@ -195,7 +195,7 @@ it('will not crash when a json body is invalid', function () {
 
     $provider = new RequestAttributesProvider(
         new Redactor(),
-        new UserAttributesProvider()
+        new EmptyUserAttributesProvider()
     );
     expect($provider->toArray($request))->not()->toHaveKey('http.request.body.contents');
 });
@@ -209,7 +209,7 @@ it('can retrieve the body contents of a POST request', function () {
 
     $provider = new RequestAttributesProvider(
         new Redactor(),
-        new UserAttributesProvider()
+        new EmptyUserAttributesProvider()
     );
     expect($provider->toArray($request)['http.request.body.contents'])->toBe(['key' => 'value']);
 });
@@ -223,7 +223,7 @@ it('can retrieve the body contents of a GET request', function () {
 
     $provider = new RequestAttributesProvider(
         new Redactor(),
-        new UserAttributesProvider()
+        new EmptyUserAttributesProvider()
     );
 
     expect($provider->toArray($request)['http.request.body.contents'])->toBe(['key' => 'value']);

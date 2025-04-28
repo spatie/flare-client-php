@@ -72,27 +72,20 @@ class Flare
     }
 
     public static function make(
-        string $apiToken,
+        string|FlareConfig $apiToken,
     ): self {
-        return self::makeFromConfig(
-            FlareConfig::make($apiToken)->useDefaults()
-        );
-    }
+        $config = is_string($apiToken) ? FlareConfig::make($apiToken)->useDefaults() : $apiToken;
 
-    public static function makeFromConfig(FlareConfig $config, bool $boot = true): self
-    {
         $container = Container::instance();
 
         $provider = new FlareProvider($config, $container);
 
         $provider->register();
-
-        if ($boot) {
-            $provider->boot();
-        }
+        $provider->boot();
 
         return $container->get(Flare::class);
     }
+
 
     public function registerFlareHandlers(): self
     {
@@ -343,6 +336,20 @@ class Flare
     public function withApplicationVersion(string|Closure $version): self
     {
         $this->resource->serviceVersion(is_callable($version) ? $version() : $version);
+
+        return $this;
+    }
+
+    public function withApplicationName(string|Closure $name): self
+    {
+        $this->resource->serviceName(is_callable($name) ? $name() : $name);
+
+        return $this;
+    }
+
+    public function withApplicationStage(string|Closure $stage): self
+    {
+        $this->resource->serviceStage(is_callable($stage) ? $stage() : $stage);
 
         return $this;
     }

@@ -16,9 +16,9 @@ it('can symphony record dumps', function () {
         tracer: $flare->tracer,
         backTracer: $flare->backTracer,
         config: [
-            'trace' => true,
-            'report' => true,
-            'max_reported' => 10,
+            'with_traces' => true,
+            'with_errors' => true,
+            'max_items_with_errors' => 10,
         ],
     );
 
@@ -47,9 +47,9 @@ it('can record dump origins', function () {
         tracer: $flare->tracer,
         backTracer: $flare->backTracer,
         config: [
-            'trace' => true,
-            'report' => true,
-            'max_reported' => 10,
+            'with_traces' => true,
+            'with_errors' => true,
+            'max_items_with_errors' => 10,
             'find_origin' => true,
         ],
     );
@@ -72,9 +72,9 @@ it('can disable recording dump origins', function () {
         tracer: $flare->tracer,
         backTracer: $flare->backTracer,
         config: [
-            'trace' => true,
-            'report' => true,
-            'max_reported' => 10,
+            'with_traces' => true,
+            'with_errors' => true,
+            'max_items_with_errors' => 10,
             'find_origin' => false,
         ],
     );
