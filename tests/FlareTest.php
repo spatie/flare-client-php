@@ -364,7 +364,7 @@ it('can report a handled error', function (Throwable|string $throwable) {
     expect($report['handled'])->toBeTrue();
 })->with([
     new Exception('This is a test'),
-    'This is a test'
+    'This is a test',
 ]);
 
 it('can override the grouping algorithm for specific classes', function () {
