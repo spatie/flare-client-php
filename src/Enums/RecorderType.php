@@ -19,6 +19,7 @@ enum RecorderType: string
     case Null = 'null';
     case Query = 'query';
     case Queue = 'queue';
+    case Request = 'request';
     case RedisCommand = 'redis_command';
     case Routing = 'routing';
     case Transaction = 'transaction';

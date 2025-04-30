@@ -31,7 +31,7 @@ it('can trace queries', function () {
 
     expect($flare->tracer->currentTrace())->toHaveCount(1);
 
-    $span = reset($flare->tracer->currentTrace());
+    $span = array_values($flare->tracer->currentTrace())[0];
 
     expect($span)
         ->toBeInstanceOf(QuerySpan::class)
@@ -134,7 +134,7 @@ it('can find the origin of a query when tracing and a threshold is met', functio
 
     expect($flare->tracer->currentTrace())->toHaveCount(1);
 
-    $span = reset($flare->tracer->currentTrace());
+    $span = array_values($flare->tracer->currentTrace())[0];
 
     expect($span->attributes)->toHaveKeys([
         'code.filepath',
@@ -165,7 +165,7 @@ it('can find the origin of a query when tracing no threshold is set', function (
 
     expect($flare->tracer->currentTrace())->toHaveCount(1);
 
-    $span = reset($flare->tracer->currentTrace());
+    $span = array_values($flare->tracer->currentTrace())[0];
 
     expect($span->attributes)->toHaveKeys([
         'code.filepath',
@@ -196,7 +196,7 @@ it('will not find the origin of a query when tracing and a threshold is not met'
 
     expect($flare->tracer->currentTrace())->toHaveCount(1);
 
-    $span = reset($flare->tracer->currentTrace());
+    $span = array_values($flare->tracer->currentTrace())[0];
 
     expect($span->attributes)->not()->toHaveKeys([
         'code.filepath',

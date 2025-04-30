@@ -2,6 +2,8 @@
 
 namespace Spatie\FlareClient\Support;
 
+use BackedEnum;
+use Spatie\FlareClient\Contracts\FlareCollectType;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\CollectType;
 use Spatie\FlareClient\FlareMiddleware\AddConsoleInformation;
@@ -18,16 +20,18 @@ use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
 use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
 use Spatie\FlareClient\Recorders\RedisCommandRecorder\RedisCommandRecorder;
+use Spatie\FlareClient\Recorders\RequestRecorder\RequestRecorder;
 use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
 use Spatie\FlareClient\Recorders\ViewRecorder\ViewRecorder;
 use Spatie\FlareClient\Resources\Resource;
+use StringBackedEnum;
 
 class CollectsResolver
 {
-    /** @var array<class-string<FlareMiddleware>, array> */
+    /** @var array<class-string<FlareMiddleware>, array<string, mixed>> */
     protected array $middlewares = [];
 
-    /** @var array<class-string<Recorder>, array> */
+    /** @var array<class-string<Recorder>, array<string, mixed>> */
     protected array $recorders = [];
 
     /** @var array<callable(Resource):Resource> */
@@ -66,7 +70,8 @@ class CollectsResolver
                 CollectType::RedisCommands => $this->redisCommands($options),
                 CollectType::Views => $this->views($options),
                 CollectType::ServerInfo => $this->severInfo($options),
-                default => null,
+                null => null,
+                default => $this->handleUnknownCollectType($collect['type'], $options),
             };
         }
 
@@ -77,10 +82,19 @@ class CollectsResolver
         ];
     }
 
+    protected function handleUnknownCollectType(
+        FlareCollectType $type,
+        array $options
+    ): void
+    {
+
+    }
+
     protected function requests(
         array $options
     ): void {
         $this->addMiddleware($options['middleware'] ?? AddRequestInformation::class);
+        $this->addRecorder($options['recorder'] ?? RequestRecorder::class);
     }
 
     protected function console(

@@ -2,6 +2,7 @@
 
 namespace Spatie\FlareClient;
 
+use BackedEnum;
 use Closure;
 use Exception;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
@@ -10,6 +11,7 @@ use Spatie\ErrorSolutions\Contracts\HasSolutionsForThrowable;
 use Spatie\ErrorSolutions\SolutionProviderRepository;
 use Spatie\FlareClient\AttributesProviders\EmptyUserAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
+use Spatie\FlareClient\Contracts\FlareCollectType;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\CollectType;
 use Spatie\FlareClient\Enums\OverriddenGrouping;
@@ -38,6 +40,7 @@ use Spatie\FlareClient\Support\CollectsResolver;
 use Spatie\FlareClient\Support\StacktraceMapper;
 use Spatie\FlareClient\Support\TraceLimits;
 use Spatie\FlareClient\TraceExporters\OpenTelemetryJsonTraceExporter;
+use StringBackedEnum;
 
 class FlareConfig
 {
@@ -46,7 +49,7 @@ class FlareConfig
      * @param null|Closure(Report): bool $filterReportsCallable
      * @param array<class-string<FlareMiddleware>, array> $middleware
      * @param array<class-string<Recorder>, array> $recorders
-     * @param array<string, array{type: CollectType, ignored: ?bool, options: array}> $collects
+     * @param array<string, array{type: FlareCollectType, ignored: ?bool, options: array}> $collects
      * @param array<class-string<ArgumentReducer>|ArgumentReducer>|ArgumentReducers|null $argumentReducers
      * @param class-string<Sender> $sender
      * @param class-string<SolutionProviderRepository> $solutionsProviderRepository
@@ -166,7 +169,7 @@ class FlareConfig
         return $this->addCollect(CollectType::Requests, $extra);
     }
 
-    public function ignoreRequestInfo(): static
+    public function ignoreRequests(): static
     {
         return $this->ignoreCollect(CollectType::Requests);
     }
@@ -710,7 +713,7 @@ class FlareConfig
     }
 
     protected function addCollect(
-        CollectType $type,
+        FlareCollectType $type,
         array $options = [],
     ): static {
         $this->collects[$type->value]['type'] = $type;
@@ -719,7 +722,7 @@ class FlareConfig
         return $this;
     }
 
-    protected function ignoreCollect(CollectType $type): static
+    protected function ignoreCollect(FlareCollectType $type): static
     {
         $this->collects[$type->value]['type'] = $type;
         $this->collects[$type->value]['ignored'] = true;

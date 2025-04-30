@@ -23,10 +23,12 @@ it('can create a report', function () {
 it('can create an error exception report', function () {
     $flare = setupFlare(fn (FlareConfig $config) => $config);
 
+    set_error_handler(function () {}); // Ensure no previous error handler is set so that we don't get deprection warnings
+
     $flare->registerFlareHandlers();
 
     try {
-        trigger_error('this is a custom error', E_USER_ERROR);
+        trigger_error('this is a custom error');
     } catch (Error $error) {
 
     }

@@ -2,7 +2,9 @@
 
 namespace Spatie\FlareClient\Enums;
 
-enum CollectType: string
+use Spatie\FlareClient\Contracts\FlareCollectType;
+
+enum CollectType: string implements FlareCollectType
 {
     case Dumps = 'dumps';
     case Requests = 'requests';

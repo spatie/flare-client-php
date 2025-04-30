@@ -21,6 +21,7 @@ use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
 use Spatie\FlareClient\Recorders\NullRecorder;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
 use Spatie\FlareClient\Recorders\RedisCommandRecorder\RedisCommandRecorder;
+use Spatie\FlareClient\Recorders\RequestRecorder\RequestRecorder;
 use Spatie\FlareClient\Recorders\ThrowableRecorder\ThrowableRecorder;
 use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
 use Spatie\FlareClient\Recorders\ViewRecorder\ViewRecorder;
@@ -159,6 +160,11 @@ class Flare
     public function redisCommand(): RedisCommandRecorder|NullRecorder
     {
         return $this->recorders[RecorderType::RedisCommand->value] ?? NullRecorder::instance();
+    }
+
+    public function request(): RequestRecorder|NullRecorder
+    {
+        return $this->recorders[RecorderType::Request->value] ?? NullRecorder::instance();
     }
 
     public function transaction(): TransactionRecorder|NullRecorder

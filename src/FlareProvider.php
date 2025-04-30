@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Contracts\Container\Container as IlluminateContainer;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\ErrorSolutions\Contracts\SolutionProviderRepository as SolutionProviderRepositoryContract;
+use Spatie\FlareClient\AttributesProviders\RequestAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\SamplingType;

@@ -56,6 +56,11 @@ parameters:
 			path: src/Flare.php
 
 		-
+			message: "#^Access to an undefined property Spatie\\\\FlareClient\\\\Contracts\\\\FlareCollectType\\:\\:\\$value\\.$#"
+			count: 4
+			path: src/FlareConfig.php
+
+		-
 			message: "#^Unsafe usage of new static\\(\\)\\.$#"
 			count: 1
 			path: src/FlareConfig.php
