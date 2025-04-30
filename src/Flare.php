@@ -333,8 +333,12 @@ class Flare
         return $this;
     }
 
-    public function report(Throwable $throwable, ?callable $callback = null, ?Report $report = null, ?bool $handled = null): ?Report
+    public function report(Throwable|string $throwable, ?callable $callback = null, ?Report $report = null, ?bool $handled = null): ?Report
     {
+        if (is_string($throwable)) {
+            $throwable = new Exception($throwable);
+        }
+
         if (! $this->shouldSendReport($throwable)) {
             return null;
         }
@@ -356,7 +360,7 @@ class Flare
         return $report;
     }
 
-    public function reportHandled(Throwable $throwable): ?Report
+    public function reportHandled(Throwable|string $throwable): ?Report
     {
         return $this->report($throwable, null, null, true);
     }

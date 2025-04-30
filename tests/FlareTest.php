@@ -20,15 +20,18 @@ beforeEach(function () {
     useTime('2019-01-01 12:34:56');
 });
 
-it('can report an exception', function () {
-    reportException();
+it('can report an exception', function (Throwable|string $throwable) {
+    $this->flare->report($throwable);
 
     $this->fakeClient->assertRequestsSent(1);
 
     $report = $this->fakeClient->getLastPayload();
 
     $this->assertMatchesReportSnapshot($report);
-});
+})->with([
+    new Exception('This is a test'),
+    'This is a test',
+]);
 
 it('can report a initialised report instance', function () {
     $throwable = new Exception('This is a test');
@@ -351,9 +354,7 @@ it('is possible to disable stack frame arguments with zend.exception_ignore_args
     $this->fakeClient->assertLastRequestHas('stacktrace.0.arguments', null);
 });
 
-it('can report a handled error', function () {
-    $throwable = new Exception('This is a test');
-
+it('can report a handled error', function (Throwable|string $throwable) {
     $this->flare->reportHandled($throwable);
 
     $this->fakeClient->assertRequestsSent(1);
@@ -361,7 +362,10 @@ it('can report a handled error', function () {
     $report = $this->fakeClient->getLastPayload();
 
     expect($report['handled'])->toBeTrue();
-});
+})->with([
+    new Exception('This is a test'),
+    'This is a test'
+]);
 
 it('can override the grouping algorithm for specific classes', function () {
     $throwable = new RuntimeException('This is a test');

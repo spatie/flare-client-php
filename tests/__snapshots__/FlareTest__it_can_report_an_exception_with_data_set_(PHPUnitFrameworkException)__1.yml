@@ -1,0 +1,25 @@
+notifier: 'Flare Client'
+language: PHP
+framework_version: null
+language_version: 7.3.2
+exception_class: PHPUnit\Framework\Exception
+seen_at: 1546346096
+message: 'This is a test'
+glows: {  }
+solutions: {  }
+documentation_links: {  }
+stacktrace: {  }
+context:
+    arguments:
+        - '[phpunit arguments removed]'
+    env:
+        php_version: 7.3.2
+stage: null
+message_level: null
+open_frame_index: null
+application_path: null
+application_version: null
+tracking_uuid: fake-uuid
+handled: null
+overridden_grouping: null
+uuid: fake-uuid
