@@ -8,7 +8,7 @@ use Illuminate\Foundation\Application;
 use Psr\Container\ContainerInterface;
 use Spatie\FlareClient\AttributesProviders\RequestAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
-use Spatie\FlareClient\Concerns\Recorders\RecordsPendingSpans;
+use Spatie\FlareClient\Concerns\Recorders\RecordsSpans;
 use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
@@ -20,8 +20,8 @@ use Symfony\Component\HttpFoundation\Request;
 
 class RequestRecorder implements SpansRecorder
 {
-    /** @use RecordsPendingSpans<Span> */
-    use RecordsPendingSpans;
+    /** @use RecordsSpans<Span> */
+    use RecordsSpans;
 
     public static function type(): string|RecorderType
     {
@@ -54,12 +54,22 @@ class RequestRecorder implements SpansRecorder
 
     public function recordStart(
         ?Request $request = null,
+        ?string $route = null,
+        ?string $entryPointClass = null,
         array $attributes = [],
     ): ?Span {
-        return $this->startSpan(function () use ($request, $attributes) {
+        return $this->startSpan(function () use ($entryPointClass, $route, $request, $attributes) {
             $requestAttributes = $this->requestAttributesProvider->toArray(
                 $request ?? Request::createFromGlobals()
             );
+
+            if ($route) {
+                $requestAttributes['http.route'] = $route;
+            }
+
+            if($entryPointClass){
+                $requestAttributes['flare.entry_point.class'] = $entryPointClass;
+            }
 
             return Span::build(
                 traceId: $this->tracer->currentTraceId(),
@@ -68,7 +78,7 @@ class RequestRecorder implements SpansRecorder
                 attributes: [
                     'flare.span_type' => SpanType::Request,
                     ...$requestAttributes,
-                    ...$attributes
+                    ...$attributes,
                 ]
             );
         });
@@ -78,13 +88,12 @@ class RequestRecorder implements SpansRecorder
         ?int $responseStatusCode = null,
         ?int $responseBodySize = null,
         array $attributes = [],
-    ): ?Span
-    {
-        if($responseStatusCode){
+    ): ?Span {
+        if ($responseStatusCode) {
             $attributes['http.response.status_code'] = $responseStatusCode;
         }
 
-        if($responseBodySize){
+        if ($responseBodySize) {
             $attributes['http.response.body.size'] = $responseBodySize;
         }
 

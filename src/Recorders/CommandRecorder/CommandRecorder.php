@@ -2,7 +2,7 @@
 
 namespace Spatie\FlareClient\Recorders\CommandRecorder;
 
-use Spatie\FlareClient\Concerns\Recorders\RecordsPendingSpans;
+use Spatie\FlareClient\Concerns\Recorders\RecordsSpans;
 use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
@@ -14,8 +14,8 @@ use Symfony\Component\Console\Input\InputInterface;
 
 class CommandRecorder  extends Recorder  implements SpansRecorder
 {
-    /** @use RecordsPendingSpans<Span> */
-    use RecordsPendingSpans;
+    /** @use RecordsSpans<Span> */
+    use RecordsSpans;
 
     public static function type(): string|RecorderType
     {
@@ -38,11 +38,16 @@ class CommandRecorder  extends Recorder  implements SpansRecorder
     public function recordStart(
         string $command,
         array|InputInterface $arguments,
+        ?string $entryPointClass = null,
         array $attributes = []
     ): ?Span {
-        return $this->startSpan(function () use ($attributes, $arguments, $command) {
+        return $this->startSpan(function () use ($entryPointClass, $attributes, $arguments, $command) {
             if ($arguments instanceof InputInterface) {
                 $arguments = $this->getArguments($arguments);
+            }
+
+            if($entryPointClass !== null){
+                $attributes['flare.entry_point_class'] = $entryPointClass;
             }
 
             return Span::build(

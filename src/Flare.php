@@ -122,59 +122,59 @@ class Flare
         return $this;
     }
 
-    public function cache(): CacheRecorder|NullRecorder
+    public function cache(): CacheRecorder
     {
-        return $this->recorders[RecorderType::Cache->value] ?? NullRecorder::instance();
+        return $this->recorders[RecorderType::Cache->value];
     }
 
-    public function command(): CommandRecorder|NullRecorder
+    public function command(): CommandRecorder
     {
-        return $this->recorders[RecorderType::Command->value] ?? NullRecorder::instance();
+        return $this->recorders[RecorderType::Command->value];
     }
 
-    public function externalHttp(): ExternalHttpRecorder|NullRecorder
+    public function externalHttp(): ExternalHttpRecorder
     {
-        return $this->recorders[RecorderType::ExternalHttp->value] ?? NullRecorder::instance();
+        return $this->recorders[RecorderType::ExternalHttp->value];
     }
 
-    public function filesystem(): FilesystemRecorder|NullRecorder
+    public function filesystem(): FilesystemRecorder
     {
-        return $this->recorders[RecorderType::Filesystem->value] ?? NullRecorder::instance();
+        return $this->recorders[RecorderType::Filesystem->value];
     }
 
-    public function glow(): GlowRecorder|NullRecorder
+    public function glow(): GlowRecorder
     {
-        return $this->recorders[RecorderType::Glow->value] ?? NullRecorder::instance();
+        return $this->recorders[RecorderType::Glow->value];
     }
 
-    public function log(): LogRecorder|NullRecorder
+    public function log(): LogRecorder
     {
-        return $this->recorders[RecorderType::Log->value] ?? NullRecorder::instance();
+        return $this->recorders[RecorderType::Log->value];
     }
 
-    public function query(): QueryRecorder|NullRecorder
+    public function query(): QueryRecorder
     {
-        return $this->recorders[RecorderType::Query->value] ?? NullRecorder::instance();
+        return $this->recorders[RecorderType::Query->value];
     }
 
-    public function redisCommand(): RedisCommandRecorder|NullRecorder
+    public function redisCommand(): RedisCommandRecorder
     {
-        return $this->recorders[RecorderType::RedisCommand->value] ?? NullRecorder::instance();
+        return $this->recorders[RecorderType::RedisCommand->value];
     }
 
-    public function request(): RequestRecorder|NullRecorder
+    public function request(): RequestRecorder
     {
-        return $this->recorders[RecorderType::Request->value] ?? NullRecorder::instance();
+        return $this->recorders[RecorderType::Request->value];
     }
 
-    public function transaction(): TransactionRecorder|NullRecorder
+    public function transaction(): TransactionRecorder
     {
-        return $this->recorders[RecorderType::Transaction->value] ?? NullRecorder::instance();
+        return $this->recorders[RecorderType::Transaction->value];
     }
 
-    public function view(): ViewRecorder|NullRecorder
+    public function view(): ViewRecorder
     {
-        return $this->recorders[RecorderType::View->value] ?? NullRecorder::instance();
+        return $this->recorders[RecorderType::View->value];
     }
 
     public function span(

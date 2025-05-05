@@ -3,11 +3,16 @@
 namespace Spatie\FlareClient\Tests\Shared;
 
 use DateTimeImmutable;
+use Redis;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowSpanEvent;
+use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
+use Spatie\FlareClient\Recorders\RedisCommandRecorder\RedisCommandRecorder;
 use Spatie\FlareClient\Report;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Time\Time;
 use Spatie\FlareClient\Tracer;
+use Spatie\LaravelFlare\Recorders\QueryRecorder\QueryRecorder as LaravelQueryRecorder;
+use Spatie\LaravelFlare\Recorders\RedisCommandRecorder\RedisCommandRecorder as LaravelRedisCommandRecorder;
 
 class FakeTime implements Time
 {
@@ -21,6 +26,16 @@ class FakeTime implements Time
         GlowSpanEvent::useTime($fakeTime);
         Tracer::useTime($fakeTime);
         Span::useTime($fakeTime);
+        QueryRecorder::useTime($fakeTime);
+        RedisCommandRecorder::useTime($fakeTime);
+
+        if(class_exists(LaravelQueryRecorder::class)) {
+            LaravelQueryRecorder::useTime($fakeTime);
+        }
+
+        if(class_exists(LaravelRedisCommandRecorder::class)) {
+            LaravelRedisCommandRecorder::useTime($fakeTime);
+        }
 
         return $fakeTime;
     }

@@ -3,6 +3,7 @@
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
 use Spatie\FlareClient\Recorders\QueryRecorder\QuerySpan;
+use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
 use Spatie\FlareClient\Time\TimeHelper;
 
@@ -27,14 +28,20 @@ it('can trace queries', function () {
 
     $flare->tracer->startTrace();
 
-    $recorder->record('select * from users where id = ?', TimeHelper::milliseconds(300), ['id' => 1], 'users', 'mysql');
+    $recorder->record(
+        'select * from users where id = ?',
+        TimeHelper::milliseconds(300),
+        ['id' => 1],
+        'users',
+        'mysql'
+    );
 
     expect($flare->tracer->currentTrace())->toHaveCount(1);
 
     $span = array_values($flare->tracer->currentTrace())[0];
 
     expect($span)
-        ->toBeInstanceOf(QuerySpan::class)
+        ->toBeInstanceOf(Span::class)
         ->spanId->not()->toBeNull()
         ->traceId->toBe($flare->tracer->currentTraceId())
         ->parentSpanId->toBeNull()
@@ -67,14 +74,20 @@ it('can report queries without tracing', function () {
         ]
     );
 
-    $recorder->record('select * from users where id = ?', TimeHelper::milliseconds(300), ['id' => 1], 'users', 'mysql');
+    $recorder->record(
+        'select * from users where id = ?',
+        TimeHelper::milliseconds(300),
+        ['id' => 1],
+        'users',
+        'mysql'
+    );
 
     expect($recorder->getSpans())->toHaveCount(1);
 
     $span = $recorder->getSpans()[0];
 
     expect($span)
-        ->toBeInstanceOf(QuerySpan::class)
+        ->toBeInstanceOf(Span::class)
         ->spanId->not()->toBeNull()
         ->traceId->toBe('')
         ->parentSpanId->toBeNull()

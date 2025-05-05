@@ -10,7 +10,7 @@ use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Recorders\Recorder;
 
-class GlowRecorder  extends Recorder  implements SpanEventsRecorder
+class GlowRecorder extends Recorder implements SpanEventsRecorder
 {
     /**  @use RecordsSpanEvents<GlowSpanEvent> */
     use RecordsSpanEvents;

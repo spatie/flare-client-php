@@ -3,16 +3,19 @@
 namespace Spatie\FlareClient\Tests\TestClasses;
 
 use Spatie\FlareClient\Concerns\Recorders\RecordsSpans;
-use Spatie\FlareClient\Contracts\Recorders\SpansRecorder as BaseSpansRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Spans\Span;
 
-class SpansRecorder implements BaseSpansRecorder
+class SpansRecorder implements \Spatie\FlareClient\Contracts\Recorders\SpansRecorder
 {
     use RecordsSpans;
 
+    protected bool $canStartTraces = false;
+
     protected function configure(array $config): void
     {
+        $this->canStartTraces = $config['can_start_traces'] ?? false;
+
         $this->configureRecorder($config);
     }
 
@@ -21,16 +24,22 @@ class SpansRecorder implements BaseSpansRecorder
         return 'spans';
     }
 
-    public function record(string $message, ?int $duration = null): ?Span
+    protected function canStartTraces(): bool
     {
-        return $this->persistEntry(fn () => Span::build(
-            traceId: $this->tracer->isSampling() ? $this->tracer->currentTraceId() : '',
-            parentId: "Span - {$message}",
-            name: "Span - {$message}",
-            duration: $duration,
-            attributes: [
-                'message' => $message,
-            ],
+        return $this->canStartTraces;
+    }
+
+    public function pushSpan(string $name): ?Span
+    {
+        return $this->startSpan(fn () => Span::build(
+            traceId: $this->tracer->currentTraceId() ?? '',
+            parentId: $this->tracer->currentSpanId(),
+            name: $name,
         ));
+    }
+
+    public function popSpan(): ?Span
+    {
+        return $this->endSpan();
     }
 }

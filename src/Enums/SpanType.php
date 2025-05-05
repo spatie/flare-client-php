@@ -13,4 +13,5 @@ enum SpanType: string implements FlareSpanType
     case Command = 'php_command';
     case View = 'php_view';
     case HttpRequest = 'php_http_request';
+    case Filesystem = 'php_filesystem';
 }

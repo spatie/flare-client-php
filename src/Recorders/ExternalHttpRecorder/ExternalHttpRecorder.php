@@ -4,7 +4,7 @@ namespace Spatie\FlareClient\Recorders\ExternalHttpRecorder;
 
 use Closure;
 use Psr\Container\ContainerInterface;
-use Spatie\FlareClient\Concerns\Recorders\RecordsPendingSpans;
+use Spatie\FlareClient\Concerns\Recorders\RecordsSpans;
 use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
@@ -16,8 +16,8 @@ use Spatie\FlareClient\Tracer;
 
 class ExternalHttpRecorder  extends Recorder implements SpansRecorder
 {
-    /** @use RecordsPendingSpans<Span> */
-    use RecordsPendingSpans;
+    /** @use RecordsSpans<Span> */
+    use RecordsSpans;
 
     public function __construct(
         protected Tracer $tracer,
@@ -46,10 +46,11 @@ class ExternalHttpRecorder  extends Recorder implements SpansRecorder
     public function recordSending(
         string $url,
         string $method,
-        int $requestBodySize,
+        ?int $bodySize = null,
         array $headers = [],
+        array $attributes = [],
     ): ?Span {
-        return $this->startSpan(function () use ($headers, $requestBodySize, $method, $url) {
+        return $this->startSpan(function () use ($attributes, $headers, $bodySize, $method, $url) {
             $parsedUrl = parse_url($url);
 
             $name = is_array($parsedUrl) && array_key_exists('host', $parsedUrl)
@@ -70,8 +71,9 @@ class ExternalHttpRecorder  extends Recorder implements SpansRecorder
                     'url.path' => $parsedUrl['path'] ?? null,
                     'url.query' => $parsedUrl['query'] ?? null,
                     'url.fragment' => $parsedUrl['fragment'] ?? null,
-                    'http.request.body.size' => $requestBodySize,
+                    'http.request.body.size' => $bodySize,
                     'http.request.headers' => $this->redactor->censorHeaders($headers),
+                    ...$attributes
                 ],
             );
         });
@@ -79,13 +81,13 @@ class ExternalHttpRecorder  extends Recorder implements SpansRecorder
 
     public function recordReceived(
         int $responseCode,
-        int $responseBodySize,
-        array $headers = [],
+        ?int $responseBodySize = null,
+        array $responseHeaders = [],
     ): ?Span {
         return $this->endSpan(attributes: [
             'http.response.status_code' => $responseCode,
             'http.response.body.size' => $responseBodySize,
-            'http.response.headers' => $this->redactor->censorHeaders($headers),
+            'http.response.headers' => $this->redactor->censorHeaders($responseHeaders),
         ]);
     }
 

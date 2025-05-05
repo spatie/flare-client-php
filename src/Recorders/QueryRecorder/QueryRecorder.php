@@ -3,15 +3,18 @@
 namespace Spatie\FlareClient\Recorders\QueryRecorder;
 
 use Spatie\FlareClient\Concerns\Recorders\RecordsSpans;
-use Spatie\FlareClient\Contracts\FlareSpanType;
+use Spatie\FlareClient\Concerns\UsesTime;
 use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Recorders\Recorder;
+use Spatie\FlareClient\Spans\Span;
 
-class QueryRecorder  extends Recorder  implements SpansRecorder
+class QueryRecorder extends Recorder implements SpansRecorder
 {
-    /** @use RecordsSpans<QuerySpan> */
+    use UsesTime;
+
+    /** @use RecordsSpans<Span> */
     use RecordsSpans;
 
     protected bool $includeBindings = true;
@@ -44,26 +47,65 @@ class QueryRecorder  extends Recorder  implements SpansRecorder
         ?array $bindings = null,
         ?string $databaseName = null,
         ?string $driverName = null,
-        FlareSpanType $spanType = SpanType::Query,
-        ?int $end = null,
-        ?array $attributes = null,
-    ): ?QuerySpan {
-        return $this->persistEntry(function () use ($end, $attributes, $spanType, $driverName, $databaseName, $bindings, $duration, $sql) {
-            $span = new QuerySpan(
+        array $attributes = [],
+    ): ?Span {
+        $span = $this->recordStart(
+            sql: $sql,
+            bindings: $bindings,
+            databaseName: $databaseName,
+            driverName: $driverName,
+            start: self::getCurrentTime() - $duration,
+            attributes: $attributes,
+        );
+
+        if ($span === null) {
+            return null;
+        }
+
+        $this->recordEnd();
+
+        $this->setOrigin($span);
+
+        return $span;
+    }
+
+    public function recordStart(
+        string $sql,
+        ?array $bindings = null,
+        ?string $databaseName = null,
+        ?string $driverName = null,
+        ?int $start = null,
+        array $attributes = [],
+    ): ?Span {
+        return $this->startSpan(function () use ($start, $attributes, $driverName, $databaseName, $bindings, $sql) {
+            $attributes = [
+                'flare.span_type' => SpanType::Query,
+                'db.system' => $driverName,
+                'db.name' => $databaseName,
+                'db.statement' => $sql,
+                'db.sql.bindings' => $bindings,
+                ... $attributes,
+            ];
+
+            if (! $this->includeBindings) {
+                unset($attributes['db.sql.bindings']);
+            }
+
+            return Span::build(
                 traceId: $this->tracer->currentTraceId() ?? '',
-                parentSpanId: $this->tracer->currentSpan()?->spanId,
-                sql: $sql,
-                duration: $duration,
-                bindings: $this->includeBindings ? $bindings : null,
-                databaseName: $databaseName,
-                driverName: $driverName,
-                end: $end,
-                spanType: $spanType
+                parentId: $this->tracer->currentSpan()?->spanId,
+                name: "Query - {$sql}",
+                start: $start,
+                attributes: $attributes,
             );
-
-            $span->addAttributes($attributes);
-
-            return $span;
         });
+    }
+
+    public function recordEnd(
+        array $attributes = [],
+    ): ?Span {
+        return $this->endSpan(
+            attributes: $attributes,
+        );
     }
 }

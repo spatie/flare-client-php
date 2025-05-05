@@ -2,7 +2,7 @@
 
 namespace Spatie\FlareClient\Recorders\TransactionRecorder;
 
-use Spatie\FlareClient\Concerns\Recorders\RecordsPendingSpans;
+use Spatie\FlareClient\Concerns\Recorders\RecordsSpans;
 use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
@@ -12,8 +12,8 @@ use Spatie\FlareClient\Recorders\Recorder;
 
 class TransactionRecorder  extends Recorder  implements SpansRecorder
 {
-    /** @use RecordsPendingSpans<TransactionSpan> */
-    use RecordsPendingSpans;
+    /** @use RecordsSpans<TransactionSpan> */
+    use RecordsSpans;
 
     public static function type(): string|RecorderType
     {
