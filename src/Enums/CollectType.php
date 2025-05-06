@@ -17,7 +17,6 @@ enum CollectType: string implements FlareCollectType
     case Throwables = 'throwables';
     case Queries = 'queries';
     case Transactions = 'database_transactions';
-    case ApplicationInfo = 'application_info';
     case ServerInfo = 'server_info';
     case Jobs = 'jobs';
     case Filesystem = 'filesystem';
@@ -25,4 +24,5 @@ enum CollectType: string implements FlareCollectType
     case RedisCommands = 'redis_commands';
     case Notifications = 'notifications';
     case Views = 'views';
+    case StackFrameArguments = 'stack_frame_arguments';
 }

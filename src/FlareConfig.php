@@ -2,13 +2,23 @@
 
 namespace Spatie\FlareClient;
 
-use BackedEnum;
 use Closure;
 use Exception;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\Backtrace\Arguments\Reducers\ArgumentReducer;
+use Spatie\Backtrace\Arguments\Reducers\ArrayArgumentReducer;
+use Spatie\Backtrace\Arguments\Reducers\BaseTypeArgumentReducer;
+use Spatie\Backtrace\Arguments\Reducers\ClosureArgumentReducer;
+use Spatie\Backtrace\Arguments\Reducers\DateTimeArgumentReducer;
+use Spatie\Backtrace\Arguments\Reducers\DateTimeZoneArgumentReducer;
+use Spatie\Backtrace\Arguments\Reducers\EnumArgumentReducer;
+use Spatie\Backtrace\Arguments\Reducers\StdClassArgumentReducer;
+use Spatie\Backtrace\Arguments\Reducers\SymphonyRequestArgumentReducer;
 use Spatie\ErrorSolutions\Contracts\HasSolutionsForThrowable;
 use Spatie\ErrorSolutions\SolutionProviderRepository;
+use Spatie\ErrorSolutions\SolutionProviders\BadMethodCallSolutionProvider;
+use Spatie\ErrorSolutions\SolutionProviders\MergeConflictSolutionProvider;
+use Spatie\ErrorSolutions\SolutionProviders\UndefinedPropertySolutionProvider;
 use Spatie\FlareClient\AttributesProviders\EmptyUserAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\Contracts\FlareCollectType;
@@ -40,7 +50,7 @@ use Spatie\FlareClient\Support\CollectsResolver;
 use Spatie\FlareClient\Support\StacktraceMapper;
 use Spatie\FlareClient\Support\TraceLimits;
 use Spatie\FlareClient\TraceExporters\OpenTelemetryJsonTraceExporter;
-use StringBackedEnum;
+use Spatie\LaravelFlare\ArgumentReducers\ModelArgumentReducer;
 
 class FlareConfig
 {
@@ -50,10 +60,8 @@ class FlareConfig
      * @param array<class-string<FlareMiddleware>, array> $middleware
      * @param array<class-string<Recorder>, array> $recorders
      * @param array<string, array{type: FlareCollectType, ignored: ?bool, options: array}> $collects
-     * @param array<class-string<ArgumentReducer>|ArgumentReducer>|ArgumentReducers|null $argumentReducers
      * @param class-string<Sender> $sender
      * @param class-string<SolutionProviderRepository> $solutionsProviderRepository
-     * @param array<class-string<HasSolutionsForThrowable>> $solutionsProviders
      * @param Closure(Scope):void|null $configureScopeCallable
      * @param Closure(Resource):void|null $configureResourceCallable
      * @param Closure(Span):void|null $configureSpansCallable
@@ -78,13 +86,9 @@ class FlareConfig
         public string $applicationName = 'PHP application',
         public ?string $applicationVersion = null,
         public ?string $applicationStage = null,
-        public null|array|ArgumentReducers $argumentReducers = [],
-        public bool $withStackFrameArguments = true,
-        public bool $forcePHPStackFrameArgumentsIniSetting = true,
         public string $sender = CurlSender::class,
         public array $senderConfig = [],
         public string $solutionsProviderRepository = SolutionProviderRepository::class,
-        public array $solutionsProviders = [],
         public bool $trace = true,
         public string $sampler = RateSampler::class,
         public array $samplerConfig = [],
@@ -104,7 +108,6 @@ class FlareConfig
         public array $overriddenGroupings = [],
     ) {
     }
-
     public static function make(string $apiToken): static
     {
         return new static($apiToken);
@@ -162,6 +165,29 @@ class FlareConfig
                 'password',
                 'password_confirmation',
             );
+    }
+
+    public static function defaultSolutionProviders(): array
+    {
+        return [
+            BadMethodCallSolutionProvider::class,
+            MergeConflictSolutionProvider::class,
+            UndefinedPropertySolutionProvider::class,
+        ];
+    }
+
+    public static function defaultArgumentReducers(): array
+    {
+        return [
+            BaseTypeArgumentReducer::class,
+            ArrayArgumentReducer::class,
+            StdClassArgumentReducer::class,
+            EnumArgumentReducer::class,
+            ClosureArgumentReducer::class,
+            DateTimeArgumentReducer::class,
+            DateTimeZoneArgumentReducer::class,
+            SymphonyRequestArgumentReducer::class,
+        ];
     }
 
     public function collectRequests(array $extra = []): static
@@ -259,9 +285,13 @@ class FlareConfig
     }
 
     public function collectSolutions(
+        ?array $solutionProviders = null,
         array $extra = [],
     ): static {
-        return $this->addCollect(CollectType::Solutions, $extra);
+        return $this->addCollect(CollectType::Solutions, [
+            'solution_providers' => $solutionProviders ?? static::defaultSolutionProviders(),
+            ...$extra
+        ]);
     }
 
     public function ignoreSolutions(): static
@@ -478,26 +508,21 @@ class FlareConfig
         string|ArgumentReducers|ArgumentReducer|array|null $argumentReducers = null,
         bool $forcePHPIniSetting = true
     ): static {
-        $this->withStackFrameArguments = true;
-        $this->forcePHPStackFrameArgumentsIniSetting = $forcePHPIniSetting;
-
         $argumentReducers = match (true) {
-            $argumentReducers === null => ArgumentReducers::default(),
+            $argumentReducers === null => static::defaultArgumentReducers(),
             $argumentReducers instanceof ArgumentReducers, is_array($argumentReducers) => $argumentReducers,
             $argumentReducers instanceof ArgumentReducer, is_string($argumentReducers) => [$argumentReducers],
         };
 
-        $this->argumentReducers = $argumentReducers;
-
-        return $this;
+        return $this->addCollect(CollectType::StackFrameArguments, [
+            'argument_reducers' => $argumentReducers,
+            'force_php_ini_setting' => $forcePHPIniSetting,
+        ]);
     }
 
     public function ignoreStackFrameArguments(): static
     {
-        $this->withStackFrameArguments = false;
-        $this->forcePHPStackFrameArgumentsIniSetting = false;
-
-        return $this;
+        return $this->ignoreCollect(CollectType::StackFrameArguments);
     }
 
     /**
@@ -523,16 +548,6 @@ class FlareConfig
     public function reportErrorLevels(int $reportErrorLevels): static
     {
         $this->reportErrorLevels = $reportErrorLevels;
-
-        return $this;
-    }
-
-    /**
-     * @param array<class-string<HasSolutionsForThrowable>> ...$solutionProvider
-     */
-    public function solutionProvider(string ...$solutionProvider): static
-    {
-        array_push($this->solutionsProviders, ...$solutionProvider);
 
         return $this;
     }

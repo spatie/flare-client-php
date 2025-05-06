@@ -59,6 +59,7 @@ class ViewRecorder  extends Recorder  implements SpansRecorder
                 'flare.span_type' => SpanType::View,
                 'view.name' => $viewName,
                 'view.file' => $file,
+                'view.data' => $data,
                 ...$attributes,
             ]
         ));

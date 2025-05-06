@@ -35,7 +35,7 @@ class ReportFactory implements WithAttributes
     /** @var ArgumentReducers|null */
     public null|ArgumentReducers $argumentReducers = null;
 
-    public bool $withStackTraceArguments = true;
+    public bool $collectStackTraceArguments = true;
 
     /** @var array<Span|SpanEvent> */
     public array $events = [];
@@ -150,9 +150,9 @@ class ReportFactory implements WithAttributes
         return $this;
     }
 
-    public function withStackTraceArguments(bool $withStackTraceArguments): self
+    public function collectStackTraceArguments(bool $collectStackTraceArguments): self
     {
-        $this->withStackTraceArguments = $withStackTraceArguments;
+        $this->collectStackTraceArguments = $collectStackTraceArguments;
 
         return $this;
     }
@@ -229,7 +229,7 @@ class ReportFactory implements WithAttributes
             : Backtrace::create();
 
         return $stacktrace
-            ->withArguments($this->withStackTraceArguments)
+            ->withArguments($this->collectStackTraceArguments)
             ->reduceArguments($this->argumentReducers)
             ->applicationPath($this->applicationPath ?? '');
     }

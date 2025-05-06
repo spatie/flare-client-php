@@ -7,6 +7,8 @@ use Error;
 use ErrorException;
 use Exception;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
+use Spatie\ErrorSolutions\Contracts\HasSolutionsForThrowable;
+use Spatie\ErrorSolutions\Contracts\SolutionProviderRepository;
 use Spatie\FlareClient\Concerns\HasCustomContext;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\OverriddenGrouping;
@@ -18,7 +20,6 @@ use Spatie\FlareClient\Recorders\ExternalHttpRecorder\ExternalHttpRecorder;
 use Spatie\FlareClient\Recorders\FilesystemRecorder\FilesystemRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
 use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
-use Spatie\FlareClient\Recorders\NullRecorder;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
 use Spatie\FlareClient\Recorders\RedisCommandRecorder\RedisCommandRecorder;
 use Spatie\FlareClient\Recorders\RequestRecorder\RequestRecorder;
@@ -63,8 +64,9 @@ class Flare
         protected readonly ?int $reportErrorLevels,
         protected null|Closure $filterExceptionsCallable,
         protected null|Closure $filterReportsCallable,
+        protected readonly SolutionProviderRepository $solutionProviderRepository,
         protected readonly null|ArgumentReducers $argumentReducers,
-        protected readonly bool $withStackFrameArguments,
+        protected readonly bool $collectStackFrameArguments,
         protected Resource $resource,
         protected Scope $scope,
         protected StacktraceMapper $stacktraceMapper,
@@ -361,6 +363,16 @@ class Flare
     }
 
     /**
+     * @param class-string<HasSolutionsForThrowable> ...$solutionProviders
+     */
+    public function withSolutionProvider(string ...$solutionProviders): self
+    {
+        $this->solutionProviderRepository->registerSolutionProviders($solutionProviders);
+
+        return $this;
+    }
+
+    /**
      * @param Closure(Exception): bool $filterExceptionsCallable
      */
     public function filterExceptionsUsing(Closure $filterExceptionsCallable): static
@@ -418,7 +430,7 @@ class Flare
     ): ReportFactory {
         $factory
             ->resource($this->resource)
-            ->withStackTraceArguments($this->withStackFrameArguments)
+            ->collectStackTraceArguments($this->collectStackFrameArguments)
             ->argumentReducers($this->argumentReducers)
             ->overriddenGroupings($this->overriddenGroupings)
             ->context($this->customContext);

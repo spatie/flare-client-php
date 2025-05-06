@@ -6,9 +6,9 @@ use Closure;
 use Illuminate\Contracts\Container\Container as IlluminateContainer;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\ErrorSolutions\Contracts\SolutionProviderRepository as SolutionProviderRepositoryContract;
-use Spatie\FlareClient\AttributesProviders\RequestAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
+use Spatie\FlareClient\Enums\CollectType;
 use Spatie\FlareClient\Enums\SamplingType;
 use Spatie\FlareClient\FlareMiddleware\AddRecordedEntries;
 use Spatie\FlareClient\Recorders\ThrowableRecorder\ThrowableRecorder;
@@ -80,21 +80,6 @@ class FlareProvider
                 : SamplingType::Disabled,
         ));
 
-        $this->container->singleton(ArgumentReducers::class, fn () => match (true) {
-            $this->config->argumentReducers === null => null,
-            is_array($this->config->argumentReducers) => ArgumentReducers::create($this->config->argumentReducers),
-            default => $this->config->argumentReducers,
-        });
-
-        $this->container->singleton(SolutionProviderRepositoryContract::class, function () {
-            /** @var SolutionProviderRepositoryContract $repository */
-            $repository = new $this->config->solutionsProviderRepository;
-
-            $repository->registerSolutionProviders($this->config->solutionsProviders);
-
-            return $repository;
-        });
-
         $this->container->singleton(SentReports::class);
 
         $this->container->singleton(ThrowableRecorder::class, fn () => new ThrowableRecorder(
@@ -112,8 +97,27 @@ class FlareProvider
         [
             'middlewares' => $middlewares,
             'recorders' => $recorders,
+            'solutionProviders' => $solutionProviders,
             'resourceModifiers' => $resourceModifiers,
+            'collectStackFrameArguments' => $collectStackFrameArguments,
+            'argumentReducers' => $argumentReducers,
+            'forcePHPStackFrameArgumentsIniSetting' => $forcePHPStackFrameArgumentsIniSetting,
         ] = (new $this->config->collectsResolver)->execute($this->config->collects);
+
+        $this->container->singleton(ArgumentReducers::class, fn () => match (true){
+            $collectStackFrameArguments === false => ArgumentReducers::create([]),
+            is_array($argumentReducers) => ArgumentReducers::create($argumentReducers),
+            default => $argumentReducers,
+        });
+
+        $this->container->singleton(SolutionProviderRepositoryContract::class, function () use ($solutionProviders) {
+            /** @var SolutionProviderRepositoryContract $repository */
+            $repository = new $this->config->solutionsProviderRepository;
+
+            $repository->registerSolutionProviders($solutionProviders);
+
+            return $repository;
+        });
 
         $this->container->singleton(Resource::class, function () use ($resourceModifiers) {
             $resource = new Resource(
@@ -124,7 +128,7 @@ class FlareProvider
                 Telemetry::VERSION
             );
 
-            foreach ($resourceModifiers as $resourceModifier){
+            foreach ($resourceModifiers as $resourceModifier) {
                 $resource = $resourceModifier($resource);
             }
 
@@ -167,7 +171,7 @@ class FlareProvider
             ($this->registerRecorderAndMiddlewaresCallback)($this->container, $middlewareClass, $config);
         }
 
-        $this->container->singleton(Flare::class, function () use ($middlewares, $recorders) {
+        $this->container->singleton(Flare::class, function () use ($collectStackFrameArguments, $middlewares, $recorders) {
             $recorders = array_combine(
                 array_map(
                     function ($recorder) {
@@ -195,6 +199,7 @@ class FlareProvider
 
             array_unshift($middleware, new AddRecordedEntries($recorders));
 
+
             return new Flare(
                 api: $this->container->get(Api::class),
                 tracer: $this->container->get(Tracer::class),
@@ -209,8 +214,9 @@ class FlareProvider
                 reportErrorLevels: $this->config->reportErrorLevels,
                 filterExceptionsCallable: $this->config->filterExceptionsCallable,
                 filterReportsCallable: $this->config->filterReportsCallable,
+                solutionProviderRepository:  $this->container->get(SolutionProviderRepositoryContract::class),
                 argumentReducers: $this->container->get(ArgumentReducers::class),
-                withStackFrameArguments: $this->config->withStackFrameArguments,
+                collectStackFrameArguments: $collectStackFrameArguments,
                 resource: $this->container->get(Resource::class),
                 scope: $this->container->get(Scope::class),
                 stacktraceMapper: $this->container->get(StacktraceMapper::class),
@@ -218,7 +224,7 @@ class FlareProvider
             );
         });
 
-        if ($this->config->forcePHPStackFrameArgumentsIniSetting) {
+        if ($collectStackFrameArguments && $forcePHPStackFrameArgumentsIniSetting) {
             (new PhpStackFrameArgumentsFixer())->enable();
         }
     }

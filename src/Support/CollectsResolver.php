@@ -2,7 +2,9 @@
 
 namespace Spatie\FlareClient\Support;
 
-use BackedEnum;
+use Spatie\Backtrace\Arguments\ArgumentReducers;
+use Spatie\Backtrace\Arguments\Reducers\ArgumentReducer;
+use Spatie\ErrorSolutions\Contracts\HasSolutionsForThrowable;
 use Spatie\FlareClient\Contracts\FlareCollectType;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\CollectType;
@@ -24,7 +26,6 @@ use Spatie\FlareClient\Recorders\RequestRecorder\RequestRecorder;
 use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
 use Spatie\FlareClient\Recorders\ViewRecorder\ViewRecorder;
 use Spatie\FlareClient\Resources\Resource;
-use StringBackedEnum;
 
 class CollectsResolver
 {
@@ -34,10 +35,20 @@ class CollectsResolver
     /** @var array<class-string<Recorder>, array<string, mixed>> */
     protected array $recorders = [];
 
+    /** @var array<class-string<HasSolutionsForThrowable>> */
+    protected array $solutionProviders = [];
+
     /** @var array<callable(Resource):Resource> */
     protected array $resourceModifiers = [];
 
-    /** @return array{middlewares: array<class-string<FlareMiddleware>, array>, recorders: array<class-string<Recorder>, array>, resourceModifiers: array<callable(Resource):Resource>} */
+    /** @var array<ArgumentReducer|class-string<ArgumentReducer>>|ArgumentReducers */
+    private array|ArgumentReducers $argumentReducers = [];
+
+    private bool $collectStackFrameArguments = false;
+
+    private bool $forcePHPStackFrameArgumentsIniSetting = false;
+
+    /** @return array{middlewares: array<class-string<FlareMiddleware>, array>, recorders: array<class-string<Recorder>, array>, solutionProviders: array<class-string<HasSolutionsForThrowable>>, resourceModifiers: array<callable(Resource):Resource>, collectStackFrameArguments: bool, argumentReducers: array<class-string<ArgumentReducer>|ArgumentReducer>|ArgumentReducers, forcePHPStackFrameArgumentsIniSetting: bool} */
     public function execute(
         array $collects,
     ): array {
@@ -46,7 +57,7 @@ class CollectsResolver
         $this->resourceModifiers = [];
 
         foreach ($collects as $collect) {
-            $ignored = $collect['ignore'] ?? false;
+            $ignored = $collect['ignored'] ?? false;
 
             if ($ignored) {
                 continue;
@@ -70,6 +81,7 @@ class CollectsResolver
                 CollectType::RedisCommands => $this->redisCommands($options),
                 CollectType::Views => $this->views($options),
                 CollectType::ServerInfo => $this->severInfo($options),
+                CollectType::StackFrameArguments => $this->stackFrameArguments($options),
                 null => null,
                 default => $this->handleUnknownCollectType($collect['type'], $options),
             };
@@ -78,6 +90,10 @@ class CollectsResolver
         return [
             'middlewares' => $this->middlewares,
             'recorders' => $this->recorders,
+            'solutionProviders' => $this->solutionProviders,
+            'collectStackFrameArguments' => $this->collectStackFrameArguments,
+            'argumentReducers' => $this->argumentReducers,
+            'forcePHPStackFrameArgumentsIniSetting' => $this->forcePHPStackFrameArgumentsIniSetting,
             'resourceModifiers' => $this->resourceModifiers,
         ];
     }
@@ -85,8 +101,7 @@ class CollectsResolver
     protected function handleUnknownCollectType(
         FlareCollectType $type,
         array $options
-    ): void
-    {
+    ): void {
 
     }
 
@@ -148,6 +163,7 @@ class CollectsResolver
     protected function solutions(array $solutions): void
     {
         $this->addMiddleware($solutions['middleware'] ?? AddSolutions::class);
+        $this->solutionProviders = $solutions['solution_providers'] ?? [];
     }
 
     protected function dumps(array $options): void
@@ -222,21 +238,28 @@ class CollectsResolver
 
     protected function severInfo(array $options): void
     {
-        if($options['host'] ?? false) {
+        if ($options['host'] ?? false) {
             $this->resourceModifiers[] = fn (Resource $resource) => $resource->host();
         }
 
-        if($options['php'] ?? false) {
+        if ($options['php'] ?? false) {
             $this->resourceModifiers[] = fn (Resource $resource) => $resource->process()->processRuntime();
         }
 
-        if($options['os'] ?? false) {
+        if ($options['os'] ?? false) {
             $this->resourceModifiers[] = fn (Resource $resource) => $resource->operatingSystem();
         }
 
-        if($options['composer'] ?? false) {
+        if ($options['composer'] ?? false) {
             $this->resourceModifiers[] = fn (Resource $resource) => $resource->composer();
         }
+    }
+
+    protected function stackFrameArguments(array $options): void
+    {
+        $this->collectStackFrameArguments = true;
+        $this->argumentReducers = $options['argument_reducers'] ?? [];
+        $this->forcePHPStackFrameArgumentsIniSetting = $options['force_php_ini_setting'] ?? false;
     }
 
     /**
