@@ -12,8 +12,6 @@ use Spatie\FlareClient\Spans\Span;
 
 class RedisCommandRecorder extends Recorder implements SpansRecorder
 {
-    use UsesTime;
-
     /** @use RecordsSpans<Span> */
     use RecordsSpans;
 

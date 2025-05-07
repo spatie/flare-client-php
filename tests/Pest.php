@@ -3,7 +3,9 @@
 use Spatie\FlareClient\Flare;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Support\Container;
+use Spatie\FlareClient\Tests\Shared\FakeIds;
 use Spatie\FlareClient\Tests\Shared\FakeSender;
+use Spatie\FlareClient\Tests\Shared\FakeTime;
 use Spatie\FlareClient\Tests\Shared\FakeTraceExporter;
 
 uses()->beforeEach(function () {
@@ -36,6 +38,14 @@ function setupFlare(
 
     if ($useFakeTraceExporter) {
         $config->traceExporter = FakeTraceExporter::class;
+    }
+
+    if(FakeTime::isSetup()){
+        $config->time = FakeTime::class;
+    }
+
+    if(FakeIds::setup()){
+        $config->ids = FakeIds::class;
     }
 
     if ($closure) {

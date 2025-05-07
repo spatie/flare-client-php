@@ -179,7 +179,7 @@ it('can start and end a span', function () {
     expect($span->start)->toBe(1546346096000000000);
     expect($span->end)->toBeNull();
 
-    FakeTime::setup('2019-01-01 12:35:56');
+    FakeTime::setCurrentTime('2019-01-01 12:35:56');
 
     $span2 = $tracer->startSpan('Some span 2');
 

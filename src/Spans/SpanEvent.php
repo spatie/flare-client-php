@@ -9,7 +9,6 @@ use Spatie\FlareClient\Contracts\WithAttributes;
 
 class SpanEvent implements WithAttributes
 {
-    use UsesTime;
     use HasAttributes;
 
     /**
@@ -21,21 +20,6 @@ class SpanEvent implements WithAttributes
         array $attributes,
     ) {
         $this->addAttributes($attributes);
-    }
-
-    /**
-     * @param array<string, mixed> $attributes
-     */
-    public static function build(
-        string $name,
-        ?int $timestamp = null,
-        array $attributes = [],
-    ): self {
-        return new self(
-            name: $name,
-            timestamp: $timestamp ?? self::getCurrentTime(),
-            attributes: $attributes,
-        );
     }
 
     /**

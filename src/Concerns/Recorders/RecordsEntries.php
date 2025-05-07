@@ -121,7 +121,7 @@ trait RecordsEntries
     protected function setOrigin(
         mixed $entry,
         ?Closure $frameAfter = null
-    ): Span|SpanEvent {
+    ): mixed {
         $duration = match (true) {
             $entry instanceof Span => $entry->end - $entry->start,
             $entry instanceof SpanEvent => null,

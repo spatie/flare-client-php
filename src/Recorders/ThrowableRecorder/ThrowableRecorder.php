@@ -10,11 +10,12 @@ use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanStatusCode;
 use Spatie\FlareClient\Recorders\Recorder;
 use Spatie\FlareClient\Report;
+use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Tracer;
 
-class ThrowableRecorder  extends Recorder  implements SpanEventsRecorder
+class ThrowableRecorder extends Recorder implements SpanEventsRecorder
 {
-    /** @use RecordsSpanEvents<ThrowableSpanEvent> */
+    /** @use RecordsSpanEvents<SpanEvent> */
     use RecordsSpanEvents;
 
     public function __construct(
@@ -38,7 +39,10 @@ class ThrowableRecorder  extends Recorder  implements SpanEventsRecorder
     public function record(Report $report): void
     {
         $this->persistEntry(function () use ($report) {
-            $event = ThrowableSpanEvent::fromReport($report);
+            $event = ThrowableSpanEvent::fromReport(
+                $report,
+                $this->tracer->time->getCurrentTime(),
+            );
 
             $currentSpan = $this->tracer->currentSpan();
 

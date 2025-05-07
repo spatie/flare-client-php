@@ -9,8 +9,6 @@ use Spatie\FlareClient\Enums\OverriddenGrouping;
 
 class Report
 {
-    use UsesTime;
-
     /**
      * @param array<int, array{file: string, lineNumber: int, method: string|null, class: string|null, codeSnippet: array<string>, arguments: array|null, isApplicationFrame: bool}> $stacktrace
      * @param array<int, array{class: string, title: string, description: string, links: string[], actionDescription: string|null, isRunnable: bool, aiGenerated: bool}> $solutions
@@ -21,6 +19,7 @@ class Report
         public readonly string $exceptionClass,
         public readonly string $message,
         public readonly bool $isLog,
+        public readonly int $timeUs,
         public readonly ?string $level = null,
         public readonly array $attributes = [],
         public readonly array $solutions = [],
@@ -40,7 +39,7 @@ class Report
     {
         $report = [
             'exceptionClass' => $this->exceptionClass,
-            'seenAtUnixNano' => $this::getCurrentTime(),
+            'seenAtUnixNano' => $this->timeUs,
             'message' => $this->message,
             'solutions' => $this->solutions,
             'stacktrace' => $this->stacktrace,

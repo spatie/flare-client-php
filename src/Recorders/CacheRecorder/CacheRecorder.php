@@ -7,11 +7,13 @@ use Spatie\FlareClient\Contracts\Recorders\SpanEventsRecorder;
 use Spatie\FlareClient\Enums\CacheOperation;
 use Spatie\FlareClient\Enums\CacheResult;
 use Spatie\FlareClient\Enums\RecorderType;
+use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Recorders\Recorder;
+use Spatie\FlareClient\Spans\SpanEvent;
 
 class CacheRecorder extends Recorder implements SpanEventsRecorder
 {
-    /** @use RecordsSpanEvents<CacheSpanEvent> */
+    /** @use RecordsSpanEvents<SpanEvent> */
     use RecordsSpanEvents;
 
     /**
@@ -36,22 +38,22 @@ class CacheRecorder extends Recorder implements SpanEventsRecorder
         ));
     }
 
-    public function recordHit(string $key, ?string $store): ?CacheSpanEvent
+    public function recordHit(string $key, ?string $store): ?SpanEvent
     {
         return $this->record($key, $store, CacheOperation::Get, CacheResult::Hit);
     }
 
-    public function recordMiss(string $key, ?string $store): ?CacheSpanEvent
+    public function recordMiss(string $key, ?string $store): ?SpanEvent
     {
         return $this->record($key, $store, CacheOperation::Get, CacheResult::Miss);
     }
 
-    public function recordKeyWritten(string $key, ?string $store): ?CacheSpanEvent
+    public function recordKeyWritten(string $key, ?string $store): ?SpanEvent
     {
         return $this->record($key, $store, CacheOperation::Set, CacheResult::Success);
     }
 
-    public function recordKeyForgotten(string $key, ?string $store): ?CacheSpanEvent
+    public function recordKeyForgotten(string $key, ?string $store): ?SpanEvent
     {
         return $this->record($key, $store, CacheOperation::Forget, CacheResult::Success);
     }
@@ -61,14 +63,30 @@ class CacheRecorder extends Recorder implements SpanEventsRecorder
         ?string $store,
         CacheOperation $operation,
         CacheResult $result,
-        ?array $attributes = null,
-    ): ?CacheSpanEvent {
+        array $attributes = [],
+    ): ?SpanEvent {
         if (! in_array($operation, $this->operations)) {
             return null;
         }
 
-        return $this->persistEntry(
-            fn () => (new CacheSpanEvent($key, $store, $operation, $result))->addAttributes($attributes),
+        $name = match ([$operation, $result]) {
+            [CacheOperation::Get, CacheResult::Hit] => 'hit',
+            [CacheOperation::Get, CacheResult::Miss] => 'miss',
+            [CacheOperation::Set, CacheResult::Success] => 'key written',
+            [CacheOperation::Forget, CacheResult::Success] => 'key forgotten',
+            default => '',
+        };
+
+        return $this->spanEvent(
+            "Cache {$name} - {$key}",
+            attributes: [
+                'flare.span_event_type' => SpanEventType::Cache,
+                'cache.operation' => $operation,
+                'cache.result' => $result,
+                'cache.key' => $key,
+                'cache.store' => $store,
+                ...$attributes,
+            ]
         );
     }
 }

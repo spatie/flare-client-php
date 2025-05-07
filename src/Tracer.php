@@ -15,6 +15,7 @@ use Spatie\FlareClient\Sampling\Sampler;
 use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
+use Spatie\FlareClient\Support\Ids;
 use Spatie\FlareClient\Support\TraceLimits;
 use Spatie\FlareClient\Time\Time;
 use Spatie\FlareClient\TraceExporters\TraceExporter;
@@ -22,9 +23,6 @@ use Throwable;
 
 class Tracer
 {
-    use UsesTime;
-    use UsesIds;
-
     /** @var array<string, Span[]> */
     protected array $traces = [];
 
@@ -40,6 +38,8 @@ class Tracer
         protected readonly Api $api,
         protected readonly TraceExporter $exporter,
         public readonly TraceLimits $limits,
+        public readonly Time $time,
+        public readonly Ids $ids,
         protected Resource $resource,
         protected Scope $scope,
         public readonly Sampler $sampler = new RateSampler([]),
@@ -50,11 +50,6 @@ class Tracer
         public SamplingType $samplingType = SamplingType::Waiting,
         public bool $clearTracesAfterExport = true,
     ) {
-    }
-
-    public function time(): Time
-    {
-        return static::$time;
     }
 
     /**
@@ -82,7 +77,7 @@ class Tracer
     public function potentiallyResumeTrace(
         string $traceParent
     ): SamplingType {
-        $parsed = static::ids()->parseTraceParent($traceParent);
+        $parsed = $this->ids->parseTraceParent($traceParent);
 
         if ($parsed === null) {
             return $this->samplingType = SamplingType::Off;
@@ -119,7 +114,7 @@ class Tracer
             throw new Exception('Trace cannot be started when sampling is disabled, off or already started');
         }
 
-        $this->currentTraceId = static::ids()->trace();
+        $this->currentTraceId = $this->ids->trace();
         $this->samplingType = SamplingType::Sampling;
     }
 
@@ -148,7 +143,7 @@ class Tracer
 
     public function traceParent(): string
     {
-        return static::ids()->traceParent(
+        return $this->ids->traceParent(
             $this->currentTraceId ?? '',
             $this->currentSpanId ?? '',
             $this->isSampling(),
@@ -265,11 +260,13 @@ class Tracer
         ?int $end = null,
         array $attributes = [],
     ): Span {
-        $span = Span::build(
+        $span = new Span(
             traceId: $this->currentTraceId ?? '',
-            parentId: $this->currentSpanId,
+            spanId: $this->ids->span(),
+            parentSpanId: $this->currentSpanId,
             name: $name,
-            start: $start ?? $this::getCurrentTime(),
+            start: $start ?? $this->time->getCurrentTime(),
+            end: null,
             attributes: $attributes,
         );
 
@@ -293,7 +290,7 @@ class Tracer
             throw new Exception('No span to end');
         }
 
-        $span->end = $endUs ?? $this::getCurrentTime();
+        $span->end = $endUs ?? $this->time->getCurrentTime();
 
         if (count($additionalAttributes) > 0) {
             $span->addAttributes($additionalAttributes);

@@ -32,8 +32,10 @@ use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Support\BackTracer;
 use Spatie\FlareClient\Support\Container;
+use Spatie\FlareClient\Support\Ids;
 use Spatie\FlareClient\Support\SentReports;
 use Spatie\FlareClient\Support\StacktraceMapper;
+use Spatie\FlareClient\Time\Time;
 use Throwable;
 
 class Flare
@@ -56,6 +58,8 @@ class Flare
         protected readonly Api $api,
         public readonly Tracer $tracer,
         public readonly BackTracer $backTracer,
+        protected readonly Ids $ids,
+        protected readonly Time $time,
         protected readonly SentReports $sentReports,
         protected readonly array $middleware,
         protected readonly array $recorders,
@@ -199,7 +203,11 @@ class Flare
             return null;
         }
 
-        $event = SpanEvent::build($name, attributes: $attributes);
+        $event = new SpanEvent(
+            name: $name,
+            timestamp: $this->tracer->time->getCurrentTime(),
+            attributes: $attributes,
+        );
 
         $this->tracer->currentSpan()->addEvent(
             $event
@@ -275,7 +283,11 @@ class Flare
             $factory->handled();
         }
 
-        return $factory->build($this->stacktraceMapper);
+        return $factory->build(
+            $this->stacktraceMapper,
+            $this->time,
+            $this->ids,
+        );
     }
 
     public function reportHandled(Throwable $throwable): ?Report
@@ -313,7 +325,11 @@ class Flare
             $callback
         );
 
-        $report = $factory->build($this->stacktraceMapper);
+        $report = $factory->build(
+            $this->stacktraceMapper,
+            $this->time,
+            $this->ids,
+        );
 
         $this->sendReportToApi($report);
 
@@ -323,7 +339,11 @@ class Flare
     public function sendTestReport(Throwable $throwable): void
     {
         $this->api->test(
-            ReportFactory::createForThrowable($throwable)->resource($this->resource)->build($this->stacktraceMapper),
+            ReportFactory::createForThrowable($throwable)->resource($this->resource)->build(
+                $this->stacktraceMapper,
+                $this->time,
+                $this->ids,
+            ),
         );
     }
 

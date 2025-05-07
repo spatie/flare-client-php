@@ -4,6 +4,7 @@ use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowSpanEvent;
+use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
 
 beforeEach(function () {
@@ -19,10 +20,6 @@ it('stores glows for reporting and tracing', function () {
         'max_items_with_errors' => 10,
     ]);
 
-    $glow = new GlowSpanEvent('Some name', MessageLevels::Info, [
-        'some' => 'metadata',
-    ]);
-
     $recorder->record(
         name: 'Some name',
         level: MessageLevels::Info,
@@ -33,8 +30,10 @@ it('stores glows for reporting and tracing', function () {
 
     expect($glows)->toHaveCount(1);
 
+    $glow = $glows[0];
+
     expect($glow)
-        ->toBeInstanceOf(GlowSpanEvent::class)
+        ->toBeInstanceOf(SpanEvent::class)
         ->name->toBe('Glow - Some name')
         ->timestamp->toBe(1546346096000000000);
 

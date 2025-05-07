@@ -23,11 +23,11 @@ class SpanEventsRecorder implements BaseSpanEventsRecorder
 
     public function record(string $message): ?SpanEvent
     {
-        return $this->persistEntry(fn () => SpanEvent::build(
+        return $this->spanEvent(
             name: "Span Event - {$message}",
-            attributes: [
+            attributes: fn () => [
                 'message' => $message,
             ],
-        ));
+        );
     }
 }

@@ -71,7 +71,7 @@ parameters:
 			path: src/FlareConfig.php
 
 		-
-			message: "#^Instanceof between Spatie\\\\FlareClient\\\\Recorders\\\\CacheRecorder\\\\CacheSpanEvent and Spatie\\\\FlareClient\\\\Spans\\\\Span will always evaluate to false\\.$#"
+			message: "#^Instanceof between Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent and Spatie\\\\FlareClient\\\\Spans\\\\Span will always evaluate to false\\.$#"
 			count: 1
 			path: src/Recorders/CacheRecorder/CacheRecorder.php
 
@@ -86,7 +86,7 @@ parameters:
 			path: src/Recorders/CommandRecorder/CommandRecorder.php
 
 		-
-			message: "#^Instanceof between Spatie\\\\FlareClient\\\\Recorders\\\\DumpRecorder\\\\DumpSpanEvent and Spatie\\\\FlareClient\\\\Spans\\\\Span will always evaluate to false\\.$#"
+			message: "#^Instanceof between Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent and Spatie\\\\FlareClient\\\\Spans\\\\Span will always evaluate to false\\.$#"
 			count: 1
 			path: src/Recorders/DumpRecorder/DumpRecorder.php
 
@@ -116,12 +116,12 @@ parameters:
 			path: src/Recorders/FilesystemRecorder/FilesystemRecorder.php
 
 		-
-			message: "#^Instanceof between Spatie\\\\FlareClient\\\\Recorders\\\\GlowRecorder\\\\GlowSpanEvent and Spatie\\\\FlareClient\\\\Spans\\\\Span will always evaluate to false\\.$#"
+			message: "#^Instanceof between Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent and Spatie\\\\FlareClient\\\\Spans\\\\Span will always evaluate to false\\.$#"
 			count: 1
 			path: src/Recorders/GlowRecorder/GlowRecorder.php
 
 		-
-			message: "#^Instanceof between Spatie\\\\FlareClient\\\\Recorders\\\\LogRecorder\\\\LogMessageSpanEvent and Spatie\\\\FlareClient\\\\Spans\\\\Span will always evaluate to false\\.$#"
+			message: "#^Instanceof between Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent and Spatie\\\\FlareClient\\\\Spans\\\\Span will always evaluate to false\\.$#"
 			count: 1
 			path: src/Recorders/LogRecorder/LogRecorder.php
 
@@ -156,7 +156,7 @@ parameters:
 			path: src/Recorders/RequestRecorder/RequestRecorder.php
 
 		-
-			message: "#^Instanceof between Spatie\\\\FlareClient\\\\Recorders\\\\ThrowableRecorder\\\\ThrowableSpanEvent and Spatie\\\\FlareClient\\\\Spans\\\\Span will always evaluate to false\\.$#"
+			message: "#^Instanceof between Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent and Spatie\\\\FlareClient\\\\Spans\\\\Span will always evaluate to false\\.$#"
 			count: 1
 			path: src/Recorders/ThrowableRecorder/ThrowableRecorder.php
 

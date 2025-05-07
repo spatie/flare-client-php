@@ -3,6 +3,7 @@
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Recorders\DumpRecorder\DumpRecorder;
 use Spatie\FlareClient\Recorders\DumpRecorder\DumpSpanEvent;
+use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
 
 beforeEach(function () {
@@ -30,7 +31,7 @@ it('can symphony record dumps', function () {
     $this->assertCount(1, $dumps);
 
     expect($dumps[0])
-        ->toBeInstanceOf(DumpSpanEvent::class)
+        ->toBeInstanceOf(SpanEvent::class)
         ->name->toBe('Dump entry')
         ->timestamp->toBe(1546346096000000000);
 

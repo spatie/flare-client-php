@@ -17,7 +17,9 @@ use Spatie\FlareClient\Enums\OverriddenGrouping;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
+use Spatie\FlareClient\Support\Ids;
 use Spatie\FlareClient\Support\StacktraceMapper;
+use Spatie\FlareClient\Time\Time;
 use Spatie\Ignition\Contracts\RunnableSolution as IgnitionRunnableSolution;
 use Spatie\Ignition\Contracts\Solution as IgnitionSolution;
 use Throwable;
@@ -26,7 +28,6 @@ class ReportFactory implements WithAttributes
 {
     use HasAttributes;
     use HasCustomContext;
-    use UsesIds;
 
     protected Resource $resource;
 
@@ -172,7 +173,9 @@ class ReportFactory implements WithAttributes
     }
 
     public function build(
-        StacktraceMapper $stacktraceMapper
+        StacktraceMapper $stacktraceMapper,
+        Time $time,
+        Ids $ids,
     ): Report {
         if ($this->throwable === null && $this->isLog === false) {
             throw new Exception('No throwable or message provided');
@@ -208,6 +211,7 @@ class ReportFactory implements WithAttributes
             exceptionClass: $exceptionClass,
             message: $this->message,
             isLog: $this->isLog,
+            timeUs: $time->getCurrentTime(),
             level: $this->level,
             attributes: $attributes,
             solutions: $this->mapSolutions(),
@@ -217,7 +221,7 @@ class ReportFactory implements WithAttributes
             events: array_values(array_filter(
                 array_map(fn (Span|SpanEvent $span) => $span->toEvent(), $this->events),
             )),
-            trackingUuid: $this->trackingUuid ?? self::ids()->uuid(),
+            trackingUuid: $this->trackingUuid ?? $ids->uuid(),
             overriddenGrouping: $this->throwable ? $this->overriddenGroupings[$this->throwable::class] ?? null : null,
         );
     }

@@ -8,13 +8,15 @@ use Spatie\Backtrace\Frame;
 use Spatie\FlareClient\Concerns\Recorders\RecordsSpanEvents;
 use Spatie\FlareClient\Contracts\Recorders\SpanEventsRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
+use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Recorders\Recorder;
+use Spatie\FlareClient\Spans\SpanEvent;
 use Symfony\Component\VarDumper\Cloner\Data;
 use Symfony\Component\VarDumper\VarDumper;
 
 class DumpRecorder extends Recorder implements SpanEventsRecorder
 {
-    /** @use RecordsSpanEvents<DumpSpanEvent> */
+    /** @use RecordsSpanEvents<SpanEvent> */
     use RecordsSpanEvents;
 
     public const DEFAULT_MAX_ITEMS_WITH_ERRORS = 25;
@@ -45,19 +47,19 @@ class DumpRecorder extends Recorder implements SpanEventsRecorder
         static::$multiDumpHandler = $multiDumpHandler;
     }
 
-    public function record(Data $data): ?DumpSpanEvent
+    public function record(Data $data): ?SpanEvent
     {
-        return $this->persistEntry(function () use ($data) {
-            $spanEvent = new DumpSpanEvent(
-                htmlDump: (new HtmlDumper())->dump($data),
-            );
-
-            $this->setOrigin($spanEvent, frameAfter: function (Frame $frame) {
-                return $frame->class === VarDumper::class && $frame->method === 'dump';
-            });
-
-            return $spanEvent;
-        });
+        return $this->spanEvent(
+            name: 'Dump entry',
+            attributes: fn () => [
+                'flare.span_event_type' => SpanEventType::Dump,
+                'dump.html' => (new HtmlDumper())->dump($data),
+            ],
+            spanEventCallback: fn (SpanEvent $spanEvent) => $this->setOrigin(
+                $spanEvent,
+                frameAfter: fn (Frame $frame) => $frame->class === VarDumper::class && $frame->method === 'dump'
+            )
+        );
     }
 
     /*

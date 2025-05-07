@@ -31,17 +31,10 @@ it('can trace throwables', function () {
                     fn (ExpectSpanEvent $spanEvent) => $spanEvent
                     ->hasName('Exception - Spatie\FlareClient\Tests\TestClasses\ExceptionWithContext')
                     ->hasType(SpanEventType::Exception)
-                    ->hasAttributeCount(6)
+                    ->hasAttributeCount(5)
                     ->hasAttribute('exception.message', 'We failed')
                     ->hasAttribute('exception.type', 'Spatie\FlareClient\Tests\TestClasses\ExceptionWithContext')
                     ->hasAttribute('exception.handled', false)
-                    ->hasAttribute('exception.stacktrace', function ($stacktrace) {
-                        expect($stacktrace)->toBeArray();
-
-                        expect($stacktrace[0])->toContain('at '.__FILE__.':'.(__LINE__ - 21));
-                        // {closure} in PHP < 8.4 {closure:1} in PHP >= 8.4
-                        expect($stacktrace[0])->toContain('ThrowableRecorderTest::{closure');
-                    })
                     ->hasAttribute('exception.id')
                 )
             )

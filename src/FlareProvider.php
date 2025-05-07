@@ -18,12 +18,14 @@ use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Senders\Sender;
 use Spatie\FlareClient\Support\BackTracer;
 use Spatie\FlareClient\Support\Container;
+use Spatie\FlareClient\Support\Ids;
 use Spatie\FlareClient\Support\PhpStackFrameArgumentsFixer;
 use Spatie\FlareClient\Support\Redactor;
 use Spatie\FlareClient\Support\SentReports;
 use Spatie\FlareClient\Support\StacktraceMapper;
 use Spatie\FlareClient\Support\Telemetry;
 use Spatie\FlareClient\Support\TraceLimits;
+use Spatie\FlareClient\Time\Time;
 use Spatie\FlareClient\TraceExporters\TraceExporter;
 
 class FlareProvider
@@ -66,10 +68,15 @@ class FlareProvider
             $this->config->applicationPath
         ));
 
+        $this->container->singleton(Time::class, fn() => new $this->config->time);
+        $this->container->singleton(Ids::class, fn() => new $this->config->ids);
+
         $this->container->singleton(Tracer::class, fn () => new Tracer(
             api: $this->container->get(Api::class),
             exporter: $this->container->get(TraceExporter::class),
             limits: $this->config->traceLimits ?? new TraceLimits(),
+            time: $this->container->get(Time::class),
+            ids: $this->container->get(Ids::class),
             resource: $this->container->get(Resource::class),
             scope: $this->container->get(Scope::class),
             sampler: $this->container->get(Sampler::class),
@@ -204,6 +211,8 @@ class FlareProvider
                 api: $this->container->get(Api::class),
                 tracer: $this->container->get(Tracer::class),
                 backTracer: $this->container->get(BackTracer::class),
+                ids: $this->container->get(Ids::class),
+                time: $this->container->get(Time::class),
                 sentReports: $this->container->get(SentReports::class),
                 middleware: $middleware,
                 recorders: $recorders,

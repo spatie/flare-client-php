@@ -4,6 +4,7 @@ use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Recorders\LogRecorder\LogMessageSpanEvent;
 use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
+use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
 
 beforeEach(function () {
@@ -30,7 +31,7 @@ it('stores glows for reporting and tracing', function () {
     expect($logs)->toHaveCount(1);
 
     expect($logs[0])
-        ->toBeInstanceOf(LogMessageSpanEvent::class)
+        ->toBeInstanceOf(SpanEvent::class)
         ->name->toBe('Log entry')
         ->timestamp->toBe(1546346096000000000)
         ->attributes

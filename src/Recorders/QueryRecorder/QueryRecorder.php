@@ -13,8 +13,6 @@ use Spatie\FlareClient\Spans\Span;
 
 class QueryRecorder extends Recorder implements SpansRecorder
 {
-    use UsesTime;
-
     /** @use RecordsSpans<Span> */
     use RecordsSpans;
 

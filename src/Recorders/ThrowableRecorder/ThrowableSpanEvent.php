@@ -13,76 +13,36 @@ class ThrowableSpanEvent extends SpanEvent
         public string $message,
         public string $class,
         public ?bool $handled,
-        /** @var string[] */
-        public array $stackTrace,
+        int $timeUs,
         public ?string $id = null,
-        ?int $timeUs = null,
         public SpanEventType $spanEventType = SpanEventType::Exception,
     ) {
         parent::__construct(
             "Exception - {$this->class}",
-            $timeUs ?? static::getCurrentTime(),
+            $timeUs,
             $this->collectAttributes(),
         );
     }
 
-    public static function fromReport(Report $report): self
+    public static function fromReport(Report $report, int $timeUs): self
     {
-        $stackTrace = array_map(
-            fn (array $frame) => static::flareFrameToLine($frame),
-            $report->stacktrace
-        );
-
         return new self(
             $report->message,
             $report->exceptionClass,
             $report->handled ?? false,
-            $stackTrace,
+            $timeUs,
             $report->trackingUuid
         );
     }
 
-    public static function fromThrowable(Throwable $throwable): self
+    public static function fromThrowable(Throwable $throwable, int $timeUs): self
     {
         return new self(
             $throwable->getMessage(),
             $throwable::class,
             null,
-            array_map(
-                fn (array $frame) => static::phpFrameToLine($frame),
-                $throwable->getTrace(),
-            ),
+            $timeUs,
         );
-    }
-
-    protected static function flareFrameToLine(
-        array $frame
-    ): string {
-        $location = match (true) {
-            $frame['class'] !== null && $frame['method'] !== null => "{$frame['class']}::{$frame['method']}",
-            $frame['class'] => "{$frame['class']}",
-            $frame['method'] => "{$frame['method']}",
-            default => "Unknown",
-        };
-
-        return "{$location} at {$frame['file']}:{$frame['lineNumber']}".PHP_EOL;
-    }
-
-    protected static function phpFrameToLine(
-        array $frame
-    ): string {
-        $location = match (true) {
-            ($frame['class'] ?? null) !== null && ($frame['method'] ?? null) !== null => "{$frame['class']}::{$frame['method']}",
-            ($frame['class'] ?? null) !== null => "{$frame['class']}",
-            ($frame['method'] ?? null) !== null => "{$frame['method']}",
-            default => "Unknown",
-        };
-
-        $file = $frame['file'] ?? 'Unknown';
-
-        $line = $frame['line'] ?? '?';
-
-        return "{$location} at {$file}:{$line}".PHP_EOL;
     }
 
     protected function collectAttributes(): array
@@ -92,7 +52,6 @@ class ThrowableSpanEvent extends SpanEvent
             'exception.message' => $this->message,
             'exception.type' => $this->class,
             'exception.handled' => $this->handled,
-            'exception.stacktrace' => $this->stackTrace,
             'exception.id' => $this->id,
         ];
     }

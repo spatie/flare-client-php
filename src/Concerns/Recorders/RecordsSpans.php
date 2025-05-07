@@ -74,11 +74,13 @@ trait RecordsSpans
                 ['name' => $name, 'attributes' => $attributes] = $nameAndAttributes();
             }
 
-            $span = Span::build(
+            $span = new Span(
                 traceId: $this->tracer->currentTraceId() ?? '', // In the case of a non trace but do collect spans for errors
-                parentId: $parentId ?? $this->tracer->currentSpanId(),
+                spanId: $this->tracer->ids->span(),
+                parentSpanId: $parentId ?? $this->tracer->currentSpanId(),
                 name: $name,
-                start: $start,
+                start: $start ?? $this->tracer->time->getCurrentTime(),
+                end: null,
                 attributes: $attributes,
             );
 
@@ -139,6 +141,13 @@ trait RecordsSpans
         return $span;
     }
 
+    /**
+     * @param Closure():string|string|null $name
+     * @param Closure():array<string, mixed>|array $attributes
+     * @param Closure():array{name: string, attributes: array<string, mixed>}|null $nameAndAttributes
+     * @param Closure():array<string,mixed>|null $additionalAttributes
+     * @param Closure(T):(void|T|null)|null $spanCallback
+     */
     protected function span(
         Closure|string|null $name = null,
         Closure|array $attributes = [],
@@ -148,12 +157,13 @@ trait RecordsSpans
         ?int $duration = null,
         ?string $parentId = null,
         ?Closure $additionalAttributes = null,
+        ?Closure $spanCallback = null,
     ): ?Span {
         [$start, $end] = match (true) {
             $start !== null && $end !== null => [$start, $end],
             $start !== null && $duration !== null => [$start, $start + $duration],
             $end !== null && $duration !== null => [$end, $end + $duration],
-            $start === null && $end === null && $duration !== null => [$this->tracer->time()->getCurrentTime() - $duration, $this->tracer->time()->getCurrentTime()],
+            $start === null && $end === null && $duration !== null => [$this->tracer->time->getCurrentTime() - $duration, $this->tracer->time->getCurrentTime()],
             default => throw new InvalidArgumentException('Span cannot be started, no valid timings provided'),
         };
 
@@ -172,6 +182,7 @@ trait RecordsSpans
         $this->endSpan(
             time: $end,
             additionalAttributes: $additionalAttributes === null ? [] : $additionalAttributes,
+            spanCallback: $spanCallback,
         );
 
         $this->setOrigin($span);

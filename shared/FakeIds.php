@@ -15,15 +15,20 @@ class FakeIds extends Ids
 
     public static array $nextUuids = [];
 
+    protected static ?self $instance = null;
+
+    public static function isSetup(): bool
+    {
+        return static::$instance !== null;
+    }
+
     public static function setup(): self
     {
-        $fakeIds = new FakeIds();
+        if (static::$instance) {
+            return static::$instance;
+        }
 
-        Tracer::useIds($fakeIds);
-        Span::useIds($fakeIds);
-        ReportFactory::useIds($fakeIds);
-
-        return $fakeIds;
+        return static::$instance = new self();
     }
 
     public function trace(): string

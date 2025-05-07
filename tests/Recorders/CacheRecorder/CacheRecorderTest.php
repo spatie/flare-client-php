@@ -5,6 +5,7 @@ use Spatie\FlareClient\Enums\CacheResult;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheSpanEvent;
+use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
 
 beforeEach(function () {
@@ -37,7 +38,7 @@ it('can record cache events', function () {
     $this->assertCount(4, $events);
 
     expect($events[0])
-        ->toBeInstanceOf(CacheSpanEvent::class)
+        ->toBeInstanceOf(SpanEvent::class)
         ->name->toBe('Cache hit - key')
         ->timestamp->toBe(1546346096000000000)
         ->attributes
@@ -49,7 +50,7 @@ it('can record cache events', function () {
         ->toHaveKey('cache.result', CacheResult::Hit);
 
     expect($events[1])
-        ->toBeInstanceOf(CacheSpanEvent::class)
+        ->toBeInstanceOf(SpanEvent::class)
         ->name->toBe('Cache miss - key')
         ->timestamp->toBe(1546346096000000000)
         ->attributes
@@ -61,7 +62,7 @@ it('can record cache events', function () {
         ->toHaveKey('cache.result', CacheResult::Miss);
 
     expect($events[2])
-        ->toBeInstanceOf(CacheSpanEvent::class)
+        ->toBeInstanceOf(SpanEvent::class)
         ->name->toBe('Cache key written - key')
         ->timestamp->toBe(1546346096000000000)
         ->attributes
@@ -73,7 +74,7 @@ it('can record cache events', function () {
         ->toHaveKey('cache.result', CacheResult::Success);
 
     expect($events[3])
-        ->toBeInstanceOf(CacheSpanEvent::class)
+        ->toBeInstanceOf(SpanEvent::class)
         ->name->toBe('Cache key forgotten - key')
         ->timestamp->toBe(1546346096000000000)
         ->attributes

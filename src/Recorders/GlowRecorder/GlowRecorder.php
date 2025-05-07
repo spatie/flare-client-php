@@ -3,16 +3,16 @@
 namespace Spatie\FlareClient\Recorders\GlowRecorder;
 
 use Spatie\FlareClient\Concerns\Recorders\RecordsSpanEvents;
-use Spatie\FlareClient\Contracts\FlareSpanEventType;
 use Spatie\FlareClient\Contracts\Recorders\SpanEventsRecorder;
 use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Recorders\Recorder;
+use Spatie\FlareClient\Spans\SpanEvent;
 
 class GlowRecorder extends Recorder implements SpanEventsRecorder
 {
-    /**  @use RecordsSpanEvents<GlowSpanEvent> */
+    /**  @use RecordsSpanEvents<SpanEvent> */
     use RecordsSpanEvents;
 
     public static function type(): string|RecorderType
@@ -24,16 +24,17 @@ class GlowRecorder extends Recorder implements SpanEventsRecorder
         string $name,
         MessageLevels $level = MessageLevels::Info,
         array $context = [],
-        ?int $time = null,
-        FlareSpanEventType $spanEventType = SpanEventType::Glow,
-        ?array $attributes = null,
-    ): ?GlowSpanEvent {
-        return $this->persistEntry(fn () => (new GlowSpanEvent(
-            name: $name,
-            level: $level,
-            context: $context,
-            time: $time,
-            spanEventType: $spanEventType,
-        ))->addAttributes($attributes));
+        array $attributes = [],
+    ): ?SpanEvent {
+        return $this->spanEvent(
+            name: "Glow - {$name}",
+            attributes: fn () => [
+                'flare.span_event_type' => SpanEventType::Glow,
+                'glow.name' => $name,
+                'glow.level' => $level->value,
+                'glow.context' => $context,
+                ...$attributes,
+            ],
+        );
     }
 }

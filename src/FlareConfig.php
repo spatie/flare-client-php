@@ -47,8 +47,11 @@ use Spatie\FlareClient\Senders\Sender;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Support\CollectsResolver;
+use Spatie\FlareClient\Support\Ids;
 use Spatie\FlareClient\Support\StacktraceMapper;
 use Spatie\FlareClient\Support\TraceLimits;
+use Spatie\FlareClient\Time\SystemTime;
+use Spatie\FlareClient\Time\Time;
 use Spatie\FlareClient\TraceExporters\OpenTelemetryJsonTraceExporter;
 use Spatie\LaravelFlare\ArgumentReducers\ModelArgumentReducer;
 
@@ -105,6 +108,8 @@ class FlareConfig
         public string $traceExporter = OpenTelemetryJsonTraceExporter::class,
         public string $stacktraceMapper = StacktraceMapper::class,
         public string $collectsResolver = CollectsResolver::class,
+        public string $ids = Ids::class,
+        public string $time = SystemTime::class,
         public array $overriddenGroupings = [],
     ) {
     }
