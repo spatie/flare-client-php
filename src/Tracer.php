@@ -8,6 +8,7 @@ use Spatie\FlareClient\Concerns\UsesIds;
 use Spatie\FlareClient\Concerns\UsesTime;
 use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Enums\SamplingType;
+use Spatie\FlareClient\Enums\SpanStatusCode;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Sampling\RateSampler;
 use Spatie\FlareClient\Sampling\Sampler;
@@ -15,7 +16,9 @@ use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Support\TraceLimits;
+use Spatie\FlareClient\Time\Time;
 use Spatie\FlareClient\TraceExporters\TraceExporter;
+use Throwable;
 
 class Tracer
 {
@@ -47,6 +50,11 @@ class Tracer
         public SamplingType $samplingType = SamplingType::Waiting,
         public bool $clearTracesAfterExport = true,
     ) {
+    }
+
+    public function time(): Time
+    {
+        return static::$time;
     }
 
     /**
@@ -213,6 +221,42 @@ class Tracer
     }
 
     /**
+     * @param string $name
+     * @param Closure $callback
+     * @param array<string, mixed> $attributes
+     * @param Closure(mixed):array<string, mixed>|null $endAttributes
+     */
+    public function span(
+        string $name,
+        Closure $callback,
+        array $attributes = [],
+        ?Closure $endAttributes = null,
+    ): Span {
+        $span = $this->startSpan($name, attributes: $attributes);
+
+        try {
+            $returned = $callback();
+        } catch (Throwable $throwable) {
+            $this->endSpan($span);
+
+            $span->setStatus(
+                SpanStatusCode::Error,
+                $throwable->getMessage(),
+            );
+
+            throw $throwable;
+        }
+
+        $additionalAttributes = $endAttributes === null
+            ? []
+            : ($endAttributes)($returned);
+
+        $this->endSpan($span, additionalAttributes: $additionalAttributes);
+
+        return $span;
+    }
+
+    /**
      * @param array<string, mixed> $attributes
      */
     public function startSpan(
@@ -238,8 +282,11 @@ class Tracer
         return $span;
     }
 
-    public function endSpan(?Span $span = null, ?int $endUs = null): Span
-    {
+    public function endSpan(
+        ?Span $span = null,
+        ?int $endUs = null,
+        array $additionalAttributes = [],
+    ): Span {
         $span ??= $this->currentSpan();
 
         if ($span === null) {
@@ -247,6 +294,10 @@ class Tracer
         }
 
         $span->end = $endUs ?? $this::getCurrentTime();
+
+        if (count($additionalAttributes) > 0) {
+            $span->addAttributes($additionalAttributes);
+        }
 
         $this->configureSpan($span);
 

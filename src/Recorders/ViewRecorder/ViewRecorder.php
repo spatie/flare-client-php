@@ -51,18 +51,16 @@ class ViewRecorder  extends Recorder  implements SpansRecorder
         ?string $file = null,
         array $attributes = []
     ): ?Span {
-        return $this->startSpan(fn () => Span::build(
-            $this->tracer->currentTraceId(),
-            $this->tracer->currentSpanId(),
-            "View - {$viewName}",
-            attributes: [
+        return $this->startSpan(
+            name: "View - {$viewName}",
+            attributes: fn() =>  [
                 'flare.span_type' => SpanType::View,
                 'view.name' => $viewName,
                 'view.file' => $file,
                 'view.data' => $data,
                 ...$attributes,
             ]
-        ));
+        );
     }
 
     public function recordRendered(): ?Span

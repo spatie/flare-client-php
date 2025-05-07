@@ -5,6 +5,7 @@ use Spatie\FlareClient\Enums\TransactionStatus;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
 use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
 use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionSpan;
+use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
 use Spatie\FlareClient\Time\TimeHelper;
 
@@ -53,7 +54,7 @@ it('can trace a transaction', function () {
     expect($flare->tracer->currentTrace())->toHaveCount(2);
 
     expect($transactionSpan)
-        ->toBeInstanceOf(TransactionSpan::class)
+        ->toBeInstanceOf(Span::class)
         ->name->toBe('DB Transaction')
         ->start->toBe(1546346096000000000)
         ->end->toBe(1546346097000000000)
@@ -87,7 +88,7 @@ it('can rollback a transaction', function () {
     expect($flare->tracer->currentTrace())->toHaveCount(1);
 
     expect($transactionSpan)
-        ->toBeInstanceOf(TransactionSpan::class)
+        ->toBeInstanceOf(Span::class)
         ->name->toBe('DB Transaction')
         ->start->toBe(1546346096000000000)
         ->end->toBe(1546346097000000000)

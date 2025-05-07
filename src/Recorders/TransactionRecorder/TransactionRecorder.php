@@ -3,16 +3,16 @@
 namespace Spatie\FlareClient\Recorders\TransactionRecorder;
 
 use Spatie\FlareClient\Concerns\Recorders\RecordsSpans;
-use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Enums\TransactionStatus;
 use Spatie\FlareClient\Recorders\Recorder;
+use Spatie\FlareClient\Spans\Span;
 
-class TransactionRecorder  extends Recorder  implements SpansRecorder
+class TransactionRecorder extends Recorder implements SpansRecorder
 {
-    /** @use RecordsSpans<TransactionSpan> */
+    /** @use RecordsSpans<Span> */
     use RecordsSpans;
 
     public static function type(): string|RecorderType
@@ -21,35 +21,32 @@ class TransactionRecorder  extends Recorder  implements SpansRecorder
     }
 
     public function recordBegin(
-        FlareSpanType $spanType = SpanType::Transaction,
         array $attributes = [],
-    ): ?TransactionSpan {
-        return $this->startSpan(fn (): TransactionSpan => (new TransactionSpan(
-            traceId: $this->tracer->currentTraceId() ?? '',
-            parentSpanId: $this->tracer->currentSpan()?->spanId,
-            spanType: $spanType,
-        ))->addAttributes($attributes));
+    ): ?Span {
+        return $this->startSpan(
+            name: 'DB Transaction',
+            attributes: fn () => array_filter([
+                'flare.span_type' => SpanType::Transaction,
+                ...$attributes,
+            ]),
+        );
     }
 
     public function recordCommit(
         array $attributes = [],
-    ): ?TransactionSpan {
-        return $this->endSpan(
-            fn (TransactionSpan $span) => $span->addAttributes([
-                'db.transaction.status' => TransactionStatus::Committed,
-                ...$attributes,
-            ])
-        );
+    ): ?Span {
+        return $this->endSpan(additionalAttributes:  [
+            'db.transaction.status' => TransactionStatus::Committed,
+            ...$attributes,
+        ]);
     }
 
     public function recordRollback(
         array $attributes = [],
-    ): ?TransactionSpan {
-        return $this->endSpan(
-            fn (TransactionSpan $span) => $span->addAttributes([
-                'db.transaction.status' => TransactionStatus::RolledBack,
-                ...$attributes,
-            ])
-        );
+    ): ?Span {
+        return $this->endSpan(additionalAttributes:  [
+            'db.transaction.status' => TransactionStatus::RolledBack,
+            ...$attributes,
+        ]);
     }
 }

@@ -30,28 +30,24 @@ class FilesystemRecorder extends Recorder implements SpansRecorder
         ?string $description = null,
         array $attributes = [],
     ): ?Span {
-        return $this->startSpan(function () use ($operation, $description, $attributes) {
-            $operationName = $operation instanceof FilesystemOperation
-                ? $operation->value
-                : $operation;
+        $operationName = $operation instanceof FilesystemOperation
+            ? $operation->value
+            : $operation;
 
-            return Span::build(
-                $this->tracer->currentTraceId() ?? '',
-                $this->tracer->currentSpanId(),
-                name: $description ??  "Filesystem - {$operationName}",
-                attributes: [
-                    'flare.span.type' => SpanType::Filesystem,
-                    'filesystem.operation' => $operation,
-                    ...$attributes,
-                ],
-            );
-        });
+        return $this->startSpan(
+            name: $description ??  "Filesystem - {$operationName}",
+            attributes: [
+                'flare.span.type' => SpanType::Filesystem,
+                'filesystem.operation' => $operation,
+                ...$attributes,
+            ],
+        );
     }
 
     public function recordOperationEnd(
         array $attributes = [],
     ): ?Span {
-        return $this->endSpan(attributes: [
+        return $this->endSpan(additionalAttributes:  [
             ...$attributes,
         ]);
     }

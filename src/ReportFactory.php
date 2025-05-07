@@ -237,8 +237,8 @@ class ReportFactory implements WithAttributes
     protected function mapSolutions(): array
     {
         return array_map(
-            function (Solution|IgnitionSolution $solution) {
-                $isRunnable = ($solution instanceof RunnableSolution || $solution instanceof IgnitionRunnableSolution);
+            function (Solution $solution) {
+                $isRunnable = $solution instanceof RunnableSolution;
 
                 return [
                     'class' => get_class($solution),

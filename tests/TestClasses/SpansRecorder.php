@@ -31,11 +31,7 @@ class SpansRecorder implements \Spatie\FlareClient\Contracts\Recorders\SpansReco
 
     public function pushSpan(string $name): ?Span
     {
-        return $this->startSpan(fn () => Span::build(
-            traceId: $this->tracer->currentTraceId() ?? '',
-            parentId: $this->tracer->currentSpanId(),
-            name: $name,
-        ));
+        return $this->startSpan(name: $name);
     }
 
     public function popSpan(): ?Span

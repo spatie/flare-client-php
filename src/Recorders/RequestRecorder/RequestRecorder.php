@@ -3,8 +3,6 @@
 namespace Spatie\FlareClient\Recorders\RequestRecorder;
 
 use Closure;
-use Illuminate\Contracts\Events\Dispatcher;
-use Illuminate\Foundation\Application;
 use Psr\Container\ContainerInterface;
 use Spatie\FlareClient\AttributesProviders\RequestAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
@@ -58,7 +56,7 @@ class RequestRecorder implements SpansRecorder
         ?string $entryPointClass = null,
         array $attributes = [],
     ): ?Span {
-        return $this->startSpan(function () use ($entryPointClass, $route, $request, $attributes) {
+        return $this->startSpan(nameAndAttributes: function () use ($entryPointClass, $route, $request, $attributes) {
             $requestAttributes = $this->requestAttributesProvider->toArray(
                 $request ?? Request::createFromGlobals()
             );
@@ -67,20 +65,18 @@ class RequestRecorder implements SpansRecorder
                 $requestAttributes['http.route'] = $route;
             }
 
-            if($entryPointClass){
+            if ($entryPointClass) {
                 $requestAttributes['flare.entry_point.class'] = $entryPointClass;
             }
 
-            return Span::build(
-                traceId: $this->tracer->currentTraceId(),
-                parentId: $this->tracer->currentSpanId(),
-                name: "Request - {$requestAttributes['url.full']}",
-                attributes: [
+            return [
+                'name' => "Request - {$requestAttributes['url.full']}",
+                'attributes' => [
                     'flare.span_type' => SpanType::Request,
                     ...$requestAttributes,
                     ...$attributes,
-                ]
-            );
+                ],
+            ];
         });
     }
 
@@ -97,7 +93,7 @@ class RequestRecorder implements SpansRecorder
             $attributes['http.response.body.size'] = $responseBodySize;
         }
 
-        return $this->endSpan(attributes: $attributes);
+        return $this->endSpan(additionalAttributes: $attributes);
     }
 }
 
