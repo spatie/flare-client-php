@@ -25,7 +25,7 @@ class NullRecorder implements SpansRecorder, SpanEventsRecorder
 
     }
 
-    public function start(): void
+    public function boot(): void
     {
 
     }

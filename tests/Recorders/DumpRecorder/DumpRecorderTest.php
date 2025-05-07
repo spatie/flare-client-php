@@ -22,7 +22,7 @@ it('can symphony record dumps', function () {
         ],
     );
 
-    $dumpRecorder->start();
+    $dumpRecorder->boot();
 
     dump('This is a test for the DumpRecorder');
 
@@ -54,7 +54,7 @@ it('can record dump origins', function () {
         ],
     );
 
-    $dumpRecorder->start();
+    $dumpRecorder->boot();
 
     dump('This is a test for the DumpRecorder');
 
@@ -79,7 +79,7 @@ it('can disable recording dump origins', function () {
         ],
     );
 
-    $dumpRecorder->start();
+    $dumpRecorder->boot();
 
     dump('This is a test for the DumpRecorder');
 

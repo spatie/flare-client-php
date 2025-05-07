@@ -31,7 +31,7 @@ class DumpRecorder extends Recorder implements SpanEventsRecorder
         $this->configureRecorder($config + ['find_origin_threshold' => null]);
     }
 
-    public function start(): void
+    public function boot(): void
     {
         $multiDumpHandler = new MultiDumpHandler();
 

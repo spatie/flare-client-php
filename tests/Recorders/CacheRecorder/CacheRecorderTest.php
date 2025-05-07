@@ -25,7 +25,7 @@ it('can record cache events', function () {
         ]
     );
 
-    $recorder->start();
+    $recorder->boot();
 
     $recorder->recordHit('key', 'store');
     $recorder->recordMiss('key', 'store');
@@ -98,7 +98,7 @@ it('can limit the kinds of events being recorder', function () {
         ]
     );
 
-    $recorder->start();
+    $recorder->boot();
 
     $recorder->recordHit('key', 'store');
     $recorder->recordMiss('key', 'store');

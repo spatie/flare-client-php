@@ -231,7 +231,7 @@ class FlareProvider
 
     public function boot(): void
     {
-        $this->container->get(Flare::class)->startRecorders();
+        $this->container->get(Flare::class)->bootRecorders();
     }
 
     protected function defaultRegisterRecordersAndMiddlewaresCallback(): Closure

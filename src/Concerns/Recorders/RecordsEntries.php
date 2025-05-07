@@ -53,7 +53,7 @@ trait RecordsEntries
         $this->configure($config);
     }
 
-    public function start(): void
+    public function boot(): void
     {
         // Most of the time only required in framework specific implementations
     }

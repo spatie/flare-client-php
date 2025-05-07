@@ -115,10 +115,10 @@ class Flare
         return $this;
     }
 
-    public function startRecorders(): self
+    public function bootRecorders(): self
     {
         foreach ($this->recorders as $recorder) {
-            $recorder->start();
+            $recorder->boot();
         }
 
         return $this;

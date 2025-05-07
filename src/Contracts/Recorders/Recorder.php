@@ -8,7 +8,7 @@ interface Recorder
 {
     public static function type(): string|RecorderType;
 
-    public function start(): void;
+    public function boot(): void;
 
     public function reset(): void;
 }
