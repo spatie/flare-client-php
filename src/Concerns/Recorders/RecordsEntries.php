@@ -79,11 +79,11 @@ trait RecordsEntries
     }
 
     /**
-     * @param Closure(): T $entry
+     * @param Closure():T|T $entry
      *
      * @return ?T
      */
-    protected function persistEntry(Closure $entry)
+    protected function persistEntry(object $entry)
     {
         $shouldTrace = $this->shouldTrace();
         $shouldReport = $this->shouldReport();

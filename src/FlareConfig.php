@@ -14,7 +14,6 @@ use Spatie\Backtrace\Arguments\Reducers\DateTimeZoneArgumentReducer;
 use Spatie\Backtrace\Arguments\Reducers\EnumArgumentReducer;
 use Spatie\Backtrace\Arguments\Reducers\StdClassArgumentReducer;
 use Spatie\Backtrace\Arguments\Reducers\SymphonyRequestArgumentReducer;
-use Spatie\ErrorSolutions\Contracts\HasSolutionsForThrowable;
 use Spatie\ErrorSolutions\SolutionProviderRepository;
 use Spatie\ErrorSolutions\SolutionProviders\BadMethodCallSolutionProvider;
 use Spatie\ErrorSolutions\SolutionProviders\MergeConflictSolutionProvider;
@@ -39,6 +38,7 @@ use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
 use Spatie\FlareClient\Recorders\ViewRecorder\ViewRecorder;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Sampling\AlwaysSampler;
+use Spatie\FlareClient\Sampling\NeverSampler;
 use Spatie\FlareClient\Sampling\RateSampler;
 use Spatie\FlareClient\Sampling\Sampler;
 use Spatie\FlareClient\Scopes\Scope;
@@ -51,7 +51,6 @@ use Spatie\FlareClient\Support\Ids;
 use Spatie\FlareClient\Support\StacktraceMapper;
 use Spatie\FlareClient\Support\TraceLimits;
 use Spatie\FlareClient\Time\SystemTime;
-use Spatie\FlareClient\Time\Time;
 use Spatie\FlareClient\TraceExporters\OpenTelemetryJsonTraceExporter;
 use Spatie\LaravelFlare\ArgumentReducers\ModelArgumentReducer;
 
@@ -60,8 +59,6 @@ class FlareConfig
     /**
      * @param null|Closure(Exception): bool $filterExceptionsCallable
      * @param null|Closure(Report): bool $filterReportsCallable
-     * @param array<class-string<FlareMiddleware>, array> $middleware
-     * @param array<class-string<Recorder>, array> $recorders
      * @param array<string, array{type: FlareCollectType, ignored: ?bool, options: array}> $collects
      * @param class-string<Sender> $sender
      * @param class-string<SolutionProviderRepository> $solutionsProviderRepository
@@ -79,8 +76,6 @@ class FlareConfig
         public ?string $apiToken = null,
         public string $baseUrl = 'https://reporting.flareapp.io/api',
         public bool $sendReportsImmediately = false,
-        public array $middleware = [],
-        public array $recorders = [],
         public array $collects = [],
         public ?int $reportErrorLevels = null,
         public ?Closure $filterExceptionsCallable = null,
@@ -113,6 +108,7 @@ class FlareConfig
         public array $overriddenGroupings = [],
     ) {
     }
+
     public static function make(string $apiToken): static
     {
         return new static($apiToken);
@@ -295,7 +291,7 @@ class FlareConfig
     ): static {
         return $this->addCollect(CollectType::Solutions, [
             'solution_providers' => $solutionProviders ?? static::defaultSolutionProviders(),
-            ...$extra
+            ...$extra,
         ]);
     }
 
@@ -472,6 +468,24 @@ class FlareConfig
         return $this->ignoreCollect(CollectType::ServerInfo);
     }
 
+    /** @param array<class-string<Recorder>, array<string, mixed>> $recorders */
+    public function collectRecorders(
+        array $recorders = [],
+    ): static {
+        return $this->addCollect(CollectType::Recorders, [
+            'recorders' => $recorders,
+        ]);
+    }
+
+    /** @param array<class-string<FlareMiddleware>, array<string, mixed>> $middleware */
+    public function collectFlareMiddleware(
+        array $middleware = [],
+    ): static {
+        return $this->addCollect(CollectType::FlareMiddleware, [
+            'flare_middleware' => $middleware,
+        ]);
+    }
+
     /**
      * @param string|Closure(): string $version
      */
@@ -622,6 +636,13 @@ class FlareConfig
         return $this;
     }
 
+    public function neverSampleTraces(): static
+    {
+        $this->sampler = NeverSampler::class;
+
+        return $this;
+    }
+
     public function sampleRate(float $rate): static
     {
         $this->sampler = RateSampler::class;
@@ -644,54 +665,6 @@ class FlareConfig
     public function sendReportsImmediately(bool $sendReportsImmediately = true): static
     {
         $this->sendReportsImmediately = $sendReportsImmediately;
-
-        return $this;
-    }
-
-    /**
-     * @param class-string<FlareMiddleware> $middleware
-     */
-    public function middleware(
-        string $middleware,
-        array $options = []
-    ): static {
-        $this->middleware[$middleware] = $options;
-
-        return $this;
-    }
-
-    /**
-     * @param class-string<FlareMiddleware> ...$middlewareClasses
-     */
-    public function removeMiddleware(string ...$middlewareClasses): static
-    {
-        foreach ($middlewareClasses as $middlewareClass) {
-            unset($this->middleware[$middlewareClass]);
-        }
-
-        return $this;
-    }
-
-    /**
-     * @param class-string<Recorder> $recorder
-     */
-    public function recorder(
-        string $recorder,
-        array $options = []
-    ): static {
-        $this->recorders[$recorder] = $options;
-
-        return $this;
-    }
-
-    /**
-     * @param class-string<Recorder> ...$recorderClasses
-     */
-    public function removeRecorder(string ...$recorderClasses): static
-    {
-        foreach ($recorderClasses as $recorderClass) {
-            unset($this->recorders[$recorderClass]);
-        }
 
         return $this;
     }

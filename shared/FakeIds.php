@@ -46,16 +46,23 @@ class FakeIds extends Ids
         return array_shift(static::$nextUuids) ?? parent::uuid();
     }
 
-    public function nextTraceId(string $traceId): self
+    public function nextTraceId(string ...$traceIds): self
     {
-        static::$nextTraceIds[] = $traceId;
+        array_push(static::$nextTraceIds, ...$traceIds);
 
         return $this;
     }
 
-    public function nextSpanId(string $spanId): self
+    public function nextTraceIdTimes(string $traceId, int $times): self
     {
-        static::$nextSpanIds[] = $spanId;
+        array_push(static::$nextTraceIds, ...array_fill(0, $times, $traceId));
+
+        return $this;
+    }
+
+    public function nextSpanId(string ...$spanIds): self
+    {
+        array_push(static::$nextSpanIds, ...$spanIds);
 
         return $this;
     }

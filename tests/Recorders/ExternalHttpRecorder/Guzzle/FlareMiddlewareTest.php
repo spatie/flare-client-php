@@ -11,7 +11,7 @@ use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Recorders\ExternalHttpRecorder\Guzzle\FlareHandlerStack;
 
 test('middleware records successful requests and responses', function () {
-    $flare = setupFlare(fn (FlareConfig $config) => $config->collectExternalHttp());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->alwaysSampleTraces()->collectExternalHttp());
 
     $flare->tracer->startTrace();
 
@@ -66,7 +66,7 @@ test('middleware records successful requests and responses', function () {
 });
 
 test('middleware records HTTP error responses', function () {
-    $flare = setupFlare(fn (FlareConfig $config) => $config->collectExternalHttp());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->alwaysSampleTraces()->collectExternalHttp());
 
     $flare->tracer->startTrace();
 
@@ -114,7 +114,7 @@ test('middleware records HTTP error responses', function () {
 });
 
 test('middleware records connection errors', function () {
-    $flare = setupFlare(fn (FlareConfig $config) => $config->collectExternalHttp());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->alwaysSampleTraces()->collectExternalHttp());
 
     $flare->tracer->startTrace();
 
@@ -143,7 +143,7 @@ test('middleware records connection errors', function () {
 });
 
 test('middleware correctly formats headers', function () {
-    $flare = setupFlare(fn (FlareConfig $config) => $config->collectExternalHttp());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->alwaysSampleTraces()->collectExternalHttp());
 
     $flare->tracer->startTrace();
 

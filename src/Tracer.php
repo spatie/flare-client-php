@@ -4,8 +4,6 @@ namespace Spatie\FlareClient;
 
 use Closure;
 use Exception;
-use Spatie\FlareClient\Concerns\UsesIds;
-use Spatie\FlareClient\Concerns\UsesTime;
 use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Enums\SamplingType;
 use Spatie\FlareClient\Enums\SpanStatusCode;
@@ -40,8 +38,8 @@ class Tracer
         public readonly TraceLimits $limits,
         public readonly Time $time,
         public readonly Ids $ids,
-        protected Resource $resource,
-        protected Scope $scope,
+        public readonly Resource $resource,
+        public readonly Scope $scope,
         public readonly Sampler $sampler = new RateSampler([]),
         public ?Closure $configureSpansCallable = null,
         public ?Closure $configureSpanEventsCallable = null,
@@ -52,51 +50,76 @@ class Tracer
     ) {
     }
 
-    /**
-     * @param array{traceparent?: string} $context
-     */
-    public function potentialStartTrace(array $context = []): SamplingType
-    {
+    public function startTrace(
+        ?string $traceparent = null,
+        array $context = [],
+        bool $forceSampling = false,
+    ): SamplingType {
+        if ($forceSampling) {
+            return $this->initiateTrace(sample: true);
+        }
+
         if ($this->samplingType !== SamplingType::Waiting) {
             return $this->samplingType;
         }
 
-        if (array_key_exists('traceparent', $context)) {
-            return $this->potentiallyResumeTrace($context['traceparent']);
+        $parsedTraceparent = $traceparent !== null
+            ? $this->ids->parseTraceparent($traceparent)
+            : null;
+
+        if ($parsedTraceparent !== null) {
+            [
+                'traceId' => $traceId,
+                'parentSpanId' => $parentSpanId,
+                'sampling' => $sampling,
+            ] = $parsedTraceparent;
+
+            return $this->initiateTrace(
+                sample: $sampling, traceId: $traceId, spanId: $parentSpanId
+            );
         }
 
         if (! $this->sampler->shouldSample($context)) {
-            return $this->samplingType = SamplingType::Off;
+            return $this->initiateTrace(sample: false);
         }
 
-        $this->startTrace();
-
-        return SamplingType::Sampling;
+        return $this->initiateTrace(sample: true);
     }
 
-    public function potentiallyResumeTrace(
-        string $traceParent
+    public function startTraceWithSpan(
+        Span|Closure $span,
+        array $context = [],
+    ): ?Span {
+        if (! $this->sampler->shouldSample($context)) {
+            $this->initiateTrace(sample: false);
+
+            return null;
+        }
+
+        $span = is_callable($span) ? $span() : $span;
+
+        $this->initiateTrace(
+            sample: true,
+            traceId: $span->traceId,
+            spanId: $span->spanId,
+        );
+
+        return $span;
+    }
+
+    protected function initiateTrace(
+        bool $sample,
+        ?string $traceId = null,
+        ?string $spanId = null,
     ): SamplingType {
-        $parsed = $this->ids->parseTraceParent($traceParent);
+        $this->currentTraceId = $traceId ?? $this->ids->trace();
+        $this->currentSpanId = $spanId ?? $this->ids->span();
 
-        if ($parsed === null) {
-            return $this->samplingType = SamplingType::Off;
-        }
+        $this->traces[$this->currentTraceId] = [];
 
-        [
-            'traceId' => $traceId,
-            'parentSpanId' => $parentSpanId,
-            'sampling' => $sampling,
-        ] = $parsed;
-
-        if ($sampling === false) {
-            return $this->samplingType = SamplingType::Off;
-        }
-
-        $this->currentTraceId = $traceId;
-        $this->currentSpanId = $parentSpanId;
-
-        return $this->samplingType = SamplingType::Sampling;
+        return $this->samplingType = $sample
+            ? SamplingType::Sampling
+            : SamplingType::Off;
     }
 
     public function isSampling(): bool
@@ -104,23 +127,10 @@ class Tracer
         return $this->samplingType === SamplingType::Sampling;
     }
 
-    public function startTrace(): void
-    {
-        if ($this->currentTraceId) {
-            throw new Exception('Trace already started');
-        }
-
-        if ($this->samplingType !== SamplingType::Waiting) {
-            throw new Exception('Trace cannot be started when sampling is disabled, off or already started');
-        }
-
-        $this->currentTraceId = $this->ids->trace();
-        $this->samplingType = SamplingType::Sampling;
-    }
-
     public function endTrace(): void
     {
         $this->currentTraceId = null;
+        $this->currentSpanId = null;
         $this->samplingType = SamplingType::Waiting;
 
         $payload = $this->exporter->export(
@@ -196,7 +206,7 @@ class Tracer
         return $this->traces[$this->currentTraceId][$this->currentSpanId] ?? null;
     }
 
-    public function addSpan(Span $span, bool $makeCurrent = false): Span
+    public function addRawSpan(Span $span): Span
     {
         if (count($this->traces[$span->traceId] ?? []) >= $this->limits->maxSpans) {
             return $span;
@@ -204,13 +214,66 @@ class Tracer
 
         $this->traces[$span->traceId][$span->spanId] = $span;
 
-        if ($makeCurrent) {
-            $this->setCurrentSpanId($span->spanId);
-        }
+        $this->setCurrentSpanId($span->spanId);
 
         if ($span->end !== null) {
             $this->configureSpan($span);
         }
+
+        return $span;
+    }
+
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    public function startSpan(
+        string $name,
+        ?int $time = null,
+        array $attributes = [],
+    ): ?Span {
+        $spanClosure = fn () => new Span(
+            traceId: $this->currentTraceId ?? $this->ids->trace(),
+            spanId: $this->ids->span(),
+            parentSpanId: $this->currentSpanId,
+            name: $name,
+            start: $time ?? $this->time->getCurrentTime(),
+            end: null,
+            attributes: $attributes,
+        );
+
+        if ($this->isSampling() === true) {
+            return $this->addRawSpan($spanClosure());
+        }
+
+        $span = $this->startTraceWithSpan($spanClosure);
+
+        if ($span === null) {
+            return null; // No sampling was started
+        }
+
+        return $this->addRawSpan($span);
+    }
+
+    public function endSpan(
+        ?Span $span = null,
+        ?int $time = null,
+        array $additionalAttributes = [],
+    ): Span {
+        $span ??= $this->currentSpan();
+
+        if ($span === null) {
+            throw new Exception('No span to end');
+        }
+
+        $span->end = $time ?? $this->time->getCurrentTime();
+
+        if (count($additionalAttributes) > 0) {
+            $span->addAttributes($additionalAttributes);
+        }
+
+        $this->configureSpan($span);
+
+        $this->setCurrentSpanId($span->parentSpanId);
 
         return $span;
     }
@@ -226,8 +289,12 @@ class Tracer
         Closure $callback,
         array $attributes = [],
         ?Closure $endAttributes = null,
-    ): Span {
+    ): ?Span {
         $span = $this->startSpan($name, attributes: $attributes);
+
+        if ($span === null) {
+            return null;
+        }
 
         try {
             $returned = $callback();
@@ -251,56 +318,29 @@ class Tracer
         return $span;
     }
 
-    /**
-     * @param array<string, mixed> $attributes
-     */
-    public function startSpan(
+    /** @param array<string, mixed> $attributes */
+    public function spanEvent(
         string $name,
-        ?int $start = null,
-        ?int $end = null,
         array $attributes = [],
-    ): Span {
-        $span = new Span(
-            traceId: $this->currentTraceId ?? '',
-            spanId: $this->ids->span(),
-            parentSpanId: $this->currentSpanId,
+        ?int $timestampUs = null,
+    ): ?SpanEvent {
+        $currentSpan = $this->currentSpan();
+
+        if ($currentSpan === null) {
+            return null;
+        }
+
+        $event = new SpanEvent(
             name: $name,
-            start: $start ?? $this->time->getCurrentTime(),
-            end: null,
+            timestamp: $timestampUs ?? $this->time->getCurrentTime(),
             attributes: $attributes,
         );
 
-        $span = $this->addSpan($span, makeCurrent: true);
+        $currentSpan->addEvent(
+            $event
+        );
 
-        if ($end !== null) {
-            $this->endSpan($span, $end);
-        }
-
-        return $span;
-    }
-
-    public function endSpan(
-        ?Span $span = null,
-        ?int $endUs = null,
-        array $additionalAttributes = [],
-    ): Span {
-        $span ??= $this->currentSpan();
-
-        if ($span === null) {
-            throw new Exception('No span to end');
-        }
-
-        $span->end = $endUs ?? $this->time->getCurrentTime();
-
-        if (count($additionalAttributes) > 0) {
-            $span->addAttributes($additionalAttributes);
-        }
-
-        $this->configureSpan($span);
-
-        $this->setCurrentSpanId($span->parentSpanId);
-
-        return $span;
+        return $event;
     }
 
     public function trashCurrentTrace(

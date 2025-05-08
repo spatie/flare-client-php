@@ -2,10 +2,13 @@
 
 use PHPUnit\Framework\Exception;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
+use Spatie\FlareClient\Concerns\Recorders\RecordsSpans;
+use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\CacheOperation;
 use Spatie\FlareClient\Enums\CacheResult;
 use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Enums\OverriddenGrouping;
+use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Enums\TransactionStatus;
@@ -26,6 +29,8 @@ use Spatie\FlareClient\Tests\Shared\ExpectTracer;
 use Spatie\FlareClient\Tests\Shared\FakeSender;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
 use Spatie\FlareClient\Tests\TestClasses\ExceptionWithContext;
+use Spatie\FlareClient\Tests\TestClasses\FakeFlareMiddleware;
+use Spatie\FlareClient\Tests\TestClasses\SpansRecorder as FakeSpansRecorder;
 use Spatie\FlareClient\Tests\TestClasses\TraceArguments;
 use Spatie\FlareClient\Time\TimeHelper;
 
@@ -658,18 +663,14 @@ it('can report a handled error', function () {
 });
 
 it('is possible to manually add spans and span events', function () {
-    $flare = setupFlare(
-        fn (FlareConfig $config) => $config->alwaysSampleTraces()
-    );
+    $flare = setupFlare(alwaysSampleTraces: true);
 
-    $flare->tracer->startTrace();
-
-    $flare->span('Test Span', function () use ($flare) {
-        $flare->span('Test Child Span', function () use ($flare) {
-            $flare->spanEvent('Test Child Span Event');
+    $flare->tracer->span('Test Span', function () use ($flare) {
+        $flare->tracer->span('Test Child Span', function () use ($flare) {
+            $flare->tracer->spanEvent('Test Child Span Event');
         });
 
-        $flare->spanEvent('Test Span Event');
+        $flare->tracer->spanEvent('Test Span Event');
     });
 
     ExpectTracer::create($flare)
@@ -703,7 +704,7 @@ it('is possible to configure a tracing resource', function () {
 
     $flare->tracer->startTrace();
 
-    $flare->span('Test Span', fn () => null);
+    $flare->tracer->span('Test Span', fn () => null);
 
     ExpectTracer::create($flare)->resource(
         fn (ExpectResource $resource) => $resource->hasAttribute('custom_attribute', 'test')
@@ -719,7 +720,7 @@ it('it is possible to configure a tracing scope', function () {
 
     $flare->tracer->startTrace();
 
-    $flare->span('Test Span', fn () => null);
+    $flare->tracer->span('Test Span', fn () => null);
 
     ExpectTracer::create($flare)->scope(
         fn (ExpectScope $scope) => $scope->hasAttribute('custom_attribute', 'test')
@@ -735,7 +736,7 @@ it('is possible to configure a span when ended', function () {
 
     $flare->tracer->startTrace();
 
-    $flare->span('Test Span', fn () => null);
+    $flare->tracer->span('Test Span', fn () => null);
 
     ExpectTracer::create($flare)->trace(
         fn (ExpectTrace $trace) => $trace->span(
@@ -753,7 +754,7 @@ it('is possible to configure a span event when ended', function () {
 
     $flare->tracer->startTrace();
 
-    $flare->span('Test Span', fn () => $flare->spanEvent('Test Span Event'));
+    $flare->tracer->span('Test Span', fn () => $flare->tracer->spanEvent('Test Span Event'));
 
     ExpectTracer::create($flare)->trace(
         fn (ExpectTrace $trace) => $trace->span(
@@ -784,6 +785,50 @@ it('can override the grouping algorithm for specific classes', function () {
     $payload = FakeSender::instance()->getLastPayload();
 
     expect($payload['overriddenGrouping'])->toBe('exception_message_and_class');
+});
+
+it('can add an additional recorders', function (){
+    $flare = setupFlare(
+        fn(FlareConfig $config) => $config->collectRecorders([
+            FakeSpansRecorder::class => [
+                'with_errors' => true,
+            ],
+        ])
+    );
+
+    $flare->recorder('spans')->record('Hi', duration: TimeHelper::milliseconds(300));
+
+    $throwable = new RuntimeException('This is a test');
+
+    $flare->reportHandled($throwable);
+
+    FakeSender::instance()->assertRequestsSent(1);
+
+    $payload = FakeSender::instance()->getLastPayload();
+
+    expect($payload['events'])->toHaveCount(1);
+});
+
+it('it can add additional middleware', function () {
+    $flare = setupFlare(
+        fn(FlareConfig $config) => $config->collectFlareMiddleware([
+            FakeFlareMiddleware::class => [
+                'extra' => ['key' => 'value'],
+            ],
+        ])
+    );
+
+    $throwable = new RuntimeException('This is a test');
+
+    $flare->reportHandled($throwable);
+
+    FakeSender::instance()->assertRequestsSent(1);
+
+    $payload = FakeSender::instance()->getLastPayload();
+
+    expect($payload['attributes']['context.custom'])->toEqual([
+        'extra' => ['key' => 'value'],
+    ]);
 });
 
 // Helpers

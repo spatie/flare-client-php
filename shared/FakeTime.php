@@ -51,4 +51,10 @@ class FakeTime implements Time
 
         static::$dateTime = $dateTime;
     }
+
+    public static function reset()
+    {
+        static::$instance = null;
+        static::$dateTime = null;
+    }
 }

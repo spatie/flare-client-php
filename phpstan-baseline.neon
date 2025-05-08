@@ -1,6 +1,11 @@
 parameters:
 	ignoreErrors:
 		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:application\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\ApplicationRecorder\\\\ApplicationRecorder but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\.$#"
+			count: 1
+			path: src/Flare.php
+
+		-
 			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:cache\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\CacheRecorder\\\\CacheRecorder but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\.$#"
 			count: 1
 			path: src/Flare.php
@@ -69,6 +74,16 @@ parameters:
 			message: "#^Unsafe usage of new static\\(\\)\\.$#"
 			count: 1
 			path: src/FlareConfig.php
+
+		-
+			message: "#^Instanceof between \\*NEVER\\* and Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent will always evaluate to false\\.$#"
+			count: 1
+			path: src/Recorders/ApplicationRecorder/ApplicationRecorder.php
+
+		-
+			message: "#^Match arm is unreachable because previous comparison is always true\\.$#"
+			count: 1
+			path: src/Recorders/ApplicationRecorder/ApplicationRecorder.php
 
 		-
 			message: "#^Instanceof between Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent and Spatie\\\\FlareClient\\\\Spans\\\\Span will always evaluate to false\\.$#"

@@ -8,11 +8,11 @@ use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\ErrorSolutions\Contracts\SolutionProviderRepository as SolutionProviderRepositoryContract;
 use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
-use Spatie\FlareClient\Enums\CollectType;
 use Spatie\FlareClient\Enums\SamplingType;
 use Spatie\FlareClient\FlareMiddleware\AddRecordedEntries;
 use Spatie\FlareClient\Recorders\ThrowableRecorder\ThrowableRecorder;
 use Spatie\FlareClient\Resources\Resource;
+use Spatie\FlareClient\Sampling\NeverSampler;
 use Spatie\FlareClient\Sampling\Sampler;
 use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Senders\Sender;
@@ -68,8 +68,8 @@ class FlareProvider
             $this->config->applicationPath
         ));
 
-        $this->container->singleton(Time::class, fn() => new $this->config->time);
-        $this->container->singleton(Ids::class, fn() => new $this->config->ids);
+        $this->container->singleton(Time::class, fn () => new $this->config->time);
+        $this->container->singleton(Ids::class, fn () => new $this->config->ids);
 
         $this->container->singleton(Tracer::class, fn () => new Tracer(
             api: $this->container->get(Api::class),
@@ -79,12 +79,14 @@ class FlareProvider
             ids: $this->container->get(Ids::class),
             resource: $this->container->get(Resource::class),
             scope: $this->container->get(Scope::class),
-            sampler: $this->container->get(Sampler::class),
+            sampler: $this->config->trace
+                ? $this->container->get(Sampler::class)
+                : new NeverSampler(),
             configureSpansCallable: $this->config->configureSpansCallable,
             configureSpanEventsCallable: $this->config->configureSpanEventsCallable,
             samplingType: $this->config->trace
                 ? SamplingType::Waiting
-                : SamplingType::Disabled,
+                : SamplingType::Off,
         ));
 
         $this->container->singleton(SentReports::class);
@@ -111,7 +113,7 @@ class FlareProvider
             'forcePHPStackFrameArgumentsIniSetting' => $forcePHPStackFrameArgumentsIniSetting,
         ] = (new $this->config->collectsResolver)->execute($this->config->collects);
 
-        $this->container->singleton(ArgumentReducers::class, fn () => match (true){
+        $this->container->singleton(ArgumentReducers::class, fn () => match (true) {
             $collectStackFrameArguments === false => ArgumentReducers::create([]),
             is_array($argumentReducers) => ArgumentReducers::create($argumentReducers),
             default => $argumentReducers,
@@ -158,17 +160,6 @@ class FlareProvider
 
             return $scope;
         });
-
-
-        $middlewares = array_merge(
-            $middlewares,
-            $this->config->middleware
-        );
-
-        $recorders = array_merge(
-            $recorders,
-            $this->config->recorders
-        );
 
         foreach ($recorders as $recorderClass => $config) {
             ($this->registerRecorderAndMiddlewaresCallback)($this->container, $recorderClass, $config);
@@ -223,7 +214,7 @@ class FlareProvider
                 reportErrorLevels: $this->config->reportErrorLevels,
                 filterExceptionsCallable: $this->config->filterExceptionsCallable,
                 filterReportsCallable: $this->config->filterReportsCallable,
-                solutionProviderRepository:  $this->container->get(SolutionProviderRepositoryContract::class),
+                solutionProviderRepository: $this->container->get(SolutionProviderRepositoryContract::class),
                 argumentReducers: $this->container->get(ArgumentReducers::class),
                 collectStackFrameArguments: $collectStackFrameArguments,
                 resource: $this->container->get(Resource::class),

@@ -5,6 +5,7 @@ namespace Spatie\FlareClient\Concerns\Recorders;
 use Closure;
 use InvalidArgumentException;
 use Spatie\FlareClient\Spans\Span;
+use Spatie\FlareClient\Support\TimeInterval;
 
 /**
  * @template T of Span
@@ -38,19 +39,24 @@ trait RecordsSpans
         return false;
     }
 
+    protected function shouldStartTrace(Span $span): bool
+    {
+        return true;
+    }
+
     /**
      * @param T $entry
      */
     protected function traceEntry(mixed $entry): void
     {
-        $this->tracer->addSpan($entry, makeCurrent: true);
+        $this->tracer->addRawSpan($entry);
     }
 
     /**
      * @param Closure():string|string|null $name
      * @param Closure():array<string, mixed>|array $attributes
      * @param Closure():array{name: string, attributes: array<string, mixed>}|null $nameAndAttributes
-     * @param int|null $start
+     * @param int|null $time
      * @param string|null $parentId
      *
      * @return Span|null
@@ -59,14 +65,14 @@ trait RecordsSpans
         Closure|string|null $name = null,
         Closure|array $attributes = [],
         ?Closure $nameAndAttributes = null,
-        ?int $start = null,
+        ?int $time = null,
         ?string $parentId = null,
     ): ?Span {
         if ($nameAndAttributes === null && $name === null) {
             throw new InvalidArgumentException('Either $nameAndAttributes must be set, or both $name and $attributes must be set.');
         }
 
-        return $this->persistEntry(function () use ($nameAndAttributes, $parentId, $attributes, $start, $name) {
+        return $this->persistEntry(function () use ($nameAndAttributes, $parentId, $attributes, $time, $name) {
             $name = is_callable($name) ? $name() : $name;
             $attributes = is_callable($attributes) ? $attributes() : $attributes;
 
@@ -75,11 +81,11 @@ trait RecordsSpans
             }
 
             $span = new Span(
-                traceId: $this->tracer->currentTraceId() ?? '', // In the case of a non trace but do collect spans for errors
+                traceId: $this->tracer->currentTraceId() ?? $this->tracer->ids->trace(),
                 spanId: $this->tracer->ids->span(),
                 parentSpanId: $parentId ?? $this->tracer->currentSpanId(),
                 name: $name,
-                start: $start ?? $this->tracer->time->getCurrentTime(),
+                start: $time ?? $this->tracer->time->getCurrentTime(),
                 end: null,
                 attributes: $attributes,
             );
@@ -159,19 +165,18 @@ trait RecordsSpans
         ?Closure $additionalAttributes = null,
         ?Closure $spanCallback = null,
     ): ?Span {
-        [$start, $end] = match (true) {
-            $start !== null && $end !== null => [$start, $end],
-            $start !== null && $duration !== null => [$start, $start + $duration],
-            $end !== null && $duration !== null => [$end, $end + $duration],
-            $start === null && $end === null && $duration !== null => [$this->tracer->time->getCurrentTime() - $duration, $this->tracer->time->getCurrentTime()],
-            default => throw new InvalidArgumentException('Span cannot be started, no valid timings provided'),
-        };
+        [$start, $end] = TimeInterval::resolve(
+            time: $this->tracer->time,
+            start: $start,
+            end: $end,
+            duration: $duration,
+        );
 
         $span = $this->startSpan(
             name: $name,
             attributes: $attributes,
             nameAndAttributes: $nameAndAttributes,
-            start: $start,
+            time: $start,
             parentId: $parentId,
         );
 
@@ -192,23 +197,34 @@ trait RecordsSpans
 
     protected function persistEntry(Closure $entry): ?Span
     {
-        if ($this->withTraces === true
-            && $this->tracer->isSampling() === false
-            && $this->canStartTraces()
+        if (
+            $this->withTraces === false
+            || $this->tracer->isSampling()
+            || $this->canStartTraces() === false
         ) {
-            $this->potentiallyStartTrace();
+            return $this->basePersistEntry($entry);
         }
 
-        return $this->basePersistEntry($entry);
-    }
+        $span = $entry();
 
-    protected function potentiallyStartTrace(): void
-    {
-        $this->tracer->potentialStartTrace();
-
-        if ($this->tracer->isSampling()) {
-            $this->shouldEndTrace = true;
+        if($this->shouldStartTrace($span) === false){
+            return $this->basePersistEntry($span);
         }
+
+        $spanInTrace = $this->tracer->startTraceWithSpan($span);
+
+        if ($spanInTrace === null && $this->withErrors === false) {
+            return null; // No sampling was started and not required for errors
+        }
+
+        if ($spanInTrace === null) {
+            return $this->basePersistEntry($span); // No sampling was started, use it for errors
+        }
+
+        $this->shouldEndTrace = true;
+        $this->nestingCounter = 1;
+
+        return $this->basePersistEntry($span); // Sampling was started, use trace and span id from span
     }
 
     /** @return array<T> */

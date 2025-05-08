@@ -14,4 +14,11 @@ enum SpanType: string implements FlareSpanType
     case View = 'php_view';
     case HttpRequest = 'php_http_request';
     case Filesystem = 'php_filesystem';
+
+    case Application = 'php_application';
+    case ApplicationRegistration = 'php_application_registration';
+    case ApplicationBoot = 'php_application_boot';
+    case ApplicationTerminating = 'php_application_terminating';
+
+    case Custom = 'custom';
 }

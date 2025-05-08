@@ -13,6 +13,7 @@ use Spatie\FlareClient\FlareMiddleware\AddGitInformation;
 use Spatie\FlareClient\FlareMiddleware\AddRequestInformation;
 use Spatie\FlareClient\FlareMiddleware\AddSolutions;
 use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
+use Spatie\FlareClient\Recorders\ApplicationRecorder\ApplicationRecorder;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
 use Spatie\FlareClient\Recorders\DumpRecorder\DumpRecorder;
@@ -56,6 +57,8 @@ class CollectsResolver
         $this->recorders = [];
         $this->resourceModifiers = [];
 
+        $this->application(); // Always enabled
+
         foreach ($collects as $collect) {
             $ignored = $collect['ignored'] ?? false;
 
@@ -82,7 +85,9 @@ class CollectsResolver
                 CollectType::Views => $this->views($options),
                 CollectType::ServerInfo => $this->severInfo($options),
                 CollectType::StackFrameArguments => $this->stackFrameArguments($options),
-                null => null,
+                CollectType::Recorders => $this->recorders($options),
+                CollectType::FlareMiddleware => $this->flareMiddleware($options),
+                CollectType::Application, null => null,
                 default => $this->handleUnknownCollectType($collect['type'], $options),
             };
         }
@@ -103,6 +108,11 @@ class CollectsResolver
         array $options
     ): void {
 
+    }
+
+    protected function application(): void
+    {
+        $this->addRecorder(ApplicationRecorder::class);
     }
 
     protected function requests(
@@ -252,6 +262,20 @@ class CollectsResolver
 
         if ($options['composer'] ?? false) {
             $this->resourceModifiers[] = fn (Resource $resource) => $resource->composer();
+        }
+    }
+
+    protected function recorders(array $options): void
+    {
+        foreach ($options['recorders'] ?? [] as $recorderClass => $recorderOptions) {
+            $this->addRecorder($recorderClass, $recorderOptions);
+        }
+    }
+
+    protected function flareMiddleware(array $options): void
+    {
+        foreach ($options['flare_middleware'] ?? [] as $middlewareClass => $middlewareOptions) {
+            $this->addMiddleware($middlewareClass, $middlewareOptions);
         }
     }
 

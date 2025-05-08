@@ -6,6 +6,7 @@ use Spatie\FlareClient\Concerns\HasAttributes;
 use Spatie\FlareClient\Concerns\UsesTime;
 use Spatie\FlareClient\Contracts\FlareSpanEventType;
 use Spatie\FlareClient\Contracts\WithAttributes;
+use Spatie\FlareClient\Enums\SpanEventType;
 
 class SpanEvent implements WithAttributes
 {
@@ -27,11 +28,7 @@ class SpanEvent implements WithAttributes
      */
     public function toEvent(): ?array
     {
-        $type = $this->attributes['flare.span_event_type'] ?? null;
-
-        if ($type === null) {
-            return null;
-        }
+        $type = $this->attributes['flare.span_event_type'] ?? SpanEventType::Custom;
 
         unset($this->attributes['flare.span_event_type']);
 

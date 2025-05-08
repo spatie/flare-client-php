@@ -2,6 +2,9 @@
 
 namespace Spatie\FlareClient\Time;
 
+use DateTimeImmutable;
+use DateTimeInterface;
+
 class TimeHelper
 {
     public static function minute(): int
@@ -47,5 +50,15 @@ class TimeHelper
     public static function phpMicroTime(int|float $microtime): int
     {
         return (int) ($microtime * 1000_000_000);
+    }
+
+    public static function dateTimeToNano(DateTimeInterface $dateTime): int
+    {
+        return (int) $dateTime->format('U') * 1_000_000_000 + (int) $dateTime->format('u') * 1_000;
+    }
+
+    public static function now(): int
+    {
+        return static::phpMicroTime(microtime(true));
     }
 }

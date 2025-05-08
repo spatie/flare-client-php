@@ -12,7 +12,8 @@ beforeEach(function () {
 });
 
 it('can trace queries', function () {
-    $flare = setupFlare();
+    $flare = setupFlare(alwaysSampleTraces: true);
+
     $recorder = new QueryRecorder(
         tracer: $flare->tracer,
         backTracer: $flare->backTracer,
@@ -44,7 +45,6 @@ it('can trace queries', function () {
         ->toBeInstanceOf(Span::class)
         ->spanId->not()->toBeNull()
         ->traceId->toBe($flare->tracer->currentTraceId())
-        ->parentSpanId->toBeNull()
         ->start->toBe(1546346096000000000 - TimeHelper::milliseconds(300))
         ->end->toBe(1546346096000000000)
         ->name->toBe('Query - select * from users where id = ?');
@@ -59,7 +59,9 @@ it('can trace queries', function () {
 });
 
 it('can report queries without tracing', function () {
-    $flare = setupFlare();
+    $flare = setupFlare(alwaysSampleTraces: true);
+
+    $flare->tracer->startTrace();
 
     $recorder = new QueryRecorder(
         $flare->tracer,
@@ -83,14 +85,14 @@ it('can report queries without tracing', function () {
     );
 
     expect($recorder->getSpans())->toHaveCount(1);
+    expect($flare->tracer->currentTrace())->toHaveCount(0);
 
     $span = $recorder->getSpans()[0];
 
     expect($span)
         ->toBeInstanceOf(Span::class)
         ->spanId->not()->toBeNull()
-        ->traceId->toBe('')
-        ->parentSpanId->toBeNull()
+        ->traceId->not()->toBeNull()
         ->start->toBe(1546346096000000000 - TimeHelper::milliseconds(300))
         ->end->toBe(1546346096000000000)
         ->name->toBe('Query - select * from users where id = ?');
@@ -126,7 +128,7 @@ it('can disable the inclusion of bindings', function () {
 });
 
 it('can find the origin of a query when tracing and a threshold is met', function () {
-    $flare = setupFlare();
+    $flare = setupFlare(alwaysSampleTraces: true);
 
     $recorder = new QueryRecorder(
         $flare->tracer,
@@ -157,7 +159,7 @@ it('can find the origin of a query when tracing and a threshold is met', functio
 });
 
 it('can find the origin of a query when tracing no threshold is set', function () {
-    $flare = setupFlare();
+    $flare = setupFlare(alwaysSampleTraces: true);
 
     $recorder = new QueryRecorder(
         $flare->tracer,
@@ -188,7 +190,7 @@ it('can find the origin of a query when tracing no threshold is set', function (
 });
 
 it('will not find the origin of a query when tracing and a threshold is not met', function () {
-    $flare = setupFlare();
+    $flare = setupFlare(alwaysSampleTraces: true);
 
     $recorder = new QueryRecorder(
         $flare->tracer,
@@ -219,7 +221,7 @@ it('will not find the origin of a query when tracing and a threshold is not met'
 });
 
 it('will not find the origin of a query when only reporting', function () {
-    $flare = setupFlare();
+    $flare = setupFlare(alwaysSampleTraces: true);
 
     $recorder = new QueryRecorder(
         $flare->tracer,

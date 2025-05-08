@@ -8,6 +8,7 @@ use Spatie\FlareClient\Concerns\UsesTime;
 use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Contracts\WithAttributes;
 use Spatie\FlareClient\Enums\SpanStatusCode;
+use Spatie\FlareClient\Enums\SpanType;
 
 class Span implements WithAttributes
 {
@@ -59,11 +60,7 @@ class Span implements WithAttributes
      */
     public function toEvent(): ?array
     {
-        $type = $this->attributes['flare.span_type'] ?? null;
-
-        if ($type === null) {
-            return null;
-        }
+        $type = $this->attributes['flare.span_type'] ?? SpanType::Custom;
 
         unset($this->attributes['flare.span_type']);
 

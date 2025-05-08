@@ -11,6 +11,8 @@ use Spatie\FlareClient\Tests\Shared\FakeTraceExporter;
 uses()->beforeEach(function () {
     Container::instance()->reset();
     FakeSender::reset();
+    FakeTime::reset();
+    FakeIds::reset();
 })->in(__DIR__);
 
 function makePathsRelative(string $text): string
@@ -25,7 +27,8 @@ function setupFlare(
     ?Closure $closure = null,
     bool $sendReportsImmediately = true,
     bool $useFakeSender = true,
-    bool $useFakeTraceExporter = true
+    bool $useFakeTraceExporter = true,
+    bool $alwaysSampleTraces = false,
 ): Flare {
     $config = new FlareConfig(
         apiToken: 'fake-api-key',
@@ -38,6 +41,10 @@ function setupFlare(
 
     if ($useFakeTraceExporter) {
         $config->traceExporter = FakeTraceExporter::class;
+    }
+
+    if($alwaysSampleTraces){
+        $config->alwaysSampleTraces();
     }
 
     if(FakeTime::isSetup()){

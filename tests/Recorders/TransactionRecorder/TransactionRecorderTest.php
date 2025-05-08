@@ -14,7 +14,7 @@ beforeEach(function () {
 });
 
 it('can trace a transaction', function () {
-    $flare = setupFlare();
+    $flare = setupFlare(alwaysSampleTraces: true);
 
     $transactionRecorder = new TransactionRecorder(
         $flare->tracer,
@@ -58,7 +58,6 @@ it('can trace a transaction', function () {
         ->name->toBe('DB Transaction')
         ->start->toBe(1546346096000000000)
         ->end->toBe(1546346097000000000)
-        ->parentSpanId->toBeNull()
         ->attributes
         ->toHaveCount(2)
         ->toHaveKey('flare.span_type', SpanType::Transaction)
@@ -69,7 +68,7 @@ it('can trace a transaction', function () {
 });
 
 it('can rollback a transaction', function () {
-    $flare = setupFlare();
+    $flare = setupFlare(alwaysSampleTraces: true);
 
     $transactionRecorder = new TransactionRecorder(
         $flare->tracer,
@@ -92,7 +91,6 @@ it('can rollback a transaction', function () {
         ->name->toBe('DB Transaction')
         ->start->toBe(1546346096000000000)
         ->end->toBe(1546346097000000000)
-        ->parentSpanId->toBeNull()
         ->attributes
         ->toHaveCount(2)
         ->toHaveKey('flare.span_type', SpanType::Transaction)
@@ -100,7 +98,7 @@ it('can rollback a transaction', function () {
 });
 
 it('can nest transaction spans', function () {
-    $flare = setupFlare();
+    $flare = setupFlare(alwaysSampleTraces: true);
 
     $transactionRecorder = new TransactionRecorder(
         $flare->tracer,
@@ -128,8 +126,7 @@ it('can nest transaction spans', function () {
 
     expect($transactionSpanA)
         ->start->toBe(1546346096000000000)
-        ->end->toBe(1546346099000000000)
-        ->parentSpanId->toBeNull();
+        ->end->toBe(1546346099000000000);
 
     expect($transactionSpanB)
         ->start->toBe(1546346097000000000)

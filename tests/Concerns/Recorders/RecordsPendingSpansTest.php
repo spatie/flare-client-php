@@ -81,7 +81,7 @@ it('can completely disable reporting', function () {
 });
 
 it('can trace spans', function () {
-    $flare = setupFlare();
+    $flare = setupFlare(alwaysSampleTraces: true);
 
     $recorder = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
         'with_traces' => true,
@@ -110,7 +110,7 @@ it('can trace spans', function () {
 });
 
 it('will not trace span when not tracing', function () {
-    $flare = setupFlare();
+    $flare = setupFlare(fn(FlareConfig$config) => $config->neverSampleTraces());
 
     $recorder = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
         'with_traces' => true,
@@ -124,7 +124,7 @@ it('will not trace span when not tracing', function () {
 
 it('will not trace a span when the span limit is reached', function () {
     $flare = setupFlare(function (FlareConfig $config) {
-        $config->trace(maxSpans: 35);
+        $config->alwaysSampleTraces()->trace(maxSpans: 35);
     });
 
     $recorder = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
@@ -142,7 +142,7 @@ it('will not trace a span when the span limit is reached', function () {
 });
 
 it('is possible to disable the recorder for tracing', function () {
-    $flare = setupFlare();
+    $flare = setupFlare(alwaysSampleTraces: true);
 
     $recorder = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
         'with_traces' => false,
@@ -159,18 +159,18 @@ it('is possible to disable the recorder for tracing', function () {
 it('a closure passed span will not be executed when not tracing or reporting', function () {
     class TestSpanRecorderExecution extends SpansRecorder
     {
-        public function record(string $message): ?Span
+        public function recordMessage(string $message): ?Span
         {
             $this->persistEntry(fn () => throw new Exception('Closure executed'));
         }
     }
 
-    $flare = setupFlare();
+    $flare = setupFlare(alwaysSampleTraces: true);
 
     expect(fn () => (new TestSpanRecorderExecution($flare->tracer, $flare->backTracer, config:[
         'with_traces' => true,
         'with_errors' => true,
-    ]))->record('Hello World'))->toThrow(
+    ]))->recordMessage('Hello World'))->toThrow(
         Exception::class,
         'Closure executed'
     );
@@ -178,24 +178,26 @@ it('a closure passed span will not be executed when not tracing or reporting', f
     expect(fn () => (new TestSpanRecorderExecution($flare->tracer, $flare->backTracer, config:[
         'with_traces' => false,
         'with_errors' => false,
-    ]))->record('Hello World'))->not()->toThrow(
+    ]))->recordMessage('Hello World'))->not()->toThrow(
         Exception::class,
         'Closure executed'
     );
 });
 
 it('will correctly nest spans', function () {
-    $flare = setupFlare();
+    $flare = setupFlare(alwaysSampleTraces: true);
 
     $recorder = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
         'with_traces' => true,
     ]);
 
     $flare->tracer->startTrace();
+    $parentSpan = $flare->tracer->startSpan('Parent');
 
     $spanA = $recorder->pushSpan('Pending Span A');
 
     expect($flare->tracer->currentSpanId())->toBe($spanA->spanId);
+    expect($spanA->parentSpanId)->toBe($parentSpan->spanId);
 
     $spanB = $recorder->pushSpan('Pending Span B');
 
@@ -208,7 +210,7 @@ it('will correctly nest spans', function () {
 
     $recorder->popSpan();
 
-    expect($flare->tracer->currentSpanId())->toBeNull();
+    expect($flare->tracer->currentSpanId())->toBe($parentSpan->spanId);
 });
 
 it('can start and end traces when not present', function () {
@@ -228,6 +230,36 @@ it('can start and end traces when not present', function () {
     expect($flare->tracer->isSampling())->toBeTrue();
 
     $recorder->popSpan();
+
+    expect($flare->tracer->isSampling())->toBeFalse();
+});
+
+it('can start and end traces when not present decided by the span type', function () {
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config->alwaysSampleTraces()
+    );
+
+    $recorderA = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
+        'can_start_traces' => true,
+        'should_start_trace' => fn(Span $span) => $span->name === 'Trace staring span',
+        'with_traces' => true,
+    ]);
+
+    expect($flare->tracer->isSampling())->toBeFalse();
+
+    $recorderA->pushSpan('Pending Span');
+
+    expect($flare->tracer->isSampling())->toBeFalse();
+
+    $recorderA->pushSpan('Trace staring span');
+
+    expect($flare->tracer->isSampling())->toBeTrue();
+
+    $recorderA->popSpan();
+
+    expect($flare->tracer->isSampling())->toBeFalse();
+
+    $recorderA->popSpan();
 
     expect($flare->tracer->isSampling())->toBeFalse();
 });
@@ -290,7 +322,7 @@ it('will not start and end a trace when already sampling', function () {
 
 it('will not start a trace when tracing is completely disabled', function () {
     $flare = setupFlare(
-        fn (FlareConfig $config) => $config->alwaysSampleTraces()->trace(false)
+        fn (FlareConfig $config) => $config->trace(false)
     );
 
     $recorder = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
@@ -301,10 +333,12 @@ it('will not start a trace when tracing is completely disabled', function () {
     $recorder->pushSpan('Pending Span A');
 
     expect($flare->tracer->isSampling())->toBeFalse();
-    expect($flare->tracer->getTraces())->toHaveCount(0);
+    expect($flare->tracer->getTraces())->toHaveCount(1);
+    expect($flare->tracer->currentTrace())->toBeEmpty();
 
     $recorder->popSpan();
 
     expect($flare->tracer->isSampling())->toBeFalse();
-    expect($flare->tracer->getTraces())->toHaveCount(0);
+    expect($flare->tracer->getTraces())->toHaveCount(1);
+    expect($flare->tracer->currentTrace())->toBeEmpty();
 });

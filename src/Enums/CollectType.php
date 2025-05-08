@@ -6,6 +6,7 @@ use Spatie\FlareClient\Contracts\FlareCollectType;
 
 enum CollectType: string implements FlareCollectType
 {
+    case Application = 'application';
     case Dumps = 'dumps';
     case Requests = 'requests';
     case Commands = 'console';
@@ -25,4 +26,6 @@ enum CollectType: string implements FlareCollectType
     case Notifications = 'notifications';
     case Views = 'views';
     case StackFrameArguments = 'stack_frame_arguments';
+    case Recorders = 'recorders';
+    case FlareMiddleware = 'flare_middleware';
 }

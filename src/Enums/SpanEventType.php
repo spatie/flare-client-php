@@ -11,4 +11,5 @@ enum SpanEventType: string implements FlareSpanEventType
     case Dump = 'php_dump';
     case Exception = 'php_exception';
     case Cache = 'php_cache';
+    case Custom = 'custom';
 }

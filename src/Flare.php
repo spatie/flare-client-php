@@ -14,6 +14,7 @@ use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\OverriddenGrouping;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
+use Spatie\FlareClient\Recorders\ApplicationRecorder\ApplicationRecorder;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
 use Spatie\FlareClient\Recorders\ExternalHttpRecorder\ExternalHttpRecorder;
@@ -28,8 +29,6 @@ use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
 use Spatie\FlareClient\Recorders\ViewRecorder\ViewRecorder;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Scopes\Scope;
-use Spatie\FlareClient\Spans\Span;
-use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Support\BackTracer;
 use Spatie\FlareClient\Support\Container;
 use Spatie\FlareClient\Support\Ids;
@@ -128,6 +127,11 @@ class Flare
         return $this;
     }
 
+    public function application(): ApplicationRecorder
+    {
+        return $this->recorders[RecorderType::Application->value];
+    }
+
     public function cache(): CacheRecorder
     {
         return $this->recorders[RecorderType::Cache->value];
@@ -183,37 +187,10 @@ class Flare
         return $this->recorders[RecorderType::View->value];
     }
 
-    public function span(
-        string $name,
-        Closure $closure,
-        array $attributes = [],
-    ): Span {
-        $span = $this->tracer->startSpan($name, attributes: $attributes);
-
-        $closure();
-
-        return $this->tracer->endSpan($span);
-    }
-
-    public function spanEvent(
-        string $name,
-        array $attributes = [],
-    ): ?SpanEvent {
-        if ($this->tracer->currentSpan() === null) {
-            return null;
-        }
-
-        $event = new SpanEvent(
-            name: $name,
-            timestamp: $this->tracer->time->getCurrentTime(),
-            attributes: $attributes,
-        );
-
-        $this->tracer->currentSpan()->addEvent(
-            $event
-        );
-
-        return $event;
+    public function recorder(
+        RecorderType|string $type
+    ): Recorder {
+        return $this->recorders[is_string($type) ? $type : $type->value];
     }
 
     public function handleException(Throwable $throwable): void

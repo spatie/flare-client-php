@@ -43,7 +43,7 @@ class Ids
     /**
      * @return ?array{traceId: string, parentSpanId: string, sampling: bool}
      */
-    public function parseTraceParent(
+    public function parseTraceparent(
         string $traceParent
     ): ?array {
         $parts = explode('-', $traceParent);

@@ -8,7 +8,7 @@ use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Time\TimeHelper;
 
 it('can trace requests', function () {
-    $flare = setupFlare(fn(FlareConfig $config) => $config->collectRequests());
+    $flare = setupFlare(fn(FlareConfig $config) => $config->collectRequests()->alwaysSampleTraces());
 
     $flare->tracer->startTrace();
 
@@ -25,8 +25,7 @@ it('can trace requests', function () {
     expect($span)
         ->toBeInstanceOf(Span::class)
         ->spanId->not()->toBeNull()
-        ->traceId->toBe($flare->tracer->currentTraceId())
-        ->parentSpanId->toBeNull();
+        ->traceId->toBe($flare->tracer->currentTraceId());
 
     expect($span->attributes)
         ->toHaveKey('flare.span_type', SpanType::Request);

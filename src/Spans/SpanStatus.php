@@ -7,8 +7,8 @@ use Spatie\FlareClient\Enums\SpanStatusCode;
 class SpanStatus
 {
     public function __construct(
-        protected SpanStatusCode $code = SpanStatusCode::Unset,
-        protected ?string $message = null
+        public SpanStatusCode $code = SpanStatusCode::Unset,
+        public ?string $message = null
     ) {
         if ($code !== SpanStatusCode::Error && $this->message !== null) {
             throw new \InvalidArgumentException('Message can only be set for error status codes');
