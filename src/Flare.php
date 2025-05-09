@@ -24,7 +24,7 @@ use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
 use Spatie\FlareClient\Recorders\RedisCommandRecorder\RedisCommandRecorder;
 use Spatie\FlareClient\Recorders\RequestRecorder\RequestRecorder;
-use Spatie\FlareClient\Recorders\ThrowableRecorder\ThrowableRecorder;
+use Spatie\FlareClient\Recorders\ErrorRecorder\ErrorRecorder;
 use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
 use Spatie\FlareClient\Recorders\ViewRecorder\ViewRecorder;
 use Spatie\FlareClient\Resources\Resource;
@@ -62,8 +62,7 @@ class Flare
         protected readonly SentReports $sentReports,
         protected readonly array $middleware,
         protected readonly array $recorders,
-        protected readonly ?ThrowableRecorder $throwableRecorder,
-        protected readonly ?string $applicationPath,
+        protected readonly ?ErrorRecorder $throwableRecorder,
         protected readonly ?int $reportErrorLevels,
         protected null|Closure $filterExceptionsCallable,
         protected null|Closure $filterReportsCallable,
@@ -125,6 +124,11 @@ class Flare
         }
 
         return $this;
+    }
+
+    public function tracer(): Tracer
+    {
+        return  $this->tracer;
     }
 
     public function application(): ApplicationRecorder

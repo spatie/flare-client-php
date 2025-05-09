@@ -6,8 +6,10 @@ use Exception;
 use Spatie\FlareClient\Enums\SamplingType;
 use Spatie\FlareClient\Enums\SpanStatusCode;
 use Spatie\FlareClient\Enums\SpanType;
+use Spatie\FlareClient\Flare;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Sampling\NeverSampler;
+use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Tests\Shared\FakeIds;
 use Spatie\FlareClient\Tests\Shared\FakeSender;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
@@ -318,4 +320,23 @@ it('cannot add a span event when no current span is active', function () {
     $tracer = setupFlare(alwaysSampleTraces: true)->tracer;
 
     expect($tracer->spanEvent('Some event'))->toBeNull();
+});
+
+it('can remove a span event', function (){
+    $tracer = setupFlare(fn(FlareConfig $config) => $config
+        ->alwaysSampleTraces()
+        ->configureSpanEvents(fn(SpanEvent $spanEvent) => $spanEvent->name === 'Delete' ? null : $spanEvent)
+    )->tracer;
+
+    $tracer->startSpan('Some span');
+
+    $tracer->spanEvent('Some event');
+    $tracer->spanEvent('Delete');
+
+    $tracer->endSpan();
+
+    $span = array_values($tracer->currentTrace())[0];
+
+    expect($span->events)->toHaveCount(1);
+    expect($span->events[0]->name)->toEqual('Some event');
 });

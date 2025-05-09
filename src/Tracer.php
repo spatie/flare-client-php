@@ -29,8 +29,8 @@ class Tracer
     protected ?string $currentSpanId = null;
 
     /**
-     * @param Closure(Span):void|null $configureSpansCallable
-     * @param Closure(SpanEvent):void|null $configureSpanEventsCallable
+     * @param Closure(Span):(void|Span)|null $configureSpansCallable
+     * @param Closure(SpanEvent):(void|SpanEvent|null)|null $configureSpanEventsCallable
      */
     public function __construct(
         protected readonly Api $api,
@@ -43,8 +43,6 @@ class Tracer
         public readonly Sampler $sampler = new RateSampler([]),
         public ?Closure $configureSpansCallable = null,
         public ?Closure $configureSpanEventsCallable = null,
-        public ?Closure $filterSpansCallable = null,
-        public ?Closure $filterSpanEventsCallable = null,
         public SamplingType $samplingType = SamplingType::Waiting,
         public bool $clearTracesAfterExport = true,
     ) {
@@ -218,6 +216,8 @@ class Tracer
 
         if ($span->end !== null) {
             $this->configureSpan($span);
+
+            $this->setCurrentSpanId($span->parentSpanId);
         }
 
         return $span;
@@ -322,7 +322,7 @@ class Tracer
     public function spanEvent(
         string $name,
         array $attributes = [],
-        ?int $timestampUs = null,
+        ?int $time = null,
     ): ?SpanEvent {
         $currentSpan = $this->currentSpan();
 
@@ -332,7 +332,7 @@ class Tracer
 
         $event = new SpanEvent(
             name: $name,
-            timestamp: $timestampUs ?? $this->time->getCurrentTime(),
+            timestamp: $time ?? $this->time->getCurrentTime(),
             attributes: $attributes,
         );
 
@@ -358,6 +358,26 @@ class Tracer
     }
 
     /**
+     * @param Closure(Span):(void|Span) $callback
+     */
+    public function configureSpansUsing(Closure $callback): static
+    {
+        $this->configureSpansCallable = $callback;
+
+        return $this;
+    }
+
+    /**
+     * @param Closure(SpanEvent):(void|SpanEvent|null) $callback
+     */
+    public function configureSpanEventsUsing(Closure $callback): static
+    {
+        $this->configureSpanEventsCallable = $callback;
+
+        return $this;
+    }
+
+    /**
      * @return array<string, Span[]>
      */
     public function getTraces(): array
@@ -371,10 +391,23 @@ class Tracer
             ($this->configureSpansCallable)($span);
         }
 
+        $removedEvent = false;
+
         if ($this->configureSpanEventsCallable) {
-            foreach ($span->events as $event) {
-                ($this->configureSpanEventsCallable)($event);
+            for ($i = 0; $i < count($span->events); $i++) {
+                $event = $span->events[$i];
+
+                $returned = ($this->configureSpanEventsCallable)($event);
+
+                if ($returned === null) {
+                    unset($span->events[$i]);
+                    $removedEvent = true;
+                }
             }
+        }
+
+        if ($removedEvent) {
+            $span->events = array_values($span->events);
         }
     }
 }

@@ -49,7 +49,9 @@ class CollectsResolver
 
     private bool $forcePHPStackFrameArgumentsIniSetting = false;
 
-    /** @return array{middlewares: array<class-string<FlareMiddleware>, array>, recorders: array<class-string<Recorder>, array>, solutionProviders: array<class-string<HasSolutionsForThrowable>>, resourceModifiers: array<callable(Resource):Resource>, collectStackFrameArguments: bool, argumentReducers: array<class-string<ArgumentReducer>|ArgumentReducer>|ArgumentReducers, forcePHPStackFrameArgumentsIniSetting: bool} */
+    protected bool $collectErrorsWithTraces = false;
+
+    /** @return array{middlewares: array<class-string<FlareMiddleware>, array>, recorders: array<class-string<Recorder>, array>, solutionProviders: array<class-string<HasSolutionsForThrowable>>, resourceModifiers: array<callable(Resource):Resource>, collectStackFrameArguments: bool, argumentReducers: array<class-string<ArgumentReducer>|ArgumentReducer>|ArgumentReducers, forcePHPStackFrameArgumentsIniSetting: bool, collectErrorsWithTraces:bool} */
     public function execute(
         array $collects,
     ): array {
@@ -87,6 +89,7 @@ class CollectsResolver
                 CollectType::StackFrameArguments => $this->stackFrameArguments($options),
                 CollectType::Recorders => $this->recorders($options),
                 CollectType::FlareMiddleware => $this->flareMiddleware($options),
+                CollectType::ErrorsWithTraces => $this->errorsWithTraces($options),
                 CollectType::Application, null => null,
                 default => $this->handleUnknownCollectType($collect['type'], $options),
             };
@@ -100,6 +103,7 @@ class CollectsResolver
             'argumentReducers' => $this->argumentReducers,
             'forcePHPStackFrameArgumentsIniSetting' => $this->forcePHPStackFrameArgumentsIniSetting,
             'resourceModifiers' => $this->resourceModifiers,
+            'collectErrorsWithTraces' => $this->collectErrorsWithTraces,
         ];
     }
 
@@ -113,6 +117,11 @@ class CollectsResolver
     protected function application(): void
     {
         $this->addRecorder(ApplicationRecorder::class);
+    }
+
+    protected function errorsWithTraces(array $options): void
+    {
+        $this->collectErrorsWithTraces = $options['with_traces'] ?? false;
     }
 
     protected function requests(

@@ -106,6 +106,11 @@ parameters:
 			path: src/Recorders/DumpRecorder/DumpRecorder.php
 
 		-
+			message: "#^Instanceof between Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent and Spatie\\\\FlareClient\\\\Spans\\\\Span will always evaluate to false\\.$#"
+			count: 1
+			path: src/Recorders/ErrorRecorder/ErrorRecorder.php
+
+		-
 			message: "#^Instanceof between \\*NEVER\\* and Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent will always evaluate to false\\.$#"
 			count: 1
 			path: src/Recorders/ExternalHttpRecorder/ExternalHttpRecorder.php
@@ -169,11 +174,6 @@ parameters:
 			message: "#^Match arm is unreachable because previous comparison is always true\\.$#"
 			count: 1
 			path: src/Recorders/RequestRecorder/RequestRecorder.php
-
-		-
-			message: "#^Instanceof between Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent and Spatie\\\\FlareClient\\\\Spans\\\\Span will always evaluate to false\\.$#"
-			count: 1
-			path: src/Recorders/ThrowableRecorder/ThrowableRecorder.php
 
 		-
 			message: "#^Instanceof between \\*NEVER\\* and Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent will always evaluate to false\\.$#"

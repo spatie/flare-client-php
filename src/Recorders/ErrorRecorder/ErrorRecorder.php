@@ -1,6 +1,6 @@
 <?php
 
-namespace Spatie\FlareClient\Recorders\ThrowableRecorder;
+namespace Spatie\FlareClient\Recorders\ErrorRecorder;
 
 use Closure;
 use Psr\Container\ContainerInterface;
@@ -13,10 +13,14 @@ use Spatie\FlareClient\Report;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Tracer;
 
-class ThrowableRecorder extends Recorder implements SpanEventsRecorder
+class ErrorRecorder extends Recorder implements SpanEventsRecorder
 {
     /** @use RecordsSpanEvents<SpanEvent> */
     use RecordsSpanEvents;
+
+    const DEFAULT_WITH_TRACES =  true;
+
+    const DEFAULT_WITH_ERRORS =  false;
 
     public function __construct(
         protected Tracer $tracer,
@@ -39,7 +43,7 @@ class ThrowableRecorder extends Recorder implements SpanEventsRecorder
     public function record(Report $report): void
     {
         $this->persistEntry(function () use ($report) {
-            $event = ThrowableSpanEvent::fromReport(
+            $event = ErrorSpanEvent::fromReport(
                 $report,
                 $this->tracer->time->getCurrentTime(),
             );

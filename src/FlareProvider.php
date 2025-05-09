@@ -10,7 +10,7 @@ use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\SamplingType;
 use Spatie\FlareClient\FlareMiddleware\AddRecordedEntries;
-use Spatie\FlareClient\Recorders\ThrowableRecorder\ThrowableRecorder;
+use Spatie\FlareClient\Recorders\ErrorRecorder\ErrorRecorder;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Sampling\NeverSampler;
 use Spatie\FlareClient\Sampling\Sampler;
@@ -91,7 +91,7 @@ class FlareProvider
 
         $this->container->singleton(SentReports::class);
 
-        $this->container->singleton(ThrowableRecorder::class, fn () => new ThrowableRecorder(
+        $this->container->singleton(ErrorRecorder::class, fn () => new ErrorRecorder(
             $this->container->get(Tracer::class),
         ));
 
@@ -111,6 +111,7 @@ class FlareProvider
             'collectStackFrameArguments' => $collectStackFrameArguments,
             'argumentReducers' => $argumentReducers,
             'forcePHPStackFrameArgumentsIniSetting' => $forcePHPStackFrameArgumentsIniSetting,
+            'collectErrorsWithTraces' => $collectErrorsWithTraces,
         ] = (new $this->config->collectsResolver)->execute($this->config->collects);
 
         $this->container->singleton(ArgumentReducers::class, fn () => match (true) {
@@ -169,7 +170,7 @@ class FlareProvider
             ($this->registerRecorderAndMiddlewaresCallback)($this->container, $middlewareClass, $config);
         }
 
-        $this->container->singleton(Flare::class, function () use ($collectStackFrameArguments, $middlewares, $recorders) {
+        $this->container->singleton(Flare::class, function () use ($collectErrorsWithTraces, $collectStackFrameArguments, $middlewares, $recorders) {
             $recorders = array_combine(
                 array_map(
                     function ($recorder) {
@@ -207,10 +208,7 @@ class FlareProvider
                 sentReports: $this->container->get(SentReports::class),
                 middleware: $middleware,
                 recorders: $recorders,
-                throwableRecorder: $this->config->traceThrowables
-                    ? $this->container->get(ThrowableRecorder::class)
-                    : null,
-                applicationPath: $this->config->applicationPath,
+                throwableRecorder: $collectErrorsWithTraces ? $this->container->get(ErrorRecorder::class) : null,
                 reportErrorLevels: $this->config->reportErrorLevels,
                 filterExceptionsCallable: $this->config->filterExceptionsCallable,
                 filterReportsCallable: $this->config->filterReportsCallable,

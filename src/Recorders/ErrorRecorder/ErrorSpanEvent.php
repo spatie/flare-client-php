@@ -1,13 +1,13 @@
 <?php
 
-namespace Spatie\FlareClient\Recorders\ThrowableRecorder;
+namespace Spatie\FlareClient\Recorders\ErrorRecorder;
 
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Report;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Throwable;
 
-class ThrowableSpanEvent extends SpanEvent
+class ErrorSpanEvent extends SpanEvent
 {
     public function __construct(
         public string $message,

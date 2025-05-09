@@ -28,4 +28,5 @@ enum CollectType: string implements FlareCollectType
     case StackFrameArguments = 'stack_frame_arguments';
     case Recorders = 'recorders';
     case FlareMiddleware = 'flare_middleware';
+    case ErrorsWithTraces = 'errors_with_traces';
 }

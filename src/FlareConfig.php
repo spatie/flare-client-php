@@ -28,6 +28,7 @@ use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
 use Spatie\FlareClient\Recorders\DumpRecorder\DumpRecorder;
+use Spatie\FlareClient\Recorders\ErrorRecorder\ErrorRecorder;
 use Spatie\FlareClient\Recorders\ExternalHttpRecorder\ExternalHttpRecorder;
 use Spatie\FlareClient\Recorders\FilesystemRecorder\FilesystemRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
@@ -64,8 +65,8 @@ class FlareConfig
      * @param class-string<SolutionProviderRepository> $solutionsProviderRepository
      * @param Closure(Scope):void|null $configureScopeCallable
      * @param Closure(Resource):void|null $configureResourceCallable
-     * @param Closure(Span):void|null $configureSpansCallable
-     * @param Closure(SpanEvent):void|null $configureSpanEventsCallable
+     * @param Closure(Span):(void|Span)|null $configureSpansCallable
+     * @param Closure(SpanEvent):(void|SpanEvent|null)|null $configureSpanEventsCallable
      * @param array<string> $censorHeaders
      * @param array<string> $censorBodyFields
      * @param class-string<UserAttributesProvider> $userAttributesProvider
@@ -91,7 +92,6 @@ class FlareConfig
         public string $sampler = RateSampler::class,
         public array $samplerConfig = [],
         public ?TraceLimits $traceLimits = null,
-        public bool $traceThrowables = true,
         public ?Closure $configureScopeCallable = null,
         public ?Closure $configureResourceCallable = null,
         public ?Closure $configureSpansCallable = null,
@@ -138,6 +138,7 @@ class FlareConfig
     public function useDefaults(): static
     {
         return $this
+            ->collectErrorsWithTraces()
             ->collectDumps()
             ->collectCommands()
             ->collectRequests()
@@ -151,7 +152,7 @@ class FlareConfig
             ->collectViews()
             ->collectGlows()
             ->collectSolutions()
-            ->collectThrowablesWithTraces()
+            ->collectErrorsWithTraces()
             ->collectStackFrameArguments()
             ->collectServerInfo()
             ->censorHeaders(
@@ -321,12 +322,17 @@ class FlareConfig
         return $this->ignoreCollect(CollectType::Dumps);
     }
 
-    public function collectThrowablesWithTraces(
-        bool $withTraces = true,
+    public function collectErrorsWithTraces(
+        bool $withTraces = ErrorRecorder::DEFAULT_WITH_TRACES,
     ): static {
-        $this->traceThrowables = $withTraces;
+        return $this->addCollect(CollectType::ErrorsWithTraces, [
+            'with_traces' => $withTraces,
+        ]);
+    }
 
-        return $this;
+    public function ignoreErrorsWithTraces(): static
+    {
+        return $this->ignoreCollect(CollectType::ErrorsWithTraces);
     }
 
     public function collectQueries(
@@ -610,7 +616,7 @@ class FlareConfig
     }
 
     /**
-     * @param Closure(Span):(void|null) $configureSpansCallable
+     * @param Closure(Span):(void|Span) $configureSpansCallable
      */
     public function configureSpans(Closure $configureSpansCallable): static
     {
@@ -620,7 +626,7 @@ class FlareConfig
     }
 
     /**
-     * @param Closure(SpanEvent):(void|null) $configureSpanEventsCallable
+     * @param Closure(SpanEvent):(void|null|SpanEvent) $configureSpanEventsCallable
      */
     public function configureSpanEvents(Closure $configureSpanEventsCallable): static
     {
@@ -690,6 +696,13 @@ class FlareConfig
         OverriddenGrouping $override
     ): static {
         $this->overriddenGroupings[$class] = $override;
+
+        return $this;
+    }
+
+    public function traceLimits(TraceLimits $traceLimits): static
+    {
+        $this->traceLimits = $traceLimits;
 
         return $this;
     }
