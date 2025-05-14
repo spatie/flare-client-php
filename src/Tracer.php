@@ -13,6 +13,7 @@ use Spatie\FlareClient\Sampling\Sampler;
 use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
+use Spatie\FlareClient\Support\GracefulSpanEnder;
 use Spatie\FlareClient\Support\Ids;
 use Spatie\FlareClient\Support\TraceLimits;
 use Spatie\FlareClient\Time\Time;
@@ -45,6 +46,7 @@ class Tracer
         public ?Closure $configureSpanEventsCallable = null,
         public SamplingType $samplingType = SamplingType::Waiting,
         public bool $clearTracesAfterExport = true,
+        protected GracefulSpanEnder $gracefulSpanEnder = new GracefulSpanEnder(),
     ) {
     }
 
@@ -383,6 +385,27 @@ class Tracer
     public function getTraces(): array
     {
         return $this->traces;
+    }
+
+    public function gracefullyHandleError(): void
+    {
+        if ($this->isSampling() === false) {
+            return;
+        }
+
+        $currentSpan = $this->currentSpan();
+
+        while ($currentSpan !== null) {
+            if($currentSpan->end !== null) {
+                break;
+            }
+
+            if ($this->gracefulSpanEnder->shouldGracefullyEndSpan($currentSpan)) {
+                $this->endSpan($currentSpan);
+            }
+
+            $currentSpan = $this->traces[$currentSpan->traceId][$currentSpan->parentSpanId] ?? null;
+        }
     }
 
     protected function configureSpan(Span $span): void

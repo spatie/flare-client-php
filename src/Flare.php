@@ -231,6 +231,10 @@ class Flare
         ?callable $callback = null,
         ?bool $handled = null
     ): ?Report {
+        if($handled === null) {
+            $this->tracer->gracefullyHandleError();
+        }
+
         if (! $this->shouldSendReport($throwable)) {
             return null;
         }

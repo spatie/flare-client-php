@@ -18,6 +18,7 @@ use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Senders\Sender;
 use Spatie\FlareClient\Support\BackTracer;
 use Spatie\FlareClient\Support\Container;
+use Spatie\FlareClient\Support\GracefulSpanEnder;
 use Spatie\FlareClient\Support\Ids;
 use Spatie\FlareClient\Support\PhpStackFrameArgumentsFixer;
 use Spatie\FlareClient\Support\Redactor;
@@ -70,6 +71,7 @@ class FlareProvider
 
         $this->container->singleton(Time::class, fn () => new $this->config->time);
         $this->container->singleton(Ids::class, fn () => new $this->config->ids);
+        $this->container->singleton(GracefulSpanEnder::class, fn () => new GracefulSpanEnder());
 
         $this->container->singleton(Tracer::class, fn () => new Tracer(
             api: $this->container->get(Api::class),
@@ -87,6 +89,7 @@ class FlareProvider
             samplingType: $this->config->trace
                 ? SamplingType::Waiting
                 : SamplingType::Off,
+            gracefulSpanEnder: $this->container->get(GracefulSpanEnder::class),
         ));
 
         $this->container->singleton(SentReports::class);

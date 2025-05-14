@@ -18,9 +18,9 @@ class ErrorRecorder extends Recorder implements SpanEventsRecorder
     /** @use RecordsSpanEvents<SpanEvent> */
     use RecordsSpanEvents;
 
-    const DEFAULT_WITH_TRACES =  true;
+    const DEFAULT_WITH_TRACES = true;
 
-    const DEFAULT_WITH_ERRORS =  false;
+    const DEFAULT_WITH_ERRORS = false;
 
     public function __construct(
         protected Tracer $tracer,

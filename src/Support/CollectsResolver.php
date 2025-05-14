@@ -235,6 +235,7 @@ class CollectsResolver
             'with_traces',
             'with_errors',
             'max_items_with_errors',
+            'track_all_disks'
         ]));
     }
 
