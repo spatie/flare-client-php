@@ -16,7 +16,7 @@ class FlareMiddleware
     public function __invoke(callable $handler): callable
     {
         return function (RequestInterface $request, array $options) use ($handler) {
-            $this->flare->externalHttp()->recordSending(
+            $this->flare->externalHttp()?->recordSending(
                 url: (string) $request->getUri(),
                 method: $request->getMethod(),
                 bodySize: $request->getBody()->getSize() ?: 0,
@@ -33,7 +33,7 @@ class FlareMiddleware
     protected function onSuccess(): callable
     {
         return function (ResponseInterface $response) {
-            $this->flare->externalHttp()->recordReceived(
+            $this->flare->externalHttp()?->recordReceived(
                 responseCode: $response->getStatusCode(),
                 responseBodySize: $response->getBody()->getSize() ?: 0,
                 responseHeaders: $this->getHeaders($response),
@@ -49,7 +49,7 @@ class FlareMiddleware
             if (method_exists($reason, 'getResponse') && $reason->getResponse() instanceof ResponseInterface) {
                 $response = $reason->getResponse();
 
-                $this->flare->externalHttp()->recordReceived(
+                $this->flare->externalHttp()?->recordReceived(
                     responseCode: $response->getStatusCode(),
                     responseBodySize: $response->getBody()->getSize() ?: 0,
                     responseHeaders: $this->getHeaders($response),
@@ -59,7 +59,7 @@ class FlareMiddleware
             }
             $errorMessage = $reason->getMessage();
 
-            $this->flare->externalHttp()->recordConnectionFailed($errorMessage);
+            $this->flare->externalHttp()?->recordConnectionFailed($errorMessage);
 
             throw $reason;
         };

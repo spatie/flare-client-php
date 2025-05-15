@@ -25,6 +25,7 @@ use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
 use Spatie\FlareClient\Recorders\RedisCommandRecorder\RedisCommandRecorder;
 use Spatie\FlareClient\Recorders\RequestRecorder\RequestRecorder;
+use Spatie\FlareClient\Recorders\ResponseRecorder\ResponseRecorder;
 use Spatie\FlareClient\Recorders\RoutingRecorder\RoutingRecorder;
 use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
 use Spatie\FlareClient\Recorders\ViewRecorder\ViewRecorder;
@@ -136,64 +137,69 @@ class Flare
         return $this->recorders[RecorderType::Application->value];
     }
 
-    public function cache(): CacheRecorder
+    public function cache(): CacheRecorder|null
     {
-        return $this->recorders[RecorderType::Cache->value];
+        return $this->recorders[RecorderType::Cache->value] ?? null;
     }
 
-    public function command(): CommandRecorder
+    public function command(): CommandRecorder|null
     {
-        return $this->recorders[RecorderType::Command->value];
+        return $this->recorders[RecorderType::Command->value] ?? null;
     }
 
-    public function externalHttp(): ExternalHttpRecorder
+    public function externalHttp(): ExternalHttpRecorder|null
     {
-        return $this->recorders[RecorderType::ExternalHttp->value];
+        return $this->recorders[RecorderType::ExternalHttp->value] ?? null;
     }
 
-    public function filesystem(): FilesystemRecorder
+    public function filesystem(): FilesystemRecorder|null
     {
-        return $this->recorders[RecorderType::Filesystem->value];
+        return $this->recorders[RecorderType::Filesystem->value] ?? null;
     }
 
-    public function glow(): GlowRecorder
+    public function glow(): GlowRecorder|null
     {
-        return $this->recorders[RecorderType::Glow->value];
+        return $this->recorders[RecorderType::Glow->value] ?? null;
     }
 
-    public function log(): LogRecorder
+    public function log(): LogRecorder|null
     {
-        return $this->recorders[RecorderType::Log->value];
+        return $this->recorders[RecorderType::Log->value] ?? null;
     }
 
-    public function query(): QueryRecorder
+    public function query(): QueryRecorder|null
     {
-        return $this->recorders[RecorderType::Query->value];
+        return $this->recorders[RecorderType::Query->value] ?? null;
     }
 
-    public function redisCommand(): RedisCommandRecorder
+    public function redisCommand(): RedisCommandRecorder|null
     {
-        return $this->recorders[RecorderType::RedisCommand->value];
+        return $this->recorders[RecorderType::RedisCommand->value] ?? null;
     }
 
-    public function request(): RequestRecorder
+    public function request(): RequestRecorder|null
     {
-        return $this->recorders[RecorderType::Request->value];
+        return $this->recorders[RecorderType::Request->value] ?? null;
     }
 
-    public function routing(): RoutingRecorder
+    public function response(): ResponseRecorder|null
     {
-        return $this->recorders[RecorderType::Routing->value];
+        return $this->recorders[RecorderType::Response->value] ?? null;
     }
 
-    public function transaction(): TransactionRecorder
+    public function routing(): RoutingRecorder|null
     {
-        return $this->recorders[RecorderType::Transaction->value];
+        return $this->recorders[RecorderType::Routing->value] ?? null;
     }
 
-    public function view(): ViewRecorder
+    public function transaction(): TransactionRecorder|null
     {
-        return $this->recorders[RecorderType::View->value];
+        return $this->recorders[RecorderType::Transaction->value] ?? null;
+    }
+
+    public function view(): ViewRecorder|null
+    {
+        return $this->recorders[RecorderType::View->value] ?? null;
     }
 
     public function recorder(
@@ -415,7 +421,7 @@ class Flare
     ): void {
         $this->api->sendQueue(reports: $reports, traces: $traces);
 
-        if($reports){
+        if ($reports) {
             $this->customContext = [];
 
             $this->resetRecorders();

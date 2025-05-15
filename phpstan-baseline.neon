@@ -6,62 +6,67 @@ parameters:
 			path: src/Flare.php
 
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:cache\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\CacheRecorder\\\\CacheRecorder but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\.$#"
+			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:cache\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\CacheRecorder\\\\CacheRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
 			count: 1
 			path: src/Flare.php
 
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:command\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\CommandRecorder\\\\CommandRecorder but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\.$#"
+			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:command\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\CommandRecorder\\\\CommandRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
 			count: 1
 			path: src/Flare.php
 
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:externalHttp\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\ExternalHttpRecorder\\\\ExternalHttpRecorder but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\.$#"
+			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:externalHttp\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\ExternalHttpRecorder\\\\ExternalHttpRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
 			count: 1
 			path: src/Flare.php
 
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:filesystem\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\FilesystemRecorder\\\\FilesystemRecorder but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\.$#"
+			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:filesystem\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\FilesystemRecorder\\\\FilesystemRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
 			count: 1
 			path: src/Flare.php
 
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:glow\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\GlowRecorder\\\\GlowRecorder but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\.$#"
+			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:glow\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\GlowRecorder\\\\GlowRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
 			count: 1
 			path: src/Flare.php
 
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:log\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\LogRecorder\\\\LogRecorder but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\.$#"
+			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:log\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\LogRecorder\\\\LogRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
 			count: 1
 			path: src/Flare.php
 
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:query\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\QueryRecorder\\\\QueryRecorder but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\.$#"
+			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:query\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\QueryRecorder\\\\QueryRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
 			count: 1
 			path: src/Flare.php
 
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:redisCommand\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\RedisCommandRecorder\\\\RedisCommandRecorder but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\.$#"
+			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:redisCommand\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\RedisCommandRecorder\\\\RedisCommandRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
 			count: 1
 			path: src/Flare.php
 
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:request\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\RequestRecorder\\\\RequestRecorder but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\.$#"
+			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:request\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\RequestRecorder\\\\RequestRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
 			count: 1
 			path: src/Flare.php
 
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:routing\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\RoutingRecorder\\\\RoutingRecorder but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\.$#"
+			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:response\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\ResponseRecorder\\\\ResponseRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
 			count: 1
 			path: src/Flare.php
 
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:transaction\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\TransactionRecorder\\\\TransactionRecorder but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\.$#"
+			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:routing\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\RoutingRecorder\\\\RoutingRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
 			count: 1
 			path: src/Flare.php
 
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:view\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\ViewRecorder\\\\ViewRecorder but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\.$#"
+			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:transaction\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\TransactionRecorder\\\\TransactionRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
+			count: 1
+			path: src/Flare.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:view\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\ViewRecorder\\\\ViewRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
 			count: 1
 			path: src/Flare.php
 
@@ -179,6 +184,16 @@ parameters:
 			message: "#^Match arm is unreachable because previous comparison is always true\\.$#"
 			count: 1
 			path: src/Recorders/RequestRecorder/RequestRecorder.php
+
+		-
+			message: "#^Instanceof between \\*NEVER\\* and Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent will always evaluate to false\\.$#"
+			count: 1
+			path: src/Recorders/ResponseRecorder/ResponseRecorder.php
+
+		-
+			message: "#^Match arm is unreachable because previous comparison is always true\\.$#"
+			count: 1
+			path: src/Recorders/ResponseRecorder/ResponseRecorder.php
 
 		-
 			message: "#^Instanceof between \\*NEVER\\* and Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent will always evaluate to false\\.$#"
