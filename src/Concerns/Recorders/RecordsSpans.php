@@ -207,7 +207,7 @@ trait RecordsSpans
 
         $span = $entry();
 
-        if($this->shouldStartTrace($span) === false){
+        if ($this->shouldStartTrace($span) === false) {
             return $this->basePersistEntry($span);
         }
 

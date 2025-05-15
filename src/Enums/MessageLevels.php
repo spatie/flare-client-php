@@ -15,7 +15,7 @@ enum MessageLevels: string
 
     public function getOrder(): int
     {
-        return match ($this){
+        return match ($this) {
             self::Emergency => 0,
             self::Alert => 1,
             self::Critical => 2,

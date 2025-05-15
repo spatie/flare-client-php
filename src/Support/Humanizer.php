@@ -10,7 +10,7 @@ class Humanizer
     {
         $bytes = static::getSizeOfContents($contents);
 
-        if($bytes === null) {
+        if ($bytes === null) {
             return 'unknown';
         }
 

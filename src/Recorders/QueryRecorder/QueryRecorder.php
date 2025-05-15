@@ -4,7 +4,6 @@ namespace Spatie\FlareClient\Recorders\QueryRecorder;
 
 use Closure;
 use Spatie\FlareClient\Concerns\Recorders\RecordsSpans;
-use Spatie\FlareClient\Concerns\UsesTime;
 use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
@@ -94,7 +93,7 @@ class QueryRecorder extends Recorder implements SpansRecorder
                 'db.name' => $databaseName,
                 'db.statement' => $sql,
                 'db.sql.bindings' => $bindings,
-                ... $attributes,
+                ...$attributes,
             ];
 
             if (! $this->includeBindings) {

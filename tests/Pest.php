@@ -43,15 +43,15 @@ function setupFlare(
         $config->traceExporter = FakeTraceExporter::class;
     }
 
-    if($alwaysSampleTraces){
+    if ($alwaysSampleTraces) {
         $config->alwaysSampleTraces();
     }
 
-    if(FakeTime::isSetup()){
+    if (FakeTime::isSetup()) {
         $config->time = FakeTime::class;
     }
 
-    if(FakeIds::setup()){
+    if (FakeIds::setup()) {
         $config->ids = FakeIds::class;
     }
 

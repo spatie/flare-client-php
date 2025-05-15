@@ -2,7 +2,6 @@
 
 namespace Spatie\FlareClient\Tests\Time;
 
-use DateTimeImmutable;
 use Spatie\FlareClient\Time\TimeHelper;
 
 it('will convert everything to nanoseconds', function () {

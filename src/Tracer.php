@@ -75,7 +75,9 @@ class Tracer
             ] = $parsedTraceparent;
 
             return $this->initiateTrace(
-                sample: $sampling, traceId: $traceId, spanId: $parentSpanId
+                sample: $sampling,
+                traceId: $traceId,
+                spanId: $parentSpanId
             );
         }
 
@@ -248,7 +250,7 @@ class Tracer
             return $this->addRawSpan($spanClosure());
         }
 
-        if($canStartTraces === false){
+        if ($canStartTraces === false) {
             return null;
         }
 
@@ -405,7 +407,7 @@ class Tracer
         $currentSpan = $this->currentSpan();
 
         while ($currentSpan !== null) {
-            if($currentSpan->end !== null) {
+            if ($currentSpan->end !== null) {
                 break;
             }
 

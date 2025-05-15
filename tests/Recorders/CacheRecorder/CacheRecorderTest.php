@@ -4,7 +4,6 @@ use Spatie\FlareClient\Enums\CacheOperation;
 use Spatie\FlareClient\Enums\CacheResult;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
-use Spatie\FlareClient\Recorders\CacheRecorder\CacheSpanEvent;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
 

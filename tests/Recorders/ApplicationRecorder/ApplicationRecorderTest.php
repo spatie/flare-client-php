@@ -6,7 +6,6 @@ use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Tests\Shared\FakeIds;
 use Spatie\FlareClient\Tests\Shared\FakeSender;
-use Spatie\FlareClient\Tests\Shared\FakeTime;
 
 it('can run through a complete application cycle', function () {
     $flare = setupFlare(alwaysSampleTraces: true);

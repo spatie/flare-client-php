@@ -2,7 +2,6 @@
 
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Recorders\DumpRecorder\DumpRecorder;
-use Spatie\FlareClient\Recorders\DumpRecorder\DumpSpanEvent;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
 

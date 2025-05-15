@@ -175,7 +175,7 @@ class ApplicationRecorder implements Recorder
             return null;
         }
 
-        if($this->booting){
+        if ($this->booting) {
             $this->recordBooted(time: $time);
         }
 

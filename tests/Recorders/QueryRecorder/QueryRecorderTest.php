@@ -2,7 +2,6 @@
 
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
-use Spatie\FlareClient\Recorders\QueryRecorder\QuerySpan;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
 use Spatie\FlareClient\Time\TimeHelper;

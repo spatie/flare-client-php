@@ -110,7 +110,7 @@ it('can trace spans', function () {
 });
 
 it('will not trace span when not tracing', function () {
-    $flare = setupFlare(fn(FlareConfig$config) => $config->neverSampleTraces());
+    $flare = setupFlare(fn (FlareConfig$config) => $config->neverSampleTraces());
 
     $recorder = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
         'with_traces' => true,
@@ -241,7 +241,7 @@ it('can start and end traces when not present decided by the span type', functio
 
     $recorderA = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
         'can_start_traces' => true,
-        'should_start_trace' => fn(Span $span) => $span->name === 'Trace staring span',
+        'should_start_trace' => fn (Span $span) => $span->name === 'Trace staring span',
         'with_traces' => true,
     ]);
 

@@ -2,13 +2,10 @@
 
 use PHPUnit\Framework\Exception;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
-use Spatie\FlareClient\Concerns\Recorders\RecordsSpans;
-use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\CacheOperation;
 use Spatie\FlareClient\Enums\CacheResult;
 use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Enums\OverriddenGrouping;
-use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Enums\TransactionStatus;
@@ -514,7 +511,7 @@ it('is possible to configure the application stage on the flare instance', funct
 });
 
 it('will add the php version to the report', function () {
-    setupFlare(fn(FlareConfig $config) => $config->collectServerInfo());
+    setupFlare(fn (FlareConfig $config) => $config->collectServerInfo());
 
     reportException();
 
@@ -787,9 +784,9 @@ it('can override the grouping algorithm for specific classes', function () {
     expect($payload['overriddenGrouping'])->toBe('exception_message_and_class');
 });
 
-it('can add an additional recorders', function (){
+it('can add an additional recorders', function () {
     $flare = setupFlare(
-        fn(FlareConfig $config) => $config->collectRecorders([
+        fn (FlareConfig $config) => $config->collectRecorders([
             FakeSpansRecorder::class => [
                 'with_errors' => true,
             ],
@@ -811,7 +808,7 @@ it('can add an additional recorders', function (){
 
 it('it can add additional middleware', function () {
     $flare = setupFlare(
-        fn(FlareConfig $config) => $config->collectFlareMiddleware([
+        fn (FlareConfig $config) => $config->collectFlareMiddleware([
             FakeFlareMiddleware::class => [
                 'extra' => ['key' => 'value'],
             ],

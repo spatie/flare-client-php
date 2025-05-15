@@ -38,7 +38,7 @@ class RoutingRecorder implements SpansRecorder
         array $attributes = [],
         ?int $time = null
     ): ?Span {
-        if($this->globalBeforeMiddleware === true) {
+        if ($this->globalBeforeMiddleware === true) {
             return null;
         }
 
@@ -89,7 +89,7 @@ class RoutingRecorder implements SpansRecorder
         array $attributes = [],
         ?int $time = null
     ): ?Span {
-        if($this->beforeMiddleware === true) {
+        if ($this->beforeMiddleware === true) {
             return null;
         }
 
@@ -144,7 +144,7 @@ class RoutingRecorder implements SpansRecorder
         array $attributes = [],
         ?int $time = null
     ): ?Span {
-        if($this->routing === true) {
+        if ($this->routing === true) {
             return null;
         }
 
@@ -152,7 +152,7 @@ class RoutingRecorder implements SpansRecorder
             $this->recordGlobalBeforeMiddlewareEnd(time: $time);
         }
 
-        if($this->beforeMiddleware) {
+        if ($this->beforeMiddleware) {
             $this->recordBeforeMiddlewareEnd(time: $time);
         }
 
@@ -195,7 +195,7 @@ class RoutingRecorder implements SpansRecorder
         array $attributes = [],
         ?int $time = null
     ): ?Span {
-        if($this->afterMiddleware === true) {
+        if ($this->afterMiddleware === true) {
             return null;
         }
 
@@ -254,7 +254,7 @@ class RoutingRecorder implements SpansRecorder
         array $attributes = [],
         ?int $time = null
     ): ?Span {
-        if($this->globalAfterMiddleware === true) {
+        if ($this->globalAfterMiddleware === true) {
             return null;
         }
 
@@ -266,7 +266,7 @@ class RoutingRecorder implements SpansRecorder
             $this->recordBeforeMiddlewareEnd(time: $time);
         }
 
-        if($this->afterMiddleware) {
+        if ($this->afterMiddleware) {
             $this->recordAfterMiddlewareEnd(time: $time);
         }
 

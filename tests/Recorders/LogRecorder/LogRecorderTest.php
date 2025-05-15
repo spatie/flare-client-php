@@ -2,7 +2,6 @@
 
 use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Enums\SpanEventType;
-use Spatie\FlareClient\Recorders\LogRecorder\LogMessageSpanEvent;
 use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
@@ -67,4 +66,3 @@ it('can only keep logs of a certain level', function () {
     expect($logs[1]->attributes)->toHaveKey('log.level', 'alert');
     expect($logs[2]->attributes)->toHaveKey('log.level', 'critical');
 });
-

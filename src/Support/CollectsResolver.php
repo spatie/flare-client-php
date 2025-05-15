@@ -233,14 +233,13 @@ class CollectsResolver
         ]));
     }
 
-
     protected function filesystem(array $options): void
     {
         $this->addRecorder($options['recorder'] ?? FilesystemRecorder::class, $this->only($options, [
             'with_traces',
             'with_errors',
             'max_items_with_errors',
-            'track_all_disks'
+            'track_all_disks',
         ]));
     }
 

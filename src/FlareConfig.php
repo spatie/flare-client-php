@@ -54,7 +54,6 @@ use Spatie\FlareClient\Support\StacktraceMapper;
 use Spatie\FlareClient\Support\TraceLimits;
 use Spatie\FlareClient\Time\SystemTime;
 use Spatie\FlareClient\TraceExporters\OpenTelemetryJsonTraceExporter;
-use Spatie\LaravelFlare\ArgumentReducers\ModelArgumentReducer;
 
 class FlareConfig
 {

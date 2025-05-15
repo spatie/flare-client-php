@@ -7,7 +7,7 @@ use Throwable;
 
 class GitAttributesProvider
 {
-    static protected array $cached;
+    protected static array $cached;
 
     public function toArray(): array
     {

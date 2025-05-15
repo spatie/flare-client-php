@@ -9,8 +9,6 @@ use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Recorders\Recorder;
 use Spatie\FlareClient\Spans\SpanEvent;
-use Spatie\FlareClient\Support\BackTracer;
-use Spatie\FlareClient\Tracer;
 
 class LogRecorder extends Recorder implements SpanEventsRecorder
 {

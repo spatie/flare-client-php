@@ -10,7 +10,6 @@ use Spatie\ErrorSolutions\Contracts\RunnableSolution;
 use Spatie\ErrorSolutions\Contracts\Solution;
 use Spatie\FlareClient\Concerns\HasAttributes;
 use Spatie\FlareClient\Concerns\HasCustomContext;
-use Spatie\FlareClient\Concerns\UsesIds;
 use Spatie\FlareClient\Contracts\ProvidesFlareContext;
 use Spatie\FlareClient\Contracts\WithAttributes;
 use Spatie\FlareClient\Enums\OverriddenGrouping;
@@ -20,8 +19,6 @@ use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Support\Ids;
 use Spatie\FlareClient\Support\StacktraceMapper;
 use Spatie\FlareClient\Time\Time;
-use Spatie\Ignition\Contracts\RunnableSolution as IgnitionRunnableSolution;
-use Spatie\Ignition\Contracts\Solution as IgnitionSolution;
 use Throwable;
 
 class ReportFactory implements WithAttributes

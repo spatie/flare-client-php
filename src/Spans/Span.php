@@ -3,8 +3,6 @@
 namespace Spatie\FlareClient\Spans;
 
 use Spatie\FlareClient\Concerns\HasAttributes;
-use Spatie\FlareClient\Concerns\UsesIds;
-use Spatie\FlareClient\Concerns\UsesTime;
 use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Contracts\WithAttributes;
 use Spatie\FlareClient\Enums\SpanStatusCode;

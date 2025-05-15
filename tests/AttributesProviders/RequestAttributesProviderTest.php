@@ -1,7 +1,7 @@
 <?php
 
-use Spatie\FlareClient\AttributesProviders\RequestAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\EmptyUserAttributesProvider;
+use Spatie\FlareClient\AttributesProviders\RequestAttributesProvider;
 use Spatie\FlareClient\Support\Redactor;
 use Spatie\FlareClient\Tests\Concerns\MatchesCodeSnippetSnapshots;
 use Symfony\Component\HttpFoundation\File\UploadedFile;

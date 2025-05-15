@@ -2,7 +2,6 @@
 
 namespace Spatie\FlareClient\Time;
 
-use DateTimeImmutable;
 use DateTimeInterface;
 
 class TimeHelper

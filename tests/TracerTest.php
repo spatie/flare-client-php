@@ -6,14 +6,12 @@ use Exception;
 use Spatie\FlareClient\Enums\SamplingType;
 use Spatie\FlareClient\Enums\SpanStatusCode;
 use Spatie\FlareClient\Enums\SpanType;
-use Spatie\FlareClient\Flare;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Sampling\NeverSampler;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Tests\Shared\FakeIds;
 use Spatie\FlareClient\Tests\Shared\FakeSender;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
-use Spatie\LaravelFlare\Tests\Concerns\ConfigureFlare;
 use Throwable;
 
 it('can start a trace', function () {
@@ -231,9 +229,11 @@ it('can run a span using closure', function () {
         callback: fn () => 'do something',
         attributes: [
             'key' => 'value',
-        ], endAttributes: fn (string $result) => [
+        ],
+        endAttributes: fn (string $result) => [
         'result' => $result,
-    ]);
+    ]
+    );
 
     expect($tracer->currentSpanId())->toBeNull();
     expect($tracer->currentTrace())->toHaveCount(1);
@@ -322,10 +322,11 @@ it('cannot add a span event when no current span is active', function () {
     expect($tracer->spanEvent('Some event'))->toBeNull();
 });
 
-it('can remove a span event', function (){
-    $tracer = setupFlare(fn(FlareConfig $config) => $config
+it('can remove a span event', function () {
+    $tracer = setupFlare(
+        fn (FlareConfig $config) => $config
         ->alwaysSampleTraces()
-        ->configureSpanEvents(fn(SpanEvent $spanEvent) => $spanEvent->name === 'Delete' ? null : $spanEvent)
+        ->configureSpanEvents(fn (SpanEvent $spanEvent) => $spanEvent->name === 'Delete' ? null : $spanEvent)
     )->tracer;
 
     $tracer->startSpan('Some span');

@@ -76,13 +76,13 @@ trait RecordsSpanEvents
                 ['name' => $name, 'attributes' => $attributes] = $nameAndAttributes();
             }
 
-            $spanEvent =  new SpanEvent(
+            $spanEvent = new SpanEvent(
                 name: $name,
                 timestamp: $time ?? $this->tracer->time->getCurrentTime(),
                 attributes: $attributes,
             );
 
-            if($spanEventCallback) {
+            if ($spanEventCallback) {
                 $spanEventCallback($spanEvent);
             }
 

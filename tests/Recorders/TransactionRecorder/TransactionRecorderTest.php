@@ -4,7 +4,6 @@ use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Enums\TransactionStatus;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
 use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
-use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionSpan;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
 use Spatie\FlareClient\Time\TimeHelper;

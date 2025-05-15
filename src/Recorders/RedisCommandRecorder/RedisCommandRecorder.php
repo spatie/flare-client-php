@@ -3,7 +3,6 @@
 namespace Spatie\FlareClient\Recorders\RedisCommandRecorder;
 
 use Spatie\FlareClient\Concerns\Recorders\RecordsSpans;
-use Spatie\FlareClient\Concerns\UsesTime;
 use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;

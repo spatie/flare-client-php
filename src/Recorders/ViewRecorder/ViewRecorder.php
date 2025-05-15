@@ -14,7 +14,7 @@ use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Support\BackTracer;
 use Spatie\FlareClient\Tracer;
 
-class ViewRecorder  extends Recorder  implements SpansRecorder
+class ViewRecorder extends Recorder implements SpansRecorder
 {
     /** @use RecordsSpans<Span> */
     use RecordsSpans;
@@ -53,7 +53,7 @@ class ViewRecorder  extends Recorder  implements SpansRecorder
     ): ?Span {
         return $this->startSpan(
             name: "View - {$viewName}",
-            attributes: fn() =>  [
+            attributes: fn () => [
                 'flare.span_type' => SpanType::View,
                 'view.name' => $viewName,
                 'view.file' => $file,

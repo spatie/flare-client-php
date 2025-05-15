@@ -2,13 +2,10 @@
 
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\FlareConfig;
-use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
-use Spatie\FlareClient\Recorders\QueryRecorder\QuerySpan;
 use Spatie\FlareClient\Spans\Span;
-use Spatie\FlareClient\Time\TimeHelper;
 
 it('can trace requests', function () {
-    $flare = setupFlare(fn(FlareConfig $config) => $config->collectRequests()->alwaysSampleTraces());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectRequests()->alwaysSampleTraces());
 
     $flare->tracer->startTrace();
 

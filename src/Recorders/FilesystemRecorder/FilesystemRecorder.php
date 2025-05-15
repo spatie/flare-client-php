@@ -2,9 +2,6 @@
 
 namespace Spatie\FlareClient\Recorders\FilesystemRecorder;
 
-use Illuminate\Http\File;
-use Illuminate\Http\UploadedFile;
-use Psr\Http\Message\StreamInterface;
 use Spatie\FlareClient\Concerns\Recorders\RecordsSpans;
 use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\FilesystemOperation;
@@ -13,7 +10,6 @@ use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Recorders\Recorder;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Support\Humanizer;
-use Throwable;
 
 class FilesystemRecorder extends Recorder implements SpansRecorder
 {
@@ -35,7 +31,7 @@ class FilesystemRecorder extends Recorder implements SpansRecorder
             : $operation;
 
         return $this->startSpan(
-            name: $description ??  "Filesystem - {$operationName}",
+            name: $description ?? "Filesystem - {$operationName}",
             attributes: [
                 'flare.span.type' => SpanType::Filesystem,
                 'filesystem.operation' => $operation,
@@ -84,7 +80,6 @@ class FilesystemRecorder extends Recorder implements SpansRecorder
             ]
         );
     }
-
 
     public function recordPut(string $path, mixed $contents = null, array $attributes = []): ?Span
     {
@@ -191,7 +186,6 @@ class FilesystemRecorder extends Recorder implements SpansRecorder
             ]
         );
     }
-
 
     public function recordMakeDirectory(string $path, array $attributes = []): ?Span
     {

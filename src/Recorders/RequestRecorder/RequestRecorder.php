@@ -99,4 +99,3 @@ class RequestRecorder implements SpansRecorder
         return $this->endSpan(additionalAttributes: $attributes);
     }
 }
-

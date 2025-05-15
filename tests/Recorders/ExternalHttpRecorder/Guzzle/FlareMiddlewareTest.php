@@ -1,11 +1,10 @@
 <?php
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler\MockHandler;
-use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
-use GuzzleHttp\Exception\RequestException;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Recorders\ExternalHttpRecorder\Guzzle\FlareHandlerStack;
@@ -80,7 +79,7 @@ test('middleware records HTTP error responses', function () {
 
     $client = new Client([
         'handler' => new FlareHandlerStack($flare, $mockHandler),
-        'http_errors' => false // Prevent Guzzle from throwing exceptions for HTTP errors
+        'http_errors' => false, // Prevent Guzzle from throwing exceptions for HTTP errors
     ]);
 
     $response = $client->request('GET', 'https://example.com/not-found');
@@ -153,10 +152,10 @@ test('middleware correctly formats headers', function () {
             [
                 'Content-Type' => ['application/json'],
                 'Set-Cookie' => ['cookie1=value1', 'cookie2=value2'],
-                'X-Multiple' => ['value1', 'value2', 'value3']
+                'X-Multiple' => ['value1', 'value2', 'value3'],
             ],
             '{"success":true}'
-        )
+        ),
     ]);
 
     $client = new Client(['handler' => new FlareHandlerStack($flare, $mockHandler)]);
@@ -164,8 +163,8 @@ test('middleware correctly formats headers', function () {
     $response = $client->request('GET', 'https://example.com', [
         'headers' => [
             'Accept' => ['application/json', 'text/html'],
-            'X-Test' => ['value1', 'value2']
-        ]
+            'X-Test' => ['value1', 'value2'],
+        ],
     ]);
 
     expect($response->getStatusCode())->toBe(200);
@@ -189,7 +188,6 @@ test('middleware correctly formats headers', function () {
         ->toHaveKey('http.response.headers', [
             'Content-Type' => 'application/json',
             'Set-Cookie' => 'cookie1=value1, cookie2=value2',
-            'X-Multiple' => 'value1, value2, value3'
+            'X-Multiple' => 'value1, value2, value3',
         ]);
 });
-

@@ -1,8 +1,6 @@
 <?php
 
-use PSpell\Config;
 use Spatie\FlareClient\FlareConfig;
-use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
 use Spatie\FlareClient\Tests\TestClasses\SpanEventsRecorder;
@@ -139,7 +137,7 @@ it('will not trace span events when no span is current', function () {
 });
 
 it('will not trace span events when not tracing', function () {
-    $flare = setupFlare(fn(FlareConfig $config) => $config->neverSampleTraces());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->neverSampleTraces());
 
     $recorder = new SpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
         'with_traces' => true,
@@ -206,7 +204,7 @@ it('a closure passed span event will not be executed when not tracing or reporti
         }
     }
 
-    $flare = setupFlare(fn(FlareConfig $config) => $config->neverSampleTraces());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->neverSampleTraces());
 
     expect(fn () => (new TestSpanEventRecorderExecution($flare->tracer, $flare->backTracer, [
         'with_traces' => true,
