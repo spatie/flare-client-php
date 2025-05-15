@@ -17,6 +17,7 @@ use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 use Spatie\FlareClient\Recorders\ApplicationRecorder\ApplicationRecorder;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
+use Spatie\FlareClient\Recorders\ErrorRecorder\ErrorRecorder;
 use Spatie\FlareClient\Recorders\ExternalHttpRecorder\ExternalHttpRecorder;
 use Spatie\FlareClient\Recorders\FilesystemRecorder\FilesystemRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
@@ -24,7 +25,7 @@ use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
 use Spatie\FlareClient\Recorders\RedisCommandRecorder\RedisCommandRecorder;
 use Spatie\FlareClient\Recorders\RequestRecorder\RequestRecorder;
-use Spatie\FlareClient\Recorders\ErrorRecorder\ErrorRecorder;
+use Spatie\FlareClient\Recorders\RoutingRecorder\RoutingRecorder;
 use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
 use Spatie\FlareClient\Recorders\ViewRecorder\ViewRecorder;
 use Spatie\FlareClient\Resources\Resource;
@@ -91,7 +92,6 @@ class Flare
         return $container->get(Flare::class);
     }
 
-
     public function registerFlareHandlers(): self
     {
         $this->registerExceptionHandler();
@@ -128,7 +128,7 @@ class Flare
 
     public function tracer(): Tracer
     {
-        return  $this->tracer;
+        return $this->tracer;
     }
 
     public function application(): ApplicationRecorder
@@ -181,6 +181,11 @@ class Flare
         return $this->recorders[RecorderType::Request->value];
     }
 
+    public function routing(): RoutingRecorder
+    {
+        return $this->recorders[RecorderType::Routing->value];
+    }
+
     public function transaction(): TransactionRecorder
     {
         return $this->recorders[RecorderType::Transaction->value];
@@ -231,11 +236,9 @@ class Flare
         ?callable $callback = null,
         ?bool $handled = null
     ): ?Report {
-        if($handled === null) {
-            $this->tracer->gracefullyHandleError();
-        }
-
         if (! $this->shouldSendReport($throwable)) {
+            $this->tracer->gracefullyHandleError();
+
             return null;
         }
 
@@ -244,6 +247,8 @@ class Flare
         if ($this->throwableRecorder) {
             $this->throwableRecorder->record($report);
         }
+
+        $this->tracer->gracefullyHandleError();
 
         $this->resetRecorders();
 
@@ -404,14 +409,18 @@ class Flare
         return $this;
     }
 
-    public function resetReporting(): void
-    {
-        $this->api->sendQueue(reports: true, traces: false);
+    public function reset(
+        bool $reports = true,
+        bool $traces = true,
+    ): void {
+        $this->api->sendQueue(reports: $reports, traces: $traces);
 
-        $this->customContext = [];
+        if($reports){
+            $this->customContext = [];
 
-        $this->resetRecorders();
-        $this->sentReports->clear();
+            $this->resetRecorders();
+            $this->sentReports->clear();
+        }
     }
 
     public function sentReports(): SentReports
@@ -419,7 +428,7 @@ class Flare
         return $this->sentReports;
     }
 
-    public function resetRecorders(): void
+    protected function resetRecorders(): void
     {
         foreach ($this->recorders as $recorder) {
             $recorder->reset();

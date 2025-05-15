@@ -21,10 +21,10 @@ enum SpanType: string implements FlareSpanType
     case ApplicationTerminating = 'php_application_terminating';
 
     case Routing = 'php_routing';
-    case GlobalMiddlewareBefore = 'php_global_middleware_before';
+    case GlobalBeforeMiddleware = 'php_global_before_middleware';
     case BeforeMiddleware = 'php_before_middleware';
-    case GlobalMiddlewareAfter = 'php_global_middleware_after';
     case AfterMiddleware = 'php_after_middleware';
+    case GlobalAfterMiddleware = 'php_global_after_middleware';
 
     case Custom = 'custom';
 }

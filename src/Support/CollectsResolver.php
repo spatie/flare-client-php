@@ -24,6 +24,7 @@ use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
 use Spatie\FlareClient\Recorders\RedisCommandRecorder\RedisCommandRecorder;
 use Spatie\FlareClient\Recorders\RequestRecorder\RequestRecorder;
+use Spatie\FlareClient\Recorders\RoutingRecorder\RoutingRecorder;
 use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
 use Spatie\FlareClient\Recorders\ViewRecorder\ViewRecorder;
 use Spatie\FlareClient\Resources\Resource;
@@ -129,6 +130,7 @@ class CollectsResolver
     ): void {
         $this->addMiddleware($options['middleware'] ?? AddRequestInformation::class);
         $this->addRecorder($options['recorder'] ?? RequestRecorder::class);
+        $this->addRecorder($options['recorder'] ?? RoutingRecorder::class);
     }
 
     protected function console(
@@ -176,6 +178,7 @@ class CollectsResolver
             'with_traces',
             'with_errors',
             'max_items_with_errors',
+            'minimal_level',
         ]));
     }
 

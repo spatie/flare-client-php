@@ -11,13 +11,23 @@ use Spatie\FlareClient\Support\TimeInterval;
 
 class RoutingRecorder implements SpansRecorder
 {
+    /** @use RecordsSpans<Span> */
     use RecordsSpans;
 
-    protected bool $globalMiddlewareBefore = false;
+    protected bool $beforeMiddleware = false;
 
-    protected $middlewareBefore = false;
+    protected bool $globalBeforeMiddleware = false;
 
-    protected bool $globalMiddlewareAfter = false;
+    protected bool $routing = false;
+
+    protected bool $afterMiddleware = false;
+
+    protected bool $globalAfterMiddleware = false;
+
+    protected function configure(array $config): void
+    {
+        $this->withTraces = true;
+    }
 
     public static function type(): string|RecorderType
     {
@@ -28,20 +38,32 @@ class RoutingRecorder implements SpansRecorder
         array $attributes = [],
         ?int $time = null
     ): ?Span {
+        if($this->globalBeforeMiddleware === true) {
+            return null;
+        }
+
+        $this->globalBeforeMiddleware = true;
+
         return $this->startSpan(
             'Global Middleware (before)',
             attributes: [
-                'flare.span_type' => SpanType::GlobalMiddlewareBefore,
+                'flare.span_type' => SpanType::GlobalBeforeMiddleware,
                 ...$attributes,
             ],
             time: $time
         );
     }
 
-    public function recordGlovalBeforeMiddlewareEnd(
+    public function recordGlobalBeforeMiddlewareEnd(
         array $attributes = [],
         ?int $time = null
     ): ?Span {
+        if ($this->globalBeforeMiddleware === false) {
+            return null;
+        }
+
+        $this->globalAfterMiddleware = false;
+
         return $this->endSpan(
             time: $time,
             additionalAttributes: $attributes,
@@ -54,22 +76,29 @@ class RoutingRecorder implements SpansRecorder
         ?int $end = null,
         ?int $duration = null,
     ): ?Span {
-        return $this->span(
-            'Global Middleware (before)',
-            attributes: [
-                'flare.span_type' => SpanType::GlobalMiddlewareBefore,
-                ...$attributes,
-            ],
-            start: $start,
-            end: $end,
-            duration: $duration
-        );
+        [$start, $end] = TimeInterval::resolve($this->tracer->time, $start, $end, $duration);
+
+        if ($this->recordGlobalBeforeMiddlewareStart($attributes, time: $start)) {
+            return $this->recordGlobalBeforeMiddlewareEnd(time: $end);
+        }
+
+        return null;
     }
 
     public function recordBeforeMiddlewareStart(
         array $attributes = [],
         ?int $time = null
     ): ?Span {
+        if($this->beforeMiddleware === true) {
+            return null;
+        }
+
+        if ($this->globalBeforeMiddleware) {
+            $this->recordGlobalBeforeMiddlewareEnd(time: $time);
+        }
+
+        $this->beforeMiddleware = true;
+
         return $this->startSpan(
             'Middleware (before)',
             attributes: [
@@ -84,6 +113,12 @@ class RoutingRecorder implements SpansRecorder
         array $attributes = [],
         ?int $time = null
     ): ?Span {
+        if ($this->beforeMiddleware === false) {
+            return null;
+        }
+
+        $this->beforeMiddleware = false;
+
         return $this->endSpan(
             time: $time,
             additionalAttributes: $attributes,
@@ -96,29 +131,91 @@ class RoutingRecorder implements SpansRecorder
         ?int $end = null,
         ?int $duration = null,
     ): ?Span {
-        return $this->span(
-            'Middleware (before)',
+        [$start, $end] = TimeInterval::resolve($this->tracer->time, $start, $end, $duration);
+
+        if ($this->recordBeforeMiddlewareStart($attributes, time: $start)) {
+            return $this->recordBeforeMiddlewareEnd(time: $end);
+        }
+
+        return null;
+    }
+
+    public function recordRoutingStart(
+        array $attributes = [],
+        ?int $time = null
+    ): ?Span {
+        if($this->routing === true) {
+            return null;
+        }
+
+        if ($this->globalBeforeMiddleware) {
+            $this->recordGlobalBeforeMiddlewareEnd(time: $time);
+        }
+
+        if($this->beforeMiddleware) {
+            $this->recordBeforeMiddlewareEnd(time: $time);
+        }
+
+        return $this->startSpan(
+            'Routing',
             attributes: [
-                'flare.span_type' => SpanType::BeforeMiddleware,
+                'flare.span_type' => SpanType::Routing,
                 ...$attributes,
             ],
-            start: $start,
-            end: $end,
-            duration: $duration
+            time: $time
         );
+    }
+
+    public function recordRoutingEnd(
+        array $attributes = [],
+        ?int $time = null
+    ): ?Span {
+        return $this->endSpan(
+            time: $time,
+            additionalAttributes: $attributes,
+        );
+    }
+
+    public function recordRouting(
+        array $attributes = [],
+        ?int $start = null,
+        ?int $end = null,
+        ?int $duration = null,
+    ): ?Span {
+        [$start, $end] = TimeInterval::resolve($this->tracer->time, $start, $end, $duration);
+
+        if ($this->recordRoutingStart($attributes, time: $start)) {
+            return $this->recordRoutingEnd(time: $end);
+        }
+
+        return null;
     }
 
     public function recordAfterMiddlewareStart(
         array $attributes = [],
         ?int $time = null
     ): ?Span {
-        return $this->tracer->startSpan(
+        if($this->afterMiddleware === true) {
+            return null;
+        }
+
+        if ($this->globalBeforeMiddleware) {
+            $this->recordGlobalBeforeMiddlewareEnd(time: $time);
+        }
+
+        if ($this->beforeMiddleware) {
+            $this->recordBeforeMiddlewareEnd(time: $time);
+        }
+
+        $this->afterMiddleware = true;
+
+        return $this->startSpan(
             'Middleware (after)',
-            time: $time,
             attributes: [
                 'flare.span_type' => SpanType::AfterMiddleware,
                 ...$attributes,
-            ]
+            ],
+            time: $time
         );
     }
 
@@ -126,7 +223,13 @@ class RoutingRecorder implements SpansRecorder
         array $attributes = [],
         ?int $time = null
     ): ?Span {
-        return $this->tracer->endSpan(
+        if ($this->afterMiddleware === false) {
+            return null;
+        }
+
+        $this->afterMiddleware = false;
+
+        return $this->endSpan(
             time: $time,
             additionalAttributes: $attributes,
         );
@@ -137,17 +240,76 @@ class RoutingRecorder implements SpansRecorder
         ?int $start = null,
         ?int $end = null,
         ?int $duration = null,
-    ): ?Span
-    {
-        return $this->span(
-            'Middleware (after)',
+    ): ?Span {
+        [$start, $end] = TimeInterval::resolve($this->tracer->time, $start, $end, $duration);
+
+        if ($this->recordAfterMiddlewareStart($attributes, time: $start)) {
+            return $this->recordAfterMiddlewareEnd(time: $end);
+        }
+
+        return null;
+    }
+
+    public function recordGlobalAfterMiddlewareStart(
+        array $attributes = [],
+        ?int $time = null
+    ): ?Span {
+        if($this->globalAfterMiddleware === true) {
+            return null;
+        }
+
+        if ($this->globalBeforeMiddleware) {
+            $this->recordGlobalBeforeMiddlewareEnd(time: $time);
+        }
+
+        if ($this->beforeMiddleware) {
+            $this->recordBeforeMiddlewareEnd(time: $time);
+        }
+
+        if($this->afterMiddleware) {
+            $this->recordAfterMiddlewareEnd(time: $time);
+        }
+
+        $this->globalAfterMiddleware = true;
+
+        return $this->startSpan(
+            'Global Middleware (after)',
             attributes: [
-                'flare.span_type' => SpanType::AfterMiddleware,
+                'flare.span_type' => SpanType::GlobalAfterMiddleware,
                 ...$attributes,
             ],
-            start: $start,
-            end: $end,
-            duration: $duration
+            time: $time
         );
+    }
+
+    public function recordGlobalAfterMiddlewareEnd(
+        array $attributes = [],
+        ?int $time = null
+    ): ?Span {
+        if ($this->globalAfterMiddleware === false) {
+            return null;
+        }
+
+        $this->globalAfterMiddleware = false;
+
+        return $this->endSpan(
+            time: $time,
+            additionalAttributes: $attributes,
+        );
+    }
+
+    public function recordGlobalAfterMiddleware(
+        array $attributes = [],
+        ?int $start = null,
+        ?int $end = null,
+        ?int $duration = null,
+    ): ?Span {
+        [$start, $end] = TimeInterval::resolve($this->tracer->time, $start, $end, $duration);
+
+        if ($this->recordGlobalAfterMiddlewareStart($attributes, time: $start)) {
+            return $this->recordGlobalAfterMiddlewareEnd(time: $end);
+        }
+
+        return null;
     }
 }

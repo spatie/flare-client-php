@@ -32,9 +32,12 @@ class RequestRecorder implements SpansRecorder
         protected array $config,
         protected RequestAttributesProvider $requestAttributesProvider,
     ) {
-        $this->configure([
-            'with_traces' => true,
-        ]);
+        $this->configure($config);
+    }
+
+    protected function configure(array $config): void
+    {
+        $this->withTraces = true;
     }
 
     public static function register(ContainerInterface $container, array $config): Closure

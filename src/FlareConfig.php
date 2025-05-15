@@ -23,6 +23,7 @@ use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\Contracts\FlareCollectType;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\CollectType;
+use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Enums\OverriddenGrouping;
 use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
@@ -273,11 +274,13 @@ class FlareConfig
         bool $withTraces = LogRecorder::DEFAULT_WITH_TRACES,
         bool $withErrors = LogRecorder::DEFAULT_WITH_ERRORS,
         ?int $maxItemsWithErrors = LogRecorder::DEFAULT_MAX_ITEMS_WITH_ERRORS,
+        MessageLevels $minimalLevel = MessageLevels::Debug,
     ): static {
         return $this->addCollect(CollectType::Logs, [
             'with_traces' => $withTraces,
             'with_errors' => $withErrors,
             'max_items_with_errors' => $maxItemsWithErrors,
+            'minimal_level' => $minimalLevel,
         ]);
     }
 

@@ -232,6 +232,7 @@ class Tracer
         string $name,
         ?int $time = null,
         array $attributes = [],
+        bool $canStartTraces = true,
     ): ?Span {
         $spanClosure = fn () => new Span(
             traceId: $this->currentTraceId ?? $this->ids->trace(),
@@ -245,6 +246,10 @@ class Tracer
 
         if ($this->isSampling() === true) {
             return $this->addRawSpan($spanClosure());
+        }
+
+        if($canStartTraces === false){
+            return null;
         }
 
         $span = $this->startTraceWithSpan($spanClosure);
@@ -281,21 +286,25 @@ class Tracer
     }
 
     /**
-     * @param string $name
-     * @param Closure $callback
+     * @template T
+     *
+     * @param Closure():T $callback
      * @param array<string, mixed> $attributes
-     * @param Closure(mixed):array<string, mixed>|null $endAttributes
+     * @param Closure(T):array<string, mixed>|null $endAttributes
+     *
+     * @return T
      */
     public function span(
         string $name,
         Closure $callback,
         array $attributes = [],
         ?Closure $endAttributes = null,
-    ): ?Span {
-        $span = $this->startSpan($name, attributes: $attributes);
+        bool $canStartTraces = true,
+    ): mixed {
+        $span = $this->startSpan($name, attributes: $attributes, canStartTraces: $canStartTraces);
 
         if ($span === null) {
-            return null;
+            return $callback();
         }
 
         try {
@@ -317,7 +326,7 @@ class Tracer
 
         $this->endSpan($span, additionalAttributes: $additionalAttributes);
 
-        return $span;
+        return $returned;
     }
 
     /** @param array<string, mixed> $attributes */

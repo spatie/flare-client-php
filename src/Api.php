@@ -86,27 +86,27 @@ class Api
         bool $traces = true,
     ): void {
         if ($reports) {
-            try {
-                foreach ($this->reportQueue as $report) {
+            foreach ($this->reportQueue as $report) {
+                try {
                     $this->sendReportToApi($report);
+                } catch (Exception $e) {
+                    continue;
                 }
-            } catch (Exception $e) {
-
-            } finally {
-                $this->reportQueue = [];
             }
+
+            $this->reportQueue = [];
         }
 
         if ($traces) {
-            try {
-                foreach ($this->traceQueue as $trace) {
+            foreach ($this->traceQueue as $trace) {
+                try {
                     $this->sendTraceToApi($trace);
+                } catch (Exception $e) {
+                    continue;
                 }
-            } catch (Exception $e) {
-
-            } finally {
-                $this->traceQueue = [];
             }
+
+            $this->traceQueue = [];
         }
     }
 

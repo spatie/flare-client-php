@@ -11,7 +11,7 @@ beforeEach(function () {
     FakeTime::setup('2019-01-01 12:34:56');
 });
 
-it('stores glows for reporting and tracing', function () {
+it('stores logs for reporting and tracing', function () {
     $flare = setupFlare();
 
     $recorder = new LogRecorder($flare->tracer, $flare->backTracer, config: [
@@ -41,3 +41,30 @@ it('stores glows for reporting and tracing', function () {
         ->toHaveKey('log.level', 'info')
         ->toHaveKey('log.context', ['some' => 'metadata']);
 });
+
+it('can only keep logs of a certain level', function () {
+    $flare = setupFlare();
+
+    $recorder = new LogRecorder($flare->tracer, $flare->backTracer, config: [
+        'with_traces' => true,
+        'with_errors' => true,
+        'max_items_with_errors' => 10,
+        'minimal_level' => MessageLevels::Critical,
+    ]);
+
+    foreach (MessageLevels::cases() as $level) {
+        $recorder->record(
+            'Some name',
+            $level,
+            ['some' => 'metadata'],
+        );
+    }
+
+    $logs = $recorder->getSpanEvents();
+
+    expect($logs)->toHaveCount(3);
+    expect($logs[0]->attributes)->toHaveKey('log.level', 'emergency');
+    expect($logs[1]->attributes)->toHaveKey('log.level', 'alert');
+    expect($logs[2]->attributes)->toHaveKey('log.level', 'critical');
+});
+

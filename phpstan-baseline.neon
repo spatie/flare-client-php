@@ -51,6 +51,11 @@ parameters:
 			path: src/Flare.php
 
 		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:routing\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\RoutingRecorder\\\\RoutingRecorder but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\.$#"
+			count: 1
+			path: src/Flare.php
+
+		-
 			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:transaction\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\TransactionRecorder\\\\TransactionRecorder but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\.$#"
 			count: 1
 			path: src/Flare.php
@@ -174,6 +179,16 @@ parameters:
 			message: "#^Match arm is unreachable because previous comparison is always true\\.$#"
 			count: 1
 			path: src/Recorders/RequestRecorder/RequestRecorder.php
+
+		-
+			message: "#^Instanceof between \\*NEVER\\* and Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent will always evaluate to false\\.$#"
+			count: 1
+			path: src/Recorders/RoutingRecorder/RoutingRecorder.php
+
+		-
+			message: "#^Match arm is unreachable because previous comparison is always true\\.$#"
+			count: 1
+			path: src/Recorders/RoutingRecorder/RoutingRecorder.php
 
 		-
 			message: "#^Instanceof between \\*NEVER\\* and Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent will always evaluate to false\\.$#"

@@ -58,11 +58,11 @@ it('can reset queued exceptions', function () {
 
     reportException();
 
-    $flare->resetReporting();
+    $flare->reset();
 
     FakeSender::instance()->assertRequestsSent(1);
 
-    $flare->resetReporting();
+    $flare->reset();
 
     FakeSender::instance()->assertRequestsSent(1);
 });
