@@ -88,7 +88,7 @@ class FlareConfig
         public string $sender = CurlSender::class,
         public array $senderConfig = [],
         public string $solutionsProviderRepository = SolutionProviderRepository::class,
-        public bool $trace = true,
+        public bool $trace = false,
         public string $sampler = RateSampler::class,
         public array $samplerConfig = [],
         public ?TraceLimits $traceLimits = null,

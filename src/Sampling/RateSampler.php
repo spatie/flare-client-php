@@ -9,7 +9,7 @@ class RateSampler implements Sampler
     public function __construct(
         array $config,
     ) {
-        $rate = $config['rate'] ?? 0.2;
+        $rate = $config['rate'] ?? 0.1;
 
         if ($rate < 0 || $rate > 1) {
             throw new \InvalidArgumentException('Rate must be between 0 and 1');

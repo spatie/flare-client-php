@@ -33,6 +33,7 @@ function setupFlare(
     $config = new FlareConfig(
         apiToken: 'fake-api-key',
         sendReportsImmediately: $sendReportsImmediately,
+        trace: true,
     );
 
     if ($useFakeSender) {
