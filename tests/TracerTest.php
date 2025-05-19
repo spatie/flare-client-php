@@ -75,7 +75,7 @@ it('will not start a trace when the sampler decides to', function () {
 });
 
 it('can potentially resume a trace', function () {
-    $tracer = setupFlare(fn(FlareConfig $config) => $config->sampleRate(1))->tracer;
+    $tracer = setupFlare(fn (FlareConfig $config) => $config->sampleRate(1))->tracer;
 
     $tracer->startTrace('00-traceid-spanid-01');
 
@@ -85,7 +85,7 @@ it('can potentially resume a trace', function () {
 });
 
 it('will not resume a trace when the traceparent is invalid', function () {
-    $tracer = setupFlare(fn(FlareConfig $config) => $config->sampleRate(0))->tracer;
+    $tracer = setupFlare(fn (FlareConfig $config) => $config->sampleRate(0))->tracer;
 
     $tracer->startTrace('invalid');
 
