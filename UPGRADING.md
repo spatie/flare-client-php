@@ -7,6 +7,7 @@ cover. We accept PRs to improve this guide.
 
 Version two of the package has been a complete rewrite, we've added some interesting points in this upgrade guide but advise you to read the docs again.
 
+- The package requires now PHP 8.2 or higher.
 - The `anonymizeIp()` method was renamed to `censorClientIps()` and should now be called on Flare config object
 - The `censorRequestBodyFields()` method was renamed to `censorBodyFields()` and should now be called on Flare config object
 - The `reportErrorLevels` method should now be called on Flare config object
