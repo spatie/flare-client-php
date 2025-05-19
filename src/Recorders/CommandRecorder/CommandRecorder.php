@@ -46,6 +46,8 @@ class CommandRecorder extends Recorder implements SpansRecorder
             attributes: function () use ($entryPointClass, $attributes, $arguments, $command) {
                 if ($arguments instanceof InputInterface) {
                     $arguments = $this->getArguments($arguments);
+
+                    $attributes['process.command_line'] = implode(' ', $arguments);
                 }
 
                 if ($entryPointClass !== null) {
