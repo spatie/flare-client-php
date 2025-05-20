@@ -13,8 +13,8 @@ class ReportDriver extends YamlDriver
         $data = $this->removeTimeValues($data);
         $data = $this->emptyStacktrace($data);
         $data = $this->removePhpunitArguments($data);
-        $data = $this->freezeLanguageVersion($data);
         $data = $this->removeUuid($data);
+        $data = $this->removeResourceAttributes($data);
 
         $yaml = parent::serialize($data);
 
@@ -26,9 +26,8 @@ class ReportDriver extends YamlDriver
         $actual = $this->removeTimeValues($actual);
         $actual = $this->emptyStacktrace($actual);
         $actual = $this->removePhpunitArguments($actual);
-        $actual = $this->freezeLanguageVersion($actual);
         $actual = $this->removeUuid($actual);
-
+        $actual = $this->removeResourceAttributes($actual);
 
         if (is_array($actual)) {
             $actual = Yaml::dump($actual, PHP_INT_MAX);
@@ -59,22 +58,38 @@ class ReportDriver extends YamlDriver
 
     protected function removePhpunitArguments(array $data): array
     {
-        $data['context']['arguments'] = ['[phpunit arguments removed]'];
-
-        return $data;
-    }
-
-    protected function freezeLanguageVersion(array $data): array
-    {
-        data_set($data, 'language_version', '7.3.2', true);
-        data_set($data, 'context.env.php_version', '7.3.2', true);
+        //        $data['context']['arguments'] = ['[phpunit arguments removed]'];
 
         return $data;
     }
 
     protected function removeUuid(array $data): array
     {
-        data_set($data, 'uuid', 'fake-uuid', true);
+        $data['trackingUuid'] = 'fake-uuid';
+
+        return $data;
+    }
+
+    protected function removeResourceAttributes(array $data): array
+    {
+        $data['attributes']['telemetry.sdk.language'] = 'fake-telemetry-sdk-language';
+        $data['attributes']['telemetry.sdk.name'] = 'fake-telemetry-sdk-name';
+        $data['attributes']['telemetry.sdk.version'] = 'fake-telemetry-sdk-version';
+        $data['attributes']['host.ip'] = 'fake-ip';
+        $data['attributes']['host.name'] = 'fake-host-name';
+        $data['attributes']['host.arch'] = 'fake-arch';
+        $data['attributes']['os.type'] = 'fake-os-type';
+        $data['attributes']['os.description'] = 'fake-os-description';
+        $data['attributes']['os.name'] = 'fake-os-name';
+        $data['attributes']['os.version'] = 'fake-os-version';
+        $data['attributes']['process.runtime.name'] = 'fake-process-runtime-name';
+        $data['attributes']['process.runtime.version'] = 'fake-process-runtime-version';
+        $data['attributes']['process.pid'] = 'fake-process-pid';
+        $data['attributes']['process.executable.path'] = 'fake-process-executable-path';
+        $data['attributes']['process.command'] = 'fake-process-command';
+        $data['attributes']['process.command_args'] = 'fake-process-command-args';
+        $data['attributes']['process.owner'] = 'fake-process-owner';
+        $data['attributes']['flare.language.version'] = '8.3.1';
 
         return $data;
     }

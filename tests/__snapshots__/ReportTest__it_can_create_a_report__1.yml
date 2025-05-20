@@ -1,25 +1,35 @@
-notifier: 'Flare Client'
-language: PHP
-framework_version: null
-language_version: 7.3.2
-exception_class: Exception
-seen_at: 1546305825
+exceptionClass: Exception
+seenAtUnixNano: 1546305825000000000
 message: 'this is an exception'
-glows: {  }
 solutions: {  }
-documentation_links: {  }
 stacktrace: {  }
-context:
-    arguments:
-        - '[phpunit arguments removed]'
-    env:
-        php_version: 7.3.2
-stage: null
-message_level: null
-open_frame_index: null
-application_path: null
-application_version: null
-tracking_uuid: fake-uuid
+openFrameIndex: null
+applicationPath: null
+trackingUuid: fake-uuid
 handled: null
-overridden_grouping: null
-uuid: fake-uuid
+attributes:
+    service.name: 'PHP application'
+    service.version: null
+    service.stage: null
+    telemetry.sdk.language: fake-telemetry-sdk-language
+    telemetry.sdk.name: fake-telemetry-sdk-name
+    telemetry.sdk.version: fake-telemetry-sdk-version
+    flare.language.name: PHP
+    flare.language.version: 8.3.1
+    host.ip: fake-ip
+    host.name: fake-host-name
+    host.arch: fake-arch
+    os.type: fake-os-type
+    os.description: fake-os-description
+    os.name: fake-os-name
+    os.version: fake-os-version
+    process.runtime.name: fake-process-runtime-name
+    process.runtime.version: fake-process-runtime-version
+    process.pid: fake-process-pid
+    process.executable.path: fake-process-executable-path
+    process.command: fake-process-command
+    process.command_args: fake-process-command-args
+    process.owner: fake-process-owner
+events: {  }
+isLog: false
+overriddenGrouping: null

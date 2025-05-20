@@ -3,9 +3,9 @@
 namespace Spatie\FlareClient\FlareMiddleware;
 
 use Closure;
-use Spatie\FlareClient\Report;
+use Spatie\FlareClient\ReportFactory;
 
 interface FlareMiddleware
 {
-    public function handle(Report $report, Closure $next);
+    public function handle(ReportFactory $report, Closure $next): ReportFactory;
 }

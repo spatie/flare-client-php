@@ -9,9 +9,7 @@ class ExceptionWithContext extends \Exception implements ProvidesFlareContext
     public function context(): array
     {
         return [
-            'context' => [
-                'another key' => 'another value',
-            ],
+            'another key' => 'another value',
         ];
     }
 }

@@ -3,29 +3,40 @@
 namespace Spatie\FlareClient\FlareMiddleware;
 
 use Closure;
+use Psr\Container\ContainerInterface;
 use Spatie\ErrorSolutions\Contracts\SolutionProviderRepository;
-use Spatie\FlareClient\Report;
-use Spatie\Ignition\Contracts\SolutionProviderRepository as IgnitionSolutionProviderRepository;
+use Spatie\FlareClient\ReportFactory;
+use Spatie\FlareClient\Support\Container;
 
 class AddSolutions implements FlareMiddleware
 {
-    protected SolutionProviderRepository|IgnitionSolutionProviderRepository $solutionProviderRepository;
-
-    public function __construct(SolutionProviderRepository|IgnitionSolutionProviderRepository $solutionProviderRepository)
+    public static function register(ContainerInterface $container, array $config): Closure
     {
-        $this->solutionProviderRepository = $solutionProviderRepository;
+        return fn () => new self(
+            $container->get(SolutionProviderRepository::class)
+        );
     }
 
-    public function handle(Report $report, Closure $next)
-    {
-        if ($throwable = $report->getThrowable()) {
-            $solutions = $this->solutionProviderRepository->getSolutionsForThrowable($throwable);
+    public function __construct(
+        protected SolutionProviderRepository $solutionProviderRepository
+    ) {
+    }
 
-            foreach ($solutions as $solution) {
-                $report->addSolution($solution);
-            }
+    public function handle(ReportFactory $report, Closure $next): ReportFactory
+    {
+        if ($report->throwable === null) {
+            return $next($report);
         }
 
+        $report->addSolutions(
+            ...$this->solutionProviderRepository->getSolutionsForThrowable($report->throwable)
+        );
+
         return $next($report);
+    }
+
+    public function boot(ContainerInterface|Container $container): void
+    {
+        $this->solutionProviderRepository = $container->get(SolutionProviderRepository::class);
     }
 }

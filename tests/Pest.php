@@ -1,11 +1,18 @@
 <?php
 
-use Spatie\FlareClient\Glows\Glow;
-use Spatie\FlareClient\Report;
-use Spatie\FlareClient\Tests\TestClasses\FakeTime;
+use Spatie\FlareClient\Flare;
+use Spatie\FlareClient\FlareConfig;
+use Spatie\FlareClient\Support\Container;
+use Spatie\FlareClient\Tests\Shared\FakeIds;
+use Spatie\FlareClient\Tests\Shared\FakeSender;
+use Spatie\FlareClient\Tests\Shared\FakeTime;
+use Spatie\FlareClient\Tests\Shared\FakeTraceExporter;
 
 uses()->beforeEach(function () {
-    Report::$fakeTrackingUuid = 'fake-uuid';
+    Container::instance()->reset();
+    FakeSender::reset();
+    FakeTime::reset();
+    FakeIds::reset();
 })->in(__DIR__);
 
 function makePathsRelative(string $text): string
@@ -13,12 +20,47 @@ function makePathsRelative(string $text): string
     return str_replace(dirname(__DIR__, 1), '', $text);
 }
 
-function useTime(string $dateTime, string $format = 'Y-m-d H:i:s')
-{
-    $fakeTime = new FakeTime($dateTime, $format);
+/**
+ * @param ?Closure(FlareConfig):void $closure
+ */
+function setupFlare(
+    ?Closure $closure = null,
+    bool $sendReportsImmediately = true,
+    bool $useFakeSender = true,
+    bool $useFakeTraceExporter = true,
+    bool $alwaysSampleTraces = false,
+): Flare {
+    $config = new FlareConfig(
+        apiToken: 'fake-api-key',
+        sendReportsImmediately: $sendReportsImmediately,
+        trace: true,
+    );
 
-    Report::useTime($fakeTime);
-    Glow::useTime($fakeTime);
+    if ($useFakeSender) {
+        $config->sender = FakeSender::class;
+    }
+
+    if ($useFakeTraceExporter) {
+        $config->traceExporter = FakeTraceExporter::class;
+    }
+
+    if ($alwaysSampleTraces) {
+        $config->alwaysSampleTraces();
+    }
+
+    if (FakeTime::isSetup()) {
+        $config->time = FakeTime::class;
+    }
+
+    if (FakeIds::setup()) {
+        $config->ids = FakeIds::class;
+    }
+
+    if ($closure) {
+        $closure($config);
+    }
+
+    return test()->flare = Flare::make($config);
 }
 
 function getStubPath(string $stubName): string

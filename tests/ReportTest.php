@@ -1,72 +1,65 @@
 <?php
 
-use Spatie\FlareClient\Context\ConsoleContextProvider;
-use Spatie\FlareClient\Glows\Glow;
-use Spatie\FlareClient\Report;
+use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Tests\Concerns\MatchesReportSnapshots;
+use Spatie\FlareClient\Tests\Shared\FakeSender;
+use Spatie\FlareClient\Tests\Shared\FakeTime;
 use Spatie\FlareClient\Tests\TestClasses\FakeErrorHandler;
-use Spatie\FlareClient\Tests\TestClasses\FakeTime;
 
 uses(MatchesReportSnapshots::class);
 
 beforeEach(function () {
-    Report::useTime(new FakeTime('2019-01-01 01:23:45'));
+    FakeTime::setup('2019-01-01 01:23:45');
 });
 
 it('can create a report', function () {
-    $report = Report::createForThrowable(new Exception('this is an exception'), new ConsoleContextProvider());
+    $flare = setupFlare(fn (FlareConfig $config) => $config);
 
-    $report = $report->toArray();
+    $report = $flare->report(new Exception('this is an exception'));
 
-    $this->assertMatchesReportSnapshot($report);
+    $this->assertMatchesReportSnapshot($report->toArray());
 });
 
+it('can create an error exception report', function () {
+    $flare = setupFlare(fn (FlareConfig $config) => $config);
+
+    set_error_handler(function () {}); // Ensure no previous error handler is set so that we don't get deprection warnings
+
+    $flare->registerFlareHandlers();
+
+    try {
+        trigger_error('this is a custom error');
+    } catch (Error $error) {
+
+    }
+
+    $this->assertMatchesReportSnapshot(FakeSender::instance()->getLastPayload());
+});
+
+
 it('will generate a uuid', function () {
-    $report = Report::createForThrowable(new Exception('this is an exception'), new ConsoleContextProvider());
+    $flare = setupFlare();
 
-    expect($report->trackingUuid())->toBeString();
+    $report = $flare->report(new Exception('this is an exception'));
 
-    expect($report->toArray()['tracking_uuid'])->toBeString();
+    expect($report->trackingUuid)->toBeUuid();
+
+    expect($report->toArray()['trackingUuid'])->toBeString();
 });
 
 it('can create a report for a string message', function () {
-    $report = Report::createForMessage('this is a message', 'Log', new ConsoleContextProvider());
+    $flare = setupFlare();
 
-    $report = $report->toArray();
+    $report = $flare->reportMessage('this is a message', 'Error');
 
-    $this->assertMatchesReportSnapshot($report);
-});
-
-it('can create a report with glows', function () {
-    /** @var Report $report */
-    $report = Report::createForThrowable(new Exception('this is an exception'), new ConsoleContextProvider());
-
-    $report->addGlow(new Glow('Glow 1', 'info', ['meta' => 'data']));
-
-    $report = $report->toArray();
-
-    $this->assertMatchesReportSnapshot($report);
-});
-
-it('can create a report with meta data', function () {
-    /** @var Report $report */
-    $report = Report::createForThrowable(new Exception('this is an exception'), new ConsoleContextProvider());
-
-    $metadata = [
-        'some' => 'data',
-        'something' => 'more',
-    ];
-
-    $report->userProvidedContext(['meta' => $metadata]);
-
-    expect($report->toArray()['context']['meta'])->toEqual($metadata);
+    $this->assertMatchesReportSnapshot($report->toArray());
 });
 
 it('can create a report with error exception and will cleanup the stack trace', function () {
-    FakeErrorHandler::setup(function (ErrorException $exception) {
-        $stacktrace = Report::createForThrowable($exception, new ConsoleContextProvider())
-            ->toArray()
-            ['stacktrace'];
+    $flare = setupFlare();
+
+    FakeErrorHandler::setup(function (ErrorException $exception) use ($flare) {
+        $stacktrace = $flare->report($exception)->toArray()['stacktrace'];
 
         expect($stacktrace[0]['file'])->toContain('ReportTest.php');
         expect($stacktrace[0]['arguments'])->toBeNull();
@@ -74,4 +67,14 @@ it('can create a report with error exception and will cleanup the stack trace', 
     });
 
     $test->doSomething; // We expect this to fail!
+});
+
+it('will keep sent reports', function () {
+    $flare = setupFlare();
+
+    $report = $flare->report(new Exception('this is an exception'));
+
+    FakeSender::instance()->assertRequestsSent(1);
+
+    expect($flare->sentReports()->all())->toHaveCount(1);
 });

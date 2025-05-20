@@ -2,225 +2,95 @@
 
 namespace Spatie\FlareClient;
 
+use Closure;
 use Error;
 use ErrorException;
 use Exception;
-use Illuminate\Contracts\Container\Container;
-use Illuminate\Pipeline\Pipeline;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
-use Spatie\Backtrace\Arguments\Reducers\ArgumentReducer;
-use Spatie\FlareClient\Concerns\HasContext;
-use Spatie\FlareClient\Context\BaseContextProviderDetector;
-use Spatie\FlareClient\Context\ContextProviderDetector;
-use Spatie\FlareClient\Enums\MessageLevels;
+use Spatie\ErrorSolutions\Contracts\HasSolutionsForThrowable;
+use Spatie\ErrorSolutions\Contracts\SolutionProviderRepository;
+use Spatie\FlareClient\Concerns\HasCustomContext;
+use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\OverriddenGrouping;
-use Spatie\FlareClient\FlareMiddleware\AddEnvironmentInformation;
-use Spatie\FlareClient\FlareMiddleware\AddGlows;
-use Spatie\FlareClient\FlareMiddleware\CensorRequestBodyFields;
+use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
-use Spatie\FlareClient\FlareMiddleware\RemoveRequestIp;
-use Spatie\FlareClient\Glows\Glow;
-use Spatie\FlareClient\Glows\GlowRecorder;
-use Spatie\FlareClient\Http\Client;
-use Spatie\FlareClient\Support\PhpStackFrameArgumentsFixer;
+use Spatie\FlareClient\Recorders\ApplicationRecorder\ApplicationRecorder;
+use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
+use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
+use Spatie\FlareClient\Recorders\ErrorRecorder\ErrorRecorder;
+use Spatie\FlareClient\Recorders\ExternalHttpRecorder\ExternalHttpRecorder;
+use Spatie\FlareClient\Recorders\FilesystemRecorder\FilesystemRecorder;
+use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
+use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
+use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
+use Spatie\FlareClient\Recorders\RedisCommandRecorder\RedisCommandRecorder;
+use Spatie\FlareClient\Recorders\RequestRecorder\RequestRecorder;
+use Spatie\FlareClient\Recorders\ResponseRecorder\ResponseRecorder;
+use Spatie\FlareClient\Recorders\RoutingRecorder\RoutingRecorder;
+use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
+use Spatie\FlareClient\Recorders\ViewRecorder\ViewRecorder;
+use Spatie\FlareClient\Resources\Resource;
+use Spatie\FlareClient\Scopes\Scope;
+use Spatie\FlareClient\Support\BackTracer;
+use Spatie\FlareClient\Support\Container;
+use Spatie\FlareClient\Support\Ids;
+use Spatie\FlareClient\Support\SentReports;
+use Spatie\FlareClient\Support\StacktraceMapper;
+use Spatie\FlareClient\Time\Time;
 use Throwable;
 
 class Flare
 {
-    use HasContext;
-
-    protected Client $client;
-
-    protected Api $api;
-
-    /** @var array<int, FlareMiddleware|class-string<FlareMiddleware>> */
-    protected array $middleware = [];
-
-    protected GlowRecorder $recorder;
-
-    protected ?string $applicationPath = null;
-
-    protected ContextProviderDetector $contextDetector;
+    use HasCustomContext;
 
     protected mixed $previousExceptionHandler = null;
 
-    /** @var null|callable */
-    protected $previousErrorHandler = null;
-
-    /** @var null|callable */
-    protected $determineVersionCallable = null;
-
-    protected ?int $reportErrorLevels = null;
-
-    /** @var null|callable */
-    protected $filterExceptionsCallable = null;
-
-    /** @var null|callable */
-    protected $filterReportsCallable = null;
-
-    protected ?string $stage = null;
-
-    protected ?string $requestId = null;
-
-    protected ?Container $container = null;
-
-    /** @var array<class-string<ArgumentReducer>|ArgumentReducer>|ArgumentReducers|null */
-    protected null|array|ArgumentReducers $argumentReducers = null;
-
-    protected bool $withStackFrameArguments = true;
-
-    /** @var array<class-string, string> */
-    protected array $overriddenGroupings = [];
-
-    public static function make(
-        ?string $apiKey = null,
-        ?ContextProviderDetector $contextDetector = null
-    ): self {
-        $client = new Client($apiKey);
-
-        return new self($client, $contextDetector);
-    }
-
-    public function setApiToken(string $apiToken): self
-    {
-        $this->client->setApiToken($apiToken);
-
-        return $this;
-    }
-
-    public function apiTokenSet(): bool
-    {
-        return $this->client->apiTokenSet();
-    }
-
-    public function setBaseUrl(string $baseUrl): self
-    {
-        $this->client->setBaseUrl($baseUrl);
-
-        return $this;
-    }
-
-    public function setStage(?string $stage): self
-    {
-        $this->stage = $stage;
-
-        return $this;
-    }
-
-    public function sendReportsImmediately(): self
-    {
-        $this->api->sendReportsImmediately();
-
-        return $this;
-    }
-
-    public function determineVersionUsing(callable $determineVersionCallable): self
-    {
-        $this->determineVersionCallable = $determineVersionCallable;
-
-        return $this;
-    }
-
-    public function reportErrorLevels(int $reportErrorLevels): self
-    {
-        $this->reportErrorLevels = $reportErrorLevels;
-
-        return $this;
-    }
-
-    public function filterExceptionsUsing(callable $filterExceptionsCallable): self
-    {
-        $this->filterExceptionsCallable = $filterExceptionsCallable;
-
-        return $this;
-    }
-
-    public function filterReportsUsing(callable $filterReportsCallable): self
-    {
-        $this->filterReportsCallable = $filterReportsCallable;
-
-        return $this;
-    }
-
-    /** @param array<class-string<ArgumentReducer>|ArgumentReducer>|ArgumentReducers|null $argumentReducers */
-    public function argumentReducers(null|array|ArgumentReducers $argumentReducers): self
-    {
-        $this->argumentReducers = $argumentReducers;
-
-        return $this;
-    }
-
-    public function withStackFrameArguments(
-        bool $withStackFrameArguments = true,
-        bool $forcePHPIniSetting = false,
-    ): self {
-        $this->withStackFrameArguments = $withStackFrameArguments;
-
-        if ($forcePHPIniSetting) {
-            (new PhpStackFrameArgumentsFixer())->enable();
-        }
-
-        return $this;
-    }
+    protected mixed $previousErrorHandler = null;
 
     /**
-     * @param class-string $exceptionClass
-     */
-    public function overrideGrouping(
-        string $exceptionClass,
-        string $type = OverriddenGrouping::ExceptionMessageAndClass,
-    ): self {
-        $this->overriddenGroupings[$exceptionClass] = $type;
-
-        return $this;
-    }
-
-    public function version(): ?string
-    {
-        if (! $this->determineVersionCallable) {
-            return null;
-        }
-
-        return ($this->determineVersionCallable)();
-    }
-
-    /**
-     * @param \Spatie\FlareClient\Http\Client $client
-     * @param \Spatie\FlareClient\Context\ContextProviderDetector|null $contextDetector
      * @param array<int, FlareMiddleware> $middleware
+     * @param array<string, Recorder> $recorders
+     * @param null|Closure(Exception): bool $filterExceptionsCallable
+     * @param null|Closure(Report): bool $filterReportsCallable
+     * @param ArgumentReducers|null $argumentReducers
+     * @param array<class-string, OverriddenGrouping> $overriddenGroupings
      */
     public function __construct(
-        Client $client,
-        ?ContextProviderDetector $contextDetector = null,
-        array $middleware = [],
+        protected readonly Api $api,
+        public readonly Tracer $tracer,
+        public readonly BackTracer $backTracer,
+        protected readonly Ids $ids,
+        protected readonly Time $time,
+        protected readonly SentReports $sentReports,
+        protected readonly array $middleware,
+        protected readonly array $recorders,
+        protected readonly ?ErrorRecorder $throwableRecorder,
+        protected readonly ?int $reportErrorLevels,
+        protected null|Closure $filterExceptionsCallable,
+        protected null|Closure $filterReportsCallable,
+        protected readonly SolutionProviderRepository $solutionProviderRepository,
+        protected readonly null|ArgumentReducers $argumentReducers,
+        protected readonly bool $collectStackFrameArguments,
+        protected Resource $resource,
+        protected Scope $scope,
+        protected StacktraceMapper $stacktraceMapper,
+        protected array $overriddenGroupings
     ) {
-        $this->client = $client;
-        $this->recorder = new GlowRecorder();
-        $this->contextDetector = $contextDetector ?? new BaseContextProviderDetector();
-        $this->middleware = $middleware;
-        $this->api = new Api($this->client);
-
-        $this->registerDefaultMiddleware();
     }
 
-    /** @return array<int, FlareMiddleware|class-string<FlareMiddleware>> */
-    public function getMiddleware(): array
-    {
-        return $this->middleware;
-    }
+    public static function make(
+        string|FlareConfig $apiToken,
+    ): self {
+        $config = is_string($apiToken) ? FlareConfig::make($apiToken)->useDefaults() : $apiToken;
 
-    public function setContextProviderDetector(ContextProviderDetector $contextDetector): self
-    {
-        $this->contextDetector = $contextDetector;
+        $container = Container::instance();
 
-        return $this;
-    }
+        $provider = new FlareProvider($config, $container);
 
-    public function setContainer(Container $container): self
-    {
-        $this->container = $container;
+        $provider->register();
+        $provider->boot();
 
-        return $this;
+        return $container->get(Flare::class);
     }
 
     public function registerFlareHandlers(): self
@@ -248,53 +118,94 @@ class Flare
         return $this;
     }
 
-    protected function registerDefaultMiddleware(): self
+    public function bootRecorders(): self
     {
-        return $this->registerMiddleware([
-            new AddGlows($this->recorder),
-            new AddEnvironmentInformation(),
-        ]);
-    }
-
-    /**
-     * @param FlareMiddleware|array<FlareMiddleware>|class-string<FlareMiddleware>|callable $middleware
-     *
-     * @return $this
-     */
-    public function registerMiddleware($middleware): self
-    {
-        if (! is_array($middleware)) {
-            $middleware = [$middleware];
+        foreach ($this->recorders as $recorder) {
+            $recorder->boot();
         }
 
-        $this->middleware = array_merge($this->middleware, $middleware);
-
         return $this;
     }
 
-    /**
-     * @return array<int,FlareMiddleware|class-string<FlareMiddleware>>
-     */
-    public function getMiddlewares(): array
+    public function tracer(): Tracer
     {
-        return $this->middleware;
+        return $this->tracer;
     }
 
-    /**
-     * @param string $name
-     * @param string $messageLevel
-     * @param array<int, mixed> $metaData
-     *
-     * @return $this
-     */
-    public function glow(
-        string $name,
-        string $messageLevel = MessageLevels::INFO,
-        array $metaData = []
-    ): self {
-        $this->recorder->record(new Glow($name, $messageLevel, $metaData));
+    public function application(): ApplicationRecorder
+    {
+        return $this->recorders[RecorderType::Application->value];
+    }
 
-        return $this;
+    public function cache(): CacheRecorder|null
+    {
+        return $this->recorders[RecorderType::Cache->value] ?? null;
+    }
+
+    public function command(): CommandRecorder|null
+    {
+        return $this->recorders[RecorderType::Command->value] ?? null;
+    }
+
+    public function externalHttp(): ExternalHttpRecorder|null
+    {
+        return $this->recorders[RecorderType::ExternalHttp->value] ?? null;
+    }
+
+    public function filesystem(): FilesystemRecorder|null
+    {
+        return $this->recorders[RecorderType::Filesystem->value] ?? null;
+    }
+
+    public function glow(): GlowRecorder|null
+    {
+        return $this->recorders[RecorderType::Glow->value] ?? null;
+    }
+
+    public function log(): LogRecorder|null
+    {
+        return $this->recorders[RecorderType::Log->value] ?? null;
+    }
+
+    public function query(): QueryRecorder|null
+    {
+        return $this->recorders[RecorderType::Query->value] ?? null;
+    }
+
+    public function redisCommand(): RedisCommandRecorder|null
+    {
+        return $this->recorders[RecorderType::RedisCommand->value] ?? null;
+    }
+
+    public function request(): RequestRecorder|null
+    {
+        return $this->recorders[RecorderType::Request->value] ?? null;
+    }
+
+    public function response(): ResponseRecorder|null
+    {
+        return $this->recorders[RecorderType::Response->value] ?? null;
+    }
+
+    public function routing(): RoutingRecorder|null
+    {
+        return $this->recorders[RecorderType::Routing->value] ?? null;
+    }
+
+    public function transaction(): TransactionRecorder|null
+    {
+        return $this->recorders[RecorderType::Transaction->value] ?? null;
+    }
+
+    public function view(): ViewRecorder|null
+    {
+        return $this->recorders[RecorderType::View->value] ?? null;
+    }
+
+    public function recorder(
+        RecorderType|string $type
+    ): Recorder {
+        return $this->recorders[is_string($type) ? $type : $type->value];
     }
 
     public function handleException(Throwable $throwable): void
@@ -306,17 +217,14 @@ class Flare
         }
     }
 
-    /**
-     * @return mixed
-     */
-    public function handleError(mixed $code, string $message, string $file = '', int $line = 0)
+    public function handleError(mixed $code, string $message, string $file = '', int $line = 0): void
     {
         $exception = new ErrorException($message, 0, $code, $file, $line);
 
         $this->report($exception);
 
         if ($this->previousErrorHandler) {
-            return call_user_func(
+            call_user_func(
                 $this->previousErrorHandler,
                 $code,
                 $message,
@@ -326,39 +234,61 @@ class Flare
         }
     }
 
-    public function applicationPath(string $applicationPath): self
-    {
-        $this->applicationPath = $applicationPath;
-
-        return $this;
-    }
-
-    public function report(Throwable $throwable, ?callable $callback = null, ?Report $report = null, ?bool $handled = null): ?Report
-    {
+    /**
+     * @param callable(ReportFactory $report):void|null $callback
+     */
+    public function report(
+        Throwable $throwable,
+        ?callable $callback = null,
+        ?bool $handled = null
+    ): ?Report {
         if (! $this->shouldSendReport($throwable)) {
+            $this->tracer->gracefullyHandleError();
+
             return null;
         }
 
-        $report ??= $this->createReport($throwable);
+        $report = $this->createReport($throwable, $callback, $handled);
 
-        if ($handled) {
-            $report->handled();
+        if ($this->throwableRecorder) {
+            $this->throwableRecorder->record($report);
         }
 
-        if (! is_null($callback)) {
-            call_user_func($callback, $report);
-        }
+        $this->tracer->gracefullyHandleError();
 
-        $this->recorder->reset();
+        $this->resetRecorders();
+
+        $this->sentReports->add($report);
 
         $this->sendReportToApi($report);
 
         return $report;
     }
 
+    public function createReport(
+        Throwable $throwable,
+        ?callable $callback = null,
+        ?bool $handled = null
+    ): Report {
+        $factory = $this->feedReportFactory(
+            ReportFactory::createForThrowable($throwable),
+            $callback
+        );
+
+        if ($handled) {
+            $factory->handled();
+        }
+
+        return $factory->build(
+            $this->stacktraceMapper,
+            $this->time,
+            $this->ids,
+        );
+    }
+
     public function reportHandled(Throwable $throwable): ?Report
     {
-        return $this->report($throwable, null, null, true);
+        return $this->report($throwable, handled: true);
     }
 
     protected function shouldSendReport(Throwable $throwable): bool
@@ -378,20 +308,39 @@ class Flare
         return true;
     }
 
-    public function reportMessage(string $message, string $logLevel, ?callable $callback = null): void
-    {
-        $report = $this->createReportFromMessage($message, $logLevel);
+    /**
+     * @param callable(ReportFactory $report): void|null $callback
+     */
+    public function reportMessage(
+        string $message,
+        string $logLevel,
+        ?callable $callback = null,
+    ): Report {
+        $factory = $this->feedReportFactory(
+            ReportFactory::createForMessage($message, $logLevel),
+            $callback
+        );
 
-        if (! is_null($callback)) {
-            call_user_func($callback, $report);
-        }
+        $report = $factory->build(
+            $this->stacktraceMapper,
+            $this->time,
+            $this->ids,
+        );
 
         $this->sendReportToApi($report);
+
+        return $report;
     }
 
     public function sendTestReport(Throwable $throwable): void
     {
-        $this->api->sendTestReport($this->createReport($throwable));
+        $this->api->test(
+            ReportFactory::createForThrowable($throwable)->resource($this->resource)->build(
+                $this->stacktraceMapper,
+                $this->time,
+                $this->ids,
+            ),
+        );
     }
 
     protected function sendReportToApi(Report $report): void
@@ -408,87 +357,114 @@ class Flare
         }
     }
 
-    public function reset(): void
+    public function withApplicationVersion(string|Closure $version): self
     {
-        $this->api->sendQueuedReports();
+        $this->resource->serviceVersion(is_callable($version) ? $version() : $version);
 
-        $this->userProvidedContext = [];
-
-        $this->recorder->reset();
+        return $this;
     }
 
-    protected function applyAdditionalParameters(Report $report): void
+    public function withApplicationName(string|Closure $name): self
     {
-        $report
-            ->stage($this->stage)
-            ->messageLevel($this->messageLevel)
-            ->setApplicationPath($this->applicationPath)
-            ->userProvidedContext($this->userProvidedContext);
+        $this->resource->serviceName(is_callable($name) ? $name() : $name);
+
+        return $this;
     }
 
-    public function anonymizeIp(): self
+    public function withApplicationStage(string|Closure $stage): self
     {
-        $this->registerMiddleware(new RemoveRequestIp());
+        $this->resource->serviceStage(is_callable($stage) ? $stage() : $stage);
 
         return $this;
     }
 
     /**
-     * @param array<int, string> $fieldNames
-     *
-     * @return $this
+     * @param class-string<HasSolutionsForThrowable> ...$solutionProviders
      */
-    public function censorRequestBodyFields(array $fieldNames): self
+    public function withSolutionProvider(string ...$solutionProviders): self
     {
-        $this->registerMiddleware(new CensorRequestBodyFields($fieldNames));
+        $this->solutionProviderRepository->registerSolutionProviders($solutionProviders);
 
         return $this;
     }
 
-    public function createReport(Throwable $throwable): Report
+    /**
+     * @param Closure(Exception): bool $filterExceptionsCallable
+     */
+    public function filterExceptionsUsing(Closure $filterExceptionsCallable): static
     {
-        $report = Report::createForThrowable(
-            $throwable,
-            $this->contextDetector->detectCurrentContext(),
-            $this->applicationPath,
-            $this->version(),
-            $this->argumentReducers,
-            $this->withStackFrameArguments,
-            $this->overriddenGroupings,
-        );
+        $this->filterExceptionsCallable = $filterExceptionsCallable;
 
-        return $this->applyMiddlewareToReport($report);
+        return $this;
     }
 
-    public function createReportFromMessage(string $message, string $logLevel): Report
+    /**
+     * @param Closure(Report): bool $filterReportsCallable
+     */
+    public function filterReportsUsing(Closure $filterReportsCallable): static
     {
-        $report = Report::createForMessage(
-            $message,
-            $logLevel,
-            $this->contextDetector->detectCurrentContext(),
-            $this->applicationPath,
-            $this->argumentReducers,
-            $this->withStackFrameArguments
-        );
+        $this->filterReportsCallable = $filterReportsCallable;
 
-        return $this->applyMiddlewareToReport($report);
+        return $this;
     }
 
-    protected function applyMiddlewareToReport(Report $report): Report
+    public function sendReportsImmediately(bool $sendReportsImmediately = true): self
     {
-        $this->applyAdditionalParameters($report);
-        $middleware = array_map(function ($singleMiddleware) {
-            return is_string($singleMiddleware)
-                ? new $singleMiddleware
-                : $singleMiddleware;
-        }, $this->middleware);
+        $this->api->sendReportsImmediately($sendReportsImmediately);
 
+        return $this;
+    }
 
-        $report = (new Pipeline())
-            ->send($report)
-            ->through($middleware)
-            ->then(fn ($report) => $report);
+    public function reset(
+        bool $reports = true,
+        bool $traces = true,
+    ): void {
+        $this->api->sendQueue(reports: $reports, traces: $traces);
 
-        return $report;
+        if ($reports) {
+            $this->customContext = [];
+
+            $this->resetRecorders();
+            $this->sentReports->clear();
+        }
+    }
+
+    public function sentReports(): SentReports
+    {
+        return $this->sentReports;
+    }
+
+    protected function resetRecorders(): void
+    {
+        foreach ($this->recorders as $recorder) {
+            $recorder->reset();
+        }
+    }
+
+    /**
+     * @param callable(ReportFactory $report): void|null $callback
+     */
+    protected function feedReportFactory(
+        ReportFactory $factory,
+        ?callable $callback
+    ): ReportFactory {
+        $factory
+            ->resource($this->resource)
+            ->collectStackTraceArguments($this->collectStackFrameArguments)
+            ->argumentReducers($this->argumentReducers)
+            ->overriddenGroupings($this->overriddenGroupings)
+            ->context($this->customContext);
+
+        foreach ($this->middleware as $middleware) {
+            $factory = $middleware->handle($factory, function ($factory) {
+                return $factory;
+            });
+        }
+
+        if (! is_null($callback)) {
+            call_user_func($callback, $factory);
+        }
+
+        return $factory;
     }
 }
