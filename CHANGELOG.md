@@ -2,6 +2,13 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 2.0.0 - 2025-05-20
+
+A complete rewrite of the package:
+
+- You can read our new docs on what has changed
+- There's an upgrade guide available
+
 ## 1.10.1 - 2025-02-14
 
 ### What's Changed
