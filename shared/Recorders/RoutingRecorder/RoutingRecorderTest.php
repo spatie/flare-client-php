@@ -138,12 +138,12 @@ it('will automatically close other fases of the routing', function () {
 
     FakeIds::setup()
         ->nextTraceIdTimes('fake-trace-id', 6)
-        ->nextSpanId('fake-app-id', 'fake-global-before-id', 'fake-before-id', 'fake-routing-id', 'fake-after-id', 'fake-global-after-id');
+        ->nextSpanId('fake-app-id', 'fake-global-before-id',  'fake-routing-id', 'fake-before-id', 'fake-after-id', 'fake-global-after-id');
 
     $flare->application()->recordStart(time: 0);
     $flare->routing()->recordGlobalBeforeMiddlewareStart(time: 10);
-    $flare->routing()->recordBeforeMiddlewareStart(time: 20);
-    $flare->routing()->recordRoutingStart(time: 30);
+    $flare->routing()->recordRoutingStart(time: 20);
+    $flare->routing()->recordBeforeMiddlewareStart(time: 30);
     $flare->routing()->recordAfterMiddlewareStart(time: 40);
     $flare->routing()->recordGlobalAfterMiddlewareStart(time: 50);
     $flare->routing()->recordGlobalBeforeMiddlewareEnd(time: 60);
@@ -174,18 +174,18 @@ it('will automatically close other fases of the routing', function () {
     expect($payload[2])
         ->toBeInstanceOf(Span::class)
         ->traceId->toBe('fake-trace-id')
-        ->spanId->toBe('fake-before-id')
+        ->spanId->toBe('fake-routing-id')
         ->start->toBe(20)
         ->end->toBe(30)
-        ->attributes->toHaveKey('flare.span_type', SpanType::BeforeMiddleware);
+        ->attributes->toHaveKey('flare.span_type', SpanType::Routing);
 
     expect($payload[3])
         ->toBeInstanceOf(Span::class)
         ->traceId->toBe('fake-trace-id')
-        ->spanId->toBe('fake-routing-id')
+        ->spanId->toBe('fake-before-id')
         ->start->toBe(30)
         ->end->toBe(40)
-        ->attributes->toHaveKey('flare.span_type', SpanType::Routing);
+        ->attributes->toHaveKey('flare.span_type', SpanType::BeforeMiddleware);
 
     expect($payload[4])
         ->toBeInstanceOf(Span::class)
