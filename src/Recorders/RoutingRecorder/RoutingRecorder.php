@@ -85,7 +85,6 @@ class RoutingRecorder implements SpansRecorder
         return null;
     }
 
-
     public function recordRoutingStart(
         array $attributes = [],
         ?int $time = null
@@ -145,7 +144,7 @@ class RoutingRecorder implements SpansRecorder
             $this->recordGlobalBeforeMiddlewareEnd(time: $time);
         }
 
-        if($this->routing){
+        if ($this->routing) {
             $this->recordRoutingEnd(time: $time);
         }
 
