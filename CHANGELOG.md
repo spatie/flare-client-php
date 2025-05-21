@@ -2,6 +2,10 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 2.0.2 - 2025-05-21
+
+- Use correct base url
+
 ## 2.0.1 - 2025-05-21
 
 - Routing changes
