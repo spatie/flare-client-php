@@ -13,15 +13,15 @@ test('it can run through a routing lifecycle', function () {
 
     FakeIds::setup()
         ->nextTraceIdTimes('fake-trace-id', 6)
-        ->nextSpanId('fake-app-id', 'fake-global-before-id', 'fake-before-id', 'fake-routing-id', 'fake-after-id', 'fake-global-after-id');
+        ->nextSpanId('fake-app-id', 'fake-global-before-id',  'fake-routing-id', 'fake-before-id', 'fake-after-id', 'fake-global-after-id');
 
     $flare->application()->recordStart(time: 0);
     $flare->routing()->recordGlobalBeforeMiddlewareStart(time: 10);
     $flare->routing()->recordGlobalBeforeMiddlewareEnd(time: 20);
-    $flare->routing()->recordBeforeMiddlewareStart(time: 30);
-    $flare->routing()->recordBeforeMiddlewareEnd(time: 40);
-    $flare->routing()->recordRoutingStart(time: 50);
-    $flare->routing()->recordRoutingEnd(time: 60);
+    $flare->routing()->recordRoutingStart(time: 30);
+    $flare->routing()->recordRoutingEnd(time: 40);
+    $flare->routing()->recordBeforeMiddlewareStart(time: 50);
+    $flare->routing()->recordBeforeMiddlewareEnd(time: 60);
     $flare->routing()->recordAfterMiddlewareStart(time: 70);
     $flare->routing()->recordAfterMiddlewareEnd(time: 80);
     $flare->routing()->recordGlobalAfterMiddlewareStart(time: 90);
@@ -52,18 +52,18 @@ test('it can run through a routing lifecycle', function () {
     expect($payload[2])
         ->toBeInstanceOf(Span::class)
         ->traceId->toBe('fake-trace-id')
-        ->spanId->toBe('fake-before-id')
+        ->spanId->toBe('fake-routing-id')
         ->start->toBe(30)
         ->end->toBe(40)
-        ->attributes->toHaveKey('flare.span_type', SpanType::BeforeMiddleware);
+        ->attributes->toHaveKey('flare.span_type', SpanType::Routing);
 
     expect($payload[3])
         ->toBeInstanceOf(Span::class)
         ->traceId->toBe('fake-trace-id')
-        ->spanId->toBe('fake-routing-id')
+        ->spanId->toBe('fake-before-id')
         ->start->toBe(50)
         ->end->toBe(60)
-        ->attributes->toHaveKey('flare.span_type', SpanType::Routing);
+        ->attributes->toHaveKey('flare.span_type', SpanType::BeforeMiddleware);
 
     expect($payload[4])
         ->toBeInstanceOf(Span::class)
@@ -87,11 +87,11 @@ test('it can run through a routing lifecycle without global middleware', functio
 
     FakeIds::setup()
         ->nextTraceIdTimes('fake-trace-id', 6)
-        ->nextSpanId('fake-app-id',  'fake-before-id', 'fake-routing-id', 'fake-after-id');
+        ->nextSpanId('fake-app-id',  'fake-routing-id', 'fake-before-id', 'fake-after-id');
 
     $flare->application()->recordStart(time: 0);
-    $flare->routing()->recordBeforeMiddleware(start: 0, end: 10);
-    $flare->routing()->recordRouting(start: 10, end: 20);
+    $flare->routing()->recordRouting(start: 0, end: 10);
+    $flare->routing()->recordBeforeMiddleware(start: 10, end: 20);
     $flare->routing()->recordAfterMiddleware(start: 20, end: 30);
     $flare->application()->recordEnd(time: 30);
 
@@ -111,18 +111,18 @@ test('it can run through a routing lifecycle without global middleware', functio
     expect($payload[1])
         ->toBeInstanceOf(Span::class)
         ->traceId->toBe('fake-trace-id')
-        ->spanId->toBe('fake-before-id')
+        ->spanId->toBe('fake-routing-id')
         ->start->toBe(0)
         ->end->toBe(10)
-        ->attributes->toHaveKey('flare.span_type', SpanType::BeforeMiddleware);
+        ->attributes->toHaveKey('flare.span_type', SpanType::Routing);
 
     expect($payload[2])
         ->toBeInstanceOf(Span::class)
         ->traceId->toBe('fake-trace-id')
-        ->spanId->toBe('fake-routing-id')
+        ->spanId->toBe('fake-before-id')
         ->start->toBe(10)
         ->end->toBe(20)
-        ->attributes->toHaveKey('flare.span_type', SpanType::Routing);
+        ->attributes->toHaveKey('flare.span_type', SpanType::BeforeMiddleware);
 
     expect($payload[3])
         ->toBeInstanceOf(Span::class)
