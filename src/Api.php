@@ -21,7 +21,7 @@ class Api
 
     public function __construct(
         protected string $apiToken,
-        protected string $baseUrl = 'https://reporting.flareapp.io',
+        protected string $baseUrl,
         protected Sender $sender = new CurlSender(),
         protected bool $sendReportsImmediately = false,
     ) {
