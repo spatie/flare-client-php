@@ -75,7 +75,7 @@ class FlareConfig
      */
     public function __construct(
         public ?string $apiToken = null,
-        public string $baseUrl = 'https://ingress.flareapp.io',
+        public string $baseUrl = Api::BASE_URL,
         public bool $sendReportsImmediately = false,
         public array $collects = [],
         public ?int $reportErrorLevels = null,

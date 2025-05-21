@@ -13,6 +13,8 @@ use Spatie\FlareClient\Truncation\ReportTrimmer;
 
 class Api
 {
+    public const BASE_URL = 'https://ingress.flareapp.io';
+
     /** @var array<int, Report> */
     protected array $reportQueue = [];
 
