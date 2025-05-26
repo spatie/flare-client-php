@@ -92,7 +92,7 @@ class OpenTelemetryAttributeMapper
 
     public function valueToPHP(?array $value): mixed
     {
-        if($value === null) {
+        if ($value === null) {
             return null;
         }
 
