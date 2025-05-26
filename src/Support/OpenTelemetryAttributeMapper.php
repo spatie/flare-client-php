@@ -90,8 +90,12 @@ class OpenTelemetryAttributeMapper
         return $out;
     }
 
-    public function valueToPHP(array $value): mixed
+    public function valueToPHP(?array $value): mixed
     {
+        if($value === null) {
+            return null;
+        }
+
         if (array_key_exists('stringValue', $value)) {
             if (str_starts_with($value['stringValue'], '{') && str_ends_with($value['stringValue'], '}')) {
                 try {
