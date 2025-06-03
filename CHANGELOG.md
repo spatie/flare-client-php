@@ -2,6 +2,10 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 2.0.5 - 2025-06-03
+
+- Add base path to stacktrace builder
+
 ## 2.0.3 - 2025-05-21
 
 - Use base URL const
