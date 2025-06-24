@@ -2,6 +2,7 @@
 
 use PHPUnit\Framework\Exception;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
+use Spatie\FlareClient\Disabled\DisabledFlare;
 use Spatie\FlareClient\Enums\CacheOperation;
 use Spatie\FlareClient\Enums\CacheResult;
 use Spatie\FlareClient\Enums\MessageLevels;
@@ -826,6 +827,16 @@ it('it can add additional middleware', function () {
     expect($payload['attributes']['context.custom'])->toEqual([
         'extra' => ['key' => 'value'],
     ]);
+});
+
+it('can setup a disabled flare', function (){
+    $flare = DisabledFlare::make('');
+
+    $flare->sentReports()->all();
+    $flare->application()->recordBooting();
+    $flare->tracer->startSpan('test');
+
+    expect(true)->toBeTrue();
 });
 
 // Helpers

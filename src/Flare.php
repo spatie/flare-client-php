@@ -133,6 +133,11 @@ class Flare
         return $this->tracer;
     }
 
+    public function backTracer(): BackTracer
+    {
+        return $this->backTracer;
+    }
+
     public function application(): ApplicationRecorder
     {
         return $this->recorders[RecorderType::Application->value];
