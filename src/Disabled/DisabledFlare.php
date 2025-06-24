@@ -3,9 +3,6 @@
 namespace Spatie\FlareClient\Disabled;
 
 use Closure;
-use Exception;
-use JetBrains\PhpStorm\NoReturn;
-use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Flare;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Recorders\ApplicationRecorder\ApplicationRecorder;
@@ -35,8 +32,7 @@ class DisabledFlare extends Flare
 
     public function __construct(
         public Tracer $tracer = new DisabledTracer()
-    )
-    {
+    ) {
     }
 
     public static function make(
@@ -134,7 +130,6 @@ class DisabledFlare extends Flare
     {
         return null;
     }
-
 
     public function handleException(Throwable $throwable): void
     {

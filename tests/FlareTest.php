@@ -829,7 +829,7 @@ it('it can add additional middleware', function () {
     ]);
 });
 
-it('can setup a disabled flare', function (){
+it('can setup a disabled flare', function () {
     $flare = DisabledFlare::make('');
 
     $flare->sentReports()->all();

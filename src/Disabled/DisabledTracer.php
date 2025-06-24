@@ -3,24 +3,11 @@
 namespace Spatie\FlareClient\Disabled;
 
 use Closure;
-use Exception;
-use Spatie\FlareClient\Api;
 use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Enums\SamplingType;
-use Spatie\FlareClient\Enums\SpanStatusCode;
-use Spatie\FlareClient\Resources\Resource;
-use Spatie\FlareClient\Sampling\RateSampler;
-use Spatie\FlareClient\Sampling\Sampler;
-use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
-use Spatie\FlareClient\Support\GracefulSpanEnder;
-use Spatie\FlareClient\Support\Ids;
-use Spatie\FlareClient\Support\TraceLimits;
-use Spatie\FlareClient\Time\Time;
-use Spatie\FlareClient\TraceExporters\TraceExporter;
 use Spatie\FlareClient\Tracer;
-use Throwable;
 
 class DisabledTracer extends Tracer
 {
@@ -106,7 +93,7 @@ class DisabledTracer extends Tracer
         array $attributes = [],
         bool $canStartTraces = true,
     ): ?Span {
-       return null;
+        return null;
     }
 
     public function endSpan(

@@ -2,12 +2,8 @@
 
 namespace Spatie\FlareClient\Disabled;
 
-use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Recorders\ApplicationRecorder\ApplicationRecorder;
 use Spatie\FlareClient\Spans\Span;
-use Spatie\FlareClient\Support\BackTracer;
-use Spatie\FlareClient\Support\TimeInterval;
-use Spatie\FlareClient\Tracer;
 
 class DisabledApplicationRecorder extends ApplicationRecorder
 {
