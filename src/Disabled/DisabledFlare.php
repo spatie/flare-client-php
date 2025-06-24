@@ -31,8 +31,9 @@ class DisabledFlare extends Flare
     public ApplicationRecorder $disabledApplicationRecorder;
 
     public function __construct(
-        public Tracer $tracer = new DisabledTracer()
-    ) {
+        public readonly Tracer $tracer = new DisabledTracer()
+    )
+    {
     }
 
     public static function make(
