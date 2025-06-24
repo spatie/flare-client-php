@@ -2,6 +2,10 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 2.0.6 - 2025-06-24
+
+- Add support for disabled Flare
+
 ## 2.0.5 - 2025-06-03
 
 - Add base path to stacktrace builder
