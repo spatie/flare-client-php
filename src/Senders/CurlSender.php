@@ -11,10 +11,14 @@ class CurlSender implements Sender
 {
     protected int $timeout;
 
+    /** @var array<int, mixed> */
+    private array $curlOptions;
+
     public function __construct(
         protected array $config = []
     ) {
         $this->timeout = $this->config['timeout'] ?? 10;
+        $this->curlOptions = $this->config['curl_options'] ?? [];
     }
 
     public function post(string $endpoint, string $apiToken, array $payload, Closure $callback): void
@@ -38,6 +42,10 @@ class CurlSender implements Sender
         }
 
         curl_setopt($curlHandle, CURLOPT_POSTFIELDS, $encoded);
+
+        foreach ($this->curlOptions as $option => $value) {
+            curl_setopt($curlHandle, $option, $value);
+        }
 
         $json = curl_exec($curlHandle);
 
