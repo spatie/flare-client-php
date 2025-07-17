@@ -37,7 +37,7 @@ class DisabledFlare extends Flare
     }
 
     public static function make(
-        string|FlareConfig $apiToken,
+        string|FlareConfig|null $apiToken,
     ): self {
         return new self;
     }

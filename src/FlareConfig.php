@@ -109,7 +109,7 @@ class FlareConfig
     ) {
     }
 
-    public static function make(string $apiToken): static
+    public static function make(?string $apiToken): static
     {
         return new static($apiToken);
     }

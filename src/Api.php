@@ -22,7 +22,7 @@ class Api
     protected array $traceQueue = [];
 
     public function __construct(
-        protected string $apiToken,
+        protected ?string $apiToken,
         protected string $baseUrl,
         protected Sender $sender = new CurlSender(),
         protected bool $sendReportsImmediately = false,
@@ -134,6 +134,10 @@ class Api
         string $endpoint,
         array $payload,
     ): void {
+        if ($this->apiToken === null) {
+            return;
+        }
+
         $this->sender->post(
             $endpoint,
             $this->apiToken,

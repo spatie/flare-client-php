@@ -51,7 +51,7 @@ class FlareProvider
         ));
 
         $this->container->singleton(Api::class, fn () => new Api(
-            apiToken: $this->config->apiToken ?? 'No Api Token provided',
+            apiToken: $this->config->apiToken,
             baseUrl: $this->config->baseUrl,
             sender: $this->container->get(Sender::class),
             sendReportsImmediately: $this->config->sendReportsImmediately

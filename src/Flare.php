@@ -80,9 +80,9 @@ class Flare
     }
 
     public static function make(
-        string|FlareConfig $apiToken,
+        string|FlareConfig|null $apiToken,
     ): self {
-        $config = is_string($apiToken) ? FlareConfig::make($apiToken)->useDefaults() : $apiToken;
+        $config = $apiToken instanceof FlareConfig ? $apiToken : FlareConfig::make($apiToken)->useDefaults();
 
         $container = Container::instance();
 
@@ -246,7 +246,8 @@ class Flare
     public function report(
         Throwable $throwable,
         ?callable $callback = null,
-        ?bool $handled = null
+        ?bool $handled = null,
+        ?Report $report = null
     ): ?Report {
         if (! $this->shouldSendReport($throwable)) {
             $this->tracer->gracefullyHandleError();
@@ -254,7 +255,7 @@ class Flare
             return null;
         }
 
-        $report = $this->createReport($throwable, $callback, $handled);
+        $report ??= $this->createReport($throwable, $callback, $handled);
 
         if ($this->throwableRecorder) {
             $this->throwableRecorder->record($report);
