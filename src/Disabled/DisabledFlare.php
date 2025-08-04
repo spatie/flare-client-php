@@ -32,8 +32,7 @@ class DisabledFlare extends Flare
 
     public function __construct(
         public readonly Tracer $tracer = new DisabledTracer()
-    )
-    {
+    ) {
     }
 
     public static function make(
