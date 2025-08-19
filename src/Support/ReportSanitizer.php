@@ -10,8 +10,11 @@ class ReportSanitizer
     const REPLACED_ENTRY_PREFIX = 'Spatie/Flare';
 
     /**
-     * @param  array<string,array|string|bool|int|null>  $payload
-     * @return array<string|int,mixed>
+     * @template K of array-key
+     * @template V
+     *
+     * @param  array<K,V>  $payload
+     * @return array<K,mixed>
      */
     public static function sanitizePayload(array $payload): array
     {
@@ -25,8 +28,10 @@ class ReportSanitizer
     }
 
     /**
-     * @param  array<string|int,mixed>  $input
-     * @return array<string|int,mixed>
+     * @template K of array-key
+     *
+     * @param  array<K,mixed>  $input
+     * @return array<K,mixed>
      */
     protected static function replaceNonEncodableEntries(array $input): array
     {
