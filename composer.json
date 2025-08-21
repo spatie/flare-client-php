@@ -9,6 +9,7 @@
     ],
     "homepage": "https://github.com/spatie/flare-client-php",
     "license": "MIT",
+    "repositories" : [{"type": "path", "url" : "../ignition"}],
     "require": {
         "php": "^8.2",
         "ext-curl": "*",
@@ -26,7 +27,11 @@
         "phpstan/extension-installer": "^1.4",
         "phpstan/phpstan-deprecation-rules": "^1.2",
         "phpstan/phpstan-phpunit": "^1.4",
-        "spatie/pest-plugin-snapshots": "^2.2"
+        "spatie/pest-plugin-snapshots": "^2.2",
+        "spatie/ignition" : "@dev"
+    },
+    "suggest": {
+        "spatie/ignition": "Add the best error page to your application"
     },
     "autoload": {
         "psr-4": {

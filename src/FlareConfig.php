@@ -106,6 +106,7 @@ class FlareConfig
         public string $ids = Ids::class,
         public string $time = SystemTime::class,
         public array $overriddenGroupings = [],
+        public bool $enableIgnition = true,
     ) {
     }
 

@@ -69,6 +69,11 @@ class Api
         $this->sendReportToApi($report);
     }
 
+    public function hasApiToken(): bool
+    {
+        return $this->apiToken !== null;
+    }
+
     protected function addReportToQueue(Report $report): self
     {
         $this->reportQueue[] = $report;

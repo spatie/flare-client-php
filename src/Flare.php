@@ -441,6 +441,11 @@ class Flare
         return $this->sentReports;
     }
 
+    public function hasApiToken(): bool
+    {
+        return $this->api->hasApiToken();
+    }
+
     protected function resetRecorders(): void
     {
         foreach ($this->recorders as $recorder) {
