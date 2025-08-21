@@ -2,6 +2,14 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 2.0.8 - 2025-08-21
+
+### What's Changed
+
+* Fix issue where dns servers were contacted by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/44
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/2.0.7...2.0.8
+
 ## 2.0.7 - 2025-07-17
 
 - Add support for Curl Options
