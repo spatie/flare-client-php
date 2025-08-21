@@ -6,6 +6,7 @@ use Composer\InstalledVersions;
 use Spatie\FlareClient\AttributesProviders\GitAttributesProvider;
 use Spatie\FlareClient\Concerns\HasAttributes;
 use Spatie\FlareClient\Contracts\WithAttributes;
+use Spatie\FlareClient\Support\HostIpFetcher;
 use Spatie\FlareClient\Support\Telemetry;
 
 /** @see https://github.com/opentelemetry-php/sdk/blob/main/Resource/Detectors/ */
@@ -80,8 +81,8 @@ class Resource implements WithAttributes
 
     public function host(): self
     {
-        if ($hostname = gethostname()) {
-            $this->attributes['host.ip'] = gethostbyname($hostname);
+        if ($hostIp = HostIpFetcher::fetch()) {
+            $this->attributes['host.ip'] = $hostIp;
         }
 
         $this->attributes['host.name'] = php_uname('n');
