@@ -2,6 +2,13 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 2.0.9 - 2025-08-25
+
+- Laravel's `artisan` is now considered a vendor file in stacktraces
+- Statamic's `please` is now considered a vendor file in stacktraces
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/2.0.8...2.0.9
+
 ## 2.0.8 - 2025-08-21
 
 ### What's Changed
