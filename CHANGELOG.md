@@ -2,6 +2,10 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 2.1.0 - 2025-08-27
+
+- Add support for stacktraces with logs
+
 ## 2.0.9 - 2025-08-25
 
 - Laravel's `artisan` is now considered a vendor file in stacktraces
