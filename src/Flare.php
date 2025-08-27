@@ -75,7 +75,8 @@ class Flare
         protected Scope $scope,
         protected StacktraceMapper $stacktraceMapper,
         protected ?string $applicationPath,
-        protected array $overriddenGroupings
+        protected array $overriddenGroupings,
+        protected bool $includeStackTraceWithMessages,
     ) {
     }
 
@@ -460,6 +461,7 @@ class Flare
             ->argumentReducers($this->argumentReducers)
             ->overriddenGroupings($this->overriddenGroupings)
             ->applicationPath($this->applicationPath)
+            ->includeStackTraceWithMessages($this->includeStackTraceWithMessages)
             ->context($this->customContext);
 
         foreach ($this->middleware as $middleware) {

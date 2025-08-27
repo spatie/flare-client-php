@@ -223,6 +223,7 @@ class FlareProvider
                 stacktraceMapper: $this->container->get(StacktraceMapper::class),
                 applicationPath: $this->config->applicationPath,
                 overriddenGroupings: $this->config->overriddenGroupings,
+                includeStackTraceWithMessages: $this->config->includeStackTraceWithMessages,
             );
         });
 

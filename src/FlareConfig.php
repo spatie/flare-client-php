@@ -106,6 +106,7 @@ class FlareConfig
         public string $ids = Ids::class,
         public string $time = SystemTime::class,
         public array $overriddenGroupings = [],
+        public bool $includeStackTraceWithMessages = false,
     ) {
     }
 
@@ -716,6 +717,14 @@ class FlareConfig
         string $userAttributesProvider
     ): static {
         $this->userAttributesProvider = $userAttributesProvider;
+
+        return $this;
+    }
+
+    public function includeStackTraceWithMessages(
+        bool $includeStackTraceWithMessages = true
+    ): static {
+        $this->includeStackTraceWithMessages = $includeStackTraceWithMessages;
 
         return $this;
     }

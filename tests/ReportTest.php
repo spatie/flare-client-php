@@ -23,7 +23,8 @@ it('can create a report', function () {
 it('can create an error exception report', function () {
     $flare = setupFlare(fn (FlareConfig $config) => $config);
 
-    set_error_handler(function () {}); // Ensure no previous error handler is set so that we don't get deprection warnings
+    set_error_handler(function () {
+    }); // Ensure no previous error handler is set so that we don't get deprection warnings
 
     $flare->registerFlareHandlers();
 
@@ -49,6 +50,28 @@ it('will generate a uuid', function () {
 
 it('can create a report for a string message', function () {
     $flare = setupFlare();
+
+    $report = $flare->reportMessage('this is a message', 'Error')->toArray();
+
+    $this->assertMatchesReportSnapshot($report);
+
+    expect($report['stacktrace'])->toBe([
+        [
+            'file' => 'Log',
+            'lineNumber' => 0,
+            'method' => 'Stacktrace disabled',
+            'class' => null,
+            'codeSnippet' => [
+                1 => 'File not found for code snippet',
+            ],
+            'arguments' => null,
+            'isApplicationFrame' => false,
+        ],
+    ]);
+});
+
+it('can create a report for a string message with stack trace', function () {
+    $flare = setupFlare(fn (FlareConfig $config) => $config->includeStackTraceWithMessages());
 
     $report = $flare->reportMessage('this is a message', 'Error');
 
