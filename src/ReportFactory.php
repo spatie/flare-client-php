@@ -245,7 +245,7 @@ class ReportFactory implements WithAttributes
             )];
         }
 
-        $stacktrace = $this->isLog
+        $stacktrace = $this->isLog || $this->throwable === null
             ? Backtrace::create()
             : Backtrace::createForThrowable($this->throwable);
 
@@ -263,7 +263,7 @@ class ReportFactory implements WithAttributes
 
         foreach ($frames as $index => $frame) {
             if ($frame->applicationFrame) {
-                $firstApplicationFrameIndex = $index;
+                $firstApplicationFrameIndex = (int) $index;
 
                 break;
             }
