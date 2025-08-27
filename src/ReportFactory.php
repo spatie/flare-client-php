@@ -269,7 +269,7 @@ class ReportFactory implements WithAttributes
             }
         }
 
-        if($firstApplicationFrameIndex === null) {
+        if ($firstApplicationFrameIndex === null) {
             return $frames;
         }
 

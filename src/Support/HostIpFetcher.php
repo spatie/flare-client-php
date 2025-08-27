@@ -15,32 +15,33 @@ class HostIpFetcher
 
     private static function getLocalIpAddress(): ?string
     {
-        if(! extension_loaded('sockets')){
+        if (! extension_loaded('sockets')) {
             return null;
         }
 
         try {
             $socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
 
-            if (!$socket) {
+            if (! $socket) {
                 return null;
             }
 
-            if (!socket_connect($socket, '8.8.8.8', 80)) { // UDP so no data is sent
+            if (! socket_connect($socket, '8.8.8.8', 80)) { // UDP so no data is sent
                 socket_close($socket);
 
                 return null;
             }
 
-            if (!socket_getsockname($socket, $ip)) {
+            if (! socket_getsockname($socket, $ip)) {
                 socket_close($socket);
+
                 return null;
             }
 
             socket_close($socket);
 
             return $ip;
-        }catch (Throwable){
+        } catch (Throwable) {
             return null;
         }
     }
