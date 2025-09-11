@@ -132,7 +132,7 @@ it('can add user provided context easily as an array', function () {
 
 test('callbacks can modify the report', function () {
     $flare = setupFlare(
-        fn(FlareConfig $config) => $config->applicationStage('production')
+        fn (FlareConfig $config) => $config->applicationStage('production')
     );
 
     $flare->context('my key', 'my value');
@@ -151,7 +151,7 @@ test('callbacks can modify the report', function () {
 
 it('can censor request data', function () {
     setupFlare(
-        fn(FlareConfig $config) => $config->censorBodyFields('user', 'password')->collectRequests()
+        fn (FlareConfig $config) => $config->censorBodyFields('user', 'password')->collectRequests()
     );
 
     $_ENV['FLARE_FAKE_WEB_REQUEST'] = true;
@@ -218,7 +218,7 @@ it('can merge groups', function () {
 });
 
 it('can set stages', function () {
-    setupFlare(fn(FlareConfig $config) => $config->applicationStage('production'));
+    setupFlare(fn (FlareConfig $config) => $config->applicationStage('production'));
 
     reportException();
 
@@ -226,7 +226,7 @@ it('can set stages', function () {
 });
 
 it('can add cache events', function () {
-    $flare = setupFlare(fn(FlareConfig $config) => $config->collectCacheEvents());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectCacheEvents());
 
     $flare->cache()->recordHit('key', 'store');
 
@@ -294,7 +294,7 @@ it('can add cache events', function () {
 });
 
 it('can add glows', function () {
-    $flare = setupFlare(fn(FlareConfig $config) => $config->collectGlows());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectGlows());
 
     $flare->glow()->record(
         'my glow',
@@ -339,7 +339,7 @@ it('can add glows', function () {
 });
 
 it('can add logs', function () {
-    $flare = setupFlare(fn(FlareConfig $config) => $config->collectLogs());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectLogs());
 
     $flare->log()->record(
         'my log',
@@ -384,7 +384,7 @@ it('can add logs', function () {
 });
 
 it('can add queries', function () {
-    $flare = setupFlare(fn(FlareConfig $config) => $config->collectQueries());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectQueries());
 
     $flare->query()->record(
         'select * from users where id = ?',
@@ -432,7 +432,7 @@ it('can add queries', function () {
 });
 
 it('can begin and commit transactions', function () {
-    $flare = setupFlare(fn(FlareConfig $config) => $config->collectTransactions());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectTransactions());
 
     $flare->transaction()->recordBegin();
 
@@ -455,7 +455,7 @@ it('can begin and commit transactions', function () {
 });
 
 it('can begin and rollback transactions', function () {
-    $flare = setupFlare(fn(FlareConfig $config) => $config->collectTransactions());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectTransactions());
 
     $flare->transaction()->recordBegin();
 
@@ -489,7 +489,7 @@ test('a version is by default null', function () {
 });
 
 it('will add the version to the report', function () {
-    setupFlare(fn(FlareConfig $config) => $config->applicationVersion(function () {
+    setupFlare(fn (FlareConfig $config) => $config->applicationVersion(function () {
         return '123';
     }));
 
@@ -501,7 +501,7 @@ it('will add the version to the report', function () {
 });
 
 it('will add the application name to the report', function () {
-    setupFlare(fn(FlareConfig $config) => $config->applicationName(function () {
+    setupFlare(fn (FlareConfig $config) => $config->applicationName(function () {
         return 'Flare';
     }));
 
@@ -555,7 +555,7 @@ it('is possible to configure the application stage on the flare instance', funct
 });
 
 it('will add the php version to the report', function () {
-    setupFlare(fn(FlareConfig $config) => $config->collectServerInfo());
+    setupFlare(fn (FlareConfig $config) => $config->collectServerInfo());
 
     reportException();
 
@@ -565,7 +565,7 @@ it('will add the php version to the report', function () {
 });
 
 it('can filter exceptions being reported', function () {
-    setupFlare(fn(FlareConfig $config) => $config->filterExceptionsUsing(fn(Throwable $exception) => false));
+    setupFlare(fn (FlareConfig $config) => $config->filterExceptionsUsing(fn (Throwable $exception) => false));
 
     reportException();
 
@@ -573,7 +573,7 @@ it('can filter exceptions being reported', function () {
 });
 
 it('can filter exceptions being reported and allow them', function () {
-    setupFlare(fn(FlareConfig $config) => $config->filterExceptionsUsing(fn(Throwable $exception) => true));
+    setupFlare(fn (FlareConfig $config) => $config->filterExceptionsUsing(fn (Throwable $exception) => true));
 
     reportException();
 
@@ -583,7 +583,7 @@ it('can filter exceptions being reported and allow them', function () {
 it('can filter exceptions being reported by setting it on the flare instance', function () {
     $flare = setupFlare();
 
-    $flare->filterExceptionsUsing(fn(Throwable $exception) => false);
+    $flare->filterExceptionsUsing(fn (Throwable $exception) => false);
 
     reportException();
 
@@ -591,7 +591,7 @@ it('can filter exceptions being reported by setting it on the flare instance', f
 });
 
 it('can filter reports', function () {
-    setupFlare(fn(FlareConfig $config) => $config->filterReportsUsing(fn(Report $report) => false));
+    setupFlare(fn (FlareConfig $config) => $config->filterReportsUsing(fn (Report $report) => false));
 
     reportException();
 
@@ -601,7 +601,7 @@ it('can filter reports', function () {
 it('can filter reports by setting it on the flare instance', function () {
     $flare = setupFlare();
 
-    $flare->filterReportsUsing(fn(Report $report) => false);
+    $flare->filterReportsUsing(fn (Report $report) => false);
 
     reportException();
 
@@ -609,7 +609,7 @@ it('can filter reports by setting it on the flare instance', function () {
 });
 
 it('can filter errors based on their level', function () {
-    setupFlare(fn(FlareConfig $config) => $config->reportErrorLevels(E_ALL & ~E_NOTICE));
+    setupFlare(fn (FlareConfig $config) => $config->reportErrorLevels(E_ALL & ~E_NOTICE));
 
     reportError(E_NOTICE);
     reportError(E_WARNING);
@@ -618,7 +618,7 @@ it('can filter errors based on their level', function () {
 });
 
 it('can filter error exceptions based on their severity', function () {
-    $flare = setupFlare(fn(FlareConfig $config) => $config->reportErrorLevels(E_ALL & ~E_NOTICE));
+    $flare = setupFlare(fn (FlareConfig $config) => $config->reportErrorLevels(E_ALL & ~E_NOTICE));
 
     $flare->report(new ErrorException('test', 0, E_NOTICE));
     $flare->report(new ErrorException('test', 0, E_WARNING));
@@ -628,7 +628,8 @@ it('can filter error exceptions based on their severity', function () {
 
 it('will add arguments to a stack trace by default', function () {
     // Todo: add some default argument reducers in the config
-    $flare = setupFlare(fn(FlareConfig $config
+    $flare = setupFlare(fn (
+        FlareConfig $config
     ) => $config->collectStackFrameArguments(argumentReducers: ArgumentReducers::default()));
 
     $exception = TraceArguments::create()->exception(
@@ -663,7 +664,7 @@ it('will add arguments to a stack trace by default', function () {
 it('is possible to disable stack frame arguments', function () {
     ini_set('zend.exception_ignore_args', 0); // Enabled on GH actions
 
-    $flare = setupFlare(fn(FlareConfig $config) => $config->ignoreStackFrameArguments());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->ignoreStackFrameArguments());
 
     $exception = TraceArguments::create()->exception(
         'a message',
@@ -678,7 +679,7 @@ it('is possible to disable stack frame arguments', function () {
 it('is possible to disable stack frame arguments with zend.exception_ignore_args', function () {
     ini_set('zend.exception_ignore_args', 1);
 
-    $flare = setupFlare(fn(FlareConfig $config) => $config->ignoreStackFrameArguments());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->ignoreStackFrameArguments());
 
     $exception = TraceArguments::create()->exception(
         'a message',
@@ -717,91 +718,91 @@ it('is possible to manually add spans and span events', function () {
 
     ExpectTracer::create($flare)
         ->trace(
-            fn(ExpectTrace $trace) => $trace
+            fn (ExpectTrace $trace) => $trace
                 ->hasSpanCount(2)
                 ->span(
-                    fn(ExpectSpan $span) => $span
+                    fn (ExpectSpan $span) => $span
                         ->hasName('Test Span')
                         ->missingParent()
                         ->hasSpanEventCount(1)
-                        ->spanEvent(fn(ExpectSpanEvent $spanEvent) => $spanEvent->hasName('Test Span Event')),
+                        ->spanEvent(fn (ExpectSpanEvent $spanEvent) => $spanEvent->hasName('Test Span Event')),
                     $parentSpan
                 )
                 ->span(
-                    fn(ExpectSpan $span) => $span
+                    fn (ExpectSpan $span) => $span
                         ->hasName('Test Child Span')
                         ->hasParent($parentSpan)
                         ->hasSpanEventCount(1)
-                        ->spanEvent(fn(ExpectSpanEvent $spanEvent) => $spanEvent->hasName('Test Child Span Event'))
+                        ->spanEvent(fn (ExpectSpanEvent $spanEvent) => $spanEvent->hasName('Test Child Span Event'))
                 )
         );
 });
 
 it('is possible to configure a tracing resource', function () {
     $flare = setupFlare(
-        fn(FlareConfig $config) => $config
-            ->configureResource(fn(Resource $resource) => $resource->addAttribute('custom_attribute', 'test'))
+        fn (FlareConfig $config) => $config
+            ->configureResource(fn (Resource $resource) => $resource->addAttribute('custom_attribute', 'test'))
             ->alwaysSampleTraces()
     );
 
     $flare->tracer->startTrace();
 
-    $flare->tracer->span('Test Span', fn() => null);
+    $flare->tracer->span('Test Span', fn () => null);
 
     ExpectTracer::create($flare)->resource(
-        fn(ExpectResource $resource) => $resource->hasAttribute('custom_attribute', 'test')
+        fn (ExpectResource $resource) => $resource->hasAttribute('custom_attribute', 'test')
     );
 });
 
 it('it is possible to configure a tracing scope', function () {
     $flare = setupFlare(
-        fn(FlareConfig $config) => $config
-            ->configureScope(fn(Scope $scope) => $scope->addAttribute('custom_attribute', 'test'))
+        fn (FlareConfig $config) => $config
+            ->configureScope(fn (Scope $scope) => $scope->addAttribute('custom_attribute', 'test'))
             ->alwaysSampleTraces()
     );
 
     $flare->tracer->startTrace();
 
-    $flare->tracer->span('Test Span', fn() => null);
+    $flare->tracer->span('Test Span', fn () => null);
 
     ExpectTracer::create($flare)->scope(
-        fn(ExpectScope $scope) => $scope->hasAttribute('custom_attribute', 'test')
+        fn (ExpectScope $scope) => $scope->hasAttribute('custom_attribute', 'test')
     );
 });
 
 it('is possible to configure a span when ended', function () {
     $flare = setupFlare(
-        fn(FlareConfig $config) => $config
-            ->configureSpans(fn(Span $span) => $span->addAttribute('custom_attribute', 'test'))
+        fn (FlareConfig $config) => $config
+            ->configureSpans(fn (Span $span) => $span->addAttribute('custom_attribute', 'test'))
             ->alwaysSampleTraces()
     );
 
     $flare->tracer->startTrace();
 
-    $flare->tracer->span('Test Span', fn() => null);
+    $flare->tracer->span('Test Span', fn () => null);
 
     ExpectTracer::create($flare)->trace(
-        fn(ExpectTrace $trace) => $trace->span(
-            fn(ExpectSpan $span) => $span->hasAttribute('custom_attribute', 'test')
+        fn (ExpectTrace $trace) => $trace->span(
+            fn (ExpectSpan $span) => $span->hasAttribute('custom_attribute', 'test')
         )
     );
 });
 
 it('is possible to configure a span event when ended', function () {
     $flare = setupFlare(
-        fn(FlareConfig $config) => $config
-            ->configureSpanEvents(fn(SpanEvent $spanEvent) => $spanEvent->addAttribute('custom_attribute', 'test'))
+        fn (FlareConfig $config) => $config
+            ->configureSpanEvents(fn (SpanEvent $spanEvent) => $spanEvent->addAttribute('custom_attribute', 'test'))
             ->alwaysSampleTraces()
     );
 
     $flare->tracer->startTrace();
 
-    $flare->tracer->span('Test Span', fn() => $flare->tracer->spanEvent('Test Span Event'));
+    $flare->tracer->span('Test Span', fn () => $flare->tracer->spanEvent('Test Span Event'));
 
     ExpectTracer::create($flare)->trace(
-        fn(ExpectTrace $trace) => $trace->span(
-            fn(ExpectSpan $span) => $span->spanEvent(
-                fn(ExpectSpanEvent $spanEvent) => $spanEvent->hasAttribute('custom_attribute', 'test')
+        fn (ExpectTrace $trace) => $trace->span(
+            fn (ExpectSpan $span) => $span->spanEvent(
+                fn (ExpectSpanEvent $spanEvent) => $spanEvent->hasAttribute('custom_attribute', 'test')
             )
         )
     );
@@ -809,8 +810,8 @@ it('is possible to configure a span event when ended', function () {
 
 it('can override the grouping algorithm for specific classes', function () {
     $flare = setupFlare(
-        fn(FlareConfig $config) => $config
-            ->configureSpanEvents(fn(SpanEvent $spanEvent) => $spanEvent->addAttribute('custom_attribute', 'test'))
+        fn (FlareConfig $config) => $config
+            ->configureSpanEvents(fn (SpanEvent $spanEvent) => $spanEvent->addAttribute('custom_attribute', 'test'))
             ->overrideGrouping(
                 RuntimeException::class,
                 OverriddenGrouping::ExceptionMessageAndClass
@@ -831,7 +832,7 @@ it('can override the grouping algorithm for specific classes', function () {
 
 it('can add an additional recorders', function () {
     $flare = setupFlare(
-        fn(FlareConfig $config) => $config->collectRecorders([
+        fn (FlareConfig $config) => $config->collectRecorders([
             FakeSpansRecorder::class => [
                 'with_errors' => true,
             ],
@@ -853,7 +854,7 @@ it('can add an additional recorders', function () {
 
 it('it can add additional middleware', function () {
     $flare = setupFlare(
-        fn(FlareConfig $config) => $config->collectFlareMiddleware([
+        fn (FlareConfig $config) => $config->collectFlareMiddleware([
             FakeFlareMiddleware::class => [
                 'extra' => ['key' => 'value'],
             ],
