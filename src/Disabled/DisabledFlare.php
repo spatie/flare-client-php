@@ -211,6 +211,7 @@ class DisabledFlare extends Flare
     public function reset(
         bool $reports = true,
         bool $traces = true,
+        bool $clearCustomContext = true
     ): void {
 
     }
