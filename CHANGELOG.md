@@ -2,6 +2,14 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 2.2.1 - 2025-09-11
+
+### What's Changed
+
+* Fix missing interface parameter
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/2.2.0...2.2.1
+
 ## 2.2.0 - 2025-09-11
 
 ### What's Changed
