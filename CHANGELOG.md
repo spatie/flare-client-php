@@ -2,6 +2,14 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 2.2.0 - 2025-09-11
+
+### What's Changed
+
+* Add additional methods to control custom context
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/2.1.0...2.2.0
+
 ## 2.1.0 - 2025-08-27
 
 - Add support for stacktraces with logs
