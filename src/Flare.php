@@ -425,12 +425,15 @@ class Flare
     public function reset(
         bool $reports = true,
         bool $traces = true,
+        bool $clearCustomContext = true
     ): void {
         $this->api->sendQueue(reports: $reports, traces: $traces);
 
-        if ($reports) {
-            $this->customContext = [];
+        if ($clearCustomContext) {
+            $this->clearCustomContext();
+        }
 
+        if ($reports) {
             $this->resetRecorders();
             $this->sentReports->clear();
         }

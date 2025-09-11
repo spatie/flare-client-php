@@ -21,4 +21,18 @@ trait HasCustomContext
 
         return $this;
     }
+
+    public function hydrateCustomContext(array $context): self
+    {
+        $this->customContext = $context;
+
+        return $this;
+    }
+
+    public function clearCustomContext(): self
+    {
+        $this->customContext = [];
+
+        return $this;
+    }
 }
