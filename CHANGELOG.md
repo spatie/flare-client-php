@@ -2,6 +2,10 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 2.2.3 - 2025-10-06
+
+- Fix sampler
+
 ## 2.2.2 - 2025-09-11
 
 - Fix missing interface parameter
