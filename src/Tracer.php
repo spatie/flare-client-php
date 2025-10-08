@@ -413,11 +413,6 @@ class Tracer
 
     }
 
-    public function getSpan(string $traceId, string $spanId): ?Span
-    {
-        return $this->traces[$traceId][$spanId] ?? null;
-    }
-
     public function gracefullyHandleError(): void
     {
         if ($this->isSampling() === false) {
