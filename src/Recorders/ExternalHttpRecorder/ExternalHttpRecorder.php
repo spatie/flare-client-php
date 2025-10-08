@@ -4,30 +4,17 @@ namespace Spatie\FlareClient\Recorders\ExternalHttpRecorder;
 
 use Closure;
 use Psr\Container\ContainerInterface;
-use Spatie\FlareClient\Concerns\Recorders\RecordsSpans;
-use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Recorders\Recorder;
+use Spatie\FlareClient\Recorders\SpansRecorder;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Support\BackTracer;
 use Spatie\FlareClient\Support\Redactor;
 use Spatie\FlareClient\Tracer;
 
-class ExternalHttpRecorder extends Recorder implements SpansRecorder
+class ExternalHttpRecorder extends SpansRecorder
 {
-    /** @use RecordsSpans<Span> */
-    use RecordsSpans;
-
-    public function __construct(
-        protected Tracer $tracer,
-        protected BackTracer $backTracer,
-        protected array $config,
-        protected Redactor $redactor,
-    ) {
-        $this->configure($config);
-    }
-
     public static function register(ContainerInterface $container, array $config): Closure
     {
         return fn () => new self(
@@ -36,6 +23,15 @@ class ExternalHttpRecorder extends Recorder implements SpansRecorder
             $config,
             $container->get(Redactor::class),
         );
+    }
+
+    public function __construct(
+        Tracer $tracer,
+        BackTracer $backTracer,
+        array $config,
+        protected Redactor $redactor,
+    ) {
+        parent::__construct($tracer, $backTracer, $config);
     }
 
     public static function type(): RecorderType

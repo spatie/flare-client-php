@@ -2,18 +2,14 @@
 
 namespace Spatie\FlareClient\Recorders\RoutingRecorder;
 
-use Spatie\FlareClient\Concerns\Recorders\RecordsSpans;
-use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
+use Spatie\FlareClient\Recorders\SpansRecorder;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Support\TimeInterval;
 
-class RoutingRecorder implements SpansRecorder
+class RoutingRecorder extends SpansRecorder
 {
-    /** @use RecordsSpans<Span> */
-    use RecordsSpans;
-
     protected bool $beforeMiddleware = false;
 
     protected bool $globalBeforeMiddleware = false;
@@ -62,7 +58,7 @@ class RoutingRecorder implements SpansRecorder
             return null;
         }
 
-        $this->globalAfterMiddleware = false;
+        $this->globalBeforeMiddleware = false;
 
         return $this->endSpan(
             time: $time,
@@ -97,6 +93,8 @@ class RoutingRecorder implements SpansRecorder
             $this->recordGlobalBeforeMiddlewareEnd(time: $time);
         }
 
+        $this->routing = true;
+
         return $this->startSpan(
             'Routing',
             attributes: [
@@ -111,6 +109,12 @@ class RoutingRecorder implements SpansRecorder
         array $attributes = [],
         ?int $time = null
     ): ?Span {
+        if ($this->routing === false) {
+            return null;
+        }
+
+        $this->routing = false;
+
         return $this->endSpan(
             time: $time,
             additionalAttributes: $attributes,

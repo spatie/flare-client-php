@@ -2,20 +2,15 @@
 
 namespace Spatie\FlareClient\Recorders\CacheRecorder;
 
-use Spatie\FlareClient\Concerns\Recorders\RecordsSpanEvents;
-use Spatie\FlareClient\Contracts\Recorders\SpanEventsRecorder;
 use Spatie\FlareClient\Enums\CacheOperation;
 use Spatie\FlareClient\Enums\CacheResult;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanEventType;
-use Spatie\FlareClient\Recorders\Recorder;
+use Spatie\FlareClient\Recorders\SpanEventsRecorder;
 use Spatie\FlareClient\Spans\SpanEvent;
 
-class CacheRecorder extends Recorder implements SpanEventsRecorder
+class CacheRecorder extends SpanEventsRecorder
 {
-    /** @use RecordsSpanEvents<SpanEvent> */
-    use RecordsSpanEvents;
-
     /**
      * @var array<CacheOperation|string>
      */
@@ -30,8 +25,6 @@ class CacheRecorder extends Recorder implements SpanEventsRecorder
 
     protected function configure(array $config): void
     {
-        $this->configureRecorder($config);
-
         $this->operations = array_filter(array_map(
             fn (string|CacheOperation $spanEventType) => is_string($spanEventType) ? CacheOperation::tryFrom($spanEventType) : $spanEventType,
             $config['operations'] ?? [],

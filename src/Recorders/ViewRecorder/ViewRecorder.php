@@ -5,31 +5,16 @@ namespace Spatie\FlareClient\Recorders\ViewRecorder;
 use Closure;
 use Psr\Container\ContainerInterface;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
-use Spatie\FlareClient\Concerns\Recorders\RecordsSpans;
-use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Recorders\Recorder;
+use Spatie\FlareClient\Recorders\SpansRecorder;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Support\BackTracer;
 use Spatie\FlareClient\Tracer;
 
-class ViewRecorder extends Recorder implements SpansRecorder
+class ViewRecorder extends SpansRecorder
 {
-    /** @use RecordsSpans<Span> */
-    use RecordsSpans;
-
-    public function __construct(
-        protected Tracer $tracer,
-        protected BackTracer $backTracer,
-        protected ArgumentReducers|null $argumentReducers,
-        array $config
-    ) {
-        $this->configure([
-            'with_traces' => $config['with_traces'] ?? false,
-        ]);
-    }
-
     public static function register(ContainerInterface $container, array $config): Closure
     {
         return fn () => new self(
@@ -40,9 +25,25 @@ class ViewRecorder extends Recorder implements SpansRecorder
         );
     }
 
+    public function __construct(
+        Tracer $tracer,
+        BackTracer $backTracer,
+        protected ArgumentReducers|null $argumentReducers,
+        array $config
+    ) {
+        parent::__construct($tracer, $backTracer, $config);
+    }
+
     public static function type(): string|RecorderType
     {
         return RecorderType::View;
+    }
+
+    protected function configure(array $config): void
+    {
+        parent::configure([
+            'with_traces' => $config['with_traces'] ?? false,
+        ]);
     }
 
     public function recordRendering(

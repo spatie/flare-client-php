@@ -52,6 +52,15 @@ class FakeTime implements Time
         static::$dateTime = $dateTime;
     }
 
+    public static function advance(int $seconds): void
+    {
+        if (static::isSetup() === false) {
+            throw new \Exception('FakeTime is not setup. Call FakeTime::setup() first.');
+        }
+
+        static::$dateTime = static::$dateTime->add(new \DateInterval("PT{$seconds}S"));
+    }
+
     public static function reset()
     {
         static::$instance = null;

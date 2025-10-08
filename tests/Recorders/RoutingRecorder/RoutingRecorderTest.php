@@ -146,7 +146,7 @@ it('will automatically close other fases of the routing', function () {
     $flare->routing()->recordBeforeMiddlewareStart(time: 30);
     $flare->routing()->recordAfterMiddlewareStart(time: 40);
     $flare->routing()->recordGlobalAfterMiddlewareStart(time: 50);
-    $flare->routing()->recordGlobalBeforeMiddlewareEnd(time: 60);
+    $flare->routing()->recordGlobalAfterMiddlewareEnd(time: 60);
     $flare->application()->recordEnd(time: 60);
 
     FakeSender::instance()->assertRequestsSent(1);

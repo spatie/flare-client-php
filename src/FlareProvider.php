@@ -86,9 +86,7 @@ class FlareProvider
                 : new NeverSampler(),
             configureSpansCallable: $this->config->configureSpansCallable,
             configureSpanEventsCallable: $this->config->configureSpanEventsCallable,
-            samplingType: $this->config->trace
-                ? SamplingType::Waiting
-                : SamplingType::Off,
+            samplingType: $this->config->trace ? SamplingType::Waiting : SamplingType::Disabled,
             gracefulSpanEnder: $this->container->get(GracefulSpanEnder::class),
         ));
 
@@ -96,6 +94,8 @@ class FlareProvider
 
         $this->container->singleton(ErrorRecorder::class, fn () => new ErrorRecorder(
             $this->container->get(Tracer::class),
+            $this->container->get(BackTracer::class),
+            [],
         ));
 
         $this->container->singleton(Redactor::class, fn () => new Redactor(

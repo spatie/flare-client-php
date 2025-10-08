@@ -26,7 +26,8 @@
         "phpstan/extension-installer": "^1.4",
         "phpstan/phpstan-deprecation-rules": "^1.2",
         "phpstan/phpstan-phpunit": "^1.4",
-        "spatie/pest-plugin-snapshots": "^2.2"
+        "spatie/pest-plugin-snapshots": "^2.2",
+        "spatie/ray": "^1.42"
     },
     "autoload": {
         "psr-4": {

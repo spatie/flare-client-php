@@ -3,23 +3,15 @@
 namespace Spatie\FlareClient\Recorders\QueryRecorder;
 
 use Closure;
-use Spatie\FlareClient\Concerns\Recorders\RecordsSpans;
-use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Recorders\Recorder;
+use Spatie\FlareClient\Recorders\SpansRecorder;
 use Spatie\FlareClient\Spans\Span;
 
-class QueryRecorder extends Recorder implements SpansRecorder
+class QueryRecorder extends SpansRecorder
 {
-    /** @use RecordsSpans<Span> */
-    use RecordsSpans;
-
     protected bool $includeBindings = true;
-
-    protected bool $findOrigin = false;
-
-    protected ?int $findOriginThreshold = null;
 
     public const DEFAULT_INCLUDE_BINDINGS = true;
 
@@ -34,8 +26,6 @@ class QueryRecorder extends Recorder implements SpansRecorder
 
     protected function configure(array $config): void
     {
-        $this->configureRecorder($config);
-
         $this->includeBindings = $config['include_bindings'] ?? true;
     }
 

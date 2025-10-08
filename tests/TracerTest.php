@@ -45,7 +45,7 @@ it('cannot start a trace when sampling is off', function () {
 
     $tracer->startTrace();
 
-    expect($tracer->samplingType)->toBe(SamplingType::Off);
+    expect($tracer->samplingType)->toBe(SamplingType::Disabled);
 });
 
 it('is possible to end a trace and send it to the API', function () {

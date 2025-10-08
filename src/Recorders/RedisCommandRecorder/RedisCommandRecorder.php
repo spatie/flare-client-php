@@ -2,18 +2,14 @@
 
 namespace Spatie\FlareClient\Recorders\RedisCommandRecorder;
 
-use Spatie\FlareClient\Concerns\Recorders\RecordsSpans;
-use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Recorders\Recorder;
+use Spatie\FlareClient\Recorders\SpansRecorder;
 use Spatie\FlareClient\Spans\Span;
 
-class RedisCommandRecorder extends Recorder implements SpansRecorder
+class RedisCommandRecorder extends SpansRecorder
 {
-    /** @use RecordsSpans<Span> */
-    use RecordsSpans;
-
     public static function type(): string|RecorderType
     {
         return RecorderType::RedisCommand;

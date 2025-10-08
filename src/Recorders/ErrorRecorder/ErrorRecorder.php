@@ -2,37 +2,21 @@
 
 namespace Spatie\FlareClient\Recorders\ErrorRecorder;
 
-use Closure;
-use Psr\Container\ContainerInterface;
-use Spatie\FlareClient\Concerns\Recorders\RecordsSpanEvents;
-use Spatie\FlareClient\Contracts\Recorders\SpanEventsRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanStatusCode;
-use Spatie\FlareClient\Recorders\Recorder;
+use Spatie\FlareClient\Recorders\SpanEventsRecorder;
 use Spatie\FlareClient\Report;
-use Spatie\FlareClient\Spans\SpanEvent;
-use Spatie\FlareClient\Tracer;
 
-class ErrorRecorder extends Recorder implements SpanEventsRecorder
+class ErrorRecorder extends SpanEventsRecorder
 {
-    /** @use RecordsSpanEvents<SpanEvent> */
-    use RecordsSpanEvents;
-
     const DEFAULT_WITH_TRACES = true;
 
     const DEFAULT_WITH_ERRORS = false;
 
-    public function __construct(
-        protected Tracer $tracer,
-    ) {
-        $this->withTraces = true;
-    }
-
-    public static function register(ContainerInterface $container, array $config): Closure
+    protected function configure(array $config): void
     {
-        return fn () => new self(
-            $container->get(Tracer::class),
-        );
+        $this->withTraces = true;
+        $this->withErrors = false;
     }
 
     public static function type(): string|RecorderType
@@ -42,26 +26,28 @@ class ErrorRecorder extends Recorder implements SpanEventsRecorder
 
     public function record(Report $report): void
     {
-        $this->persistEntry(function () use ($report) {
-            $event = ErrorSpanEvent::fromReport(
-                $report,
-                $this->tracer->time->getCurrentTime(),
+        if ($this->withTraces === false && $this->tracer->isSampling() === false) {
+            return;
+        }
+
+        $currentSpan = $this->tracer->currentSpan();
+
+        if ($currentSpan === null) {
+            return;
+        }
+
+        $event = ErrorSpanEvent::fromReport(
+            $report,
+            $this->tracer->time->getCurrentTime(),
+        );
+
+        if ($event->handled !== true) {
+            $currentSpan->setStatus(
+                SpanStatusCode::Error,
+                $event->message,
             );
+        }
 
-            $currentSpan = $this->tracer->currentSpan();
-
-            if ($currentSpan === null) {
-                return $event;
-            }
-
-            if ($event->handled !== true) {
-                $currentSpan->setStatus(
-                    SpanStatusCode::Error,
-                    $event->message,
-                );
-            }
-
-            return $event;
-        });
+        $currentSpan->addEvent($event);
     }
 }
