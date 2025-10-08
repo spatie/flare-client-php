@@ -2,6 +2,12 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 2.3.0 - 2025-10-08
+
+- Fixed an issue where disabled tracing could still trace
+- Completely refactored the recorders, the old traits are now deprecated in favour of specific classes for spans or span events
+- Fix an issue where attributes of spans & span events used in an error removed the span type
+
 ## 2.2.3 - 2025-10-06
 
 - Fix sampler
