@@ -8,7 +8,6 @@ use Spatie\FlareClient\Spans\Span;
 
 class ConcreteSpansRecorder extends SpansRecorder
 {
-
     public static function type(): string|RecorderType
     {
         return 'spans';

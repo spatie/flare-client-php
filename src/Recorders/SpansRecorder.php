@@ -26,7 +26,7 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
 
     private int $nestingCounter = 0;
 
-    /** @var array<Span>  */
+    /** @var array<Span> */
     private array $stack = [];
 
     private bool $startedTrace = false;
@@ -65,7 +65,6 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
     {
         // Most of the time only required in framework specific implementations
     }
-
 
     /**
      * @param Closure():string|string|null $name
@@ -215,7 +214,7 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
             return $span;
         }
 
-        if($span === null){
+        if ($span === null) {
             // We should not end up here
 
             return null;
@@ -309,7 +308,6 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
 
         return $span;
     }
-
 
     final public function getSpans(): array
     {

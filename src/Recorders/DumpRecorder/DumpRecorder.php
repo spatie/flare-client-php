@@ -2,13 +2,11 @@
 
 namespace Spatie\FlareClient\Recorders\DumpRecorder;
 
-use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;
 use Spatie\Backtrace\Frame;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanEventType;
-use Spatie\FlareClient\Recorders\Recorder;
 use Spatie\FlareClient\Recorders\SpanEventsRecorder;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Symfony\Component\VarDumper\Cloner\Data;

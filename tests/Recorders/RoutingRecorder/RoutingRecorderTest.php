@@ -9,7 +9,7 @@ use Spatie\FlareClient\Tests\Shared\FakeIds;
 use Spatie\FlareClient\Tests\Shared\FakeSender;
 
 test('it can run through a routing lifecycle', function () {
-    $flare = setupFlare(fn(FlareConfig $config) => $config->collectRequests(), alwaysSampleTraces: true);
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectRequests(), alwaysSampleTraces: true);
 
     FakeIds::setup()
         ->nextTraceIdTimes('fake-trace-id', 6)
@@ -83,7 +83,7 @@ test('it can run through a routing lifecycle', function () {
 });
 
 test('it can run through a routing lifecycle without global middleware', function () {
-    $flare = setupFlare(fn(FlareConfig $config) => $config->collectRequests(), alwaysSampleTraces: true);
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectRequests(), alwaysSampleTraces: true);
 
     FakeIds::setup()
         ->nextTraceIdTimes('fake-trace-id', 6)

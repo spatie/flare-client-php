@@ -2,7 +2,6 @@
 
 namespace Spatie\FlareClient\Recorders\ApplicationRecorder;
 
-use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Recorders\SpansRecorder;

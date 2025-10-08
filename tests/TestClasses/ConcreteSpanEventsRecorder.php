@@ -2,10 +2,8 @@
 
 namespace Spatie\FlareClient\Tests\TestClasses;
 
-use Closure;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Recorders\SpanEventsRecorder;
-use Spatie\FlareClient\Recorders\SpansRecorder;
 use Spatie\FlareClient\Spans\SpanEvent;
 
 class ConcreteSpanEventsRecorder extends SpanEventsRecorder

@@ -62,7 +62,6 @@ abstract class SpanEventsRecorder extends Recorder implements SpanEventsRecorder
         // Most of the time only required in framework specific implementations
     }
 
-
     private function addEntryToTrace(SpanEvent $entry): void
     {
         $span = $this->tracer->currentSpan();

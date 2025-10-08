@@ -7,7 +7,6 @@ use Psr\Container\ContainerInterface;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
-use Spatie\FlareClient\Recorders\Recorder;
 use Spatie\FlareClient\Recorders\SpansRecorder;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Support\BackTracer;

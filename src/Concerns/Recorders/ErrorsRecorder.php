@@ -2,7 +2,6 @@
 
 namespace Spatie\FlareClient\Concerns\Recorders;
 
-use PhpParser\Node\Expr\Closure;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
 

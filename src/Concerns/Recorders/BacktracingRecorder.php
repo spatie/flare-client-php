@@ -38,10 +38,10 @@ trait BacktracingRecorder
             $entry instanceof SpanEvent => null,
         };
 
-        $shouldBacktrace =  $this->findOrigin
+        $shouldBacktrace = $this->findOrigin
             && ($this->findOriginThreshold === null || $duration >= $this->findOriginThreshold);
 
-        if($shouldBacktrace === false){
+        if ($shouldBacktrace === false) {
             return $entry;
         }
 

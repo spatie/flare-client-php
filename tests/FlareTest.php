@@ -26,9 +26,9 @@ use Spatie\FlareClient\Tests\Shared\ExpectTrace;
 use Spatie\FlareClient\Tests\Shared\ExpectTracer;
 use Spatie\FlareClient\Tests\Shared\FakeSender;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
+use Spatie\FlareClient\Tests\TestClasses\DeprecatedSpansRecorder as FakeSpansRecorder;
 use Spatie\FlareClient\Tests\TestClasses\ExceptionWithContext;
 use Spatie\FlareClient\Tests\TestClasses\FakeFlareMiddleware;
-use Spatie\FlareClient\Tests\TestClasses\DeprecatedSpansRecorder as FakeSpansRecorder;
 use Spatie\FlareClient\Tests\TestClasses\TraceArguments;
 use Spatie\FlareClient\Time\TimeHelper;
 
