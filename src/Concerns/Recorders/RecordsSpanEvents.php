@@ -8,6 +8,7 @@ use Spatie\FlareClient\Spans\SpanEvent;
 
 /**
  * @template T of SpanEvent
+ * @deprecated Use the SpanEventsRecorder instead.
  */
 trait RecordsSpanEvents
 {

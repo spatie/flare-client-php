@@ -3,7 +3,7 @@
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
-use Spatie\FlareClient\Tests\TestClasses\DeprecatedSpanEventsRecorder;
+use Spatie\FlareClient\Tests\TestClasses\ConcreteSpanEventsRecorder;
 use Spatie\FlareClient\Time\TimeHelper;
 
 beforeEach(function () {
@@ -13,7 +13,7 @@ beforeEach(function () {
 it('is initially empty', function () {
     $flare = setupFlare();
 
-    $recorder = new DeprecatedSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
+    $recorder = new ConcreteSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
         'with_errors' => true,
         'with_traces' => true,
     ]);
@@ -24,7 +24,7 @@ it('is initially empty', function () {
 it('stores span events for reporting', function () {
     $flare = setupFlare();
 
-    $recorder = new DeprecatedSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
+    $recorder = new ConcreteSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
         'with_errors' => true,
     ]);
 
@@ -46,7 +46,7 @@ it('stores span events for reporting', function () {
 it('does not store more than the max defined number of reported span events and removes the first ones', function () {
     $flare = setupFlare();
 
-    $recorder = new DeprecatedSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
+    $recorder = new ConcreteSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
         'with_errors' => true,
         'max_items_with_errors' => 35,
     ]);
@@ -63,7 +63,7 @@ it('does not store more than the max defined number of reported span events and 
 it('can disable the limit of span events stored for reporting', function () {
     $flare = setupFlare();
 
-    $recorder = new DeprecatedSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
+    $recorder = new ConcreteSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
         'with_errors' => true,
         'max_items_with_errors' => null,
     ]);
@@ -79,7 +79,7 @@ it('can disable the limit of span events stored for reporting', function () {
 it('can completely disable reporting', function () {
     $flare = setupFlare();
 
-    $recorder = new DeprecatedSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
+    $recorder = new ConcreteSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
         'with_errors' => false,
     ]);
 
@@ -93,7 +93,7 @@ it('can completely disable reporting', function () {
 it('can trace span events', function () {
     $flare = setupFlare(alwaysSampleTraces: true);
 
-    $recorder = new DeprecatedSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
+    $recorder = new ConcreteSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
         'with_traces' => true,
     ]);
 
@@ -116,10 +116,10 @@ it('can trace span events', function () {
         ->toHaveKey('message', 'Hello World');
 });
 
-it('will not trace span events when no span is current', function () {
+it('will not trace span events when there is no current span', function () {
     $flare = setupFlare(alwaysSampleTraces: true);
 
-    $recorder = new DeprecatedSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
+    $recorder = new ConcreteSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
         'with_traces' => true,
     ]);
 
@@ -139,7 +139,7 @@ it('will not trace span events when no span is current', function () {
 it('will not trace span events when not tracing', function () {
     $flare = setupFlare(fn (FlareConfig $config) => $config->neverSampleTraces());
 
-    $recorder = new DeprecatedSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
+    $recorder = new ConcreteSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
         'with_traces' => true,
     ]);
 
@@ -160,7 +160,7 @@ it('will not trace span events when the span events per span limit is reached', 
 
     $flare = setupFlare();
 
-    $recorder = new DeprecatedSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
+    $recorder = new ConcreteSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
         'with_traces' => true,
     ]);
 
@@ -180,7 +180,7 @@ it('will not trace span events when the span events per span limit is reached', 
 it('is possible to disable the recorder for tracing', function () {
     $flare = setupFlare(alwaysSampleTraces: true);
 
-    $recorder = new DeprecatedSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
+    $recorder = new ConcreteSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
         'with_traces' => false,
     ]);
 
@@ -196,17 +196,17 @@ it('is possible to disable the recorder for tracing', function () {
 });
 
 it('a closure passed span event will not be executed when not tracing or reporting', function () {
-    class TestDeprecatedSpanEventRecorderExecution extends DeprecatedSpanEventsRecorder
+    class TestConcreteSpanEventsRecorderExecution extends ConcreteSpanEventsRecorder
     {
         public function record(string $message): ?SpanEvent
         {
-            $this->persistEntry(fn () => throw new Exception('Closure executed'));
+            $this->spanEvent(fn () => throw new Exception('Closure executed'));
         }
     }
 
     $flare = setupFlare(fn (FlareConfig $config) => $config->neverSampleTraces());
 
-    expect(fn () => (new TestDeprecatedSpanEventRecorderExecution($flare->tracer, $flare->backTracer, [
+    expect(fn () => (new TestConcreteSpanEventsRecorderExecution($flare->tracer, $flare->backTracer, [
         'with_traces' => true,
         'with_errors' => true,
     ]))->record('Hello World'))->toThrow(
@@ -214,7 +214,7 @@ it('a closure passed span event will not be executed when not tracing or reporti
         'Closure executed'
     );
 
-    expect(fn () => (new TestDeprecatedSpanEventRecorderExecution($flare->tracer, $flare->backTracer, [
+    expect(fn () => (new TestConcreteSpanEventsRecorderExecution($flare->tracer, $flare->backTracer, [
         'with_traces' => false,
         'with_errors' => false,
     ]))->record('Hello World'))->not()->toThrow(
@@ -226,7 +226,7 @@ it('a closure passed span event will not be executed when not tracing or reporti
 it('can find origins when tracing events', function () {
     $flare = setupFlare(alwaysSampleTraces: true);
 
-    $recorder = new DeprecatedSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
+    $recorder = new ConcreteSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
         'with_traces' => true,
         'find_origin' => true,
     ]);
@@ -242,10 +242,10 @@ it('can find origins when tracing events', function () {
     ]);
 });
 
-it('can will not find origins when tracing events when find origin is disabled', function () {
+it('will not find origins when tracing events when find origin is disabled', function () {
     $flare = setupFlare(alwaysSampleTraces: true);
 
-    $recorder = new DeprecatedSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
+    $recorder = new ConcreteSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
         'with_traces' => true,
         'find_origin' => false,
     ]);
@@ -264,7 +264,7 @@ it('can will not find origins when tracing events when find origin is disabled',
 it('is not possible to overwrite the find origin threshold', function () {
     $flare = setupFlare(alwaysSampleTraces: true);
 
-    $recorder = new DeprecatedSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
+    $recorder = new ConcreteSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
         'with_traces' => true,
         'find_origin' => true,
         'find_origin_threshold' => TimeHelper::milliseconds(300),
@@ -284,7 +284,7 @@ it('is not possible to overwrite the find origin threshold', function () {
 it('will not find origins when only reporting', function () {
     $flare = setupFlare();
 
-    $recorder = new DeprecatedSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
+    $recorder = new ConcreteSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
         'with_errors' => true,
         'find_origin' => true,
     ]);

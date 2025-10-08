@@ -2,20 +2,15 @@
 
 namespace Spatie\FlareClient\Recorders\FilesystemRecorder;
 
-use Spatie\FlareClient\Concerns\Recorders\RecordsSpans;
-use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\FilesystemOperation;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
-use Spatie\FlareClient\Recorders\Recorder;
+use Spatie\FlareClient\Recorders\SpansRecorder;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Support\Humanizer;
 
-class FilesystemRecorder extends Recorder implements SpansRecorder
+class FilesystemRecorder extends SpansRecorder
 {
-    /** @use RecordsSpans<Span> */
-    use RecordsSpans;
-
     public static function type(): string|RecorderType
     {
         return RecorderType::Filesystem;

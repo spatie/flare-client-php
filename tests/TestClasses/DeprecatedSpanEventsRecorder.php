@@ -7,7 +7,7 @@ use Spatie\FlareClient\Contracts\Recorders\SpanEventsRecorder as BaseSpanEventsR
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Spans\SpanEvent;
 
-class SpanEventsRecorder implements BaseSpanEventsRecorder
+class DeprecatedSpanEventsRecorder implements BaseSpanEventsRecorder
 {
     use RecordsSpanEvents;
 

@@ -29,12 +29,10 @@ class SpanEvent implements WithAttributes
     {
         $type = $this->attributes['flare.span_event_type'] ?? SpanEventType::Custom;
 
-        unset($this->attributes['flare.span_event_type']);
-
         return [
             'startTimeUnixNano' => $this->timestamp,
             'endTimeUnixNano' => null,
-            'attributes' => $this->attributes,
+            'attributes' => array_diff_key($this->attributes, ['flare.span_event_type' => null]),
             'type' => $type,
         ];
     }

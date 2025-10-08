@@ -86,144 +86,34 @@ parameters:
 			path: src/FlareConfig.php
 
 		-
-			message: "#^Instanceof between \\*NEVER\\* and Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent will always evaluate to false\\.$#"
-			count: 1
-			path: src/Recorders/ApplicationRecorder/ApplicationRecorder.php
-
-		-
-			message: "#^Match arm is unreachable because previous comparison is always true\\.$#"
-			count: 1
-			path: src/Recorders/ApplicationRecorder/ApplicationRecorder.php
-
-		-
-			message: "#^Instanceof between Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent and Spatie\\\\FlareClient\\\\Spans\\\\Span will always evaluate to false\\.$#"
-			count: 1
-			path: src/Recorders/CacheRecorder/CacheRecorder.php
-
-		-
-			message: "#^Instanceof between \\*NEVER\\* and Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent will always evaluate to false\\.$#"
-			count: 1
-			path: src/Recorders/CommandRecorder/CommandRecorder.php
-
-		-
-			message: "#^Match arm is unreachable because previous comparison is always true\\.$#"
-			count: 1
-			path: src/Recorders/CommandRecorder/CommandRecorder.php
-
-		-
-			message: "#^Instanceof between Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent and Spatie\\\\FlareClient\\\\Spans\\\\Span will always evaluate to false\\.$#"
-			count: 1
-			path: src/Recorders/DumpRecorder/DumpRecorder.php
-
-		-
-			message: "#^Instanceof between Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent and Spatie\\\\FlareClient\\\\Spans\\\\Span will always evaluate to false\\.$#"
-			count: 1
-			path: src/Recorders/ErrorRecorder/ErrorRecorder.php
-
-		-
-			message: "#^Instanceof between \\*NEVER\\* and Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent will always evaluate to false\\.$#"
-			count: 1
-			path: src/Recorders/ExternalHttpRecorder/ExternalHttpRecorder.php
-
-		-
-			message: "#^Match arm is unreachable because previous comparison is always true\\.$#"
-			count: 1
-			path: src/Recorders/ExternalHttpRecorder/ExternalHttpRecorder.php
-
-		-
 			message: "#^Class Spatie\\\\FlareClient\\\\Recorders\\\\ExternalHttpRecorder\\\\Guzzle\\\\FlareHandlerStack extends @final class GuzzleHttp\\\\HandlerStack\\.$#"
 			count: 1
 			path: src/Recorders/ExternalHttpRecorder/Guzzle/FlareHandlerStack.php
 
 		-
-			message: "#^Instanceof between \\*NEVER\\* and Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent will always evaluate to false\\.$#"
-			count: 1
-			path: src/Recorders/FilesystemRecorder/FilesystemRecorder.php
-
-		-
-			message: "#^Match arm is unreachable because previous comparison is always true\\.$#"
-			count: 1
-			path: src/Recorders/FilesystemRecorder/FilesystemRecorder.php
-
-		-
 			message: "#^Instanceof between Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent and Spatie\\\\FlareClient\\\\Spans\\\\Span will always evaluate to false\\.$#"
 			count: 1
-			path: src/Recorders/GlowRecorder/GlowRecorder.php
+			path: src/Recorders/SpanEventsRecorder.php
 
 		-
-			message: "#^Instanceof between Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent and Spatie\\\\FlareClient\\\\Spans\\\\Span will always evaluate to false\\.$#"
+			message: "#^Unsafe usage of new static\\(\\)\\.$#"
 			count: 1
-			path: src/Recorders/LogRecorder/LogRecorder.php
-
-		-
-			message: "#^Instanceof between \\*NEVER\\* and Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent will always evaluate to false\\.$#"
-			count: 1
-			path: src/Recorders/QueryRecorder/QueryRecorder.php
-
-		-
-			message: "#^Match arm is unreachable because previous comparison is always true\\.$#"
-			count: 1
-			path: src/Recorders/QueryRecorder/QueryRecorder.php
+			path: src/Recorders/SpanEventsRecorder.php
 
 		-
 			message: "#^Instanceof between \\*NEVER\\* and Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent will always evaluate to false\\.$#"
 			count: 1
-			path: src/Recorders/RedisCommandRecorder/RedisCommandRecorder.php
+			path: src/Recorders/SpansRecorder.php
 
 		-
 			message: "#^Match arm is unreachable because previous comparison is always true\\.$#"
 			count: 1
-			path: src/Recorders/RedisCommandRecorder/RedisCommandRecorder.php
+			path: src/Recorders/SpansRecorder.php
 
 		-
-			message: "#^Instanceof between \\*NEVER\\* and Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent will always evaluate to false\\.$#"
+			message: "#^Unsafe usage of new static\\(\\)\\.$#"
 			count: 1
-			path: src/Recorders/RequestRecorder/RequestRecorder.php
-
-		-
-			message: "#^Match arm is unreachable because previous comparison is always true\\.$#"
-			count: 1
-			path: src/Recorders/RequestRecorder/RequestRecorder.php
-
-		-
-			message: "#^Instanceof between \\*NEVER\\* and Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent will always evaluate to false\\.$#"
-			count: 1
-			path: src/Recorders/ResponseRecorder/ResponseRecorder.php
-
-		-
-			message: "#^Match arm is unreachable because previous comparison is always true\\.$#"
-			count: 1
-			path: src/Recorders/ResponseRecorder/ResponseRecorder.php
-
-		-
-			message: "#^Instanceof between \\*NEVER\\* and Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent will always evaluate to false\\.$#"
-			count: 1
-			path: src/Recorders/RoutingRecorder/RoutingRecorder.php
-
-		-
-			message: "#^Match arm is unreachable because previous comparison is always true\\.$#"
-			count: 1
-			path: src/Recorders/RoutingRecorder/RoutingRecorder.php
-
-		-
-			message: "#^Instanceof between \\*NEVER\\* and Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent will always evaluate to false\\.$#"
-			count: 1
-			path: src/Recorders/TransactionRecorder/TransactionRecorder.php
-
-		-
-			message: "#^Match arm is unreachable because previous comparison is always true\\.$#"
-			count: 1
-			path: src/Recorders/TransactionRecorder/TransactionRecorder.php
-
-		-
-			message: "#^Instanceof between \\*NEVER\\* and Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent will always evaluate to false\\.$#"
-			count: 1
-			path: src/Recorders/ViewRecorder/ViewRecorder.php
-
-		-
-			message: "#^Match arm is unreachable because previous comparison is always true\\.$#"
-			count: 1
-			path: src/Recorders/ViewRecorder/ViewRecorder.php
+			path: src/Recorders/SpansRecorder.php
 
 		-
 			message: "#^Access to an undefined property Spatie\\\\FlareClient\\\\Contracts\\\\FlareSpanType\\:\\:\\$value\\.$#"

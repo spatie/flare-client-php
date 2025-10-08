@@ -3,7 +3,7 @@
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
-use Spatie\FlareClient\Tests\TestClasses\SpansRecorder;
+use Spatie\FlareClient\Tests\TestClasses\DeprecatedSpansRecorder;
 
 beforeEach(function () {
     FakeTime::setup('2019-01-01 12:34:56');
@@ -13,7 +13,7 @@ beforeEach(function () {
 it('can start and end a span when reporting', function () {
     $flare = setupFlare();
 
-    $recorder = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
+    $recorder = new DeprecatedSpansRecorder($flare->tracer, $flare->backTracer,  config:[
         'with_errors' => true,
     ]);
 
@@ -34,7 +34,7 @@ it('can start and end a span when reporting', function () {
 it('does not store more than the max defined number of reported spans and removes the first ones', function () {
     $flare = setupFlare();
 
-    $recorder = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
+    $recorder = new DeprecatedSpansRecorder($flare->tracer, $flare->backTracer,  config:[
         'with_errors' => true,
         'max_items_with_errors' => 35,
     ]);
@@ -52,7 +52,7 @@ it('does not store more than the max defined number of reported spans and remove
 it('can disable the limit of spans stored for reporting', function () {
     $flare = setupFlare();
 
-    $recorder = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
+    $recorder = new DeprecatedSpansRecorder($flare->tracer, $flare->backTracer,  config:[
         'with_errors' => true,
         'max_items_with_errors' => null,
     ]);
@@ -68,7 +68,7 @@ it('can disable the limit of spans stored for reporting', function () {
 it('can completely disable reporting', function () {
     $flare = setupFlare();
 
-    $recorder = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
+    $recorder = new DeprecatedSpansRecorder($flare->tracer, $flare->backTracer,  config:[
         'with_errors' => false,
     ]);
 
@@ -83,7 +83,7 @@ it('can completely disable reporting', function () {
 it('can trace spans', function () {
     $flare = setupFlare(alwaysSampleTraces: true);
 
-    $recorder = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
+    $recorder = new DeprecatedSpansRecorder($flare->tracer, $flare->backTracer,  config:[
         'with_traces' => true,
     ]);
 
@@ -112,7 +112,7 @@ it('can trace spans', function () {
 it('will not trace span when not tracing', function () {
     $flare = setupFlare(fn (FlareConfig$config) => $config->neverSampleTraces());
 
-    $recorder = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
+    $recorder = new DeprecatedSpansRecorder($flare->tracer, $flare->backTracer,  config:[
         'with_traces' => true,
     ]);
 
@@ -127,7 +127,7 @@ it('will not trace a span when the span limit is reached', function () {
         $config->alwaysSampleTraces()->trace(maxSpans: 35);
     });
 
-    $recorder = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
+    $recorder = new DeprecatedSpansRecorder($flare->tracer, $flare->backTracer,  config:[
         'with_traces' => true,
     ]);
 
@@ -144,7 +144,7 @@ it('will not trace a span when the span limit is reached', function () {
 it('is possible to disable the recorder for tracing', function () {
     $flare = setupFlare(alwaysSampleTraces: true);
 
-    $recorder = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
+    $recorder = new DeprecatedSpansRecorder($flare->tracer, $flare->backTracer,  config:[
         'with_traces' => false,
     ]);
 
@@ -157,7 +157,7 @@ it('is possible to disable the recorder for tracing', function () {
 });
 
 it('a closure passed span will not be executed when not tracing or reporting', function () {
-    class TestSpanRecorderExecution extends SpansRecorder
+    class TestSpanRecorderExecutionDeprecated extends DeprecatedSpansRecorder
     {
         public function recordMessage(string $message): ?Span
         {
@@ -167,7 +167,7 @@ it('a closure passed span will not be executed when not tracing or reporting', f
 
     $flare = setupFlare(alwaysSampleTraces: true);
 
-    expect(fn () => (new TestSpanRecorderExecution($flare->tracer, $flare->backTracer, config:[
+    expect(fn () => (new TestSpanRecorderExecutionDeprecated($flare->tracer, $flare->backTracer, config:[
         'with_traces' => true,
         'with_errors' => true,
     ]))->recordMessage('Hello World'))->toThrow(
@@ -175,7 +175,7 @@ it('a closure passed span will not be executed when not tracing or reporting', f
         'Closure executed'
     );
 
-    expect(fn () => (new TestSpanRecorderExecution($flare->tracer, $flare->backTracer, config:[
+    expect(fn () => (new TestSpanRecorderExecutionDeprecated($flare->tracer, $flare->backTracer, config:[
         'with_traces' => false,
         'with_errors' => false,
     ]))->recordMessage('Hello World'))->not()->toThrow(
@@ -187,7 +187,7 @@ it('a closure passed span will not be executed when not tracing or reporting', f
 it('will correctly nest spans', function () {
     $flare = setupFlare(alwaysSampleTraces: true);
 
-    $recorder = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
+    $recorder = new DeprecatedSpansRecorder($flare->tracer, $flare->backTracer,  config:[
         'with_traces' => true,
     ]);
 
@@ -218,7 +218,7 @@ it('can start and end traces when not present', function () {
         fn (FlareConfig $config) => $config->alwaysSampleTraces()
     );
 
-    $recorder = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
+    $recorder = new DeprecatedSpansRecorder($flare->tracer, $flare->backTracer,  config:[
         'can_start_traces' => true,
         'with_traces' => true,
     ]);
@@ -239,7 +239,7 @@ it('can start and end traces when not present decided by the span type', functio
         fn (FlareConfig $config) => $config->alwaysSampleTraces()
     );
 
-    $recorderA = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
+    $recorderA = new DeprecatedSpansRecorder($flare->tracer, $flare->backTracer,  config:[
         'can_start_traces' => true,
         'should_start_trace' => fn (Span $span) => $span->name === 'Trace staring span',
         'with_traces' => true,
@@ -269,7 +269,7 @@ it('can start and end traces when not present (nested)', function () {
         fn (FlareConfig $config) => $config->alwaysSampleTraces()
     );
 
-    $recorder = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
+    $recorder = new DeprecatedSpansRecorder($flare->tracer, $flare->backTracer,  config:[
         'can_start_traces' => true,
         'with_traces' => true,
     ]);
@@ -302,7 +302,7 @@ it('will not start and end a trace when already sampling', function () {
         fn (FlareConfig $config) => $config->alwaysSampleTraces()
     );
 
-    $recorder = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
+    $recorder = new DeprecatedSpansRecorder($flare->tracer, $flare->backTracer,  config:[
         'can_start_traces' => true,
         'with_traces' => true,
     ]);
@@ -325,7 +325,7 @@ it('will not start a trace when tracing is completely disabled', function () {
         fn (FlareConfig $config) => $config->trace(false)
     );
 
-    $recorder = new SpansRecorder($flare->tracer, $flare->backTracer,  config:[
+    $recorder = new DeprecatedSpansRecorder($flare->tracer, $flare->backTracer,  config:[
         'can_start_traces' => true,
         'with_traces' => true,
     ]);
@@ -340,5 +340,4 @@ it('will not start a trace when tracing is completely disabled', function () {
 
     expect($flare->tracer->isSampling())->toBeFalse();
     expect($flare->tracer->getTraces())->toHaveCount(1);
-    expect($flare->tracer->currentTrace())->toBeEmpty();
 });

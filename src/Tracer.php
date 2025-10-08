@@ -131,9 +131,17 @@ class Tracer
 
     public function endTrace(): void
     {
+        $traceId = $this->currentTraceId;
+
         $this->currentTraceId = null;
         $this->currentSpanId = null;
         $this->samplingType = SamplingType::Waiting;
+
+        if (empty($this->traces[$traceId] ?? [])) {
+            unset($this->traces[$traceId]);
+
+            return;
+        }
 
         $payload = $this->exporter->export(
             $this->resource,
@@ -266,7 +274,7 @@ class Tracer
     public function endSpan(
         ?Span $span = null,
         ?int $time = null,
-        array $additionalAttributes = [],
+        array|Closure $additionalAttributes = [],
     ): Span {
         $span ??= $this->currentSpan();
 
@@ -274,7 +282,13 @@ class Tracer
             throw new Exception('No span to end');
         }
 
-        $span->end = $time ?? $this->time->getCurrentTime();
+        if ($span->end === null) {
+            $span->end = $time ?? $this->time->getCurrentTime();
+        }
+
+        if (is_callable($additionalAttributes)) {
+            $additionalAttributes = $additionalAttributes();
+        }
 
         if (count($additionalAttributes) > 0) {
             $span->addAttributes($additionalAttributes);
@@ -396,6 +410,7 @@ class Tracer
     public function getTraces(): array
     {
         return $this->traces;
+
     }
 
     public function gracefullyHandleError(): void

@@ -2,18 +2,14 @@
 
 namespace Spatie\FlareClient\Recorders\ApplicationRecorder;
 
-use Spatie\FlareClient\Concerns\Recorders\RecordsSpans;
-use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
+use Spatie\FlareClient\Recorders\SpansRecorder;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Support\TimeInterval;
 
-class ApplicationRecorder implements Recorder
+class ApplicationRecorder extends SpansRecorder
 {
-    /** @use  RecordsSpans<Span> */
-    use RecordsSpans;
-
     protected bool $running = false;
 
     protected bool $registering = false;
@@ -25,16 +21,7 @@ class ApplicationRecorder implements Recorder
     protected function configure(array $config): void
     {
         $this->withTraces = true;
-    }
-
-    protected function canStartTraces(): bool
-    {
-        return true;
-    }
-
-    protected function shouldStartTrace(Span $span): bool
-    {
-        return ($span->attributes['flare.span_type'] ?? null) === SpanType::Application;
+        $this->withErrors = false;
     }
 
     public static function type(): string|RecorderType
@@ -61,6 +48,7 @@ class ApplicationRecorder implements Recorder
                 ...$attributes,
             ],
             time: $time,
+            canStartTrace: true,
         );
     }
 
@@ -231,15 +219,15 @@ class ApplicationRecorder implements Recorder
         }
 
         if ($this->registering) {
-            $this->recordRegistered(time:  $time);
+            $this->recordRegistered(time: $time);
         }
 
         if ($this->booting) {
-            $this->recordBooted(time:  $time);
+            $this->recordBooted(time: $time);
         }
 
         if ($this->terminating) {
-            $this->recordTerminated(time:  $time);
+            $this->recordTerminated(time: $time);
         }
 
         $this->running = false;

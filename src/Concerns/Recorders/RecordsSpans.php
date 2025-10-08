@@ -9,6 +9,7 @@ use Spatie\FlareClient\Support\TimeInterval;
 
 /**
  * @template T of Span
+ * @deprecated Use the SpansRecorder instead.
  */
 trait RecordsSpans
 {

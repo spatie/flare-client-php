@@ -2,23 +2,20 @@
 
 namespace Spatie\FlareClient\Recorders\ResponseRecorder;
 
-use Spatie\FlareClient\Concerns\Recorders\RecordsSpans;
-use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
+use Spatie\FlareClient\Recorders\SpansRecorder;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Support\TimeInterval;
 
-class ResponseRecorder implements SpansRecorder
+class ResponseRecorder extends SpansRecorder
 {
-    /** @use RecordsSpans<Span> */
-    use RecordsSpans;
-
     protected bool $recordingResponse = false;
 
     protected function configure(array $config): void
     {
         $this->withTraces = true;
+        $this->withErrors = false;
     }
 
     public static function type(): string|RecorderType

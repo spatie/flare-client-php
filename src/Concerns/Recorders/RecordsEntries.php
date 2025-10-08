@@ -11,6 +11,7 @@ use Spatie\FlareClient\Tracer;
 
 /**
  * @template T of SpanEvent|Span
+ * @deprecated use the SpansRecorder or SpanEventsRecorder classes instead
  */
 trait RecordsEntries
 {
