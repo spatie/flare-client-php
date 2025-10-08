@@ -22,7 +22,7 @@
         "symfony/var-dumper": "^5.2|^6.0|^7.0"
     },
     "require-dev": {
-        "pestphp/pest": "^2.36.0|^3.0",
+        "pestphp/pest": "^2.36.0|^3.0|^4.0",
         "phpstan/extension-installer": "^1.4",
         "phpstan/phpstan-deprecation-rules": "^1.2",
         "phpstan/phpstan-phpunit": "^1.4",
