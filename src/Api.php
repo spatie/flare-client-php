@@ -152,7 +152,7 @@ class Api
                     throw new NotFound($response);
                 }
 
-                if ($response->code !== 200 && $response->code !== 204) {
+                if ($response->code < 200 || $response->code >= 300) {
                     throw new BadResponseCode($response);
                 }
             }
