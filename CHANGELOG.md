@@ -2,6 +2,10 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 2.3.1 - 2025-10-10
+
+- Better handling of success codes in the Api
+
 ## 2.3.0 - 2025-10-08
 
 - Fixed an issue where disabled tracing could still trace
