@@ -28,7 +28,7 @@ class FilesystemRecorder extends SpansRecorder
         return $this->startSpan(
             name: $description ?? "Filesystem - {$operationName}",
             attributes: [
-                'flare.span.type' => SpanType::Filesystem,
+                'flare.span_type' => SpanType::Filesystem,
                 'filesystem.operation' => $operation,
                 ...$attributes,
             ],
