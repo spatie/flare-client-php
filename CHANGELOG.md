@@ -2,6 +2,10 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 2.3.2 - 2025-10-13
+
+- Fix attribute key for span type in FilesystemRecorder.php
+
 ## 2.3.1 - 2025-10-10
 
 - Better handling of success codes in the Api
