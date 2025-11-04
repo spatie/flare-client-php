@@ -2,7 +2,6 @@
 
 namespace Spatie\FlareClient\Resources;
 
-use Composer\InstalledVersions;
 use Spatie\FlareClient\AttributesProviders\GitAttributesProvider;
 use Spatie\FlareClient\Concerns\HasAttributes;
 use Spatie\FlareClient\Contracts\WithAttributes;
