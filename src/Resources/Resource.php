@@ -22,7 +22,7 @@ class Resource implements WithAttributes
         ?string $serviceVersion = null,
         ?string $serviceStage = null,
         string $telemetrySdkName = Telemetry::NAME,
-        string $telemetrySdkVersion = Telemetry::VERSION,
+        string $telemetrySdkVersion = 'unknown',
         array $attributes = []
     ) {
         $this->attributes = [
@@ -73,9 +73,6 @@ class Resource implements WithAttributes
 
     public function composer(): self
     {
-        $this->serviceName(InstalledVersions::getRootPackage()['name']);
-        $this->serviceVersion(InstalledVersions::getRootPackage()['pretty_version']);
-
         return $this;
     }
 

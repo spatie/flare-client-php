@@ -15,7 +15,7 @@ class Scope implements WithAttributes
      */
     public function __construct(
         public string $name = Telemetry::NAME,
-        public string $version = Telemetry::VERSION,
+        public string $version = 'unknown',
         array $attributes = [],
     ) {
         $this->addAttributes($attributes);

@@ -137,8 +137,8 @@ class FlareProvider
                 $this->config->applicationName,
                 $this->config->applicationVersion,
                 $this->config->applicationStage,
-                Telemetry::NAME,
-                Telemetry::VERSION
+                Telemetry::getName(),
+                Telemetry::getVersion(),
             );
 
             foreach ($resourceModifiers as $resourceModifier) {
@@ -154,8 +154,8 @@ class FlareProvider
 
         $this->container->singleton(Scope::class, function () {
             $scope = new Scope(
-                Telemetry::NAME,
-                Telemetry::VERSION
+                Telemetry::getName(),
+                Telemetry::getVersion(),
             );
 
             if ($this->config->configureScopeCallable) {
