@@ -107,7 +107,7 @@ class GitAttributesProvider
             return [];
         }
 
-        if (preg_match("/\0.*?\n\n(.+)/s", $decompressed, $matches)) {
+        if (preg_match("/\0.*?\n\n([^\n]+)/s", $decompressed, $matches)) {
             return ['git.message' => trim($matches[1])];
         }
 
@@ -169,7 +169,7 @@ BASH;
         $guessedPath = __DIR__.'/../../';
 
         if (is_dir($guessedPath.'/.git')) {
-            return realpath($guessedPath);
+            return realpath($guessedPath) ?: null;
         }
 
         return null;

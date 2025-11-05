@@ -15,7 +15,7 @@ class AddGitInformation implements FlareMiddleware
 
     public static function register(ContainerInterface $container, array $config): Closure
     {
-        return fn () => new static(
+        return fn () => new self(
             $container->get(GitAttributesProvider::class),
             $config,
         );
