@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Contracts\Container\Container as IlluminateContainer;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\ErrorSolutions\Contracts\SolutionProviderRepository as SolutionProviderRepositoryContract;
+use Spatie\FlareClient\AttributesProviders\GitAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\SamplingType;
@@ -17,6 +18,7 @@ use Spatie\FlareClient\Sampling\Sampler;
 use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Senders\Sender;
 use Spatie\FlareClient\Support\BackTracer;
+use Spatie\FlareClient\Support\CollectsResolver;
 use Spatie\FlareClient\Support\Container;
 use Spatie\FlareClient\Support\GracefulSpanEnder;
 use Spatie\FlareClient\Support\Ids;
@@ -105,6 +107,7 @@ class FlareProvider
         ));
 
         $this->container->singleton(UserAttributesProvider::class, $this->config->userAttributesProvider);
+        $this->container->singleton(GitAttributesProvider::class, fn () => new GitAttributesProvider($this->config->applicationPath));
 
         [
             'middlewares' => $middlewares,
@@ -115,7 +118,7 @@ class FlareProvider
             'argumentReducers' => $argumentReducers,
             'forcePHPStackFrameArgumentsIniSetting' => $forcePHPStackFrameArgumentsIniSetting,
             'collectErrorsWithTraces' => $collectErrorsWithTraces,
-        ] = (new $this->config->collectsResolver)->execute($this->config->collects);
+        ] = (new $this->config->collectsResolver())->execute($this->config->collects);
 
         $this->container->singleton(ArgumentReducers::class, fn () => match (true) {
             $collectStackFrameArguments === false => ArgumentReducers::create([]),
@@ -142,7 +145,7 @@ class FlareProvider
             );
 
             foreach ($resourceModifiers as $resourceModifier) {
-                $resource = $resourceModifier($resource);
+                $resource = $resourceModifier($resource, $this->container);
             }
 
             if ($this->config->configureResourceCallable) {

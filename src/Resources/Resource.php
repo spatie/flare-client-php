@@ -9,7 +9,6 @@ use Spatie\FlareClient\Contracts\WithAttributes;
 use Spatie\FlareClient\Support\HostIpFetcher;
 use Spatie\FlareClient\Support\Telemetry;
 
-/** @see https://github.com/opentelemetry-php/sdk/blob/main/Resource/Detectors/ */
 class Resource implements WithAttributes
 {
     use HasAttributes;
@@ -123,9 +122,12 @@ class Resource implements WithAttributes
         return $this;
     }
 
-    public function git(): self
+    public function git(
+        GitAttributesProvider $attributesProvider,
+        bool $useProcess,
+    ): self
     {
-        $attributes = (new GitAttributesProvider())->toArray();
+        $attributes = $attributesProvider->toArray($useProcess);
 
         if (empty($attributes)) {
             return $this;
