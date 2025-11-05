@@ -3,7 +3,6 @@
 namespace Spatie\FlareClient\AttributesProviders;
 
 use Spatie\FlareClient\FlareMiddleware\AddGitInformation;
-use Spatie\FlareClient\Time\TimeHelper;
 use Symfony\Component\Process\Process;
 use Throwable;
 
@@ -86,7 +85,7 @@ class GitAttributesProvider
 
     protected function collectGitCommitInfo(string $gitDirectory, string $hash): array
     {
-        if(! function_exists('gzuncompress')){
+        if (! function_exists('gzuncompress')) {
             return [];
         }
 

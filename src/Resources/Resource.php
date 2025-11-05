@@ -2,7 +2,6 @@
 
 namespace Spatie\FlareClient\Resources;
 
-use Composer\InstalledVersions;
 use Spatie\FlareClient\AttributesProviders\GitAttributesProvider;
 use Spatie\FlareClient\Concerns\HasAttributes;
 use Spatie\FlareClient\Contracts\WithAttributes;
@@ -125,8 +124,7 @@ class Resource implements WithAttributes
     public function git(
         GitAttributesProvider $attributesProvider,
         bool $useProcess,
-    ): self
-    {
+    ): self {
         $attributes = $attributesProvider->toArray($useProcess);
 
         if (empty($attributes)) {

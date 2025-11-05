@@ -15,7 +15,7 @@ class Telemetry
 
     public static function getVersion(): string
     {
-        if(! class_exists(InstalledVersions::class)){
+        if (! class_exists(InstalledVersions::class)) {
             return 'unknown';
         }
 

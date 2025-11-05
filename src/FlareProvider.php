@@ -18,7 +18,6 @@ use Spatie\FlareClient\Sampling\Sampler;
 use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Senders\Sender;
 use Spatie\FlareClient\Support\BackTracer;
-use Spatie\FlareClient\Support\CollectsResolver;
 use Spatie\FlareClient\Support\Container;
 use Spatie\FlareClient\Support\GracefulSpanEnder;
 use Spatie\FlareClient\Support\Ids;
