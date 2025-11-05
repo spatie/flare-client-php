@@ -2,6 +2,10 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 3.3.3 - 2025-11-05
+
+- Use local data to determine the flare client telemetry version
+
 ## 2.3.2 - 2025-10-13
 
 - Fix attribute key for span type in FilesystemRecorder.php
