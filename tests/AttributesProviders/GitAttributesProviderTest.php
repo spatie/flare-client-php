@@ -10,11 +10,13 @@ it('can collect git info from files', function () {
         ->and($result)->toHaveKey('git.hash')
         ->and($result['git.hash'])->toBeString()
         ->and($result['git.hash'])->toHaveLength(40)
-        ->and($result)->toHaveKey('git.branch')
-        ->and($result['git.branch'])->toBeString()
         ->and($result)->toHaveKey('git.remote')
         ->and($result['git.remote'])->toBeString()
         ->and($result['git.remote'])->toContain('flare-client-php');
+
+    if (array_key_exists('git.branch', $result)) {
+        expect($result['git.branch'])->toBeString();
+    }
 
     if (array_key_exists('git.message', $result)) {
         // Packed git objects on ci are not supported
@@ -31,12 +33,14 @@ it('can collect git info using process', function () {
         ->and($result)->toHaveKey('git.hash')
         ->and($result['git.hash'])->toBeString()
         ->and($result['git.hash'])->toHaveLength(40)
-        ->and($result)->toHaveKey('git.branch')
-        ->and($result['git.branch'])->toBeString()
         ->and($result)->toHaveKey('git.message')
         ->and($result['git.message'])->toBeString()
         ->and($result)->toHaveKey('git.is_dirty')
         ->and($result['git.is_dirty'])->toBeBool();
+
+    if (array_key_exists('git.branch', $result)) {
+        expect($result['git.branch'])->toBeString();
+    }
 });
 
 it('file-based and process-based modes return same hash and branch', function () {
@@ -46,8 +50,11 @@ it('file-based and process-based modes return same hash and branch', function ()
     $provider2 = new GitAttributesProvider(); // Create new instance to avoid cache
     $processResult = $provider2->toArray(useProcess: true);
 
-    expect($fileResult['git.hash'])->toBe($processResult['git.hash'])
-        ->and($fileResult['git.branch'])->toBe($processResult['git.branch']);
+    expect($fileResult['git.hash'])->toBe($processResult['git.hash']);
+
+    if (array_key_exists('git.branch', $fileResult) && array_key_exists('git.branch', $processResult)) {
+        expect($fileResult['git.branch'])->toBe($processResult['git.branch']);
+    }
 });
 
 it('file-based and process-based modes return same commit message when available', function () {
