@@ -8,7 +8,7 @@ use Spatie\FlareClient\TraceExporters\TraceExporter;
 
 class FakeTraceExporter implements TraceExporter
 {
-    public function export(Resource $resource, Scope $scope, array $traces): array
+    public function export(Resource $resource, Scope $scope, array $traces, array $context): array
     {
         $exportedSpans = [];
 

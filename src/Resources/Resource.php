@@ -4,6 +4,7 @@ namespace Spatie\FlareClient\Resources;
 
 use Spatie\FlareClient\AttributesProviders\GitAttributesProvider;
 use Spatie\FlareClient\Concerns\HasAttributes;
+use Spatie\FlareClient\Concerns\HasCustomContext;
 use Spatie\FlareClient\Contracts\WithAttributes;
 use Spatie\FlareClient\Support\HostIpFetcher;
 use Spatie\FlareClient\Support\Telemetry;

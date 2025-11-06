@@ -11,6 +11,7 @@ use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\SamplingType;
 use Spatie\FlareClient\FlareMiddleware\AddRecordedEntries;
+use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
 use Spatie\FlareClient\Recorders\ErrorRecorder\ErrorRecorder;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Sampling\NeverSampler;
@@ -85,6 +86,7 @@ class FlareProvider
             sampler: $this->config->trace
                 ? $this->container->get(Sampler::class)
                 : new NeverSampler(),
+            contextRecorder: $this->container->get(ContextRecorder::class),
             configureSpansCallable: $this->config->configureSpansCallable,
             configureSpanEventsCallable: $this->config->configureSpanEventsCallable,
             samplingType: $this->config->trace ? SamplingType::Waiting : SamplingType::Disabled,
@@ -104,6 +106,8 @@ class FlareProvider
             censorHeaders: $this->config->censorHeaders,
             censorBodyFields: $this->config->censorBodyFields,
         ));
+
+        $this->container->singleton(ContextRecorder::class, fn () => new ContextRecorder());
 
         $this->container->singleton(UserAttributesProvider::class, $this->config->userAttributesProvider);
         $this->container->singleton(GitAttributesProvider::class, fn () => new GitAttributesProvider($this->config->applicationPath));
@@ -214,6 +218,7 @@ class FlareProvider
                 middleware: $middleware,
                 recorders: $recorders,
                 throwableRecorder: $collectErrorsWithTraces ? $this->container->get(ErrorRecorder::class) : null,
+                contextRecorder: $this->container->get(ContextRecorder::class),
                 reportErrorLevels: $this->config->reportErrorLevels,
                 filterExceptionsCallable: $this->config->filterExceptionsCallable,
                 filterReportsCallable: $this->config->filterReportsCallable,

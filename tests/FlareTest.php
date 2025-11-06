@@ -55,26 +55,26 @@ it('can reset queued exceptions', function () {
     $flare = setupFlare();
 
     $flare->context('test_key', 'test_value');
-    expect($flare->customContext)->toBe(['test_key' => 'test_value']);
+    expect($flare->contextRecorder->toArray())->toBe(['context.custom' => ['test_key' => 'test_value']]);
 
     reportException();
 
     $flare->reset();
 
     FakeSender::instance()->assertRequestsSent(1);
-    expect($flare->customContext)->toBe([]);
+    expect($flare->contextRecorder->toArray())->toBe([]);
 
     $flare->reset();
 
     FakeSender::instance()->assertRequestsSent(1);
-    expect($flare->customContext)->toBe([]);
+    expect($flare->contextRecorder->toArray())->toBe([]);
 });
 
 it('can reset queued traces', function () {
     $flare = setupFlare(alwaysSampleTraces: true);
 
     $flare->context('test_key', 'test_value');
-    expect($flare->customContext)->toBe(['test_key' => 'test_value']);
+    expect($flare->contextRecorder->toArray())->toBe(['context.custom' => ['test_key' => 'test_value']]);
 
     $flare->tracer->startTrace();
     $span = $flare->tracer->startSpan('Test Span');
@@ -86,26 +86,26 @@ it('can reset queued traces', function () {
     $flare->reset(traces: false);
 
     expect(count(FakeSender::$requests))->toBe(1);
-    expect($flare->customContext)->toBe([]);
+    expect($flare->contextRecorder->toArray())->toBe([]);
 });
 
 it('can reset queued exceptions but keep custom context', function () {
     $flare = setupFlare();
 
     $flare->context('test_key', 'test_value');
-    expect($flare->customContext)->toBe(['test_key' => 'test_value']);
+    expect($flare->contextRecorder->toArray())->toBe(['context.custom' => ['test_key' => 'test_value']]);
 
     reportException();
 
     $flare->reset(clearCustomContext: false);
 
     FakeSender::instance()->assertRequestsSent(1);
-    expect($flare->customContext)->toBe(['test_key' => 'test_value']);
+    expect($flare->contextRecorder->toArray())->toBe(['context.custom' => ['test_key' => 'test_value']]);
 
     $flare->reset(clearCustomContext: true);
 
     FakeSender::instance()->assertRequestsSent(1);
-    expect($flare->customContext)->toBe([]);
+    expect($flare->contextRecorder->toArray())->toBe([]);
 });
 
 it('can add user provided context', function () {
