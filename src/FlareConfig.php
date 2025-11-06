@@ -25,6 +25,7 @@ use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\CollectType;
 use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Enums\OverriddenGrouping;
+use Spatie\FlareClient\FlareMiddleware\AddGitInformation;
 use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
@@ -222,9 +223,14 @@ class FlareConfig
         return $this->ignoreCollect(CollectType::Commands);
     }
 
-    public function collectGitInfo(array $extra = []): static
-    {
-        return $this->addCollect(CollectType::GitInfo, $extra);
+    public function collectGitInfo(
+        bool $useProcess = AddGitInformation::DEFAULT_USE_PROCESS,
+        array $extra = []
+    ): static {
+        return $this->addCollect(CollectType::GitInfo, [
+            'use_process' => $useProcess,
+            ...$extra,
+        ]);
     }
 
     public function ignoreGitInfo(): static
