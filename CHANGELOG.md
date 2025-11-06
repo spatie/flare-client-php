@@ -2,6 +2,10 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 2.4.0 - 2025-11-06
+
+- Update the Git Collector to be more performant
+
 ## 2.3.3 - 2025-11-05
 
 - Use local data to determine the telemetry sdk version
