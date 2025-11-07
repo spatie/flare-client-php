@@ -145,11 +145,20 @@ class Tracer
             return;
         }
 
+        $context = $this->contextRecorder->toArray();
+
+        if (! empty($context)) {
+            foreach ($this->traces as $spans) {
+                $spans[array_key_first($spans)]->addAttributes($context);
+            }
+        }
+
+        $this->contextRecorder->resetContext();
+
         $payload = $this->exporter->export(
             $this->resource,
             $this->scope,
             $this->traces,
-            $this->contextRecorder->toArray(),
         );
 
         $this->api->trace($payload);

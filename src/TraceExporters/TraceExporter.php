@@ -9,7 +9,6 @@ use Spatie\FlareClient\Spans\Span;
 interface TraceExporter
 {
     /**
-     * @param array<string, array<array-key, mixed>> $context
      * @param array<string, array<string, Span>> $traces
      *
      * @return array<mixed>
@@ -18,6 +17,5 @@ interface TraceExporter
         Resource $resource,
         Scope $scope,
         array $traces,
-        array $context
     ): array;
 }

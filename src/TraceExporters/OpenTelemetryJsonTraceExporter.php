@@ -18,13 +18,11 @@ class OpenTelemetryJsonTraceExporter implements TraceExporter
 
     /**
      * @param array<string, array<string, Span>> $traces
-     * @param array<string, array<array-key, mixed>> $context
      */
     public function export(
         Resource $resource,
         Scope $scope,
         array $traces,
-        array $context,
     ): array {
         $exportedSpans = [];
 
@@ -37,7 +35,7 @@ class OpenTelemetryJsonTraceExporter implements TraceExporter
         return [
             'resourceSpans' => [
                 [
-                    'resource' => $this->exportResource($resource, $context),
+                    'resource' => $this->exportResource($resource),
                     'scopeSpans' => [
                         [
                             'scope' => $this->exportScope($scope),
@@ -49,16 +47,12 @@ class OpenTelemetryJsonTraceExporter implements TraceExporter
         ];
     }
 
-    /**
-     * @return array{attributes: array<string, mixed>, droppedAttributesCount: int}
-     */
-    protected function exportResource(Resource $resource, array $context): array
+    protected function exportResource(Resource $resource): array
     {
         return [
-            'attributes' => $this->attributeMapper->attributesToOpenTelemetry([
-                ...$resource->attributes,
-                ...$context,
-            ]),
+            'attributes' => $this->attributeMapper->attributesToOpenTelemetry(
+                $resource->attributes,
+            ),
             'droppedAttributesCount' => $resource->droppedAttributesCount,
         ];
     }
