@@ -2,6 +2,10 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 2.5.0 - 2025-11-07
+
+- Add support for better trace context recording
+
 ## 2.4.0 - 2025-11-06
 
 - Update the Git Collector to be more performant
