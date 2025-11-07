@@ -31,10 +31,7 @@
     "autoload": {
         "psr-4": {
             "Spatie\\FlareClient\\": "src"
-        },
-        "files": [
-            "src/helpers.php"
-        ]
+        }
     },
     "autoload-dev": {
         "psr-4": {

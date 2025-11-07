@@ -7,6 +7,7 @@ use Exception;
 use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Enums\SamplingType;
 use Spatie\FlareClient\Enums\SpanStatusCode;
+use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Sampling\RateSampler;
 use Spatie\FlareClient\Sampling\Sampler;
@@ -41,6 +42,7 @@ class Tracer
         public readonly Ids $ids,
         public readonly Resource $resource,
         public readonly Scope $scope,
+        protected ContextRecorder $contextRecorder,
         public readonly Sampler $sampler = new RateSampler([]),
         public ?Closure $configureSpansCallable = null,
         public ?Closure $configureSpanEventsCallable = null,
@@ -142,6 +144,16 @@ class Tracer
 
             return;
         }
+
+        $context = $this->contextRecorder->toArray();
+
+        if (! empty($context)) {
+            foreach ($this->traces as $spans) {
+                $spans[array_key_first($spans)]->addAttributes($context);
+            }
+        }
+
+        $this->contextRecorder->resetContext();
 
         $payload = $this->exporter->export(
             $this->resource,

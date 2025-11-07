@@ -10,10 +10,10 @@ use Spatie\Backtrace\Frame;
 use Spatie\ErrorSolutions\Contracts\RunnableSolution;
 use Spatie\ErrorSolutions\Contracts\Solution;
 use Spatie\FlareClient\Concerns\HasAttributes;
-use Spatie\FlareClient\Concerns\HasCustomContext;
 use Spatie\FlareClient\Contracts\ProvidesFlareContext;
 use Spatie\FlareClient\Contracts\WithAttributes;
 use Spatie\FlareClient\Enums\OverriddenGrouping;
+use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
@@ -25,7 +25,6 @@ use Throwable;
 class ReportFactory implements WithAttributes
 {
     use HasAttributes;
-    use HasCustomContext;
 
     protected Resource $resource;
 
@@ -52,6 +51,8 @@ class ReportFactory implements WithAttributes
 
     /** @var array<class-string, OverriddenGrouping> */
     public array $overriddenGroupings = [];
+
+    protected ?ContextRecorder $contextRecorder = null;
 
     protected function __construct(
         public ?Throwable $throwable,
@@ -179,6 +180,20 @@ class ReportFactory implements WithAttributes
         return $this;
     }
 
+    public function context(string|array $key, mixed $value = null): self
+    {
+        $this->contextRecorder?->context('context.custom', $key, $value);
+
+        return $this;
+    }
+
+    public function contextRecorder(ContextRecorder $contextRecorder): self
+    {
+        $this->contextRecorder = $contextRecorder;
+
+        return $this;
+    }
+
     public function build(
         StacktraceMapper $stacktraceMapper,
         Time $time,
@@ -196,7 +211,8 @@ class ReportFactory implements WithAttributes
 
         $attributes = array_merge(
             isset($this->resource) ? $this->resource->attributes : [],
-            $this->attributes
+            $this->attributes,
+            $this->contextRecorder?->toArray() ?? [],
         );
 
         if ($this->throwable instanceof ProvidesFlareContext) {
@@ -237,12 +253,14 @@ class ReportFactory implements WithAttributes
     protected function buildStacktrace(): array
     {
         if ($this->isLog && $this->includeStackTraceWithMessages === false) {
-            return [new Frame(
-                file: 'Log',
-                lineNumber: 0,
-                arguments: null,
-                method: 'Stacktrace disabled',
-            )];
+            return [
+                new Frame(
+                    file: 'Log',
+                    lineNumber: 0,
+                    arguments: null,
+                    method: 'Stacktrace disabled',
+                ),
+            ];
         }
 
         $stacktrace = $this->isLog || $this->throwable === null

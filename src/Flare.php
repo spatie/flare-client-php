@@ -9,7 +9,6 @@ use Exception;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\ErrorSolutions\Contracts\HasSolutionsForThrowable;
 use Spatie\ErrorSolutions\Contracts\SolutionProviderRepository;
-use Spatie\FlareClient\Concerns\HasCustomContext;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\OverriddenGrouping;
 use Spatie\FlareClient\Enums\RecorderType;
@@ -17,6 +16,7 @@ use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 use Spatie\FlareClient\Recorders\ApplicationRecorder\ApplicationRecorder;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
+use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
 use Spatie\FlareClient\Recorders\ErrorRecorder\ErrorRecorder;
 use Spatie\FlareClient\Recorders\ExternalHttpRecorder\ExternalHttpRecorder;
 use Spatie\FlareClient\Recorders\FilesystemRecorder\FilesystemRecorder;
@@ -41,8 +41,6 @@ use Throwable;
 
 class Flare
 {
-    use HasCustomContext;
-
     protected mixed $previousExceptionHandler = null;
 
     protected mixed $previousErrorHandler = null;
@@ -65,6 +63,7 @@ class Flare
         protected readonly array $middleware,
         protected readonly array $recorders,
         protected readonly ?ErrorRecorder $throwableRecorder,
+        public readonly ContextRecorder $contextRecorder,
         protected readonly ?int $reportErrorLevels,
         protected null|Closure $filterExceptionsCallable,
         protected null|Closure $filterReportsCallable,
@@ -422,6 +421,13 @@ class Flare
         return $this;
     }
 
+    public function context(string|array $key, mixed $value = null): self
+    {
+        $this->contextRecorder->context('context.custom', $key, $value);
+
+        return $this;
+    }
+
     public function reset(
         bool $reports = true,
         bool $traces = true,
@@ -430,7 +436,7 @@ class Flare
         $this->api->sendQueue(reports: $reports, traces: $traces);
 
         if ($clearCustomContext) {
-            $this->clearCustomContext();
+            $this->contextRecorder->resetContext();
         }
 
         if ($reports) {
@@ -465,7 +471,7 @@ class Flare
             ->overriddenGroupings($this->overriddenGroupings)
             ->applicationPath($this->applicationPath)
             ->includeStackTraceWithMessages($this->includeStackTraceWithMessages)
-            ->context($this->customContext);
+            ->contextRecorder($this->contextRecorder);
 
         foreach ($this->middleware as $middleware) {
             $factory = $middleware->handle($factory, function ($factory) {

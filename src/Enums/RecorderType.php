@@ -7,6 +7,7 @@ enum RecorderType: string
     case Application = 'application';
     case Cache = 'cache';
     case Command = 'command';
+    case Context = 'context';
     case Dump = 'dump';
     case Event = 'event';
     case Exception = 'exception';
