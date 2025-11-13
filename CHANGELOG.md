@@ -2,6 +2,12 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 2.5.1 - 2025-11-13
+
+- Fix an issue where the disabled Flare infrastructure wasn't working propertly
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/2.5.0...2.5.1
+
 ## 2.5.0 - 2025-11-07
 
 - Add support for better trace context recording
