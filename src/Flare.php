@@ -210,8 +210,8 @@ class Flare
 
     public function recorder(
         RecorderType|string $type
-    ): Recorder {
-        return $this->recorders[is_string($type) ? $type : $type->value];
+    ): Recorder|null {
+        return $this->recorders[is_string($type) ? $type : $type->value] ?? null;
     }
 
     public function handleException(Throwable $throwable): void
