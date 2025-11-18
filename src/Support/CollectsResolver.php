@@ -155,7 +155,7 @@ class CollectsResolver
     {
         $this->resourceModifiers[] = fn (Resource $resource, ContainerInterface $container) => $resource->git(
             $container->get(GitAttributesProvider::class),
-            $options['use_process'],
+            $options['use_process'] ?? AddGitInformation::DEFAULT_USE_PROCESS,
         );
 
         $this->addMiddleware(AddGitInformation::class, $options);
