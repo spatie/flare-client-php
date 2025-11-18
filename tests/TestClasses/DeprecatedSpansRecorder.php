@@ -7,7 +7,7 @@ use Spatie\FlareClient\Concerns\Recorders\RecordsSpans;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Spans\Span;
 
-class SpansRecorder implements \Spatie\FlareClient\Contracts\Recorders\SpansRecorder
+class DeprecatedSpansRecorder implements \Spatie\FlareClient\Contracts\Recorders\SpansRecorder
 {
     use RecordsSpans;
 

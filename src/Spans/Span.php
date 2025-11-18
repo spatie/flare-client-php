@@ -60,12 +60,10 @@ class Span implements WithAttributes
     {
         $type = $this->attributes['flare.span_type'] ?? SpanType::Custom;
 
-        unset($this->attributes['flare.span_type']);
-
         return [
             'startTimeUnixNano' => $this->start,
             'endTimeUnixNano' => $this->end,
-            'attributes' => $this->attributes,
+            'attributes' => array_diff_key($this->attributes, ['flare.span_type' => null]),
             'type' => $type,
         ];
     }

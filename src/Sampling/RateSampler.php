@@ -20,6 +20,14 @@ class RateSampler implements Sampler
 
     public function shouldSample(array $context): bool
     {
-        return mt_rand(0, 100) / 100 <= $this->rate;
+        if ($this->rate === 0.0) {
+            return false;
+        }
+
+        if ($this->rate === 1.0) {
+            return true;
+        }
+
+        return (mt_rand() / mt_getrandmax()) < $this->rate;
     }
 }

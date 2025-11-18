@@ -2,9 +2,11 @@
 
 namespace Spatie\FlareClient\Support;
 
+use Psr\Container\ContainerInterface;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\Backtrace\Arguments\Reducers\ArgumentReducer;
 use Spatie\ErrorSolutions\Contracts\HasSolutionsForThrowable;
+use Spatie\FlareClient\AttributesProviders\GitAttributesProvider;
 use Spatie\FlareClient\Contracts\FlareCollectType;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\CollectType;
@@ -41,7 +43,7 @@ class CollectsResolver
     /** @var array<class-string<HasSolutionsForThrowable>> */
     protected array $solutionProviders = [];
 
-    /** @var array<callable(Resource):Resource> */
+    /** @var array<callable(Resource, ContainerInterface):Resource> */
     protected array $resourceModifiers = [];
 
     /** @var array<ArgumentReducer|class-string<ArgumentReducer>>|ArgumentReducers */
@@ -53,7 +55,7 @@ class CollectsResolver
 
     protected bool $collectErrorsWithTraces = false;
 
-    /** @return array{middlewares: array<class-string<FlareMiddleware>, array>, recorders: array<class-string<Recorder>, array>, solutionProviders: array<class-string<HasSolutionsForThrowable>>, resourceModifiers: array<callable(Resource):Resource>, collectStackFrameArguments: bool, argumentReducers: array<class-string<ArgumentReducer>|ArgumentReducer>|ArgumentReducers, forcePHPStackFrameArgumentsIniSetting: bool, collectErrorsWithTraces:bool} */
+    /** @return array{middlewares: array<class-string<FlareMiddleware>, array>, recorders: array<class-string<Recorder>, array>, solutionProviders: array<class-string<HasSolutionsForThrowable>>, resourceModifiers: array<callable(Resource, ContainerInterface):Resource>, collectStackFrameArguments: bool, argumentReducers: array<class-string<ArgumentReducer>|ArgumentReducer>|ArgumentReducers, forcePHPStackFrameArgumentsIniSetting: bool, collectErrorsWithTraces:bool} */
     public function execute(
         array $collects,
     ): array {
@@ -151,8 +153,12 @@ class CollectsResolver
 
     protected function gitInfo(array $options): void
     {
-        $this->resourceModifiers[] = fn (Resource $resource) => $resource->git();
-        $this->addMiddleware(AddGitInformation::class);
+        $this->resourceModifiers[] = fn (Resource $resource, ContainerInterface $container) => $resource->git(
+            $container->get(GitAttributesProvider::class),
+            $options['use_process'] ?? AddGitInformation::DEFAULT_USE_PROCESS,
+        );
+
+        $this->addMiddleware(AddGitInformation::class, $options);
     }
 
     protected function cache(array $options): void

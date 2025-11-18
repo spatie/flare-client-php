@@ -2,13 +2,12 @@
 
 namespace Spatie\FlareClient\Resources;
 
-use Composer\InstalledVersions;
 use Spatie\FlareClient\AttributesProviders\GitAttributesProvider;
 use Spatie\FlareClient\Concerns\HasAttributes;
 use Spatie\FlareClient\Contracts\WithAttributes;
+use Spatie\FlareClient\Support\HostIpFetcher;
 use Spatie\FlareClient\Support\Telemetry;
 
-/** @see https://github.com/opentelemetry-php/sdk/blob/main/Resource/Detectors/ */
 class Resource implements WithAttributes
 {
     use HasAttributes;
@@ -21,7 +20,7 @@ class Resource implements WithAttributes
         ?string $serviceVersion = null,
         ?string $serviceStage = null,
         string $telemetrySdkName = Telemetry::NAME,
-        string $telemetrySdkVersion = Telemetry::VERSION,
+        string $telemetrySdkVersion = 'unknown',
         array $attributes = []
     ) {
         $this->attributes = [
@@ -72,16 +71,13 @@ class Resource implements WithAttributes
 
     public function composer(): self
     {
-        $this->serviceName(InstalledVersions::getRootPackage()['name']);
-        $this->serviceVersion(InstalledVersions::getRootPackage()['pretty_version']);
-
         return $this;
     }
 
     public function host(): self
     {
-        if ($hostname = gethostname()) {
-            $this->attributes['host.ip'] = gethostbyname($hostname);
+        if ($hostIp = HostIpFetcher::fetch()) {
+            $this->attributes['host.ip'] = $hostIp;
         }
 
         $this->attributes['host.name'] = php_uname('n');
@@ -125,9 +121,11 @@ class Resource implements WithAttributes
         return $this;
     }
 
-    public function git(): self
-    {
-        $attributes = (new GitAttributesProvider())->toArray();
+    public function git(
+        GitAttributesProvider $attributesProvider,
+        bool $useProcess,
+    ): self {
+        $attributes = $attributesProvider->toArray($useProcess);
 
         if (empty($attributes)) {
             return $this;

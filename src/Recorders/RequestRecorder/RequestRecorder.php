@@ -6,38 +6,20 @@ use Closure;
 use Psr\Container\ContainerInterface;
 use Spatie\FlareClient\AttributesProviders\RequestAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
-use Spatie\FlareClient\Concerns\Recorders\RecordsSpans;
-use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
+use Spatie\FlareClient\Recorders\SpansRecorder;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Support\BackTracer;
 use Spatie\FlareClient\Support\Redactor;
 use Spatie\FlareClient\Tracer;
 use Symfony\Component\HttpFoundation\Request;
 
-class RequestRecorder implements SpansRecorder
+class RequestRecorder extends SpansRecorder
 {
-    /** @use RecordsSpans<Span> */
-    use RecordsSpans;
-
     public static function type(): string|RecorderType
     {
         return RecorderType::Request;
-    }
-
-    public function __construct(
-        protected Tracer $tracer,
-        protected BackTracer $backTracer,
-        protected array $config,
-        protected RequestAttributesProvider $requestAttributesProvider,
-    ) {
-        $this->configure($config);
-    }
-
-    protected function configure(array $config): void
-    {
-        $this->withTraces = true;
     }
 
     public static function register(ContainerInterface $container, array $config): Closure
@@ -51,6 +33,21 @@ class RequestRecorder implements SpansRecorder
                 $container->get(UserAttributesProvider::class)
             )
         );
+    }
+
+    public function __construct(
+        Tracer $tracer,
+        BackTracer $backTracer,
+        array $config,
+        protected RequestAttributesProvider $requestAttributesProvider,
+    ) {
+        parent::__construct($tracer, $backTracer, $config);
+    }
+
+    protected function configure(array $config): void
+    {
+        $this->withTraces = true;
+        $this->withErrors = false;
     }
 
     public function recordStart(

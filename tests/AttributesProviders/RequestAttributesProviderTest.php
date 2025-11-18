@@ -167,6 +167,104 @@ it('can strip body fields', function () {
     ]);
 });
 
+it('can strip body fields using nested and wildcard support', function () {
+    $post = [
+        'admin' => [
+            'email' => 'test@flareapp.io',
+            'name' => 'test',
+            'counts' => [
+                'posts' => 10,
+                'followers' => 1000,
+            ],
+        ],
+        'users' => [
+            [
+                'email' => 'test-2@flareapp.io',
+                'name' => 'test-2',
+                'counts' => [
+                    'posts' => 5,
+                    'followers' => 500,
+                ],
+            ],
+            [
+                'email' => 'test-3@flareapp.io',
+                'name' => 'test-3',
+                'counts' => [
+                    'posts' => 2,
+                    'followers' => 200,
+                ],
+            ],
+        ],
+        'wildcard' => [
+            'key1' => 'value1',
+            'key2' => 'value2',
+        ],
+        'object' => new StdClass(),
+        'nested_object' => (object) [
+            'key' => 'value',
+        ],
+    ];
+
+    $server = [
+        'REQUEST_METHOD' => 'POST',
+    ];
+
+
+    $request = new Request(request: $post, server: $server);
+
+    $provider = new RequestAttributesProvider(
+        new Redactor(censorBodyFields: [
+            'admin.name',
+            'admin.counts.followers',
+            'users.*.name',
+            'users.*.counts.followers',
+            'wildcard.*',
+            'object',
+            'nested_object.key',
+        ]),
+        new EmptyUserAttributesProvider()
+    );
+
+    $attributes = $provider->toArray($request);
+
+    expect($attributes)->toHaveKey('http.request.body.contents', [
+        'admin' => [
+            'email' => 'test@flareapp.io',
+            'name' => '<CENSORED:string>',
+            'counts' => [
+                'posts' => 10,
+                'followers' => '<CENSORED:int>',
+            ],
+        ],
+        'users' => [
+            [
+                'email' => 'test-2@flareapp.io',
+                'name' => '<CENSORED:string>',
+                'counts' => [
+                    'posts' => 5,
+                    'followers' => '<CENSORED:int>',
+                ],
+            ],
+            [
+                'email' => 'test-3@flareapp.io',
+                'name' => '<CENSORED:string>',
+                'counts' => [
+                    'posts' => 2,
+                    'followers' => '<CENSORED:int>',
+                ],
+            ],
+        ],
+        'wildcard' => [
+            'key1' => '<CENSORED:string>',
+            'key2' => '<CENSORED:string>',
+        ],
+        'object' => '<CENSORED:stdClass>',
+        'nested_object' => (object) [
+            'key' => 'value',
+        ],
+    ]);
+});
+
 it('can retrieve the body contents of a json request', function () {
     $content = '{"key": "value"}';
 

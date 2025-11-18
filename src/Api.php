@@ -3,6 +3,7 @@
 namespace Spatie\FlareClient;
 
 use Exception;
+use Spatie\FlareClient\Enums\FlarePayloadType;
 use Spatie\FlareClient\Senders\CurlSender;
 use Spatie\FlareClient\Senders\Exceptions\BadResponseCode;
 use Spatie\FlareClient\Senders\Exceptions\InvalidData;
@@ -66,7 +67,7 @@ class Api
     public function test(
         Report $report
     ): void {
-        $this->sendReportToApi($report);
+        $this->sendReportToApi($report, isTest: true);
     }
 
     protected function addReportToQueue(Report $report): self
@@ -112,13 +113,14 @@ class Api
         }
     }
 
-    protected function sendReportToApi(Report $report): void
+    protected function sendReportToApi(Report $report, bool $isTest = false): void
     {
         $payload = $this->truncateReport($report->toArray());
 
         $this->post(
             "{$this->baseUrl}/v1/errors",
             $payload,
+            $isTest ? FlarePayloadType::TestError : FlarePayloadType::Error
         );
     }
 
@@ -127,17 +129,20 @@ class Api
         $this->post(
             "{$this->baseUrl}/v1/traces",
             $trace,
+            FlarePayloadType::Traces,
         );
     }
 
     protected function post(
         string $endpoint,
         array $payload,
+        FlarePayloadType $type,
     ): void {
         $this->sender->post(
             $endpoint,
             $this->apiToken,
             $payload,
+            $type,
             function (Response $response) {
                 if ($response->code === 422) {
                     throw new InvalidData($response);
@@ -147,7 +152,7 @@ class Api
                     throw new NotFound($response);
                 }
 
-                if ($response->code !== 200 && $response->code !== 204) {
+                if ($response->code < 200 || $response->code >= 300) {
                     throw new BadResponseCode($response);
                 }
             }

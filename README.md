@@ -1,4 +1,4 @@
-# Send PHP errors to Flare
+# Send PHP errors and traces to Flare
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/spatie/flare-client-php.svg?style=flat-square)](https://packagist.org/packages/spatie/flare-client-php)
 [![Run tests](https://github.com/spatie/flare-client-php/actions/workflows/run-tests.yml/badge.svg)](https://github.com/spatie/flare-client-php/actions/workflows/run-tests.yml)
@@ -11,7 +11,7 @@ Using Laravel? You probably want to use [Flare for Laravel](https://github.com/s
 
 ## Documentation
 
-You can find the documentation of this package at [the docs of Flare](https://flareapp.io/docs/flare/general/welcome-to-flare).
+You can find the documentation of this package at [the docs of Flare](https://flareapp.io/docs/php/general/introduction).
 
 ## Changelog
 

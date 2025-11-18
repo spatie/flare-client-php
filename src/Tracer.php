@@ -7,6 +7,7 @@ use Exception;
 use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Enums\SamplingType;
 use Spatie\FlareClient\Enums\SpanStatusCode;
+use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Sampling\RateSampler;
 use Spatie\FlareClient\Sampling\Sampler;
@@ -41,6 +42,7 @@ class Tracer
         public readonly Ids $ids,
         public readonly Resource $resource,
         public readonly Scope $scope,
+        protected ContextRecorder $contextRecorder,
         public readonly Sampler $sampler = new RateSampler([]),
         public ?Closure $configureSpansCallable = null,
         public ?Closure $configureSpanEventsCallable = null,
@@ -131,9 +133,27 @@ class Tracer
 
     public function endTrace(): void
     {
+        $traceId = $this->currentTraceId;
+
         $this->currentTraceId = null;
         $this->currentSpanId = null;
         $this->samplingType = SamplingType::Waiting;
+
+        if (empty($this->traces[$traceId] ?? [])) {
+            unset($this->traces[$traceId]);
+
+            return;
+        }
+
+        $context = $this->contextRecorder->toArray();
+
+        if (! empty($context)) {
+            foreach ($this->traces as $spans) {
+                $spans[array_key_first($spans)]->addAttributes($context);
+            }
+        }
+
+        $this->contextRecorder->resetContext();
 
         $payload = $this->exporter->export(
             $this->resource,
@@ -266,7 +286,7 @@ class Tracer
     public function endSpan(
         ?Span $span = null,
         ?int $time = null,
-        array $additionalAttributes = [],
+        array|Closure $additionalAttributes = [],
     ): Span {
         $span ??= $this->currentSpan();
 
@@ -274,7 +294,13 @@ class Tracer
             throw new Exception('No span to end');
         }
 
-        $span->end = $time ?? $this->time->getCurrentTime();
+        if ($span->end === null) {
+            $span->end = $time ?? $this->time->getCurrentTime();
+        }
+
+        if (is_callable($additionalAttributes)) {
+            $additionalAttributes = $additionalAttributes();
+        }
 
         if (count($additionalAttributes) > 0) {
             $span->addAttributes($additionalAttributes);
@@ -396,6 +422,7 @@ class Tracer
     public function getTraces(): array
     {
         return $this->traces;
+
     }
 
     public function gracefullyHandleError(): void

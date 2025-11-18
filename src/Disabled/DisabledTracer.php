@@ -99,7 +99,7 @@ class DisabledTracer extends Tracer
     public function endSpan(
         ?Span $span = null,
         ?int $time = null,
-        array $additionalAttributes = [],
+        array|Closure $additionalAttributes = [],
     ): Span {
         return $this->emptySpan();
     }

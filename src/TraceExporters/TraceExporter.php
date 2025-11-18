@@ -10,6 +10,7 @@ interface TraceExporter
 {
     /**
      * @param array<string, array<string, Span>> $traces
+     *
      * @return array<mixed>
      */
     public function export(

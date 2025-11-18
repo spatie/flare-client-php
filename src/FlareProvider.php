@@ -6,10 +6,12 @@ use Closure;
 use Illuminate\Contracts\Container\Container as IlluminateContainer;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\ErrorSolutions\Contracts\SolutionProviderRepository as SolutionProviderRepositoryContract;
+use Spatie\FlareClient\AttributesProviders\GitAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\SamplingType;
 use Spatie\FlareClient\FlareMiddleware\AddRecordedEntries;
+use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
 use Spatie\FlareClient\Recorders\ErrorRecorder\ErrorRecorder;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Sampling\NeverSampler;
@@ -84,11 +86,10 @@ class FlareProvider
             sampler: $this->config->trace
                 ? $this->container->get(Sampler::class)
                 : new NeverSampler(),
+            contextRecorder: $this->container->get(ContextRecorder::class),
             configureSpansCallable: $this->config->configureSpansCallable,
             configureSpanEventsCallable: $this->config->configureSpanEventsCallable,
-            samplingType: $this->config->trace
-                ? SamplingType::Waiting
-                : SamplingType::Off,
+            samplingType: $this->config->trace ? SamplingType::Waiting : SamplingType::Disabled,
             gracefulSpanEnder: $this->container->get(GracefulSpanEnder::class),
         ));
 
@@ -96,6 +97,8 @@ class FlareProvider
 
         $this->container->singleton(ErrorRecorder::class, fn () => new ErrorRecorder(
             $this->container->get(Tracer::class),
+            $this->container->get(BackTracer::class),
+            [],
         ));
 
         $this->container->singleton(Redactor::class, fn () => new Redactor(
@@ -104,7 +107,10 @@ class FlareProvider
             censorBodyFields: $this->config->censorBodyFields,
         ));
 
+        $this->container->singleton(ContextRecorder::class, fn () => new ContextRecorder());
+
         $this->container->singleton(UserAttributesProvider::class, $this->config->userAttributesProvider);
+        $this->container->singleton(GitAttributesProvider::class, fn () => new GitAttributesProvider($this->config->applicationPath));
 
         [
             'middlewares' => $middlewares,
@@ -115,7 +121,7 @@ class FlareProvider
             'argumentReducers' => $argumentReducers,
             'forcePHPStackFrameArgumentsIniSetting' => $forcePHPStackFrameArgumentsIniSetting,
             'collectErrorsWithTraces' => $collectErrorsWithTraces,
-        ] = (new $this->config->collectsResolver)->execute($this->config->collects);
+        ] = (new $this->config->collectsResolver())->execute($this->config->collects);
 
         $this->container->singleton(ArgumentReducers::class, fn () => match (true) {
             $collectStackFrameArguments === false => ArgumentReducers::create([]),
@@ -137,12 +143,12 @@ class FlareProvider
                 $this->config->applicationName,
                 $this->config->applicationVersion,
                 $this->config->applicationStage,
-                Telemetry::NAME,
-                Telemetry::VERSION
+                Telemetry::getName(),
+                Telemetry::getVersion(),
             );
 
             foreach ($resourceModifiers as $resourceModifier) {
-                $resource = $resourceModifier($resource);
+                $resource = $resourceModifier($resource, $this->container);
             }
 
             if ($this->config->configureResourceCallable) {
@@ -154,8 +160,8 @@ class FlareProvider
 
         $this->container->singleton(Scope::class, function () {
             $scope = new Scope(
-                Telemetry::NAME,
-                Telemetry::VERSION
+                Telemetry::getName(),
+                Telemetry::getVersion(),
             );
 
             if ($this->config->configureScopeCallable) {
@@ -212,6 +218,7 @@ class FlareProvider
                 middleware: $middleware,
                 recorders: $recorders,
                 throwableRecorder: $collectErrorsWithTraces ? $this->container->get(ErrorRecorder::class) : null,
+                contextRecorder: $this->container->get(ContextRecorder::class),
                 reportErrorLevels: $this->config->reportErrorLevels,
                 filterExceptionsCallable: $this->config->filterExceptionsCallable,
                 filterReportsCallable: $this->config->filterReportsCallable,
@@ -223,6 +230,7 @@ class FlareProvider
                 stacktraceMapper: $this->container->get(StacktraceMapper::class),
                 applicationPath: $this->config->applicationPath,
                 overriddenGroupings: $this->config->overriddenGroupings,
+                includeStackTraceWithMessages: $this->config->includeStackTraceWithMessages,
             );
         });
 

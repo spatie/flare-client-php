@@ -2,19 +2,14 @@
 
 namespace Spatie\FlareClient\Recorders\LogRecorder;
 
-use Spatie\FlareClient\Concerns\Recorders\RecordsSpanEvents;
-use Spatie\FlareClient\Contracts\Recorders\SpanEventsRecorder;
 use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanEventType;
-use Spatie\FlareClient\Recorders\Recorder;
+use Spatie\FlareClient\Recorders\SpanEventsRecorder;
 use Spatie\FlareClient\Spans\SpanEvent;
 
-class LogRecorder extends Recorder implements SpanEventsRecorder
+class LogRecorder extends SpanEventsRecorder
 {
-    /** @use RecordsSpanEvents<SpanEvent> */
-    use RecordsSpanEvents;
-
     const DEFAULT_MINIMAL_LEVEL = MessageLevels::Debug;
 
     protected MessageLevels $minimalLevel;
@@ -22,8 +17,6 @@ class LogRecorder extends Recorder implements SpanEventsRecorder
     protected function configure(array $config): void
     {
         $this->minimalLevel = $config['minimal_level'] ?? self::DEFAULT_MINIMAL_LEVEL;
-
-        $this->configureRecorder($config);
     }
 
     public static function type(): string|RecorderType

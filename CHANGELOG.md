@@ -2,6 +2,84 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 2.5.2 - 2025-11-18
+
+- Allow body field censoring using dot and wildcard syntax
+- Fix an issue where the default of the git attribute provider was not provided
+
+## 2.5.1 - 2025-11-13
+
+- Fix an issue where the disabled Flare infrastructure wasn't working propertly
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/2.5.0...2.5.1
+
+## 2.5.0 - 2025-11-07
+
+- Add support for better trace context recording
+
+## 2.4.0 - 2025-11-06
+
+- Update the Git Collector to be more performant
+
+## 2.3.3 - 2025-11-05
+
+- Use local data to determine the telemetry sdk version
+
+## 3.3.3 - 2025-11-05
+
+- Use local data to determine the flare client telemetry version
+
+## 2.3.2 - 2025-10-13
+
+- Fix attribute key for span type in FilesystemRecorder.php
+
+## 2.3.1 - 2025-10-10
+
+- Better handling of success codes in the Api
+
+## 2.3.0 - 2025-10-08
+
+- Fixed an issue where disabled tracing could still trace
+- Completely refactored the recorders, the old traits are now deprecated in favour of specific classes for spans or span events
+- Fix an issue where attributes of spans & span events used in an error removed the span type
+
+## 2.2.3 - 2025-10-06
+
+- Fix sampler
+
+## 2.2.2 - 2025-09-11
+
+- Fix missing interface parameter
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/2.2.0...2.2.2
+
+## 2.2.0 - 2025-09-11
+
+### What's Changed
+
+* Add additional methods to control custom context
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/2.1.0...2.2.0
+
+## 2.1.0 - 2025-08-27
+
+- Add support for stacktraces with logs
+
+## 2.0.9 - 2025-08-25
+
+- Laravel's `artisan` is now considered a vendor file in stacktraces
+- Statamic's `please` is now considered a vendor file in stacktraces
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/2.0.8...2.0.9
+
+## 2.0.8 - 2025-08-21
+
+### What's Changed
+
+* Fix issue where dns servers were contacted by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/44
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/2.0.7...2.0.8
+
 ## 2.0.7 - 2025-07-17
 
 - Add support for Curl Options

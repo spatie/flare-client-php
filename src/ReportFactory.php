@@ -6,13 +6,14 @@ use ErrorException;
 use Exception;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\Backtrace\Backtrace;
+use Spatie\Backtrace\Frame;
 use Spatie\ErrorSolutions\Contracts\RunnableSolution;
 use Spatie\ErrorSolutions\Contracts\Solution;
 use Spatie\FlareClient\Concerns\HasAttributes;
-use Spatie\FlareClient\Concerns\HasCustomContext;
 use Spatie\FlareClient\Contracts\ProvidesFlareContext;
 use Spatie\FlareClient\Contracts\WithAttributes;
 use Spatie\FlareClient\Enums\OverriddenGrouping;
+use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
@@ -24,7 +25,6 @@ use Throwable;
 class ReportFactory implements WithAttributes
 {
     use HasAttributes;
-    use HasCustomContext;
 
     protected Resource $resource;
 
@@ -34,6 +34,8 @@ class ReportFactory implements WithAttributes
     public null|ArgumentReducers $argumentReducers = null;
 
     public bool $collectStackTraceArguments = true;
+
+    public bool $includeStackTraceWithMessages = false;
 
     /** @var array<Span|SpanEvent> */
     public array $events = [];
@@ -49,6 +51,8 @@ class ReportFactory implements WithAttributes
 
     /** @var array<class-string, OverriddenGrouping> */
     public array $overriddenGroupings = [];
+
+    protected ?ContextRecorder $contextRecorder = null;
 
     protected function __construct(
         public ?Throwable $throwable,
@@ -102,6 +106,13 @@ class ReportFactory implements WithAttributes
     public function applicationPath(?string $applicationPath): self
     {
         $this->applicationPath = $applicationPath;
+
+        return $this;
+    }
+
+    public function includeStackTraceWithMessages(bool $includeStackTraceWithMessages = true): self
+    {
+        $this->includeStackTraceWithMessages = $includeStackTraceWithMessages;
 
         return $this;
     }
@@ -169,6 +180,20 @@ class ReportFactory implements WithAttributes
         return $this;
     }
 
+    public function context(string|array $key, mixed $value = null): self
+    {
+        $this->contextRecorder?->context('context.custom', $key, $value);
+
+        return $this;
+    }
+
+    public function contextRecorder(ContextRecorder $contextRecorder): self
+    {
+        $this->contextRecorder = $contextRecorder;
+
+        return $this;
+    }
+
     public function build(
         StacktraceMapper $stacktraceMapper,
         Time $time,
@@ -186,7 +211,8 @@ class ReportFactory implements WithAttributes
 
         $attributes = array_merge(
             isset($this->resource) ? $this->resource->attributes : [],
-            $this->attributes
+            $this->attributes,
+            $this->contextRecorder?->toArray() ?? [],
         );
 
         if ($this->throwable instanceof ProvidesFlareContext) {
@@ -204,7 +230,7 @@ class ReportFactory implements WithAttributes
         $attributes['flare.language.version'] = PHP_VERSION;
 
         return new Report(
-            stacktrace: $stacktraceMapper->map($stackTrace->frames(), $this->throwable),
+            stacktrace: $stacktraceMapper->map($stackTrace, $this->throwable),
             exceptionClass: $exceptionClass,
             message: $this->message,
             isLog: $this->isLog,
@@ -213,7 +239,7 @@ class ReportFactory implements WithAttributes
             attributes: $attributes,
             solutions: $this->mapSolutions(),
             applicationPath: $this->applicationPath,
-            openFrameIndex: $this->throwable ? null : $stackTrace->firstApplicationFrameIndex(),
+            openFrameIndex: null,
             handled: $this->handled,
             events: array_values(array_filter(
                 array_map(fn (Span|SpanEvent $span) => $span->toEvent(), $this->events),
@@ -223,16 +249,49 @@ class ReportFactory implements WithAttributes
         );
     }
 
-    protected function buildStacktrace(): Backtrace
+    /** @return array<Frame> */
+    protected function buildStacktrace(): array
     {
-        $stacktrace = $this->throwable
-            ? Backtrace::createForThrowable($this->throwable)
-            : Backtrace::create();
+        if ($this->isLog && $this->includeStackTraceWithMessages === false) {
+            return [
+                new Frame(
+                    file: 'Log',
+                    lineNumber: 0,
+                    arguments: null,
+                    method: 'Stacktrace disabled',
+                ),
+            ];
+        }
 
-        return $stacktrace
+        $stacktrace = $this->isLog || $this->throwable === null
+            ? Backtrace::create()
+            : Backtrace::createForThrowable($this->throwable);
+
+        $frames = $stacktrace
             ->withArguments($this->collectStackTraceArguments)
             ->reduceArguments($this->argumentReducers)
-            ->applicationPath($this->applicationPath ?? '');
+            ->applicationPath($this->applicationPath ?? '')
+            ->frames();
+
+        if (! $this->isLog) {
+            return $frames;
+        }
+
+        $firstApplicationFrameIndex = null;
+
+        foreach ($frames as $index => $frame) {
+            if ($frame->applicationFrame) {
+                $firstApplicationFrameIndex = (int) $index;
+
+                break;
+            }
+        }
+
+        if ($firstApplicationFrameIndex === null) {
+            return $frames;
+        }
+
+        return array_values(array_slice($frames, $firstApplicationFrameIndex));
     }
 
     protected function mapSolutions(): array

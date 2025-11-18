@@ -47,13 +47,12 @@ class OpenTelemetryJsonTraceExporter implements TraceExporter
         ];
     }
 
-    /**
-     * @return array{attributes: array<string, mixed>, droppedAttributesCount: int}
-     */
     protected function exportResource(Resource $resource): array
     {
         return [
-            'attributes' => $this->attributeMapper->attributesToOpenTelemetry($resource->attributes),
+            'attributes' => $this->attributeMapper->attributesToOpenTelemetry(
+                $resource->attributes,
+            ),
             'droppedAttributesCount' => $resource->droppedAttributesCount,
         ];
     }

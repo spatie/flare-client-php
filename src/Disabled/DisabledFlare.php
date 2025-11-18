@@ -3,6 +3,8 @@
 namespace Spatie\FlareClient\Disabled;
 
 use Closure;
+use Spatie\FlareClient\Contracts\Recorders\Recorder;
+use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Flare;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Recorders\ApplicationRecorder\ApplicationRecorder;
@@ -131,6 +133,12 @@ class DisabledFlare extends Flare
         return null;
     }
 
+    public function recorder(
+        RecorderType|string $type
+    ): Recorder|null {
+        return null;
+    }
+
     public function handleException(Throwable $throwable): void
     {
     }
@@ -208,9 +216,15 @@ class DisabledFlare extends Flare
         return $this;
     }
 
+    public function context(array|string $key, mixed $value = null): Flare
+    {
+        return $this;
+    }
+
     public function reset(
         bool $reports = true,
         bool $traces = true,
+        bool $clearCustomContext = true
     ): void {
 
     }

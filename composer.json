@@ -14,7 +14,7 @@
         "ext-curl": "*",
         "guzzlehttp/guzzle": "^7.9",
         "psr/container": "^2.0",
-        "spatie/backtrace": "^1.6.2",
+        "spatie/backtrace": "^1.8.0",
         "spatie/error-solutions": "^2.0",
         "symfony/http-foundation": "^5.2|^6.0|^7.0",
         "symfony/mime": "^5.2|^6.0|^7.0",
@@ -22,7 +22,7 @@
         "symfony/var-dumper": "^5.2|^6.0|^7.0"
     },
     "require-dev": {
-        "pestphp/pest": "^2.36.0",
+        "pestphp/pest": "^2.36.0|^3.0|^4.0",
         "phpstan/extension-installer": "^1.4",
         "phpstan/phpstan-deprecation-rules": "^1.2",
         "phpstan/phpstan-phpunit": "^1.4",
@@ -31,10 +31,7 @@
     "autoload": {
         "psr-4": {
             "Spatie\\FlareClient\\": "src"
-        },
-        "files": [
-            "src/helpers.php"
-        ]
+        }
     },
     "autoload-dev": {
         "psr-4": {

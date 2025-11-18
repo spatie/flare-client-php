@@ -26,9 +26,9 @@ use Spatie\FlareClient\Tests\Shared\ExpectTrace;
 use Spatie\FlareClient\Tests\Shared\ExpectTracer;
 use Spatie\FlareClient\Tests\Shared\FakeSender;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
+use Spatie\FlareClient\Tests\TestClasses\DeprecatedSpansRecorder as FakeSpansRecorder;
 use Spatie\FlareClient\Tests\TestClasses\ExceptionWithContext;
 use Spatie\FlareClient\Tests\TestClasses\FakeFlareMiddleware;
-use Spatie\FlareClient\Tests\TestClasses\SpansRecorder as FakeSpansRecorder;
 use Spatie\FlareClient\Tests\TestClasses\TraceArguments;
 use Spatie\FlareClient\Time\TimeHelper;
 
@@ -54,15 +54,58 @@ it('can report an exception', function () {
 it('can reset queued exceptions', function () {
     $flare = setupFlare();
 
+    $flare->context('test_key', 'test_value');
+    expect($flare->contextRecorder->toArray())->toBe(['context.custom' => ['test_key' => 'test_value']]);
+
     reportException();
 
     $flare->reset();
 
     FakeSender::instance()->assertRequestsSent(1);
+    expect($flare->contextRecorder->toArray())->toBe([]);
 
     $flare->reset();
 
     FakeSender::instance()->assertRequestsSent(1);
+    expect($flare->contextRecorder->toArray())->toBe([]);
+});
+
+it('can reset queued traces', function () {
+    $flare = setupFlare(alwaysSampleTraces: true);
+
+    $flare->context('test_key', 'test_value');
+    expect($flare->contextRecorder->toArray())->toBe(['context.custom' => ['test_key' => 'test_value']]);
+
+    $flare->tracer->startTrace();
+    $span = $flare->tracer->startSpan('Test Span');
+    $flare->tracer->endSpan($span);
+    $flare->tracer->endTrace(); // This should trigger the trace to be exported and queued
+
+    expect(count(FakeSender::$requests))->toBe(1);
+
+    $flare->reset(traces: false);
+
+    expect(count(FakeSender::$requests))->toBe(1);
+    expect($flare->contextRecorder->toArray())->toBe([]);
+});
+
+it('can reset queued exceptions but keep custom context', function () {
+    $flare = setupFlare();
+
+    $flare->context('test_key', 'test_value');
+    expect($flare->contextRecorder->toArray())->toBe(['context.custom' => ['test_key' => 'test_value']]);
+
+    reportException();
+
+    $flare->reset(clearCustomContext: false);
+
+    FakeSender::instance()->assertRequestsSent(1);
+    expect($flare->contextRecorder->toArray())->toBe(['context.custom' => ['test_key' => 'test_value']]);
+
+    $flare->reset(clearCustomContext: true);
+
+    FakeSender::instance()->assertRequestsSent(1);
+    expect($flare->contextRecorder->toArray())->toBe([]);
 });
 
 it('can add user provided context', function () {
@@ -585,7 +628,9 @@ it('can filter error exceptions based on their severity', function () {
 
 it('will add arguments to a stack trace by default', function () {
     // Todo: add some default argument reducers in the config
-    $flare = setupFlare(fn (FlareConfig $config) => $config->collectStackFrameArguments(argumentReducers: ArgumentReducers::default()));
+    $flare = setupFlare(fn (
+        FlareConfig $config
+    ) => $config->collectStackFrameArguments(argumentReducers: ArgumentReducers::default()));
 
     $exception = TraceArguments::create()->exception(
         'a message',
@@ -674,22 +719,22 @@ it('is possible to manually add spans and span events', function () {
     ExpectTracer::create($flare)
         ->trace(
             fn (ExpectTrace $trace) => $trace
-            ->hasSpanCount(2)
-            ->span(
-                fn (ExpectSpan $span) => $span
-                    ->hasName('Test Span')
-                    ->missingParent()
-                    ->hasSpanEventCount(1)
-                    ->spanEvent(fn (ExpectSpanEvent $spanEvent) => $spanEvent->hasName('Test Span Event')),
-                $parentSpan
-            )
-            ->span(
-                fn (ExpectSpan $span) => $span
-                ->hasName('Test Child Span')
-                ->hasParent($parentSpan)
-                ->hasSpanEventCount(1)
-                ->spanEvent(fn (ExpectSpanEvent $spanEvent) => $spanEvent->hasName('Test Child Span Event'))
-            )
+                ->hasSpanCount(2)
+                ->span(
+                    fn (ExpectSpan $span) => $span
+                        ->hasName('Test Span')
+                        ->missingParent()
+                        ->hasSpanEventCount(1)
+                        ->spanEvent(fn (ExpectSpanEvent $spanEvent) => $spanEvent->hasName('Test Span Event')),
+                    $parentSpan
+                )
+                ->span(
+                    fn (ExpectSpan $span) => $span
+                        ->hasName('Test Child Span')
+                        ->hasParent($parentSpan)
+                        ->hasSpanEventCount(1)
+                        ->spanEvent(fn (ExpectSpanEvent $spanEvent) => $spanEvent->hasName('Test Child Span Event'))
+                )
         );
 });
 

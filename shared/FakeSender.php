@@ -3,6 +3,7 @@
 namespace Spatie\FlareClient\Tests\Shared;
 
 use Closure;
+use Spatie\FlareClient\Enums\FlarePayloadType;
 use Spatie\FlareClient\Senders\Sender;
 use Spatie\FlareClient\Senders\Support\Response;
 
@@ -25,6 +26,7 @@ class FakeSender implements Sender
         string $endpoint,
         string $apiToken,
         array $payload,
+        FlarePayloadType $type,
         Closure $callback
     ): void {
         self::$requests[] = [

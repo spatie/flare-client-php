@@ -2,37 +2,17 @@
 
 namespace Spatie\FlareClient\Recorders\CommandRecorder;
 
-use Spatie\FlareClient\Concerns\Recorders\RecordsSpans;
-use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
-use Spatie\FlareClient\Recorders\Recorder;
+use Spatie\FlareClient\Recorders\SpansRecorder;
 use Spatie\FlareClient\Spans\Span;
-use Spatie\FlareClient\Support\BackTracer;
-use Spatie\FlareClient\Tracer;
 use Symfony\Component\Console\Input\InputInterface;
 
-class CommandRecorder extends Recorder implements SpansRecorder
+class CommandRecorder extends SpansRecorder
 {
-    /** @use RecordsSpans<Span> */
-    use RecordsSpans;
-
     public static function type(): string|RecorderType
     {
         return RecorderType::Command;
-    }
-
-    public function __construct(
-        protected Tracer $tracer,
-        protected BackTracer $backTracer,
-        array $config
-    ) {
-        $this->configure($config);
-    }
-
-    protected function canStartTraces(): bool
-    {
-        return true;
     }
 
     public function recordStart(
@@ -59,6 +39,7 @@ class CommandRecorder extends Recorder implements SpansRecorder
                     ...$attributes,
                 ];
             },
+            canStartTrace: true,
         );
     }
 
