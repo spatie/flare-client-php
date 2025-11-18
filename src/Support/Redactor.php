@@ -37,10 +37,8 @@ class Redactor
 
     public function censorBody(array $body): array
     {
-        foreach ($body as $key => $value) {
-            if (in_array($this->normalizeBodyFieldName($key), $this->censorBodyFields)) {
-                $body[$key] = $this->censorValue($value);
-            }
+        foreach ($this->censorBodyFields as $censor) {
+            $body = $this->censorByPath($body, explode('.', $censor));
         }
 
         return $body;
@@ -69,5 +67,37 @@ class Redactor
     protected function censorValue(mixed $value): string
     {
         return '<CENSORED:'.get_debug_type($value).'>';
+    }
+
+    private function censorByPath(array $data, array $segments): array
+    {
+        if (empty($segments)) {
+            return $data;
+        }
+
+        $currentSegment = $segments[0];
+        $remainingSegments = array_slice($segments, 1);
+
+        foreach ($data as $key => $value) {
+            $normalizedKey = $this->normalizeBodyFieldName((string) $key);
+
+            $matches = ($currentSegment === '*') || ($normalizedKey === $currentSegment);
+
+            if (! $matches) {
+                continue;
+            }
+
+            if (empty($remainingSegments)) {
+                $data[$key] = $this->censorValue($value);
+
+                continue;
+            }
+
+            if (is_array($value)) {
+                $data[$key] = $this->censorByPath($value, $remainingSegments);
+            }
+        }
+
+        return $data;
     }
 }
