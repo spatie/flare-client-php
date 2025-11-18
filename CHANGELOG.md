@@ -2,6 +2,11 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 2.5.2 - 2025-11-18
+
+- Allow body field censoring using dot and wildcard syntax
+- Fix an issue where the default of the git attribute provider was not provided
+
 ## 2.5.1 - 2025-11-13
 
 - Fix an issue where the disabled Flare infrastructure wasn't working propertly
