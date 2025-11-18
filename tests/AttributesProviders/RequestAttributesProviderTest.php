@@ -195,6 +195,10 @@ it('can strip body fields using nested and wildcard support', function () {
                 ],
             ],
         ],
+        'wildcard' => [
+            'key1' => 'value1',
+            'key2' => 'value2',
+        ],
         'object' => new StdClass(),
         'nested_object' => (object) [
             'key' => 'value',
@@ -214,6 +218,7 @@ it('can strip body fields using nested and wildcard support', function () {
             'admin.counts.followers',
             'users.*.name',
             'users.*.counts.followers',
+            'wildcard.*',
             'object',
             'nested_object.key',
         ]),
@@ -248,6 +253,10 @@ it('can strip body fields using nested and wildcard support', function () {
                     'followers' => '<CENSORED:int>',
                 ],
             ],
+        ],
+        'wildcard' => [
+            'key1' => '<CENSORED:string>',
+            'key2' => '<CENSORED:string>',
         ],
         'object' => '<CENSORED:stdClass>',
         'nested_object' => (object) [
