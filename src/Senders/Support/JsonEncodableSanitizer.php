@@ -14,22 +14,29 @@ class JsonEncodableSanitizer implements PayloadSanitizer
 
     public function sanitize(array $payload): array
     {
-        foreach ($payload as $key => $value) {
-            try {
-                json_encode($payload[$key], JSON_THROW_ON_ERROR);
-            } catch (JsonException $e) {
-                if (is_array($value)) {
-                    $payload[$key] = $this->sanitize($payload[$key]);
+        try {
+            json_encode($payload, JSON_THROW_ON_ERROR);
 
-                    continue;
+            return $payload;
+        } catch (JsonException $ignored) {
+            foreach ($payload as $key => $value) {
+                try {
+                    json_encode($payload[$key], JSON_THROW_ON_ERROR);
+                } catch (JsonException $e) {
+                    if (is_array($value)) {
+                        $payload[$key] = $this->sanitize($payload[$key]);
+
+                        continue;
+                    }
+
+                    $payload[$key] = $this->formattedReplacementMessage($value, $e->getMessage());
                 }
 
-                $payload[$key] = $this->formattedReplacementMessage($value, $e->getMessage());
             }
 
+            return $payload;
         }
 
-        return $payload;
     }
 
     protected function formattedReplacementMessage(mixed $value, string $errorMessage): string
