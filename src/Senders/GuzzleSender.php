@@ -5,15 +5,18 @@ namespace Spatie\FlareClient\Senders;
 use Closure;
 use GuzzleHttp\Client;
 use Spatie\FlareClient\Enums\FlarePayloadType;
+use Spatie\FlareClient\Senders\Support\JsonEncodableSanitizer;
 use Spatie\FlareClient\Senders\Support\Response;
 
-class GuzzleSender implements Sender
+class GuzzleSender extends AbstractSender
 {
     protected Client $client;
 
     public function __construct(
-        protected array $config = []
+        array $config = [],
+        PayloadSanitizer $sanitizer = new JsonEncodableSanitizer
     ) {
+        parent::__construct($config, $sanitizer);
         $this->client = new Client($config);
     }
 
@@ -25,7 +28,7 @@ class GuzzleSender implements Sender
                 'Content-Type' => 'application/json',
                 'x-api-token' => $apiToken,
             ],
-            'json' => $payload,
+            'json' => $this->preparePayloadForEncoding($payload),
         ]);
 
         $callback(new Response(

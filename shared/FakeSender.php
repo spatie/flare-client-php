@@ -4,10 +4,10 @@ namespace Spatie\FlareClient\Tests\Shared;
 
 use Closure;
 use Spatie\FlareClient\Enums\FlarePayloadType;
-use Spatie\FlareClient\Senders\Sender;
+use Spatie\FlareClient\Senders\AbstractSender;
 use Spatie\FlareClient\Senders\Support\Response;
 
-class FakeSender implements Sender
+class FakeSender extends AbstractSender
 {
     /** @var array<int, array{verb: string, fullUrl: string, headers: array<string, string>, arguments: array<string, mixed>}> */
     public static array $requests = [];
@@ -33,7 +33,7 @@ class FakeSender implements Sender
             'verb' => 'POST',
             'fullUrl' => $endpoint,
             'headers' => ['X-API-KEY' => $apiToken],
-            'arguments' => $payload,
+            'arguments' => $this->preparePayloadForEncoding($payload),
         ];
 
         $callback(new Response(200, []));

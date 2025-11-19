@@ -5,7 +5,6 @@ namespace Spatie\FlareClient;
 use Spatie\FlareClient\Contracts\FlareSpanEventType;
 use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Enums\OverriddenGrouping;
-use Spatie\FlareClient\Support\ReportSanitizer;
 
 class Report
 {
@@ -57,6 +56,6 @@ class Report
             $report['level'] = $this->level;
         }
 
-        return ReportSanitizer::sanitizePayload($report);
+        return $report;
     }
 }

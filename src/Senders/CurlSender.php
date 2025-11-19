@@ -6,9 +6,10 @@ use Closure;
 use CurlHandle;
 use Spatie\FlareClient\Enums\FlarePayloadType;
 use Spatie\FlareClient\Senders\Exceptions\ConnectionError;
+use Spatie\FlareClient\Senders\Support\JsonEncodableSanitizer;
 use Spatie\FlareClient\Senders\Support\Response;
 
-class CurlSender implements Sender
+class CurlSender extends AbstractSender
 {
     protected int $timeout;
 
@@ -16,8 +17,11 @@ class CurlSender implements Sender
     private array $curlOptions;
 
     public function __construct(
-        protected array $config = []
+        array $config = [],
+        PayloadSanitizer $sanitizer = new JsonEncodableSanitizer
     ) {
+        parent::__construct($config, $sanitizer);
+
         $this->timeout = $this->config['timeout'] ?? 10;
         $this->curlOptions = $this->config['curl_options'] ?? [];
     }
@@ -36,7 +40,9 @@ class CurlSender implements Sender
 
         $curlHandle = $this->getCurlHandle($fullUrl, $headers);
 
-        $encoded = json_encode($payload);
+        $encoded = json_encode(
+            $this->preparePayloadForEncoding($payload)
+        );
 
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw new ConnectionError('Invalid JSON payload provided');
