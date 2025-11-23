@@ -70,7 +70,8 @@ class Api
         $this->sendReportToApi($report, isTest: true);
     }
 
-    public function testTrace(Array $trace): void {
+    public function testTrace(array $trace): void
+    {
         $this->sendTraceToApi($trace);
     }
 
