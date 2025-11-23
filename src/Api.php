@@ -70,6 +70,10 @@ class Api
         $this->sendReportToApi($report, isTest: true);
     }
 
+    public function testTrace(Array $trace): void {
+        $this->sendTraceToApi($trace);
+    }
+
     protected function addReportToQueue(Report $report): self
     {
         $this->reportQueue[] = $report;
