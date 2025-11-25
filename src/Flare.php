@@ -358,15 +358,22 @@ class Flare
         $this->api->testTrace($trace);
     }
 
-    private function replaceTimestamps(array $data): array
+    protected function replaceTimestamps(array $data): array
     {
         $oneHundredMs = 100000000;
+
         foreach ($data as $key => $value) {
             if ($key === 'startTimeUnixNano') {
                 $data[$key] = $this->time->getCurrentTime();
-            } elseif ($key === 'endTimeUnixNano') {
+                continue;
+            }
+
+            if ($key === 'endTimeUnixNano') {
                 $data[$key] = $this->time->getCurrentTime() + $oneHundredMs;
-            } elseif (is_array($value)) {
+                continue;
+            }
+
+            if (is_array($value)) {
                 $data[$key] = $this->replaceTimestamps($value);
             }
         }
@@ -374,7 +381,7 @@ class Flare
         return $data;
     }
 
-    private function replaceResourceAttributes(array $trace): array
+    protected function replaceResourceAttributes(array $trace): array
     {
         $mapper = new OpenTelemetryAttributeMapper();
 
@@ -394,7 +401,7 @@ class Flare
         return $trace;
     }
 
-    private function replaceTraceIds(array $trace): array
+    protected function replaceTraceIds(array $trace): array
     {
         $newTraceId = $this->ids->trace();
         $rootSpanId = null;
