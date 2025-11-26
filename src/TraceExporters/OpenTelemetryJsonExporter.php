@@ -2,6 +2,8 @@
 
 namespace Spatie\FlareClient\TraceExporters;
 
+use Spatie\FlareClient\Enums\FlareEntityType;
+use Spatie\FlareClient\Enums\FlarePayloadType;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Spans\Span;
@@ -9,7 +11,7 @@ use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Spans\SpanStatus;
 use Spatie\FlareClient\Support\OpenTelemetryAttributeMapper;
 
-class OpenTelemetryJsonTraceExporter implements TraceExporter
+class OpenTelemetryJsonExporter implements Exporter
 {
     public function __construct(
         protected OpenTelemetryAttributeMapper $attributeMapper = new OpenTelemetryAttributeMapper()
@@ -19,7 +21,7 @@ class OpenTelemetryJsonTraceExporter implements TraceExporter
     /**
      * @param array<string, array<string, Span>> $traces
      */
-    public function export(
+    public function traces(
         Resource $resource,
         Scope $scope,
         array $traces,
@@ -35,7 +37,7 @@ class OpenTelemetryJsonTraceExporter implements TraceExporter
         return [
             'resourceSpans' => [
                 [
-                    'resource' => $this->exportResource($resource),
+                    'resource' => $this->exportResource($resource, FlareEntityType::Traces),
                     'scopeSpans' => [
                         [
                             'scope' => $this->exportScope($scope),
@@ -47,11 +49,34 @@ class OpenTelemetryJsonTraceExporter implements TraceExporter
         ];
     }
 
-    protected function exportResource(Resource $resource): array
+    public function logs(Resource $resource, Scope $scope, array $logs): mixed
+    {
+        return [
+            'resourceLogs' => [
+                [
+                    'resource' => $this->exportResource($resource, FlareEntityType::Logs),
+                    'scopeLogs' => [
+                        [
+                            'scope' => $this->exportScope($scope),
+                            'logRecords' => array_map(function(array $log){
+                                if(array_key_exists('attributes', $log)){
+                                    $log['attributes'] = $this->attributeMapper->attributesToOpenTelemetry($log['attributes']);
+                                }
+
+                                return $log;
+                            }, $logs),
+                        ],
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    protected function exportResource(Resource $resource, FlareEntityType $entityType): array
     {
         return [
             'attributes' => $this->attributeMapper->attributesToOpenTelemetry(
-                $resource->attributes,
+                $resource->export($entityType),
             ),
             'droppedAttributesCount' => $resource->droppedAttributesCount,
         ];

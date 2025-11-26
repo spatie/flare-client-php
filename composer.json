@@ -19,7 +19,8 @@
         "symfony/http-foundation": "^5.2|^6.0|^7.0",
         "symfony/mime": "^5.2|^6.0|^7.0",
         "symfony/process": "^5.2|^6.0|^7.0",
-        "symfony/var-dumper": "^5.2|^6.0|^7.0"
+        "symfony/var-dumper": "^5.2|^6.0|^7.0",
+        "monolog/monolog": "^3.0"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.89",

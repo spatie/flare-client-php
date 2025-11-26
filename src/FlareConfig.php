@@ -23,9 +23,9 @@ use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\Contracts\FlareCollectType;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\CollectType;
+use Spatie\FlareClient\Enums\FlareEntityType;
 use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Enums\OverriddenGrouping;
-use Spatie\FlareClient\FlareMiddleware\AddGitInformation;
 use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
@@ -54,7 +54,7 @@ use Spatie\FlareClient\Support\Ids;
 use Spatie\FlareClient\Support\StacktraceMapper;
 use Spatie\FlareClient\Support\TraceLimits;
 use Spatie\FlareClient\Time\SystemTime;
-use Spatie\FlareClient\TraceExporters\OpenTelemetryJsonTraceExporter;
+use Spatie\FlareClient\TraceExporters\OpenTelemetryJsonExporter;
 
 class FlareConfig
 {
@@ -101,7 +101,7 @@ class FlareConfig
         public array $censorHeaders = [],
         public array $censorBodyFields = [],
         public string $userAttributesProvider = EmptyUserAttributesProvider::class,
-        public string $traceExporter = OpenTelemetryJsonTraceExporter::class,
+        public string $traceExporter = OpenTelemetryJsonExporter::class,
         public string $stacktraceMapper = StacktraceMapper::class,
         public string $collectsResolver = CollectsResolver::class,
         public string $ids = Ids::class,
@@ -224,11 +224,13 @@ class FlareConfig
     }
 
     public function collectGitInfo(
-        bool $useProcess = AddGitInformation::DEFAULT_USE_PROCESS,
+        bool $useProcess = Resource::DEFAULT_GIT_USE_PROCESS,
+        bool|FlareEntityType|array $entityTypes = Resource::DEFAULT_GIT_ENTITY_TYPES,
         array $extra = []
     ): static {
         return $this->addCollect(CollectType::GitInfo, [
             'use_process' => $useProcess,
+            'entity_types' => $entityTypes,
             ...$extra,
         ]);
     }
@@ -462,11 +464,19 @@ class FlareConfig
         return $this->ignoreCollect(CollectType::Views);
     }
 
+    /**
+     * @param bool|array<int, FlareEntityType>|FlareEntityType $host
+     * @param bool|array<int, FlareEntityType>|FlareEntityType $os
+     * @param bool|array<int, FlareEntityType>|FlareEntityType $php
+     * @param bool|array<int, FlareEntityType>|FlareEntityType $composer
+     * @param bool|array<int, FlareEntityType>|FlareEntityType $composerPackages
+     */
     public function collectServerInfo(
-        bool $host = true,
-        bool $os = true,
-        bool $php = true,
-        bool $composer = true,
+        bool|array|FlareEntityType $host = Resource::DEFAULT_HOST_ENTITY_TYPES,
+        bool|array|FlareEntityType $os = Resource::DEFAULT_OS_ENTITY_TYPES,
+        bool|array|FlareEntityType $php = Resource::DEFAULT_PHP_ENTITY_TYPES,
+        bool|array|FlareEntityType $composer = false,
+        bool|array|FlareEntityType $composerPackages = Resource::DEFAULT_COMPOSER_PACKAGES_ENTITY_TYPES,
         array $extra = [],
     ): static {
         return $this->addCollect(CollectType::ServerInfo, [
@@ -474,6 +484,7 @@ class FlareConfig
             'os' => $os,
             'php' => $php,
             'composer' => $composer,
+            'composer_packages' => $composerPackages,
             ...$extra,
         ]);
     }

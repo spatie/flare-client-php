@@ -22,6 +22,9 @@ class Api
     /** @var array<int, array> */
     protected array $traceQueue = [];
 
+    /** @var array<int, array> */
+    protected array $logDataQueue = [];
+
     public function __construct(
         protected string $apiToken,
         protected string $baseUrl,
@@ -64,6 +67,19 @@ class Api
         }
     }
 
+    public function log(
+        array $logData,
+        bool $immediately = false,
+    ): void {
+        try {
+            $immediately || $this->sendReportsImmediately
+                ? $this->sendLogDataToApi($logData)
+                : $this->addLogDataToQueue($logData);
+        } catch (Exception $e) {
+
+        }
+    }
+
     public function test(
         Report $report
     ): void {
@@ -84,9 +100,17 @@ class Api
         return $this;
     }
 
+    protected function addLogDataToQueue(array $logData): self
+    {
+        $this->logDataQueue[] = $logData;
+
+        return $this;
+    }
+
     public function sendQueue(
         bool $reports = true,
         bool $traces = true,
+        bool $logs = true,
     ): void {
         if ($reports) {
             foreach ($this->reportQueue as $report) {
@@ -111,6 +135,18 @@ class Api
 
             $this->traceQueue = [];
         }
+
+        if ($logs) {
+            foreach ($this->logDataQueue as $logData) {
+                try {
+                    $this->sendLogDataToApi($logData);
+                } catch (Exception $e) {
+                    continue;
+                }
+            }
+
+            $this->logDataQueue = [];
+        }
     }
 
     protected function sendReportToApi(Report $report, bool $isTest = false): void
@@ -130,6 +166,15 @@ class Api
             "{$this->baseUrl}/v1/traces",
             $trace,
             FlarePayloadType::Traces,
+        );
+    }
+
+    protected function sendLogDataToApi(array $logData): void
+    {
+        $this->post(
+            "{$this->baseUrl}/v1/logs",
+            $logData,
+            FlarePayloadType::Logs,
         );
     }
 

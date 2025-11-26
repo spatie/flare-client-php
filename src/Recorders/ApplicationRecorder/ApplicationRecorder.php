@@ -37,9 +37,10 @@ class ApplicationRecorder extends SpansRecorder
             return null;
         }
 
-        $serviceName = $this->tracer->resource->attributes['service.name'] ?? null;
+        $serviceName = $this->tracer->resource->serviceName;
 
         $this->running = true;
+
 
         return $this->startSpan(
             name: $serviceName ? "App - {$serviceName}" : 'App',

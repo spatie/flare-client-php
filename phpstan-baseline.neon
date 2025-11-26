@@ -86,6 +86,11 @@ parameters:
 			path: src/FlareConfig.php
 
 		-
+			message: "#^Property Spatie\\\\FlareClient\\\\Logger\\:\\:\\$logs \\(array\\<int, array\\{time_unix_nano\\: int, observed_time_unix_nano\\: int, trace_id\\?\\: string, span_id\\?\\: string, flags\\?\\: string, severity_text\\?\\: string, severity_number\\?\\: int, body\\: mixed, \\.\\.\\.\\}\\>\\) does not accept non\\-empty\\-array\\<int, array\\{body\\: mixed, time_unix_nano\\?\\: int\\|int\\<1, max\\>, observed_time_unix_nano\\?\\: int\\|int\\<1, max\\>, trace_id\\?\\: string, span_id\\?\\: string, flags\\?\\: string, severity_text\\?\\: string, severity_number\\?\\: int\\|int\\<1, max\\>, \\.\\.\\.\\}\\>\\.$#"
+			count: 1
+			path: src/Logger.php
+
+		-
 			message: "#^Class Spatie\\\\FlareClient\\\\Recorders\\\\ExternalHttpRecorder\\\\Guzzle\\\\FlareHandlerStack extends @final class GuzzleHttp\\\\HandlerStack\\.$#"
 			count: 1
 			path: src/Recorders/ExternalHttpRecorder/Guzzle/FlareHandlerStack.php

@@ -12,6 +12,8 @@ use Spatie\ErrorSolutions\Contracts\Solution;
 use Spatie\FlareClient\Concerns\HasAttributes;
 use Spatie\FlareClient\Contracts\ProvidesFlareContext;
 use Spatie\FlareClient\Contracts\WithAttributes;
+use Spatie\FlareClient\Enums\FlareEntityType;
+use Spatie\FlareClient\Enums\FlarePayloadType;
 use Spatie\FlareClient\Enums\OverriddenGrouping;
 use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
 use Spatie\FlareClient\Resources\Resource;
@@ -210,7 +212,7 @@ class ReportFactory implements WithAttributes
             : "Log";
 
         $attributes = array_merge(
-            isset($this->resource) ? $this->resource->attributes : [],
+            isset($this->resource) ? $this->resource->export(FlareEntityType::Errors) : [],
             $this->attributes,
             $this->contextRecorder?->toArray() ?? [],
         );

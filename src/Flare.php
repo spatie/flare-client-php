@@ -56,6 +56,7 @@ class Flare
     public function __construct(
         protected readonly Api $api,
         public readonly Tracer $tracer,
+        public readonly Logger $logger,
         public readonly BackTracer $backTracer,
         protected readonly Ids $ids,
         protected readonly Time $time,
@@ -431,9 +432,12 @@ class Flare
     public function reset(
         bool $reports = true,
         bool $traces = true,
+        bool $logs = true,
         bool $clearCustomContext = true
     ): void {
-        $this->api->sendQueue(reports: $reports, traces: $traces);
+        $this->logger->flush();
+
+        $this->api->sendQueue(reports: $reports, traces: $traces, logs: $logs);
 
         if ($clearCustomContext) {
             $this->contextRecorder->resetContext();

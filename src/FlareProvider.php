@@ -29,7 +29,7 @@ use Spatie\FlareClient\Support\StacktraceMapper;
 use Spatie\FlareClient\Support\Telemetry;
 use Spatie\FlareClient\Support\TraceLimits;
 use Spatie\FlareClient\Time\Time;
-use Spatie\FlareClient\TraceExporters\TraceExporter;
+use Spatie\FlareClient\TraceExporters\Exporter;
 
 class FlareProvider
 {
@@ -63,7 +63,7 @@ class FlareProvider
             $this->config->samplerConfig
         ));
 
-        $this->container->singleton(TraceExporter::class, fn () => new $this->config->traceExporter);
+        $this->container->singleton(Exporter::class, fn () => new $this->config->traceExporter);
 
         $this->container->singleton(StacktraceMapper::class, fn () => new $this->config->stacktraceMapper);
 
@@ -77,20 +77,29 @@ class FlareProvider
 
         $this->container->singleton(Tracer::class, fn () => new Tracer(
             api: $this->container->get(Api::class),
-            exporter: $this->container->get(TraceExporter::class),
+            exporter: $this->container->get(Exporter::class),
             limits: $this->config->traceLimits ?? new TraceLimits(),
             time: $this->container->get(Time::class),
             ids: $this->container->get(Ids::class),
             resource: $this->container->get(Resource::class),
             scope: $this->container->get(Scope::class),
+            contextRecorder: $this->container->get(ContextRecorder::class),
             sampler: $this->config->trace
                 ? $this->container->get(Sampler::class)
                 : new NeverSampler(),
-            contextRecorder: $this->container->get(ContextRecorder::class),
             configureSpansCallable: $this->config->configureSpansCallable,
             configureSpanEventsCallable: $this->config->configureSpanEventsCallable,
             samplingType: $this->config->trace ? SamplingType::Waiting : SamplingType::Disabled,
             gracefulSpanEnder: $this->container->get(GracefulSpanEnder::class),
+        ));
+
+        $this->container->singleton(Logger::class, fn () => new Logger(
+            api: $this->container->get(Api::class),
+            time: $this->container->get(Time::class),
+            exporter: $this->container->get(Exporter::class),
+            tracer: $this->container->get(Tracer::class),
+            resource: $this->container->get(Resource::class),
+            scope: $this->container->get(Scope::class),
         ));
 
         $this->container->singleton(SentReports::class);
@@ -211,6 +220,7 @@ class FlareProvider
             return new Flare(
                 api: $this->container->get(Api::class),
                 tracer: $this->container->get(Tracer::class),
+                logger: $this->container->get(Logger::class),
                 backTracer: $this->container->get(BackTracer::class),
                 ids: $this->container->get(Ids::class),
                 time: $this->container->get(Time::class),

@@ -10,8 +10,8 @@ use Spatie\FlareClient\AttributesProviders\GitAttributesProvider;
 use Spatie\FlareClient\Contracts\FlareCollectType;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\CollectType;
+use Spatie\FlareClient\Enums\FlareEntityType;
 use Spatie\FlareClient\FlareMiddleware\AddConsoleInformation;
-use Spatie\FlareClient\FlareMiddleware\AddGitInformation;
 use Spatie\FlareClient\FlareMiddleware\AddRequestInformation;
 use Spatie\FlareClient\FlareMiddleware\AddSolutions;
 use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
@@ -154,11 +154,10 @@ class CollectsResolver
     protected function gitInfo(array $options): void
     {
         $this->resourceModifiers[] = fn (Resource $resource, ContainerInterface $container) => $resource->git(
-            $container->get(GitAttributesProvider::class),
-            $options['use_process'] ?? AddGitInformation::DEFAULT_USE_PROCESS,
+            attributesProvider: $container->get(GitAttributesProvider::class),
+            useProcess: $options['use_process'] ?? Resource::DEFAULT_GIT_USE_PROCESS,
+            entityTypes: $this->resolveChosenFlareEntityTypes($options['entity_types'] ?? Resource::DEFAULT_GIT_ENTITY_TYPES),
         );
-
-        $this->addMiddleware(AddGitInformation::class, $options);
     }
 
     protected function cache(array $options): void
@@ -268,21 +267,21 @@ class CollectsResolver
 
     protected function severInfo(array $options): void
     {
-        if ($options['host'] ?? false) {
-            $this->resourceModifiers[] = fn (Resource $resource) => $resource->host();
-        }
+        $this->resourceModifiers[] = fn (Resource $resource) => $resource->host(
+            entityTypes: $this->resolveChosenFlareEntityTypes($options['host'] ?? Resource::DEFAULT_HOST_ENTITY_TYPES),
+        );
 
-        if ($options['php'] ?? false) {
-            $this->resourceModifiers[] = fn (Resource $resource) => $resource->process()->processRuntime();
-        }
+        $this->resourceModifiers[] = fn (Resource $resource) => $resource
+            ->process(entityTypes: $this->resolveChosenFlareEntityTypes($options['php'] ?? Resource::DEFAULT_PHP_ENTITY_TYPES))
+            ->processRuntime(entityTypes: $this->resolveChosenFlareEntityTypes($options['php'] ?? Resource::DEFAULT_PHP_ENTITY_TYPES));
 
-        if ($options['os'] ?? false) {
-            $this->resourceModifiers[] = fn (Resource $resource) => $resource->operatingSystem();
-        }
+        $this->resourceModifiers[] = fn (Resource $resource) => $resource->operatingSystem(
+            entityTypes: $this->resolveChosenFlareEntityTypes($options['os'] ?? Resource::DEFAULT_OS_ENTITY_TYPES),
+        );
 
-        if ($options['composer'] ?? false) {
-            $this->resourceModifiers[] = fn (Resource $resource) => $resource->composer();
-        }
+        $this->resourceModifiers[] = fn (Resource $resource) => $resource->composerPackages(
+            entityTypes: $this->resolveChosenFlareEntityTypes($options['composer_packages'] ?? Resource::DEFAULT_COMPOSER_PACKAGES_ENTITY_TYPES)
+        );
     }
 
     protected function recorders(array $options): void
@@ -339,5 +338,26 @@ class CollectsResolver
         array|string $keys
     ): array {
         return array_intersect_key($options, array_flip((array) $keys));
+    }
+
+    /**
+     * @param array<int, FlareEntityType>|bool|FlareEntityType $entityTypes
+     */
+    protected function resolveChosenFlareEntityTypes(
+        array|bool|FlareEntityType $entityTypes
+    ): array {
+        if ($entityTypes === true) {
+            return FlareEntityType::cases();
+        }
+
+        if ($entityTypes === false) {
+            return [];
+        }
+
+        if (is_array($entityTypes)) {
+            return $entityTypes;
+        }
+
+        return [$entityTypes];
     }
 }

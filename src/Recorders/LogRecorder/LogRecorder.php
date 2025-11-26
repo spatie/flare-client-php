@@ -30,6 +30,8 @@ class LogRecorder extends SpanEventsRecorder
         array $context = [],
         array $attributes = [],
     ): ?SpanEvent {
+        // TODO: move infrastructure here to use the logger
+
         if ($level->getOrder() > $this->minimalLevel->getOrder()) {
             return null;
         }

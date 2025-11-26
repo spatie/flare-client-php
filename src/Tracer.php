@@ -18,7 +18,7 @@ use Spatie\FlareClient\Support\GracefulSpanEnder;
 use Spatie\FlareClient\Support\Ids;
 use Spatie\FlareClient\Support\TraceLimits;
 use Spatie\FlareClient\Time\Time;
-use Spatie\FlareClient\TraceExporters\TraceExporter;
+use Spatie\FlareClient\TraceExporters\Exporter;
 use Throwable;
 
 class Tracer
@@ -36,7 +36,7 @@ class Tracer
      */
     public function __construct(
         protected readonly Api $api,
-        protected readonly TraceExporter $exporter,
+        protected readonly Exporter $exporter,
         public readonly TraceLimits $limits,
         public readonly Time $time,
         public readonly Ids $ids,
@@ -155,7 +155,7 @@ class Tracer
 
         $this->contextRecorder->resetContext();
 
-        $payload = $this->exporter->export(
+        $payload = $this->exporter->traces(
             $this->resource,
             $this->scope,
             $this->traces,
