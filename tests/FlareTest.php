@@ -884,6 +884,146 @@ it('can setup a disabled flare', function () {
     expect(true)->toBeTrue();
 });
 
+it('can send a test trace', function () {
+    setupFlare();
+
+    $trace = [
+        'resourceSpans' => [
+            [
+                'resource' => [
+                    'attributes' => [
+                        'service.name' => 'test-service',
+                    ],
+                    'droppedAttributesCount' => 0,
+                ],
+                'scopeSpans' => [
+                    [
+                        'scope' => [
+                            'name' => 'test-scope',
+                            'version' => '1.0.0',
+                        ],
+                        'spans' => [
+                            [
+                                'traceId' => 'abc123',
+                                'spanId' => 'span123',
+                                'parentSpanId' => null,
+                                'name' => 'Test Span',
+                                'startTimeUnixNano' => 1546346096000000000,
+                                'endTimeUnixNano' => 1546346097000000000,
+                                'attributes' => [],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ];
+
+    test()->flare->sendTestTrace($trace);
+
+    FakeSender::instance()->assertRequestsSent(1);
+
+    $payload = FakeSender::instance()->getLastPayload();
+
+    expect($payload)->toBeArray()
+        ->and($payload['resourceSpans'])->toBeArray()
+        ->and($payload['resourceSpans'][0]['scopeSpans'][0]['spans'][0]['name'])->toBe('Test Span');
+});
+
+it('replaces timestamps when sending test trace', function () {
+    setupFlare();
+
+    $originalStartTime = 1000000000000000000;
+    $originalEndTime = 2000000000000000000;
+
+    $trace = [
+        'resourceSpans' => [
+            [
+                'resource' => [
+                    'attributes' => [],
+                ],
+                'scopeSpans' => [
+                    [
+                        'spans' => [
+                            [
+                                'traceId' => 'abc123',
+                                'spanId' => 'span123',
+                                'parentSpanId' => null,
+                                'name' => 'Test Span',
+                                'startTimeUnixNano' => $originalStartTime,
+                                'endTimeUnixNano' => $originalEndTime,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ];
+
+    test()->flare->sendTestTrace($trace);
+
+    FakeSender::instance()->assertRequestsSent(1);
+
+    $payload = FakeSender::instance()->getLastPayload();
+
+    expect($payload['resourceSpans'][0]['scopeSpans'][0]['spans'][0])->toHaveKey('startTimeUnixNano')
+        ->and($payload['resourceSpans'][0]['scopeSpans'][0]['spans'][0])->toHaveKey('endTimeUnixNano');
+
+    $startTime = $payload['resourceSpans'][0]['scopeSpans'][0]['spans'][0]['startTimeUnixNano'];
+    $endTime = $payload['resourceSpans'][0]['scopeSpans'][0]['spans'][0]['endTimeUnixNano'];
+
+    expect($startTime)->not()->toBe($originalStartTime)
+        ->and($endTime)->not()->toBe($originalEndTime)
+        ->and($endTime)->toBeGreaterThan($startTime)
+        ->and($endTime - $startTime)->toBe(100000000);
+});
+
+it('replaces trace ids when sending test trace', function () {
+    setupFlare();
+
+    $originalTraceId = 'abc123';
+    $originalSpanId = 'span123';
+
+    $trace = [
+        'resourceSpans' => [
+            [
+                'resource' => [
+                    'attributes' => [],
+                ],
+                'scopeSpans' => [
+                    [
+                        'spans' => [
+                            [
+                                'traceId' => $originalTraceId,
+                                'spanId' => $originalSpanId,
+                                'parentSpanId' => null,
+                                'name' => 'Test Span',
+                                'startTimeUnixNano' => 1000000000000000000,
+                                'endTimeUnixNano' => 2000000000000000000,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ];
+
+    test()->flare->sendTestTrace($trace);
+
+    FakeSender::instance()->assertRequestsSent(1);
+
+    $payload = FakeSender::instance()->getLastPayload();
+
+    expect($payload['resourceSpans'][0]['scopeSpans'][0]['spans'][0])->toHaveKey('traceId')
+        ->and($payload['resourceSpans'][0]['scopeSpans'][0]['spans'][0])->toHaveKey('spanId');
+
+    $traceId = $payload['resourceSpans'][0]['scopeSpans'][0]['spans'][0]['traceId'];
+    $spanId = $payload['resourceSpans'][0]['scopeSpans'][0]['spans'][0]['spanId'];
+
+    expect($traceId)->not()->toBe($originalTraceId)
+        ->and($spanId)->not()->toBe($originalSpanId);
+});
+
 // Helpers
 function reportException()
 {
