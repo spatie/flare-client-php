@@ -365,11 +365,13 @@ class Flare
         foreach ($data as $key => $value) {
             if ($key === 'startTimeUnixNano') {
                 $data[$key] = $this->time->getCurrentTime();
+
                 continue;
             }
 
             if ($key === 'endTimeUnixNano') {
                 $data[$key] = $this->time->getCurrentTime() + $oneHundredMs;
+
                 continue;
             }
 
