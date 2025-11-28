@@ -2,6 +2,18 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 2.6.0 - 2025-11-28
+
+### What's Changed
+
+* send testtrace function for flare:test command by @Marcel-Wil in https://github.com/spatie/flare-client-php/pull/59
+
+### New Contributors
+
+* @Marcel-Wil made their first contribution in https://github.com/spatie/flare-client-php/pull/59
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/2.5.3...2.6.0
+
 ## 2.5.3 - 2025-11-26
 
 ### What's Changed
