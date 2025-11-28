@@ -34,6 +34,7 @@ use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Support\BackTracer;
 use Spatie\FlareClient\Support\Container;
 use Spatie\FlareClient\Support\Ids;
+use Spatie\FlareClient\Support\OpenTelemetryAttributeMapper;
 use Spatie\FlareClient\Support\SentReports;
 use Spatie\FlareClient\Support\StacktraceMapper;
 use Spatie\FlareClient\Time\Time;
@@ -347,6 +348,111 @@ class Flare
                 $this->ids,
             ),
         );
+    }
+
+    public function sendTestTrace(array $trace): void
+    {
+        $trace = $this->replaceTimestamps($trace);
+        $trace = $this->replaceResourceAttributes($trace);
+        $trace = $this->replaceTraceIds($trace);
+        $this->api->testTrace($trace);
+    }
+
+    protected function replaceTimestamps(array $data): array
+    {
+        $oneHundredMs = 100000000;
+
+        foreach ($data as $key => $value) {
+            if ($key === 'startTimeUnixNano') {
+                $data[$key] = $this->time->getCurrentTime();
+
+                continue;
+            }
+
+            if ($key === 'endTimeUnixNano') {
+                $data[$key] = $this->time->getCurrentTime() + $oneHundredMs;
+
+                continue;
+            }
+
+            if (is_array($value)) {
+                $data[$key] = $this->replaceTimestamps($value);
+            }
+        }
+
+        return $data;
+    }
+
+    protected function replaceResourceAttributes(array $trace): array
+    {
+        $mapper = new OpenTelemetryAttributeMapper();
+
+        $resourceAttributes = [
+            'attributes' => $mapper->attributesToOpenTelemetry($this->resource->attributes),
+            'droppedAttributesCount' => $this->resource->droppedAttributesCount,
+        ];
+
+        if (isset($trace['resourceSpans']) && is_array($trace['resourceSpans'])) {
+            foreach ($trace['resourceSpans'] as &$resourceSpan) {
+                if (isset($resourceSpan['resource'])) {
+                    $resourceSpan['resource'] = $resourceAttributes;
+                }
+            }
+        }
+
+        return $trace;
+    }
+
+    protected function replaceTraceIds(array $trace): array
+    {
+        $newTraceId = $this->ids->trace();
+        $rootSpanId = null;
+
+        if (! isset($trace['resourceSpans']) || ! is_array($trace['resourceSpans'])) {
+            return $trace;
+        }
+
+        foreach ($trace['resourceSpans'] as &$resourceSpan) {
+            if (! isset($resourceSpan['scopeSpans']) || ! is_array($resourceSpan['scopeSpans'])) {
+                continue;
+            }
+
+            foreach ($resourceSpan['scopeSpans'] as &$scopeSpan) {
+                if (! isset($scopeSpan['spans']) || ! is_array($scopeSpan['spans'])) {
+                    continue;
+                }
+
+                foreach ($scopeSpan['spans'] as &$span) {
+                    $span['traceId'] = $newTraceId;
+
+                    if ($span['parentSpanId'] === null) {
+                        $rootSpanId = $this->ids->span();
+                        $span['spanId'] = $rootSpanId;
+                    }
+                }
+            }
+        }
+
+        foreach ($trace['resourceSpans'] as &$resourceSpan) {
+            if (! isset($resourceSpan['scopeSpans']) || ! is_array($resourceSpan['scopeSpans'])) {
+                continue;
+            }
+
+            foreach ($resourceSpan['scopeSpans'] as &$scopeSpan) {
+                if (! isset($scopeSpan['spans']) || ! is_array($scopeSpan['spans'])) {
+                    continue;
+                }
+
+                foreach ($scopeSpan['spans'] as &$span) {
+                    if ($span['parentSpanId'] !== null) {
+                        $span['spanId'] = $this->ids->span();
+                        $span['parentSpanId'] = $rootSpanId;
+                    }
+                }
+            }
+        }
+
+        return $trace;
     }
 
     protected function sendReportToApi(Report $report): void
