@@ -24,14 +24,14 @@ class ErrorSpanEvent extends SpanEvent
         );
     }
 
-    public static function fromReport(Report $report, int $timeUs): self
+    public static function fromReport(array $report, int $timeUs): self
     {
         return new self(
-            $report->message,
-            $report->exceptionClass,
-            $report->handled ?? false,
+            $report['message'],
+            $report['exceptionClass'],
+            $report['handled'],
             $timeUs,
-            $report->trackingUuid
+            $report['trackingUuid'],
         );
     }
 

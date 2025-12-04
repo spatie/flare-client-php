@@ -6,37 +6,30 @@ use Spatie\FlareClient\Tests\Shared\ExpectSpan;
 use Spatie\FlareClient\Tests\Shared\ExpectSpanEvent;
 use Spatie\FlareClient\Tests\Shared\ExpectTrace;
 use Spatie\FlareClient\Tests\Shared\ExpectTracer;
+use Spatie\FlareClient\Tests\Shared\FakeApi;
+use Spatie\FlareClient\Tests\Shared\FakeIds;
 use Spatie\FlareClient\Tests\TestClasses\ExceptionWithContext;
 
 it('can trace throwables', function () {
+    FakeIds::setup()->nextUuid('fake-uuid');;
+
     $flare = setupFlare(
         fn (FlareConfig $config) => $config->collectErrorsWithTraces()->collectCommands()->trace()->alwaysSampleTraces()
     );
 
-    $flare->tracer->clearTracesAfterExport = false;
-
+    $flare->tracer->startTrace();
     $flare->command()->recordStart('command', []);
 
     $flare->report(new ExceptionWithContext('We failed'));
 
     $flare->command()->recordEnd(1);
+    $flare->tracer->endTrace();
 
-    ExpectTracer::create($flare)
-        ->trace(
-            fn (ExpectTrace $trace) => $trace
-            ->span(
-                fn (ExpectSpan $span) => $span
-                ->hasSpanEventCount(1)
-                ->spanEvent(
-                    fn (ExpectSpanEvent $spanEvent) => $spanEvent
-                    ->hasName('Exception - Spatie\FlareClient\Tests\TestClasses\ExceptionWithContext')
-                    ->hasType(SpanEventType::Exception)
-                    ->hasAttributeCount(5)
-                    ->hasAttribute('exception.message', 'We failed')
-                    ->hasAttribute('exception.type', 'Spatie\FlareClient\Tests\TestClasses\ExceptionWithContext')
-                    ->hasAttribute('exception.handled', false)
-                    ->hasAttribute('exception.id')
-                )
-            )
-        );
+    $trace = FakeApi::lastTrace()->expectSpan(0)->expectSpanEvent(0)
+        ->expectName('Exception - Spatie\FlareClient\Tests\TestClasses\ExceptionWithContext')
+        ->expectType(SpanEventType::Exception)
+        ->expectAttribute('exception.message', 'We failed')
+        ->expectAttribute('exception.type', 'Spatie\FlareClient\Tests\TestClasses\ExceptionWithContext')
+        ->expectAttribute('exception.handled', null)
+        ->expectAttribute('exception.id', 'fake-uuid');
 });

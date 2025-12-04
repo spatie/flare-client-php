@@ -13,6 +13,8 @@ class ErrorRecorder extends SpanEventsRecorder
 
     const DEFAULT_WITH_ERRORS = false;
 
+    // TODO: remove this in favour of a tracer intance on the reporter which will write the error directly to the trace
+
     protected function configure(array $config): void
     {
         $this->withTraces = true;
@@ -24,7 +26,7 @@ class ErrorRecorder extends SpanEventsRecorder
         return RecorderType::Exception;
     }
 
-    public function record(Report $report): void
+    public function record(array $report): void
     {
         if ($this->withTraces === false && $this->tracer->isSampling() === false) {
             return;

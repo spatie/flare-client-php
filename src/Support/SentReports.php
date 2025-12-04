@@ -2,21 +2,19 @@
 
 namespace Spatie\FlareClient\Support;
 
-use Spatie\FlareClient\Report;
-
 class SentReports
 {
-    /** @var array<int, Report> */
+    /** @var array<int, array> */
     protected array $reports = [];
 
-    public function add(Report $report): self
+    public function add(array $report): self
     {
         $this->reports[] = $report;
 
         return $this;
     }
 
-    /**  @return array<int, Report> */
+    /**  @return array<int, array> */
     public function all(): array
     {
         return $this->reports;
@@ -25,7 +23,7 @@ class SentReports
     /** @return array<int, string> */
     public function uuids(): array
     {
-        return array_filter(array_map(fn (Report $report) => $report->trackingUuid, $this->reports));
+        return array_filter(array_map(fn (array $report) => $report['trackingUuid'], $this->reports));
     }
 
     /** @return array<int, string> */
@@ -38,7 +36,7 @@ class SentReports
 
     public function latestUuid(): ?string
     {
-        return end($this->reports) ? end($this->reports)->trackingUuid : null;
+        return end($this->reports) ? end($this->reports)['trackingUuid'] : null;
     }
 
     public function latestUrl(): ?string

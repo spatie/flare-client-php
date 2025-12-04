@@ -2,15 +2,17 @@
 
 use Spatie\FlareClient\Flare;
 use Spatie\FlareClient\FlareConfig;
+use Spatie\FlareClient\FlareProvider;
 use Spatie\FlareClient\Support\Container;
+use Spatie\FlareClient\Tests\Shared\FakeApi;
 use Spatie\FlareClient\Tests\Shared\FakeIds;
 use Spatie\FlareClient\Tests\Shared\FakeSender;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
-use Spatie\FlareClient\Tests\Shared\FakeExporter;
 
 uses()->beforeEach(function () {
     Container::instance()->reset();
     FakeSender::reset();
+    FakeApi::reset();
     FakeTime::reset();
     FakeIds::reset();
 })->in(__DIR__);
@@ -25,14 +27,14 @@ function makePathsRelative(string $text): string
  */
 function setupFlare(
     ?Closure $closure = null,
-    bool $sendReportsImmediately = true,
     bool $useFakeSender = true,
-    bool $useFakeTraceExporter = true,
+    bool $useFakeApi = true,
     bool $alwaysSampleTraces = false,
+    bool $withoutApiKey = false,
+    bool $isUsingSubtasks = false,
 ): Flare {
     $config = new FlareConfig(
-        apiToken: 'fake-api-key',
-        sendReportsImmediately: $sendReportsImmediately,
+        apiToken: $withoutApiKey ? null : 'fake-api-key',
         trace: true,
     );
 
@@ -40,8 +42,8 @@ function setupFlare(
         $config->sender = FakeSender::class;
     }
 
-    if ($useFakeTraceExporter) {
-        $config->traceExporter = FakeExporter::class;
+    if ($useFakeApi) {
+        $config->api = FakeApi::class;
     }
 
     if ($alwaysSampleTraces) {
@@ -60,7 +62,14 @@ function setupFlare(
         $closure($config);
     }
 
-    return test()->flare = Flare::make($config);
+    $container = Container::instance();
+
+    $provider = new FlareProvider($config, $container, isUsingSubtasksClosure: fn () => $isUsingSubtasks);
+
+    $provider->register();
+    $provider->boot();
+
+    return test()->flare = $container->get(Flare::class);
 }
 
 function getStubPath(string $stubName): string

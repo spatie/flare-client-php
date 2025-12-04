@@ -9,6 +9,7 @@ enum CollectType: string implements FlareCollectType
     case Application = 'application';
     case Dumps = 'dumps';
     case Requests = 'requests';
+    case Context = 'context';
     case Commands = 'console';
     case GitInfo = 'git_info';
     case Cache = 'cache';

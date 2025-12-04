@@ -14,39 +14,35 @@ use Spatie\FlareClient\Truncation\ReportTrimmer;
 
 class Api
 {
+    // TODO: technically doing the export here would make more sense
+    // let's say we ever want to support other formats than JSON
+    // like Protobuf, we could do that here before sending to the sender
+
     public const BASE_URL = 'https://ingress.flareapp.io';
 
-    /** @var array<int, Report> */
+    /** @var array<int, array> */
     protected array $reportQueue = [];
 
     /** @var array<int, array> */
     protected array $traceQueue = [];
 
     /** @var array<int, array> */
-    protected array $logDataQueue = [];
+    protected array $logQueue = [];
 
     public function __construct(
         protected string $apiToken,
         protected string $baseUrl,
         protected Sender $sender = new CurlSender(),
-        protected bool $sendReportsImmediately = false,
     ) {
-        register_shutdown_function([$this, 'sendQueue']);
-    }
 
-    public function sendReportsImmediately(bool $sendReportsImmediately = true): self
-    {
-        $this->sendReportsImmediately = $sendReportsImmediately;
-
-        return $this;
     }
 
     public function report(
-        Report $report,
+        array $report,
         bool $immediately = false,
     ): void {
         try {
-            $immediately || $this->sendReportsImmediately
+            $immediately
                 ? $this->sendReportToApi($report)
                 : $this->addReportToQueue($report);
         } catch (Exception $e) {
@@ -59,7 +55,7 @@ class Api
         bool $immediately = false,
     ): void {
         try {
-            $immediately || $this->sendReportsImmediately
+            $immediately
                 ? $this->sendTraceToApi($trace)
                 : $this->addTraceToQueue($trace);
         } catch (Exception $e) {
@@ -72,21 +68,21 @@ class Api
         bool $immediately = false,
     ): void {
         try {
-            $immediately || $this->sendReportsImmediately
-                ? $this->sendLogDataToApi($logData)
-                : $this->addLogDataToQueue($logData);
+            $immediately
+                ? $this->sendLogToApi($logData)
+                : $this->addLogToQueue($logData);
         } catch (Exception $e) {
 
         }
     }
 
     public function test(
-        Report $report
+        array $report
     ): void {
         $this->sendReportToApi($report, isTest: true);
     }
 
-    protected function addReportToQueue(Report $report): self
+    protected function addReportToQueue(array $report): self
     {
         $this->reportQueue[] = $report;
 
@@ -100,9 +96,9 @@ class Api
         return $this;
     }
 
-    protected function addLogDataToQueue(array $logData): self
+    protected function addLogToQueue(array $logData): self
     {
-        $this->logDataQueue[] = $logData;
+        $this->logQueue[] = $logData;
 
         return $this;
     }
@@ -137,21 +133,21 @@ class Api
         }
 
         if ($logs) {
-            foreach ($this->logDataQueue as $logData) {
+            foreach ($this->logQueue as $logData) {
                 try {
-                    $this->sendLogDataToApi($logData);
+                    $this->sendLogToApi($logData);
                 } catch (Exception $e) {
                     continue;
                 }
             }
 
-            $this->logDataQueue = [];
+            $this->logQueue = [];
         }
     }
 
-    protected function sendReportToApi(Report $report, bool $isTest = false): void
+    protected function sendReportToApi(array $report, bool $isTest = false): void
     {
-        $payload = $this->truncateReport($report->toArray());
+        $payload = $this->truncateReport($report);
 
         $this->post(
             "{$this->baseUrl}/v1/errors",
@@ -169,7 +165,7 @@ class Api
         );
     }
 
-    protected function sendLogDataToApi(array $logData): void
+    protected function sendLogToApi(array $logData): void
     {
         $this->post(
             "{$this->baseUrl}/v1/logs",

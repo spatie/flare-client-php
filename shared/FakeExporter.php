@@ -4,7 +4,7 @@ namespace Spatie\FlareClient\Tests\Shared;
 
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Scopes\Scope;
-use Spatie\FlareClient\TraceExporters\Exporter;
+use Spatie\FlareClient\Exporters\Exporter;
 
 class FakeExporter implements Exporter
 {

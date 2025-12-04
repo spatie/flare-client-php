@@ -7,7 +7,7 @@ use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Time\Time;
 use Spatie\FlareClient\Time\TimeHelper;
-use Spatie\FlareClient\TraceExporters\Exporter;
+use Spatie\FlareClient\Exporters\Exporter;
 
 /**
  * @phpstan-type LogRecord array{time_unix_nano: int, observed_time_unix_nano: int, trace_id?: string, span_id?: string, flags?: string, severity_text?: string, severity_number?: int, body: mixed, attributes?: array<string, mixed>}
@@ -24,6 +24,7 @@ class Logger
         protected readonly Tracer $tracer,
         protected readonly Resource $resource,
         protected readonly Scope $scope,
+        protected readonly bool $disabled,
     ) {
     }
 

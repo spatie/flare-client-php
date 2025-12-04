@@ -18,6 +18,7 @@ use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 use Spatie\FlareClient\Recorders\ApplicationRecorder\ApplicationRecorder;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
+use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
 use Spatie\FlareClient\Recorders\DumpRecorder\DumpRecorder;
 use Spatie\FlareClient\Recorders\ExternalHttpRecorder\ExternalHttpRecorder;
 use Spatie\FlareClient\Recorders\FilesystemRecorder\FilesystemRecorder;
@@ -63,8 +64,6 @@ class CollectsResolver
         $this->recorders = [];
         $this->resourceModifiers = [];
 
-        $this->application(); // Always enabled
-
         foreach ($collects as $collect) {
             $ignored = $collect['ignored'] ?? false;
 
@@ -77,6 +76,7 @@ class CollectsResolver
             match ($collect['type'] ?? null) {
                 CollectType::Requests => $this->requests($options),
                 CollectType::Commands => $this->console($options),
+                CollectType::Context => $this->context($collect),
                 CollectType::GitInfo => $this->gitInfo($options),
                 CollectType::Cache => $this->cache($options),
                 CollectType::Glows => $this->glows($options),
@@ -118,10 +118,6 @@ class CollectsResolver
 
     }
 
-    protected function application(): void
-    {
-        $this->addRecorder(ApplicationRecorder::class);
-    }
 
     protected function errorsWithTraces(array $options): void
     {
@@ -148,6 +144,15 @@ class CollectsResolver
                 'with_errors',
                 'max_items_with_errors',
             ])
+        );
+    }
+
+    protected function context(
+        array $options
+    ): void {
+        $this->addRecorder(
+            ContextRecorder::class,
+            $options,
         );
     }
 

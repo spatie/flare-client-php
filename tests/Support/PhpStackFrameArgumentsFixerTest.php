@@ -10,16 +10,14 @@ it('can enable stack trace arguments on a PHP level', function () {
     $report = Flare::make(
         FlareConfig::make('FAKE-API-KEY')->collectStackFrameArguments(forcePHPIniSetting: false)
     )
-        ->report(TraceArguments::create()->exception('string', new DateTime()))
-        ->toArray();
+        ->report(TraceArguments::create()->exception('string', new DateTime()));
 
     expect($report['stacktrace'][1]['arguments'])->toBeNull();
 
     $report = Flare::make(
         FlareConfig::make('FAKE-API-KEY')->collectStackFrameArguments(forcePHPIniSetting: true)
     )
-        ->report(TraceArguments::create()->exception('string', new DateTime()))
-        ->toArray();
+        ->report(TraceArguments::create()->exception('string', new DateTime()));
 
     expect($report['stacktrace'][1]['arguments'])
         ->toBeArray()

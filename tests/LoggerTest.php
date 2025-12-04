@@ -6,6 +6,4 @@ it('can log a statement', function () {
     $logger->log(
         body: "Hi there"
     );
-
-    dd($logger);
 });

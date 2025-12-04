@@ -54,7 +54,7 @@ use Spatie\FlareClient\Support\Ids;
 use Spatie\FlareClient\Support\StacktraceMapper;
 use Spatie\FlareClient\Support\TraceLimits;
 use Spatie\FlareClient\Time\SystemTime;
-use Spatie\FlareClient\TraceExporters\OpenTelemetryJsonExporter;
+use Spatie\FlareClient\Exporters\OpenTelemetryJsonExporter;
 
 class FlareConfig
 {
@@ -77,7 +77,6 @@ class FlareConfig
     public function __construct(
         public ?string $apiToken = null,
         public string $baseUrl = Api::BASE_URL,
-        public bool $sendReportsImmediately = false,
         public array $collects = [],
         public ?int $reportErrorLevels = null,
         public ?Closure $filterExceptionsCallable = null,
@@ -89,7 +88,9 @@ class FlareConfig
         public string $sender = CurlSender::class,
         public array $senderConfig = [],
         public string $solutionsProviderRepository = SolutionProviderRepository::class,
-        public bool $trace = false,
+        public bool $trace = true,
+        public bool $log = false,
+        public bool $report = true,
         public string $sampler = RateSampler::class,
         public array $samplerConfig = [],
         public ?TraceLimits $traceLimits = null,
@@ -108,6 +109,7 @@ class FlareConfig
         public string $time = SystemTime::class,
         public array $overriddenGroupings = [],
         public bool $includeStackTraceWithMessages = false,
+        public string $api = Api::class,
     ) {
     }
 
@@ -142,6 +144,7 @@ class FlareConfig
         return $this
             ->collectErrorsWithTraces()
             ->collectDumps()
+            ->collectContext()
             ->collectCommands()
             ->collectRequests()
             ->collectCacheEvents()
@@ -494,6 +497,18 @@ class FlareConfig
         return $this->ignoreCollect(CollectType::ServerInfo);
     }
 
+    public function collectContext(
+        // TODO: add parameters here?
+    ): static
+    {
+        return $this->addCollect(CollectType::Context);
+    }
+
+    public function ignoreContext(): static
+    {
+        return $this->ignoreCollect(CollectType::Context);
+    }
+
     /** @param array<class-string<Recorder>, array<string, mixed>> $recorders */
     public function collectRecorders(
         array $recorders = [],
@@ -604,6 +619,8 @@ class FlareConfig
         int $maxSpanEventsPerSpan = 128,
         int $maxAttributesPerSpanEvent = 128,
     ): static {
+        // TODO: add new true defaults to laravel-flare
+
         $this->trace = $trace;
         $this->traceLimits = new TraceLimits(
             $maxSpans,
@@ -611,6 +628,24 @@ class FlareConfig
             $maxSpanEventsPerSpan,
             $maxAttributesPerSpanEvent,
         );
+
+        return $this;
+    }
+
+    public function log(
+        bool $log = true,
+    ): static {
+        // TODO: add these to laravel-flare
+        $this->log = $log;
+
+        return $this;
+    }
+
+    public function report(
+        bool $report = true,
+    ): static {
+        // TODO: add these to laravel-flare
+        $this->report = $report;
 
         return $this;
     }
@@ -684,13 +719,6 @@ class FlareConfig
     {
         $this->sampler = $sampler;
         $this->samplerConfig = $config;
-
-        return $this;
-    }
-
-    public function sendReportsImmediately(bool $sendReportsImmediately = true): static
-    {
-        $this->sendReportsImmediately = $sendReportsImmediately;
 
         return $this;
     }

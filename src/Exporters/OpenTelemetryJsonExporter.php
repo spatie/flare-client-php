@@ -1,6 +1,6 @@
 <?php
 
-namespace Spatie\FlareClient\TraceExporters;
+namespace Spatie\FlareClient\Exporters;
 
 use Spatie\FlareClient\Enums\FlareEntityType;
 use Spatie\FlareClient\Enums\FlarePayloadType;

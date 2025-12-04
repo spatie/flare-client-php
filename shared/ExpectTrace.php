@@ -4,6 +4,7 @@ namespace Spatie\FlareClient\Tests\Shared;
 
 use Closure;
 use Exception;
+use Spatie\FlareClient\Spans\Span;
 
 class ExpectTrace
 {

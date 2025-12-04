@@ -39,7 +39,6 @@ class CommandRecorder extends SpansRecorder
                     ...$attributes,
                 ];
             },
-            canStartTrace: true,
         );
     }
 
