@@ -18,7 +18,7 @@ class Lifecycle
 
     /**
      * @param Closure():bool|null $isUsingSubtasksClosure
-     * @param Closure():bool|null $shouldMakeSamplingDecisionClosure
+     * @param Closure(bool):bool|null $shouldMakeSamplingDecisionClosure
      */
     public function __construct(
         protected Api $api,

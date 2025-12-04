@@ -75,9 +75,9 @@ class FakeApi extends Api
         return ExpectReport::create(end(self::$reports));
     }
 
-    public static function lastTrace(): ExpectTrace2
+    public static function lastTrace(): ExpectTrace
     {
-        return ExpectTrace2::create(end(self::$traces));
+        return ExpectTrace::create(end(self::$traces));
     }
 
     public static function reset(): void

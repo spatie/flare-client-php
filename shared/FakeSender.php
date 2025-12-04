@@ -9,6 +9,8 @@ use Spatie\FlareClient\Senders\Support\Response;
 
 class FakeSender implements Sender
 {
+    // TODO: I think this one can be removed
+
     /** @var array<int, array{verb: string, fullUrl: string, headers: array<string, string>, arguments: array<string, mixed>}> */
     public static array $requests = [];
 

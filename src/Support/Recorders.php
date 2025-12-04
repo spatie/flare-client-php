@@ -13,7 +13,7 @@ class Recorders
     protected array $recorders = [];
 
     /**
-     * @param array<class-string<Recorder>, array{type: CollectType, options: array<string, mixed>} $recorderDefinitions
+     * @param array<class-string<Recorder>, array<string, mixed>> $recorderDefinitions
      */
     public function __construct(
         protected array $recorderDefinitions,

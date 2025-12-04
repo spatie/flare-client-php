@@ -74,11 +74,11 @@ class Reporter
     }
 
     /**
-     * @param callable(ReportFactory $report):void|null $callback
+     * @param Closure(ReportFactory $report):void|null $callback
      */
     public function report(
         Throwable $throwable,
-        ?callable $callback = null,
+        ?Closure $callback = null,
         ?bool $handled = null
     ): ?array {
         if (! $this->shouldSendReport($throwable)) {
@@ -125,7 +125,7 @@ class Reporter
             }
 
             if ($recorder instanceof ContextRecorder) {
-                $factory->addAttributes($recorder->toArray() ?? []);
+                $factory->addAttributes($recorder->toArray());
             }
         }
 

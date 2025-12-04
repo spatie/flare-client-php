@@ -5,12 +5,12 @@ namespace Spatie\FlareClient\Tests\Shared;
 use DateTimeInterface;
 use Spatie\FlareClient\Contracts\FlareSpanEventType;
 use Spatie\FlareClient\Contracts\FlareSpanType;
-use Spatie\FlareClient\Tests\Shared\Concerns\ExpectAttributes2;
+use Spatie\FlareClient\Tests\Shared\Concerns\ExpectAttributes;
 use Spatie\FlareClient\Time\TimeHelper;
 
 class ExpectReportEvent
 {
-    use ExpectAttributes2;
+    use ExpectAttributes;
 
     public function __construct(
         public array $event

@@ -60,7 +60,7 @@ class FlareConfig
 {
     /**
      * @param null|Closure(Exception): bool $filterExceptionsCallable
-     * @param null|Closure(Report): bool $filterReportsCallable
+     * @param null|Closure(array): bool $filterReportsCallable
      * @param array<string, array{type: FlareCollectType, ignored: ?bool, options: array}> $collects
      * @param class-string<Sender> $sender
      * @param class-string<SolutionProviderRepository> $solutionsProviderRepository
@@ -596,7 +596,7 @@ class FlareConfig
     }
 
     /**
-     * @param Closure(Report): bool $filterReportsCallable
+     * @param Closure(array): bool $filterReportsCallable
      */
     public function filterReportsUsing(Closure $filterReportsCallable): static
     {

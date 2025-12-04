@@ -2,34 +2,25 @@
 
 namespace Spatie\FlareClient\Tests\Shared;
 
-use Spatie\FlareClient\Contracts\WithAttributes;
-use Spatie\FlareClient\Scopes\Scope;
+use Spatie\FlareClient\Support\OpenTelemetryAttributeMapper;
+use Spatie\FlareClient\Tests\Shared\Concerns\ExpectAttributes;
 
 class ExpectScope
 {
-    use Concerns\ExpectAttributes;
+    use ExpectAttributes;
+
+    public static function create(array $scope): self
+    {
+        return new self($scope);
+    }
 
     public function __construct(
-        protected Scope $scope
+        protected array $scope
     ) {
     }
 
-    public function hasName(string $name): self
+    protected function attributes(): array
     {
-        expect($this->scope->name)->toEqual($name);
-
-        return $this;
-    }
-
-    public function hasVersion(string $version): self
-    {
-        expect($this->scope->version)->toEqual($version);
-
-        return $this;
-    }
-
-    protected function entity(): WithAttributes
-    {
-        return $this->scope;
+        return (new OpenTelemetryAttributeMapper())->attributesToPHP($this->scope['attributes']);
     }
 }

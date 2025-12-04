@@ -8,11 +8,11 @@ use Spatie\FlareClient\Contracts\WithAttributes;
 use Spatie\FlareClient\Enums\OverriddenGrouping;
 use Spatie\FlareClient\ReportFactory;
 use Spatie\FlareClient\Tests\Shared\Concerns\ExpectAttributes;
-use Spatie\FlareClient\Tests\Shared\Concerns\ExpectAttributes2;
+use Spatie\FlareClient\Tests\Shared\Concerns\ExpectAttributes;
 
 class ExpectReport
 {
-    use expectAttributes2;
+    use ExpectAttributes;
 
     public static function create(array|ReportFactory $report): self
     {

@@ -38,7 +38,7 @@ class FlareProvider
 
     /**
      * @param Closure(Container|IlluminateContainer, class-string<Recorder>, array):void|null $registerRecorderAndMiddlewaresCallback
-     * @param Closure():bool|null $usesSubtasksClosure
+     * @param Closure():bool|null $isUsingSubtasksClosure
      * @param Closure(bool):bool|null $shouldMakeSamplingDecisionClosure
      * @param Closure(Span):bool|null $gracefulSpanEnderClosure
      */
@@ -260,21 +260,19 @@ class FlareProvider
             );
         });
 
-        $this->container->singleton(Flare::class, function () use ($collectErrorsWithTraces, $collectStackFrameArguments, $middlewares, $recorders) {
-            return new Flare(
-                lifecycle: $this->container->get(Lifecycle::class),
-                tracer: $this->container->get(Tracer::class),
-                logger: $this->container->get(Logger::class),
-                reporter: $this->container->get(Reporter::class),
-                backTracer: $this->container->get(BackTracer::class),
-                ids: $this->container->get(Ids::class),
-                time: $this->container->get(Time::class),
-                sentReports: $this->container->get(SentReports::class),
-                resource: $this->container->get(Resource::class),
-                scope: $this->container->get(Scope::class),
-                recorders: $this->container->get(Recorders::class),
-            );
-        });
+        $this->container->singleton(Flare::class, fn () => new Flare(
+            lifecycle: $this->container->get(Lifecycle::class),
+            tracer: $this->container->get(Tracer::class),
+            logger: $this->container->get(Logger::class),
+            reporter: $this->container->get(Reporter::class),
+            backTracer: $this->container->get(BackTracer::class),
+            ids: $this->container->get(Ids::class),
+            time: $this->container->get(Time::class),
+            sentReports: $this->container->get(SentReports::class),
+            resource: $this->container->get(Resource::class),
+            scope: $this->container->get(Scope::class),
+            recorders: $this->container->get(Recorders::class),
+        ));
 
         if ($collectStackFrameArguments && $forcePHPStackFrameArgumentsIniSetting) {
             (new PhpStackFrameArgumentsFixer())->enable();

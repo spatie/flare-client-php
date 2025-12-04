@@ -124,9 +124,6 @@ class Tracer
         string $spanId,
         bool $currentSpanIdAvailable,
     ): bool {
-        // TODO: since technically there could already be logs tied to the previous trace_id and span_id
-        // It might be useful rewrite those logs to have the new trace_id and span_id
-
         $this->currentTraceId = $traceId;
         $this->currentSpanId = $spanId;
         $this->currentSpanIdAvailable = $currentSpanIdAvailable;
@@ -270,7 +267,8 @@ class Tracer
 
         if ($span->end !== null) {
             $this->configureSpan($span);
-            $this->currentSpanId = $span->parentSpanId;
+
+            $this->currentSpanId = $span->parentSpanId ?? '-';
         }
 
         return $span;

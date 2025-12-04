@@ -13,6 +13,7 @@ cover. We accept PRs to improve this guide.
 - Flare::report() will now return an array instead of a Report object
 - Flare::reportMessage() was removed in favor of the new logging functionality
 - We made some updates to the internal workings of the tracer
+- If you've written custom Flare middleware, please check the signatures of the ReportFactory
 
 ## From v1 to v2
 

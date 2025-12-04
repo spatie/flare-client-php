@@ -2,14 +2,8 @@
 
 namespace Spatie\FlareClient\Tests\Shared;
 
-use Closure;
-use Exception;
-use Spatie\FlareClient\Spans\Span;
-
 class ExpectTrace
 {
-    protected int $spanAssertCounter = 0;
-
     public static function create(array $trace): self
     {
         return new self($trace);
@@ -20,30 +14,32 @@ class ExpectTrace
     ) {
     }
 
-    public function hasSpanCount(int $count): self
+    public function expectSpan(int $index): ExpectSpan
     {
-        expect($this->trace)->toHaveCount($count);
+        return new ExpectSpan($this->trace['resourceSpans'][0]['scopeSpans'][0]['spans'][$index]);
+    }
+
+    public function expectSpanCount(int $count): self
+    {
+        expect($this->trace['resourceSpans'][0]['scopeSpans'][0]['spans'])->toHaveCount($count);
 
         return $this;
     }
 
-    /**
-     * @param Closure(ExpectSpan): void $closure
-     */
-    public function span(
-        Closure $closure,
-        ?Span &$span = null,
-    ): self {
-        $span = array_values($this->trace)[$this->spanAssertCounter] ?? null;
-
-        if ($span === null) {
-            throw new Exception('Span is not recorded');
-        }
-
-        $closure(new ExpectSpan($span));
-
-        $this->spanAssertCounter++;
+    public function expectNoSpans(): self
+    {
+        expect($this->trace['resourceSpans'][0]['scopeSpans'][0]['spans'])->toBeEmpty();
 
         return $this;
+    }
+
+    public function expectResource(): ExpectResource
+    {
+        return new ExpectResource($this->trace['resourceSpans'][0]['resource']);
+    }
+
+    public function expectScope(): ExpectScope
+    {
+        return ExpectScope::create($this->trace['resourceSpans'][0]['scopeSpans'][0]['scope']);
     }
 }

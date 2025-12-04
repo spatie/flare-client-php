@@ -2,37 +2,42 @@
 
 namespace Spatie\FlareClient\Tests\Shared\Concerns;
 
-use Closure;
-use Spatie\FlareClient\Contracts\WithAttributes;
-
 trait ExpectAttributes
 {
-    abstract protected function entity(): WithAttributes;
+    abstract protected function attributes(): array;
 
-    public function hasAttributeCount(int $count): self
+    public function expectAttributesCount(int $count): self
     {
-        expect($this->entity()->attributes)->toHaveCount($count);
+        expect($this->attributes())->toHaveCount($count);
 
         return $this;
     }
 
-    public function hasAttribute(string $name, mixed $value = null): self
+    public function expectAttribute(string $key, mixed $value): self
     {
-        if (func_num_args() === 1) {
-            expect($this->entity()->attributes)->toHaveKey($name);
+        expect($this->attributes()[$key])->toBe($value);
+
+        return $this;
+    }
+
+    public function expectHasAttribute(string $key): self
+    {
+        expect($this->attributes())->toHaveKey($key);
+
+        return $this;
+    }
+
+    public function expectAttributes(array $attributes, bool $exact = false): self
+    {
+        if($exact) {
+            expect($this->attributes())->toEqualCanonicalizing($attributes);
 
             return $this;
         }
 
-        if ($value instanceof Closure) {
-            expect($this->entity()->attributes)->toHaveKey($name);
-
-            $value($this->entity()->attributes[$name]);
-
-            return $this;
+        foreach ($attributes as $key => $value) {
+            expect($this->attributes()[$key])->toBe($value);
         }
-
-        expect($this->entity()->attributes[$name])->toEqual($value);
 
         return $this;
     }

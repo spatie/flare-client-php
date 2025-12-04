@@ -24,11 +24,7 @@ class AddSolutions implements FlareMiddleware
 
     public function handle(ReportFactory $report, Closure $next): ReportFactory
     {
-        if ($report->throwable === null) {
-            return $next($report);
-        }
-
-        $report->addSolutions(
+        $report->solution(
             ...$this->solutionProviderRepository->getSolutionsForThrowable($report->throwable)
         );
 

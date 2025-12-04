@@ -26,7 +26,7 @@ test('it always includes base attributes and custom attributes', function () {
 });
 
 test('it can include git data', function () {
-    $gitProvider = new GitAttributesProvider(__DIR__ . '/../');
+    $gitProvider = new GitAttributesProvider(__DIR__.'/../');
 
     $resource = new Resource(
         serviceName: 'test-service'
@@ -102,7 +102,7 @@ test('it can include composer packages', function () {
 
     $exported = $resource->export(FlareEntityType::Errors);
 
-    dd($exported);
+    expect($exported)->toHaveKey('composer.packages');
 });
 
 test('it uses different includes based on the payload type', function () {
@@ -138,7 +138,7 @@ test('it uses different includes based on the payload type', function () {
         'process.runtime.version',
     ]);
 
-    $tracesExport = $resource->export(FlarePayloadType::Traces);
+    $tracesExport = $resource->export(FlareEntityType::Traces);
 
     expect($tracesExport)->toHaveKeys([
         'process.runtime.name',
@@ -154,7 +154,7 @@ test('it uses different includes based on the payload type', function () {
         'process.executable.path',
     ]);
 
-    $logsExport = $resource->export(FlarePayloadType::Logs);
+    $logsExport = $resource->export(FlareEntityType::Logs);
 
     expect($logsExport)->toHaveKeys([
         'process.pid',

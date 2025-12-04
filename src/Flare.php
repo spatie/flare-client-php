@@ -93,11 +93,11 @@ class Flare
     }
 
     /**
-     * @param callable(ReportFactory $report):void|null $callback
+     * @param Closure(ReportFactory $report):void|null $callback
      */
     public function report(
         Throwable $throwable,
-        ?callable $callback = null,
+        ?Closure $callback = null,
         ?bool $handled = null
     ): ?array {
         return $this->reporter->report($throwable, $callback, $handled);
@@ -105,7 +105,7 @@ class Flare
 
     public function createReport(
         Throwable $throwable,
-        ?callable $callback = null,
+        ?Closure $callback = null,
         ?bool $handled = null
     ): array {
        return $this->reporter->createReport($throwable, $callback, $handled);

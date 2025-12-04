@@ -3,90 +3,124 @@
 namespace Spatie\FlareClient\Tests\Shared;
 
 use Closure;
+use DateTimeInterface;
 use Exception;
+use Spatie\FlareClient\Concerns\HasAttributes;
 use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Contracts\WithAttributes;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
+use Spatie\FlareClient\Support\OpenTelemetryAttributeMapper;
+use Spatie\FlareClient\Tests\Shared\Concerns\ExpectAttributes;
+use Spatie\FlareClient\Time\TimeHelper;
 
 class ExpectSpan
 {
-    use Concerns\ExpectAttributes;
+    use ExpectAttributes;
 
-    protected int $spanEventAssertCounter = 0;
+    public static function fromSpan(array $span): self
+    {
+        return new self($span);
+    }
 
     public function __construct(
-        protected Span $span
+        public array $span
     ) {
     }
 
-    public function hasName(string $name): self
+    public function expectName(string $name): self
     {
-        expect($this->span->name)->toEqual($name);
+        expect($this->span['name'])->toBe($name);
 
         return $this;
     }
 
-    public function hasParent(Span|ExpectSpan|string &$expectedSpan): self
+    public function expectId(string $spanId): self
+    {
+        expect($this->span['spanId'])->toEqual($spanId);
+
+        return $this;
+    }
+
+    public function expectTrace(string $expectTrace): self
+    {
+        expect($this->span['traceId'])->toEqual($expectTrace);
+
+        return $this;
+    }
+
+
+    public function expectParent(Span|ExpectSpan|string $expectedSpan): self
     {
         $id = match (true) {
             $expectedSpan instanceof Span => $expectedSpan->spanId,
-            $expectedSpan instanceof ExpectSpan => $expectedSpan->span->spanId,
+            $expectedSpan instanceof ExpectSpan => $expectedSpan->span['spanId'],
             default => $expectedSpan,
         };
 
-        expect($this->span->parentSpanId)->toEqual($id);
+        expect($this->span['parentSpanId'])->toEqual($id);
 
         return $this;
     }
 
-    public function missingParent(): self
+    public function expectNoParent(): self
     {
-        expect($this->span->parentSpanId)->toBeNull();
+        expect($this->span['parentSpanId'])->toBeNull();
 
         return $this;
     }
 
-    public function hasType(FlareSpanType $type): self
+    public function expectType(FlareSpanType $type): self
     {
-        expect($this->span->attributes['flare.span_type'])->toEqual($type);
+        expect($this->attributes()['flare.span_type'])->toEqual($type->value);
 
         return $this;
     }
 
-    public function isEnded(): self
+    public function expectStart(DateTimeInterface|int $startTimeUnixNano): self
     {
-        expect($this->span->end)->not()->toBeNull();
+        $expectedStartTimeUnixNano = $startTimeUnixNano instanceof DateTimeInterface
+            ? TimeHelper::dateTimeToNano($startTimeUnixNano)
+            : $startTimeUnixNano;
+
+        expect($this->span['startTimeUnixNano'])->toEqual($expectedStartTimeUnixNano);
 
         return $this;
     }
 
-    public function hasSpanEventCount(int $count): self
+    public function expectEnd(DateTimeInterface|int $endTimeUnixNano): self
     {
-        expect($this->span->events)->toHaveCount($count);
+        $expectedEndTimeUnixNano = $endTimeUnixNano instanceof DateTimeInterface
+            ? TimeHelper::dateTimeToNano($endTimeUnixNano)
+            : $endTimeUnixNano;
+
+        expect($this->span['endTimeUnixNano'])->toEqual($expectedEndTimeUnixNano);
 
         return $this;
     }
 
-    public function spanEvent(
-        Closure $closure,
-        ?SpanEvent &$spanEvent = null,
-    ): self {
-        $spanEvent = array_values($this->span->events)[$this->spanEventAssertCounter] ?? null;
-
-        if ($spanEvent === null) {
-            throw new Exception('Span Event is not recorded');
-        }
-
-        $closure(new ExpectSpanEvent($spanEvent));
-
-        $this->spanEventAssertCounter++;
-
-        return $this;
-    }
-
-    protected function entity(): WithAttributes
+    public function expectEnded(): self
     {
-        return $this->span;
+        expect($this->span['endTimeUnixNano'])->not()->toBeNull();
+
+        return $this;
+    }
+
+    public function expectSpanEventCount(int $count): self
+    {
+        expect($this->span['events'])->toHaveCount($count);
+
+        return $this;
+    }
+
+    public function expectSpanEvent(
+        int $index,
+    ): ExpectSpanEvent {
+        return new ExpectSpanEvent($this->span['events'][$index]);
+    }
+
+    protected function attributes(): array
+    {
+        return (new OpenTelemetryAttributeMapper)->attributesToPHP($this->span['attributes']);
     }
 }
