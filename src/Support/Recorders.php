@@ -33,6 +33,8 @@ class Recorders
 
             $recorder->boot();
         }
+
+        $this->recorderDefinitions = [];
     }
 
     public function getRecorder(

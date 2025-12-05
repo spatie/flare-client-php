@@ -27,6 +27,13 @@ trait ExpectAttributes
         return $this;
     }
 
+    public function expectMissingAttribute(string $key): self
+    {
+        expect($this->attributes())->not->toHaveKey($key);
+
+        return $this;
+    }
+
     public function expectAttributes(array $attributes, bool $exact = false): self
     {
         if($exact) {

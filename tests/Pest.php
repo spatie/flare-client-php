@@ -27,8 +27,6 @@ function makePathsRelative(string $text): string
  */
 function setupFlare(
     ?Closure $closure = null,
-    bool $useFakeSender = true,
-    bool $useFakeApi = true,
     bool $alwaysSampleTraces = false,
     bool $withoutApiKey = false,
     bool $isUsingSubtasks = false,
@@ -38,13 +36,7 @@ function setupFlare(
         trace: true,
     );
 
-    if ($useFakeSender) {
-        $config->sender = FakeSender::class;
-    }
-
-    if ($useFakeApi) {
-        $config->api = FakeApi::class;
-    }
+    $config->api = FakeApi::class;
 
     if ($alwaysSampleTraces) {
         $config->alwaysSampleTraces();

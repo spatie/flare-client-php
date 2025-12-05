@@ -16,21 +16,21 @@ class FakeApi extends Api
 
     public function report(array $report, bool $immediately = false): void
     {
-        parent::report($report, $immediately);
+//        parent::report($report, $immediately);
 
         self::$reports[] = $report;
     }
 
     public function trace(array $trace, bool $immediately = false): void
     {
-        parent::trace($trace, $immediately);
+//        parent::trace($trace, $immediately);
 
         self::$traces[] = $trace;
     }
 
     public function log(array $log, bool $immediately = false): void
     {
-        parent::log($log, $immediately);
+//        parent::log($log, $immediately);
 
         self::$logs[] = $log;
     }

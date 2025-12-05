@@ -6,7 +6,6 @@ use Spatie\FlareClient\Contracts\WithAttributes;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Support\OpenTelemetryAttributeMapper;
 use Spatie\FlareClient\Tests\Shared\Concerns\ExpectAttributes;
-use Spatie\FlareClient\Tests\Shared\Concerns\ExpectAttributes;
 
 class ExpectResource
 {

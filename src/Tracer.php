@@ -135,6 +135,10 @@ class Tracer
 
     public function endTrace(): void
     {
+        if($this->sampling === false){
+            return;
+        }
+
         $traceId = $this->currentTraceId;
 
         $this->currentTraceId = $this->ids->trace();
@@ -202,7 +206,7 @@ class Tracer
 
     public function nextSpanId(): string
     {
-        if ($this->currentSpanIdAvailable === true) {
+        if ($this->sampling && $this->currentSpanIdAvailable === true) {
             $this->currentSpanIdAvailable = false;
 
             return $this->currentSpanId;

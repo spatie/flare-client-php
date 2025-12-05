@@ -63,7 +63,7 @@ class ExpectSpan
         return $this;
     }
 
-    public function expectNoParent(): self
+    public function expectMissingParent(): self
     {
         expect($this->span['parentSpanId'])->toBeNull();
 

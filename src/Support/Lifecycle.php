@@ -64,7 +64,7 @@ class Lifecycle
         ?string $traceparent = null,
         array $samplerContext = [],
     ): void {
-        if ($this->usesSubtasks) {
+        if ($this->usesSubtasks || $this->stage === LifecycleStage::Started) {
             return;
         }
 
@@ -107,7 +107,7 @@ class Lifecycle
         ?int $timeUnixNano = null,
         array $attributes = [],
     ): void {
-        if ($this->usesSubtasks) {
+        if ($this->usesSubtasks || $this->stage === LifecycleStage::Registering) {
             return;
         }
 
@@ -137,7 +137,7 @@ class Lifecycle
         ?int $timeUnixNano = null,
         array $additionalAttributes = [],
     ): void {
-        if ($this->usesSubtasks) {
+        if ($this->usesSubtasks || $this->stage === LifecycleStage::Registered) {
             return;
         }
 
@@ -163,7 +163,7 @@ class Lifecycle
         ?int $timeUnixNano = null,
         array $attributes = [],
     ): void {
-        if ($this->usesSubtasks) {
+        if ($this->usesSubtasks || $this->stage === LifecycleStage::Booting) {
             return;
         }
 
@@ -197,7 +197,7 @@ class Lifecycle
         ?int $timeUnixNano = null,
         array $additionalAttributes = [],
     ): void {
-        if ($this->usesSubtasks) {
+        if ($this->usesSubtasks || $this->stage === LifecycleStage::Booted) {
             return;
         }
 
@@ -223,7 +223,7 @@ class Lifecycle
         ?string $traceparent = null,
         array $samplerContext = [],
     ): void {
-        if ($this->usesSubtasks === false) {
+        if ($this->usesSubtasks === false || $this->stage === LifecycleStage::Subtask) {
             return;
         }
 
@@ -237,6 +237,7 @@ class Lifecycle
             return;
         }
 
+
         $this->stage = LifecycleStage::Subtask;
 
         $this->tracer->startTrace(
@@ -247,7 +248,7 @@ class Lifecycle
 
     public function endSubtask(): void
     {
-        if ($this->usesSubtasks === false) {
+        if ($this->usesSubtasks === false || $this->stage === LifecycleStage::Idle) {
             return;
         }
 
@@ -270,7 +271,7 @@ class Lifecycle
         ?int $timeUnixNano = null,
         array $attributes = [],
     ): void {
-        if ($this->usesSubtasks) {
+        if ($this->usesSubtasks || $this->stage === LifecycleStage::Terminating) {
             return;
         }
 
@@ -301,7 +302,7 @@ class Lifecycle
         array $additionalTerminationAttributes = [],
         array $additionalApplicationAttributes = [],
     ): void {
-        if ($this->usesSubtasks) {
+        if ($this->usesSubtasks || $this->stage === LifecycleStage::Terminated) {
             return;
         }
 
@@ -317,7 +318,7 @@ class Lifecycle
             return;
         }
 
-        $this->stage = LifecycleStage::Terminated;
+        $this->stage = LifecycleStage::Terminated; // TODO: is idle a better stage here?
 
         if ($this->tracer->sampling === false) {
             return;

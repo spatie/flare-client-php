@@ -2,6 +2,7 @@
 
 namespace Spatie\FlareClient\Enums;
 
+// TODO: merge with kind?
 enum FlarePayloadType: string
 {
     case Error = 'error';

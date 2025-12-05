@@ -277,7 +277,7 @@ it('can run a span using closure', function () {
         ->expectSpan(0)
         ->expectName('Some span')
         ->expectTrace($traceId)
-        ->expectNoParent()
+        ->expectMissingParent()
         ->expectAttributes([
             'key' => 'value',
             'result' => 'do something',

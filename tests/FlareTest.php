@@ -720,7 +720,7 @@ it('is possible to manually add spans and span events', function () {
 
     $parentSpan = $trace->expectSpan(0)
         ->expectName('Test Span')
-        ->expectNoParent()
+        ->expectMissingParent()
         ->expectSpanEventCount(1);
 
     $parentSpan->expectSpanEvent(0)->expectName('Test Span Event');
