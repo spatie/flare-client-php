@@ -1,6 +1,7 @@
 exceptionClass: Log
 seenAtUnixNano: 1546305825000000000
 message: 'this is a message'
+code: null
 solutions: {  }
 stacktrace: {  }
 openFrameIndex: null
