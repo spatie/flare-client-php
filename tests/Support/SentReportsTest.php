@@ -1,6 +1,5 @@
 <?php
 
-use Spatie\FlareClient\Report;
 use Spatie\FlareClient\ReportFactory;
 use Spatie\FlareClient\Support\SentReports;
 

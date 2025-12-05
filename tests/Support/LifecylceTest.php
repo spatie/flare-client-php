@@ -5,7 +5,7 @@ use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Tests\Shared\FakeApi;
 
 it('will make a sampling decision at start', function () {
-    $flare = setupFlare(fn(FlareConfig $config) => $config->sampleRate(0.5));
+    $flare = setupFlare(fn (FlareConfig $config) => $config->sampleRate(0.5));
 
     foreach (range(0, 10) as $i) {
         $flare->lifecycle->start(timeUnixNano: 0, attributes: ['stage' => 'start']);
@@ -17,7 +17,7 @@ it('will make a sampling decision at start', function () {
 });
 
 it('will start an unsampled trace when the sampling decision is negative', function () {
-    $flare = setupFlare(fn(FlareConfig $config) => $config->neverSampleTraces());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->neverSampleTraces());
 
     $flare->lifecycle->start(timeUnixNano: 0, attributes: ['stage' => 'start']);
 
@@ -26,8 +26,8 @@ it('will start an unsampled trace when the sampling decision is negative', funct
     expect($flare->tracer->currentSpanId())->not()->toBeNull();
 });
 
-it('can continue a trace with a traceparent', function (){
-    $flare = setupFlare(fn(FlareConfig $config) => $config->neverSampleTraces());
+it('can continue a trace with a traceparent', function () {
+    $flare = setupFlare(fn (FlareConfig $config) => $config->neverSampleTraces());
 
     $traceParent = $flare->ids->traceParent(
         $traceId = $flare->ids->trace(),
@@ -233,7 +233,7 @@ it('can run through a lifecycle without subtasks, registration', function () {
         ]);
 });
 
-it('can run through a lifecycle with subtasks', function (){
+it('can run through a lifecycle with subtasks', function () {
     $flare = setupFlare(alwaysSampleTraces: true, isUsingSubtasks: true);
 
     $flare->lifecycle->startSubtask();
@@ -249,7 +249,7 @@ it('can run through a lifecycle with subtasks', function (){
         ->expectEnd(10);
 });
 
-it('will complete ignore all other lifecycle stages when using subtasks', function (){
+it('will complete ignore all other lifecycle stages when using subtasks', function () {
     $flare = setupFlare(alwaysSampleTraces: true, isUsingSubtasks: true);
 
     $flare->lifecycle->start(timeUnixNano: 0);
@@ -271,5 +271,3 @@ it('will complete ignore all other lifecycle stages when using subtasks', functi
         ->expectStart(50)
         ->expectEnd(60);
 });
-
-

@@ -4,11 +4,10 @@ namespace Spatie\FlareClient;
 
 use Closure;
 use Exception;
-use Spatie\FlareClient\Contracts\FlareCollectType;
 use Spatie\FlareClient\Contracts\FlareSpanType;
-use Spatie\FlareClient\Enums\CollectType;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanStatusCode;
+use Spatie\FlareClient\Exporters\Exporter;
 use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Sampling\RateSampler;
@@ -20,7 +19,6 @@ use Spatie\FlareClient\Support\Ids;
 use Spatie\FlareClient\Support\Recorders;
 use Spatie\FlareClient\Support\TraceLimits;
 use Spatie\FlareClient\Time\Time;
-use Spatie\FlareClient\Exporters\Exporter;
 use Throwable;
 
 class Tracer
@@ -135,7 +133,7 @@ class Tracer
 
     public function endTrace(): void
     {
-        if($this->sampling === false){
+        if ($this->sampling === false) {
             return;
         }
 
@@ -185,7 +183,6 @@ class Tracer
     {
         return $this->sampling;
     }
-
 
     public function currentTraceId(): string
     {

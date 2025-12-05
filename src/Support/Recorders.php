@@ -4,7 +4,6 @@ namespace Spatie\FlareClient\Support;
 
 use Psr\Container\ContainerInterface;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
-use Spatie\FlareClient\Enums\CollectType;
 use Spatie\FlareClient\Enums\RecorderType;
 
 class Recorders

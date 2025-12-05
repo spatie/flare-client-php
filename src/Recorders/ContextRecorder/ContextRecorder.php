@@ -28,7 +28,6 @@ class ContextRecorder implements Recorder
         $this->context = [];
     }
 
-
     public function record(
         string $group,
         string|array $key,

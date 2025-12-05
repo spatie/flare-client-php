@@ -5,7 +5,6 @@ namespace Spatie\FlareClient\Recorders\ErrorRecorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanStatusCode;
 use Spatie\FlareClient\Recorders\SpanEventsRecorder;
-use Spatie\FlareClient\Report;
 
 class ErrorRecorder extends SpanEventsRecorder
 {

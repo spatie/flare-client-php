@@ -257,5 +257,4 @@ class ReportFactory implements WithAttributes
             $this->solutions
         );
     }
-
 }

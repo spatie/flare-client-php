@@ -6,7 +6,6 @@ class SubDependencyClass
 {
     public function __construct(
         public SomeClass $someClass,
-    )
-    {
+    ) {
     }
 }

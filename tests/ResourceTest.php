@@ -4,7 +4,6 @@ namespace Spatie\FlareClient\Tests\Resources;
 
 use Spatie\FlareClient\AttributesProviders\GitAttributesProvider;
 use Spatie\FlareClient\Enums\FlareEntityType;
-use Spatie\FlareClient\Enums\FlarePayloadType;
 use Spatie\FlareClient\Resources\Resource;
 
 test('it always includes base attributes and custom attributes', function () {

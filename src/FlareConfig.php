@@ -26,6 +26,7 @@ use Spatie\FlareClient\Enums\CollectType;
 use Spatie\FlareClient\Enums\FlareEntityType;
 use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Enums\OverriddenGrouping;
+use Spatie\FlareClient\Exporters\OpenTelemetryJsonExporter;
 use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
@@ -54,7 +55,6 @@ use Spatie\FlareClient\Support\Ids;
 use Spatie\FlareClient\Support\StacktraceMapper;
 use Spatie\FlareClient\Support\TraceLimits;
 use Spatie\FlareClient\Time\SystemTime;
-use Spatie\FlareClient\Exporters\OpenTelemetryJsonExporter;
 
 class FlareConfig
 {
@@ -499,8 +499,7 @@ class FlareConfig
 
     public function collectContext(
         // TODO: add parameters here?
-    ): static
-    {
+    ): static {
         return $this->addCollect(CollectType::Context);
     }
 

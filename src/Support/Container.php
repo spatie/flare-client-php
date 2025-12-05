@@ -183,7 +183,7 @@ class Container implements ContainerInterface
             return null;
         }
 
-        if(enum_exists($id)){
+        if (enum_exists($id)) {
             return null;
         }
 

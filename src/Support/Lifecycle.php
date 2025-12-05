@@ -7,7 +7,6 @@ use Spatie\FlareClient\Api;
 use Spatie\FlareClient\Enums\LifecycleStage;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Logger;
-use Spatie\FlareClient\Recorders\ApplicationRecorder\ApplicationRecorder;
 use Spatie\FlareClient\Time\Time;
 use Spatie\FlareClient\Time\TimeHelper;
 use Spatie\FlareClient\Tracer;

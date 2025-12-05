@@ -3,20 +3,13 @@
 namespace Spatie\FlareClient;
 
 use Closure;
-use Error;
-use ErrorException;
 use Exception;
-use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\ErrorSolutions\Contracts\HasSolutionsForThrowable;
-use Spatie\ErrorSolutions\Contracts\SolutionProviderRepository;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
-use Spatie\FlareClient\Enums\OverriddenGrouping;
 use Spatie\FlareClient\Enums\RecorderType;
-use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
 use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
-use Spatie\FlareClient\Recorders\ErrorRecorder\ErrorRecorder;
 use Spatie\FlareClient\Recorders\ExternalHttpRecorder\ExternalHttpRecorder;
 use Spatie\FlareClient\Recorders\FilesystemRecorder\FilesystemRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
@@ -108,7 +101,7 @@ class Flare
         ?Closure $callback = null,
         ?bool $handled = null
     ): array {
-       return $this->reporter->createReport($throwable, $callback, $handled);
+        return $this->reporter->createReport($throwable, $callback, $handled);
     }
 
     public function reportHandled(Throwable $throwable): ?array

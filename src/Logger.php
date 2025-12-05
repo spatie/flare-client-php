@@ -3,11 +3,11 @@
 namespace Spatie\FlareClient;
 
 use DateTimeInterface;
+use Spatie\FlareClient\Exporters\Exporter;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Time\Time;
 use Spatie\FlareClient\Time\TimeHelper;
-use Spatie\FlareClient\Exporters\Exporter;
 
 /**
  * @phpstan-type LogRecord array{time_unix_nano: int, observed_time_unix_nano: int, trace_id?: string, span_id?: string, flags?: string, severity_text?: string, severity_number?: int, body: mixed, attributes?: array<string, mixed>}
@@ -69,7 +69,7 @@ class Logger
 
     public function flush(): void
     {
-        if(count($this->logs) === 0) {
+        if (count($this->logs) === 0) {
             return;
         }
 

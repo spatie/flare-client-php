@@ -66,7 +66,7 @@ it('is possible to rebind a class', function () {
     expect($instanceB)->toBeInstanceOf(SomeClassExtended::class);
 });
 
-it('is possible to auto construct simple classes', function (){
+it('is possible to auto construct simple classes', function () {
     $container = Container::instance();
 
     $instance = $container->get(SomeClass::class);

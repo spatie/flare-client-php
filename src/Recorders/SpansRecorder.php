@@ -120,7 +120,6 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
         return $span;
     }
 
-
     /**
      * @param Closure(Span):(void|Span|null)|null $spanCallback
      * @param Closure():array<string,mixed>|array<string,mixed> $additionalAttributes
@@ -160,7 +159,6 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
 
         return $span;
     }
-
 
     /**
      * @param Closure():string|string|null $name

@@ -7,9 +7,7 @@ use Spatie\FlareClient\AttributesProviders\GitAttributesProvider;
 use Spatie\FlareClient\Concerns\HasAttributes;
 use Spatie\FlareClient\Contracts\WithAttributes;
 use Spatie\FlareClient\Enums\FlareEntityType;
-use Spatie\FlareClient\Enums\FlarePayloadType;
 use Spatie\FlareClient\Enums\ResourceIncludeType;
-use Spatie\FlareClient\Flare;
 use Spatie\FlareClient\Support\HostIpFetcher;
 use Spatie\FlareClient\Support\Telemetry;
 
@@ -152,7 +150,7 @@ class Resource implements WithAttributes
         ];
 
         foreach ($this->includes as $include => $options) {
-            if (in_array($type, $options['entity_types'])){
+            if (in_array($type, $options['entity_types'])) {
                 $includes[$include] = $options['arguments'] ?? [];
             }
         }
@@ -221,14 +219,14 @@ class Resource implements WithAttributes
     {
         $packages = [];
 
-        foreach (InstalledVersions::getAllRawData() as  $data){
-            foreach ($data['versions']  as $packageName => $packageData) {
+        foreach (InstalledVersions::getAllRawData() as $data) {
+            foreach ($data['versions'] as $packageName => $packageData) {
                 $packages[$packageName] = $packageData['version'] ?? 'unknown';
             }
         }
 
         return [
-            'composer.packages' => $packages
+            'composer.packages' => $packages,
         ];
     }
 

@@ -3,7 +3,6 @@
 namespace Spatie\FlareClient\Recorders\ErrorRecorder;
 
 use Spatie\FlareClient\Enums\SpanEventType;
-use Spatie\FlareClient\Report;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Throwable;
 

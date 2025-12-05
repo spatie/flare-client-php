@@ -3,7 +3,6 @@
 namespace Spatie\FlareClient\Exporters;
 
 use Spatie\FlareClient\Enums\FlareEntityType;
-use Spatie\FlareClient\Enums\FlarePayloadType;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Spans\Span;
@@ -58,8 +57,8 @@ class OpenTelemetryJsonExporter implements Exporter
                     'scopeLogs' => [
                         [
                             'scope' => $this->exportScope($scope),
-                            'logRecords' => array_map(function(array $log){
-                                if(array_key_exists('attributes', $log)){
+                            'logRecords' => array_map(function (array $log) {
+                                if (array_key_exists('attributes', $log)) {
                                     $log['attributes'] = $this->attributeMapper->attributesToOpenTelemetry($log['attributes']);
                                 }
 

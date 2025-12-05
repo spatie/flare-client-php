@@ -2,16 +2,13 @@
 
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\FlareConfig;
-use Spatie\FlareClient\Tests\Shared\ExpectSpan;
-use Spatie\FlareClient\Tests\Shared\ExpectSpanEvent;
-use Spatie\FlareClient\Tests\Shared\ExpectTrace;
-use Spatie\FlareClient\Tests\Shared\ExpectTracer;
 use Spatie\FlareClient\Tests\Shared\FakeApi;
 use Spatie\FlareClient\Tests\Shared\FakeIds;
 use Spatie\FlareClient\Tests\TestClasses\ExceptionWithContext;
 
 it('can trace throwables', function () {
-    FakeIds::setup()->nextUuid('fake-uuid');;
+    FakeIds::setup()->nextUuid('fake-uuid');
+    ;
 
     $flare = setupFlare(
         fn (FlareConfig $config) => $config->collectErrorsWithTraces()->collectCommands()->trace()->alwaysSampleTraces()

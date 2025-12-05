@@ -406,4 +406,3 @@ it('will use the initial trace and span id until a trace is started', function (
     expect($span->traceId)->toBe($currentTraceId);
     expect($span->spanId)->toBe($currentSpanId);
 });
-

@@ -7,8 +7,7 @@ class DependencyClass
     public function __construct(
         public SomeClass $someClass,
         public SomeInterface $someInterface,
-    )
-    {
+    ) {
 
     }
 }
