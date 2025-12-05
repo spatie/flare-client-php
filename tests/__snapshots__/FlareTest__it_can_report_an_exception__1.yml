@@ -1,6 +1,7 @@
 exceptionClass: PHPUnit\Framework\Exception
 seenAtUnixNano: 1546346096000000000
 message: 'This is a test'
+code: 0
 solutions: {  }
 stacktrace: {  }
 openFrameIndex: null

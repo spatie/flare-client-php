@@ -233,6 +233,7 @@ class ReportFactory implements WithAttributes
             stacktrace: $stacktraceMapper->map($stackTrace, $this->throwable),
             exceptionClass: $exceptionClass,
             message: $this->message,
+            code: $this->throwable?->getCode(),
             isLog: $this->isLog,
             timeUs: $time->getCurrentTime(),
             level: $this->level,

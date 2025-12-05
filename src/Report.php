@@ -2,6 +2,7 @@
 
 namespace Spatie\FlareClient;
 
+use Exception;
 use Spatie\FlareClient\Contracts\FlareSpanEventType;
 use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Enums\OverriddenGrouping;
@@ -17,6 +18,7 @@ class Report
         public readonly array $stacktrace,
         public readonly string $exceptionClass,
         public readonly string $message,
+        public readonly null|int|string $code,
         public readonly bool $isLog,
         public readonly int $timeUs,
         public readonly ?string $level = null,
@@ -40,6 +42,7 @@ class Report
             'exceptionClass' => $this->exceptionClass,
             'seenAtUnixNano' => $this->timeUs,
             'message' => $this->message,
+            'code' => $this->code,
             'solutions' => $this->solutions,
             'stacktrace' => $this->stacktrace,
             'openFrameIndex' => $this->openFrameIndex,

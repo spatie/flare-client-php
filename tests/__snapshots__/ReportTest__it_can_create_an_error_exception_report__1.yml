@@ -1,6 +1,7 @@
 exceptionClass: ErrorException
 seenAtUnixNano: 1546305825000000000
 message: 'this is a custom error'
+code: 0
 solutions: {  }
 stacktrace: {  }
 openFrameIndex: null
