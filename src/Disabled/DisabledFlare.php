@@ -236,6 +236,6 @@ class DisabledFlare extends Flare
 
     protected function emptyReport(): Report
     {
-        return new Report([], 'Flare is not enabled', 'Flare is not enabled', false, 0);
+        return new Report([], 'Flare is not enabled', 'Flare is not enabled', null, false, 0);
     }
 }
