@@ -2,7 +2,6 @@
 
 namespace Spatie\FlareClient;
 
-use Exception;
 use Spatie\FlareClient\Contracts\FlareSpanEventType;
 use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Enums\OverriddenGrouping;
