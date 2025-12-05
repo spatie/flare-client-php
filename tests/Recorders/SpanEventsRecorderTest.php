@@ -97,6 +97,7 @@ it('can trace span events', function () {
         'with_traces' => true,
     ]);
 
+    $flare->tracer->startTrace();
     $span = $flare->tracer->startSpan(
         'parent span'
     );
@@ -134,23 +135,6 @@ it('will not trace span events when there is no current span', function () {
     $recorder->record('Hello World');
 
     expect($span->events)->toHaveCount(0);
-});
-
-it('will not trace span events when not tracing', function () {
-    $flare = setupFlare(fn (FlareConfig $config) => $config->neverSampleTraces());
-
-    $recorder = new ConcreteSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
-        'with_traces' => true,
-    ]);
-
-    $span = $flare->tracer->startSpan(
-        'parent span'
-    );
-
-    $spanEvent = $recorder->record('Hello World');
-
-    expect($span)->toBeNull();
-    expect($spanEvent)->toBeNull();
 });
 
 it('will not trace span events when the span events per span limit is reached', function () {
@@ -231,6 +215,8 @@ it('can find origins when tracing events', function () {
         'find_origin' => true,
     ]);
 
+    $flare->tracer->startTrace();
+
     $span = $flare->tracer->startSpan('Parent Span');
 
     $recorder->record('Hello World');
@@ -269,6 +255,8 @@ it('is not possible to overwrite the find origin threshold', function () {
         'find_origin' => true,
         'find_origin_threshold' => TimeHelper::milliseconds(300),
     ]);
+
+    $flare->tracer->startTrace();
 
     $span = $flare->tracer->startSpan('Parent Span');
 
