@@ -14,6 +14,7 @@ cover. We accept PRs to improve this guide.
 - Flare::reportMessage() was removed in favor of the new logging functionality
 - We made some updates to the internal workings of the tracer
 - If you've written custom Flare middleware, please check the signatures of the ReportFactory
+- Sending logs as events was removed, please use the logging integration instead
 
 ## From v1 to v2
 

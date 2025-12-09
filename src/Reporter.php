@@ -10,9 +10,13 @@ use Spatie\ErrorSolutions\Contracts\HasSolutionsForThrowable;
 use Spatie\ErrorSolutions\Contracts\SolutionProviderRepository;
 use Spatie\FlareClient\Contracts\Recorders\SpanEventsRecorder;
 use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
+use Spatie\FlareClient\Enums\LifecycleStage;
+use Spatie\FlareClient\Enums\SpanEventType;
+use Spatie\FlareClient\Enums\SpanStatusCode;
 use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
-use Spatie\FlareClient\Recorders\ErrorRecorder\ErrorRecorder;
+use Spatie\FlareClient\Spans\SpanEvent;
+use Spatie\FlareClient\Support\Lifecycle;
 use Spatie\FlareClient\Support\Recorders;
 use Spatie\FlareClient\Support\SentReports;
 use Throwable;
@@ -26,13 +30,13 @@ class Reporter
     /**
      * @param array<int, FlareMiddleware> $middleware
      * @param null|Closure(Exception): bool $filterExceptionsCallable
-     * @param null|Closure(array): bool $filterReportsCallable
+     * @param null|Closure(ReportFactory): bool $filterReportsCallable
      */
     public function __construct(
         protected readonly Api $api,
         protected readonly bool $disabled,
         protected readonly Tracer $tracer,
-        protected readonly ?ErrorRecorder $throwableRecorder,
+        protected readonly Lifecycle $lifecycle,
         protected readonly SentReports $sentReports,
         protected readonly ?int $reportErrorLevels,
         protected null|Closure $filterExceptionsCallable,
@@ -41,6 +45,7 @@ class Reporter
         protected readonly ReportFactory $reportFactory,
         protected readonly array $middleware,
         protected readonly Recorders $recorders,
+        protected readonly bool $addReportsToTraces,
     ) {
     }
 
@@ -80,28 +85,30 @@ class Reporter
         Throwable $throwable,
         ?Closure $callback = null,
         ?bool $handled = null
-    ): ?array {
-        if (! $this->shouldSendReport($throwable)) {
-            $this->tracer->gracefullyHandleError();
+    ): ?ReportFactory {
+        if (! $this->shouldReport($throwable)) {
+            $this->tracer->gracefullyEndSpans();
 
             return null;
         }
 
         $report = $this->createReport($throwable, $callback, $handled);
 
-        if ($this->throwableRecorder) {
-            $this->throwableRecorder->record($report);
-        }
+        $this->addReportToTrace($throwable, $handled, $report);
 
-        $this->tracer->gracefullyHandleError();
-
-        $this->sentReports->add($report);
+        $this->tracer->gracefullyEndSpans();
 
         if ($this->filterReportsCallable && ($this->filterReportsCallable)($report) === false) {
             return null;
         }
 
-        $this->api->report($report);
+        // This is in the case we have errors before or after a lifecycle or subtask
+        // Famous one is Laravel Jobs which end the subtask before the exception is handled
+        $sendImmediately = $this->lifecycle->getStage() === LifecycleStage::Idle;
+
+        $reportPayload = $this->api->report($report, $sendImmediately);
+
+        $this->sentReports->add($reportPayload);
 
         return $report;
     }
@@ -110,9 +117,9 @@ class Reporter
         Throwable $throwable,
         ?Closure $callback = null,
         ?bool $handled = null
-    ): array {
+    ): ReportFactory {
         $factory = $this->reportFactory
-            ->instance()
+            ->new()
             ->throwable($throwable);
 
         foreach ($this->recorders->all() as $recorder) {
@@ -143,18 +150,19 @@ class Reporter
             $factory->handled();
         }
 
-        return $factory->toArray();
+        return $factory;
     }
 
-    public function reportHandled(Throwable $throwable): ?array
+    public function reportHandled(Throwable $throwable): ?ReportFactory
     {
         return $this->report($throwable, handled: true);
     }
 
     public function sendTestReport(Throwable $throwable): void
     {
-        $this->api->test(
-            $this->reportFactory->instance()->throwable($throwable)->toArray()
+        $this->api->report(
+            $this->reportFactory->new()->throwable($throwable),
+            test: true
         );
     }
 
@@ -179,7 +187,7 @@ class Reporter
     }
 
     /**
-     * @param Closure(array): bool $filterReportsCallable
+     * @param Closure(ReportFactory): bool $filterReportsCallable
      */
     public function filterReportsUsing(Closure $filterReportsCallable): static
     {
@@ -188,7 +196,7 @@ class Reporter
         return $this;
     }
 
-    protected function shouldSendReport(Throwable $throwable): bool
+    protected function shouldReport(Throwable $throwable): bool
     {
         if ($this->disabled === true) {
             return false;
@@ -233,5 +241,46 @@ class Reporter
                 $line
             );
         }
+    }
+
+    protected function addReportToTrace(Throwable $throwable, ?bool $handled, ReportFactory $report): void
+    {
+        if ($this->addReportsToTraces === false || $this->tracer->isSampling() === false) {
+            return;
+        }
+
+        $currentSpan = $this->tracer->currentSpan();
+
+
+        if ($currentSpan === null) {
+            return;
+        }
+
+        $throwableClass = $throwable::class;
+
+        if ($report->trackingUuid === null) {
+            $report->trackingUuid($this->tracer->ids->uuid());
+        }
+
+        $event = new SpanEvent(
+            name: "Exception - {$throwableClass}",
+            timestamp: $this->tracer->time->getCurrentTime(),
+            attributes: [
+                'flare.span_event_type' => SpanEventType::Exception,
+                'exception.message' => $throwable->getMessage(),
+                'exception.type' => $throwableClass,
+                'exception.handled' => $handled,
+                'exception.id' => $report->trackingUuid,
+            ]
+        );
+
+        if ($handled !== true) {
+            $currentSpan->setStatus(
+                SpanStatusCode::Error,
+                $throwable->getMessage(),
+            );
+        }
+
+        $currentSpan->addEvent($event);
     }
 }

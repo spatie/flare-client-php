@@ -1,10 +1,12 @@
 <?php
 
+use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Tests\Concerns\MatchesReportSnapshots;
 use Spatie\FlareClient\Tests\Shared\FakeApi;
 use Spatie\FlareClient\Tests\Shared\FakeIds;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
+use Spatie\FlareClient\Tests\TestClasses\ExceptionWithContext;
 use Spatie\FlareClient\Tests\TestClasses\FakeErrorHandler;
 
 uses(MatchesReportSnapshots::class);
@@ -18,7 +20,7 @@ it('can create a report', function () {
 
     $report = $flare->report(new Exception('this is an exception'));
 
-    $this->assertMatchesReportSnapshot($report);
+    $this->assertMatchesReportSnapshot($report->toArray());
 });
 
 it('can create an error exception report', function () {
@@ -54,7 +56,7 @@ it('can create a report with error exception and will cleanup the stack trace', 
     $flare = setupFlare();
 
     FakeErrorHandler::setup(function (ErrorException $exception) use ($flare) {
-        $stacktrace = $flare->report($exception)['stacktrace'];
+        $stacktrace = $flare->report($exception)->toArray()['stacktrace'];
 
         expect($stacktrace[0]['file'])->toContain('ReportTest.php');
         expect($stacktrace[0]['arguments'])->toBeNull();
@@ -72,4 +74,52 @@ it('will keep sent reports', function () {
     FakeApi::assertSent(reports: 1);
 
     expect($flare->sentReports->all())->toHaveCount(1);
+});
+
+it('can add a report to a trace', function () {
+    FakeIds::setup()->nextUuid('fake-uuid');;
+
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config->collectErrorsWithTraces()->collectCommands()->trace()->alwaysSampleTraces()
+    );
+
+    $flare->tracer->startTrace();
+    $flare->command()->recordStart('command', []);
+
+    $flare->report(new ExceptionWithContext('We failed'));
+
+    $flare->command()->recordEnd(1);
+    $flare->tracer->endTrace();
+
+    FakeApi::lastTrace()->expectSpan(0)->expectSpanEvent(0)
+        ->expectName('Exception - Spatie\FlareClient\Tests\TestClasses\ExceptionWithContext')
+        ->expectType(SpanEventType::Exception)
+        ->expectAttribute('exception.message', 'We failed')
+        ->expectAttribute('exception.type', 'Spatie\FlareClient\Tests\TestClasses\ExceptionWithContext')
+        ->expectAttribute('exception.handled', null)
+        ->expectAttribute('exception.id', 'fake-uuid');
+});
+
+it('can create entries for previous exceptions', function () {
+    $flare = setupFlare();
+
+    $rootException = new InvalidArgumentException('This is the root cause exception');
+    $childException = new RuntimeException('This is the previous exception', previous: $rootException);
+    $reportedException = new Exception('This is the main exception', previous: $childException);
+
+    $flare->report($reportedException);
+
+    FakeApi::assertSent(reports: 1);
+
+    $report = FakeApi::lastReport()->expectPreviousCount(2);
+
+    $report->expectPrevious(0)
+        ->expectExceptionClass(RuntimeException::class)
+        ->expectMessage('This is the previous exception')
+        ->expectStacktraceFrame(0)->expectFile(__FILE__);
+
+    $report->expectPrevious(1)
+        ->expectExceptionClass(InvalidArgumentException::class)
+        ->expectMessage('This is the root cause exception')
+        ->expectStacktraceFrame(0)->expectFile(__FILE__);
 });

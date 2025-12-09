@@ -50,7 +50,6 @@ class ReportFactory implements WithAttributes
      *
      */
     public function __construct(
-        protected StacktraceMapper $stacktraceMapper,
         protected Time $time,
         protected Ids $ids,
         public Resource $resource,
@@ -61,7 +60,7 @@ class ReportFactory implements WithAttributes
     ) {
     }
 
-    public function instance(): self
+    public function new(): self
     {
         $clone = clone $this;
 
@@ -184,15 +183,18 @@ class ReportFactory implements WithAttributes
         $attributes['flare.language.name'] = 'PHP';
         $attributes['flare.language.version'] = PHP_VERSION;
 
+        $stackTrace = $this->cleanupStackTraceForError(
+            $this->buildStacktrace(),
+            $this->throwable,
+        );
+
         $report = [
             'exceptionClass' => $this->throwable::class,
             'seenAtUnixNano' => $this->time->getCurrentTime(),
             'message' => $this->message,
             'solutions' => $this->mapSolutions(),
-            'stacktrace' => $this->stacktraceMapper->map(
-                $this->buildStacktrace(),
-                $this->throwable
-            ),
+            'stacktrace' => $this->mapStackTrace($stackTrace),
+            'previous' => $this->buildPrevious(),
             'openFrameIndex' => null,
             'applicationPath' => $this->applicationPath,
             'trackingUuid' => $this->trackingUuid ?? $this->ids->uuid(),
@@ -210,6 +212,30 @@ class ReportFactory implements WithAttributes
         }
 
         return $report;
+    }
+
+    protected function buildPrevious(): array
+    {
+        $previous = [];
+
+        $current = $this->throwable;
+
+        while ($previousThrowable = $current->getPrevious()){
+            $stackTrace = $this->cleanupStackTraceForError(
+                $this->buildStacktrace(),
+                $this->throwable,
+            );
+
+            $previous[] = [
+                'exceptionClass' => $previousThrowable::class,
+                'message' => $previousThrowable->getMessage(),
+                'stacktrace' => $this->mapStackTrace($stackTrace),
+            ];
+
+            $current = $previousThrowable;
+        }
+
+        return $previous;
     }
 
     /** @return array<Frame> */
@@ -236,6 +262,52 @@ class ReportFactory implements WithAttributes
         }
 
         return array_values(array_slice($frames, $firstApplicationFrameIndex));
+    }
+
+    protected function cleanupStackTraceForError(
+        array $frames,
+        Throwable $throwable,
+    ): array {
+        if ($throwable::class !== ErrorException::class) {
+            return $frames;
+        }
+
+        $firstErrorFrameIndex = null;
+
+        $restructuredFrames = array_values(array_slice($frames, 1)); // remove the first frame where error was created
+
+        foreach ($restructuredFrames as $index => $frame) {
+            if ($frame->file === $throwable->getFile()) {
+                $firstErrorFrameIndex = $index;
+
+                break;
+            }
+        }
+
+        if ($firstErrorFrameIndex === null) {
+            return $frames;
+        }
+
+        $restructuredFrames[$firstErrorFrameIndex]->arguments = null; // Remove error arguments
+
+        return array_values(array_slice($restructuredFrames, $firstErrorFrameIndex));
+    }
+
+    /** @param array<Frame> $frames */
+    protected function mapStackTrace(array $frames): array
+    {
+        return array_map(
+            fn (Frame $frame) => [
+                'file' => $frame->file,
+                'lineNumber' => $frame->lineNumber,
+                'method' => $frame->method,
+                'class' => $frame->class,
+                'codeSnippet' => $frame->getSnippet(30),
+                'arguments' => $frame->arguments,
+                'isApplicationFrame' => $frame->applicationFrame,
+            ],
+            $frames
+        );
     }
 
     protected function mapSolutions(): array

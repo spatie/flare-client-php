@@ -1,10 +1,10 @@
 <?php
 
+use Monolog\Level;
 use PHPUnit\Framework\Exception;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\FlareClient\Enums\CacheOperation;
 use Spatie\FlareClient\Enums\CacheResult;
-use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Enums\OverriddenGrouping;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanEventType;
@@ -289,7 +289,7 @@ it('can add glows', function () {
 
     $flare->glow()->record(
         'my glow',
-        MessageLevels::Info,
+        Level::Info,
         ['my key' => 'my value']
     );
 
@@ -297,7 +297,7 @@ it('can add glows', function () {
 
     $flare->glow()->record(
         'another glow',
-        MessageLevels::Error,
+        Level::Error,
         ['another key' => 'another value']
     );
 
@@ -327,11 +327,11 @@ it('can add glows', function () {
 });
 
 it('can add logs', function () {
-    $flare = setupFlare(fn (FlareConfig $config) => $config->collectLogs());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectLogsWithErrors());
 
     $flare->log()->record(
         'my log',
-        MessageLevels::Info,
+        Level::Info,
         ['my key' => 'my value']
     );
 
@@ -339,7 +339,7 @@ it('can add logs', function () {
 
     $flare->log()->record(
         'another log',
-        MessageLevels::Error,
+        Level::Error,
         ['another key' => 'another value']
     );
 
@@ -583,7 +583,7 @@ it('can filter exceptions being reported by setting it on the flare instance', f
 });
 
 it('can filter reports', function () {
-    setupFlare(fn (FlareConfig $config) => $config->filterReportsUsing(fn (array $report) => false));
+    setupFlare(fn (FlareConfig $config) => $config->filterReportsUsing(fn (ReportFactory $report) => false));
 
     reportException();
 
@@ -593,7 +593,7 @@ it('can filter reports', function () {
 it('can filter reports by setting it on the flare instance', function () {
     $flare = setupFlare();
 
-    $flare->filterReportsUsing(fn (array $report) => false);
+    $flare->filterReportsUsing(fn (ReportFactory $report) => false);
 
     reportException();
 
@@ -711,14 +711,14 @@ it('is possible to manually add spans and span events', function () {
 
     $parentSpan = $trace->expectSpan(0)
         ->expectName('Test Span')
-        ->expectMissingParent()
+        ->expectMissingParentId()
         ->expectSpanEventCount(1);
 
     $parentSpan->expectSpanEvent(0)->expectName('Test Span Event');
 
     $childSpan = $trace->expectSpan(1)
         ->expectName('Test Child Span')
-        ->expectParent($parentSpan)
+        ->expectParentId($parentSpan)
         ->expectSpanEventCount(1);
 
     $childSpan->expectSpanEvent(0)->expectName('Test Child Span Event');
@@ -859,16 +859,16 @@ it('it can add additional middleware', function () {
 
 it('can setup a disabled flare', function () {
     $flare = setupFlare(
-        closure: fn (FlareConfig $config) => $config->collectLogs()->collectGlows(),
+        closure: fn (FlareConfig $config) => $config->useDefaults(),
         withoutApiKey: true,
         alwaysSampleTraces: true
     );
 
     $flare->report(new Exception('This is a test'));
 
-    $flare->glow()?->record('Hello', MessageLevels::Info);
+    $flare->glow()?->record('Hello', Level::Info);
     $flare->context('test', 'value');
-    $flare->log()?->record('Hello', MessageLevels::Info);
+    $flare->log()?->record('Hello', Level::Info);
 
     $flare->lifecycle->start();
     $flare->lifecycle->booted();

@@ -92,7 +92,7 @@ class Flare
         Throwable $throwable,
         ?Closure $callback = null,
         ?bool $handled = null
-    ): ?array {
+    ): ?ReportFactory {
         return $this->reporter->report($throwable, $callback, $handled);
     }
 
@@ -100,11 +100,11 @@ class Flare
         Throwable $throwable,
         ?Closure $callback = null,
         ?bool $handled = null
-    ): array {
+    ): ReportFactory {
         return $this->reporter->createReport($throwable, $callback, $handled);
     }
 
-    public function reportHandled(Throwable $throwable): ?array
+    public function reportHandled(Throwable $throwable): ?ReportFactory
     {
         return $this->reporter->reportHandled($throwable);
     }
@@ -130,7 +130,7 @@ class Flare
     }
 
     /**
-     * @param Closure(array): bool $filterReportsCallable
+     * @param Closure(ReportFactory): bool $filterReportsCallable
      */
     public function filterReportsUsing(Closure $filterReportsCallable): static
     {
@@ -164,9 +164,9 @@ class Flare
         return $this->recorders->getRecorder(RecorderType::Glow->value);
     }
 
-    public function log(): LogRecorder|null
+    public function log(): Logger
     {
-        return $this->recorders->getRecorder(RecorderType::Log->value);
+        return $this->logger;
     }
 
     public function query(): QueryRecorder|null

@@ -3,14 +3,20 @@
 namespace Spatie\FlareClient;
 
 use DateTimeInterface;
-use Spatie\FlareClient\Exporters\Exporter;
-use Spatie\FlareClient\Resources\Resource;
-use Spatie\FlareClient\Scopes\Scope;
+use Monolog\Level;
+use Spatie\FlareClient\Enums\RecorderType;
+use Spatie\FlareClient\Enums\SpanEventType;
+use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
+use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
+use Spatie\FlareClient\Recorders\Recorder;
+use Spatie\FlareClient\Spans\SpanEvent;
+use Spatie\FlareClient\Support\Recorders;
+use Spatie\FlareClient\Support\SeverityMapper;
 use Spatie\FlareClient\Time\Time;
 use Spatie\FlareClient\Time\TimeHelper;
 
 /**
- * @phpstan-type LogRecord array{time_unix_nano: int, observed_time_unix_nano: int, trace_id?: string, span_id?: string, flags?: string, severity_text?: string, severity_number?: int, body: mixed, attributes?: array<string, mixed>}
+ * @phpstan-type LogRecord array{timeUnixNano: int, observedTimeUnixNano: int, traceId?: string, spanId?: string, flags?: string, severityText?: string, severityNumber?: int, body: mixed, attributes?: array<string, mixed>}
  */
 class Logger
 {
@@ -20,12 +26,27 @@ class Logger
     public function __construct(
         protected readonly Api $api,
         protected readonly Time $time,
-        protected readonly Exporter $exporter,
         protected readonly Tracer $tracer,
-        protected readonly Resource $resource,
-        protected readonly Scope $scope,
+        protected readonly Recorders $recorders,
         protected readonly bool $disabled,
     ) {
+    }
+
+    public function record(
+        ?string $message,
+        Level $level = Level::Info,
+        array $context = [],
+        array $attributes = [],
+    ): void {
+        $this->log(
+            body: $message,
+            severityText:  strtolower($level->getName()),
+            severityNumber: SeverityMapper::fromMonolog($level),
+            attributes: [
+                'log.context' => $context,
+                ...$attributes,
+            ],
+        );
     }
 
     public function log(
@@ -39,6 +60,10 @@ class Logger
         ?string $spanId = null,
         ?string $flags = null,
     ): void {
+        if ($this->disabled) {
+            return;
+        }
+
         $timestampUnixNano ??= $this->time->getCurrentTime();
 
         if (! is_int($timestampUnixNano)) {
@@ -51,14 +76,21 @@ class Logger
             $observedTimestampUnixNano = TimeHelper::dateTimeToNano($observedTimestampUnixNano);
         }
 
+        /** @var ?ContextRecorder $recorder */
+        $recorder = $this->recorders->getRecorder(RecorderType::Context);
+
+        if ($context = $recorder?->toArray()) {
+            $attributes = [...$attributes ?? [], ...$context];
+        }
+
         $record = array_filter([
-                'time_unix_nano' => $timestampUnixNano,
-                'observed_time_unix_nano' => $observedTimestampUnixNano,
-                'trace_id' => $traceId ?? $this->tracer->currentTraceId(),
-                'span_id' => $spanId ?? $this->tracer->currentSpanId(),
+                'timeUnixNano' => $timestampUnixNano,
+                'observedTimeUnixNano' => $observedTimestampUnixNano,
+                'traceId' => $traceId ?? $this->tracer->currentTraceId(),
+                'spanId' => $spanId ?? $this->tracer->currentSpanId(),
                 'flags' => $flags ?? ($this->tracer->isSampling() ? '01' : '00'),
-                'severity_text' => $severityText,
-                'severity_number' => $severityNumber,
+                'severityText' => $severityText,
+                'severityNumber' => $severityNumber,
                 'attributes' => $attributes,
             ]) + [
                 'body' => $body,
@@ -67,20 +99,18 @@ class Logger
         $this->logs[] = $record;
     }
 
+    /** @return  array<int, LogRecord> */
+    public function logs(): array
+    {
+        return $this->logs;
+    }
+
     public function flush(): void
     {
         if (count($this->logs) === 0) {
             return;
         }
 
-        $logData = $this->exporter->logs(
-            $this->resource,
-            $this->scope,
-            $this->logs,
-        );
-
-        $this->api->log(
-            $logData
-        );
+        $this->api->log($this->logs);
     }
 }

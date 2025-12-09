@@ -7,24 +7,30 @@ use Exception;
 use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanStatusCode;
-use Spatie\FlareClient\Exporters\Exporter;
+use Spatie\FlareClient\Memory\Memory;
 use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
-use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Sampling\RateSampler;
 use Spatie\FlareClient\Sampling\Sampler;
-use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Support\Ids;
 use Spatie\FlareClient\Support\Recorders;
-use Spatie\FlareClient\Support\TraceLimits;
 use Spatie\FlareClient\Time\Time;
 use Throwable;
 
 class Tracer
 {
+    public const DEFAULT_MAX_SPANS_LIMIT = 512;
+    public const DEFAULT_MAX_ATTRIBUTES_PER_SPAN_LIMIT = 128;
+    public const DEFAULT_MAX_SPAN_EVENTS_PER_SPAN_LIMIT = 128;
+    public const DEFAULT_MAX_ATTRIBUTES_PER_SPAN_EVENT_LIMIT = 128;
+
+
     /** @var array<Span> */
     protected array $spans = [];
+
+    /** @var array @param array{max_spans: int, max_attributes_per_span: int, max_span_events_per_span: int, max_attributes_per_span_event: int}|null */
+    public readonly array $limits;
 
     protected string $currentTraceId;
 
@@ -33,18 +39,17 @@ class Tracer
     protected bool $currentSpanIdAvailable;
 
     /**
+     * @param array{max_spans: int, max_attributes_per_span: int, max_span_events_per_span: int, max_attributes_per_span_event: int}|null $limits
      * @param Closure(Span):(void|Span)|null $configureSpansCallable
      * @param Closure(SpanEvent):(void|SpanEvent|null)|null $configureSpanEventsCallable
      * @param Closure(Span):(bool)|null $gracefulSpanEnderClosure ,
      */
     public function __construct(
         protected readonly Api $api,
-        protected readonly Exporter $exporter,
-        public readonly TraceLimits $limits,
+        ?array $limits,
         public readonly Time $time,
         public readonly Ids $ids,
-        public readonly Resource $resource,
-        public readonly Scope $scope,
+        public readonly Memory $memory,
         protected Recorders $recorders,
         public readonly Sampler $sampler = new RateSampler([]),
         public ?Closure $configureSpansCallable = null,
@@ -56,6 +61,13 @@ class Tracer
         $this->currentTraceId = $this->ids->trace();
         $this->currentSpanId = $this->ids->span();
         $this->currentSpanIdAvailable = true;
+
+        $this->limits = [
+            'max_spans' => $limits['max_spans'] ?? self::DEFAULT_MAX_SPANS_LIMIT,
+            'max_attributes_per_span' => $limits['max_attributes_per_span'] ?? self::DEFAULT_MAX_ATTRIBUTES_PER_SPAN_LIMIT,
+            'max_span_events_per_span' => $limits['max_span_events_per_span'] ?? self::DEFAULT_MAX_SPAN_EVENTS_PER_SPAN_LIMIT,
+            'max_attributes_per_span_event' => $limits['max_attributes_per_span_event'] ?? self::DEFAULT_MAX_ATTRIBUTES_PER_SPAN_EVENT_LIMIT,
+        ];
     }
 
     public function startTrace(
@@ -137,8 +149,6 @@ class Tracer
             return;
         }
 
-        $traceId = $this->currentTraceId;
-
         $this->currentTraceId = $this->ids->trace();
         $this->currentSpanId = $this->ids->span();
         $this->currentSpanIdAvailable = true;
@@ -155,13 +165,7 @@ class Tracer
             $this->spans[array_key_first($this->spans)]->addAttributes($context);
         }
 
-        $payload = $this->exporter->traces(
-            $this->resource,
-            $this->scope,
-            [$traceId => $this->spans],
-        );
-
-        $this->api->trace($payload);
+        $this->api->trace($this->spans);
 
         $this->spans = [];
     }
@@ -259,7 +263,7 @@ class Tracer
 
     public function addSpan(Span $span): Span
     {
-        if (count($this->spans) >= $this->limits->maxSpans) {
+        if (count($this->spans) >= $this->limits['max_spans']) {
             return $span;
         }
 
@@ -308,6 +312,7 @@ class Tracer
         ?Span $span = null,
         ?int $time = null,
         array|Closure $additionalAttributes = [],
+        bool $includeMemoryUsage = false,
     ): Span {
         $span ??= $this->currentSpan();
 
@@ -325,6 +330,10 @@ class Tracer
 
         if (count($additionalAttributes) > 0) {
             $span->addAttributes($additionalAttributes);
+        }
+
+        if ($includeMemoryUsage) {
+            $span->addAttribute('flare.peak_memory_usage', $this->memory->getPeakMemoryUsage());
         }
 
         $this->configureSpan($span);
@@ -422,7 +431,7 @@ class Tracer
         return $this;
     }
 
-    public function gracefullyHandleError(): void
+    public function gracefullyEndSpans(bool $force = false): void
     {
         if ($this->isSampling() === false) {
             return;
@@ -435,11 +444,11 @@ class Tracer
                 break;
             }
 
-            if ($this->gracefulSpanEnderClosure === null || ($this->gracefulSpanEnderClosure)($currentSpan)) {
+            if ($this->gracefulSpanEnderClosure === null || $force || ($this->gracefulSpanEnderClosure)($currentSpan)) {
                 $this->endSpan($currentSpan);
             }
 
-            $currentSpan = $this->traces[$currentSpan->traceId][$currentSpan->parentSpanId] ?? null;
+            $currentSpan = $this->spans[$currentSpan->parentSpanId] ?? null;
         }
     }
 

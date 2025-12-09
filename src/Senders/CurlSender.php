@@ -4,6 +4,7 @@ namespace Spatie\FlareClient\Senders;
 
 use Closure;
 use CurlHandle;
+use Spatie\FlareClient\Enums\FlareEntityType;
 use Spatie\FlareClient\Enums\FlarePayloadType;
 use Spatie\FlareClient\Senders\Exceptions\ConnectionError;
 use Spatie\FlareClient\Senders\Support\Response;
@@ -22,7 +23,7 @@ class CurlSender implements Sender
         $this->curlOptions = $this->config['curl_options'] ?? [];
     }
 
-    public function post(string $endpoint, string $apiToken, array $payload, FlarePayloadType $type, Closure $callback): void
+    public function post(string $endpoint, string $apiToken, array $payload, FlareEntityType $type, bool $test, Closure $callback): void
     {
         $queryString = http_build_query([
             'key' => $apiToken,

@@ -2,6 +2,7 @@
 
 namespace Spatie\FlareClient\Support;
 
+use Monolog\Level;
 use Psr\Container\ContainerInterface;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\Backtrace\Arguments\Reducers\ArgumentReducer;
@@ -12,9 +13,11 @@ use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\CollectType;
 use Spatie\FlareClient\Enums\FlareEntityType;
 use Spatie\FlareClient\FlareMiddleware\AddConsoleInformation;
+use Spatie\FlareClient\FlareMiddleware\AddLogs;
 use Spatie\FlareClient\FlareMiddleware\AddRequestInformation;
 use Spatie\FlareClient\FlareMiddleware\AddSolutions;
 use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
+use Spatie\FlareClient\Logger;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
 use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
@@ -30,35 +33,35 @@ use Spatie\FlareClient\Recorders\ResponseRecorder\ResponseRecorder;
 use Spatie\FlareClient\Recorders\RoutingRecorder\RoutingRecorder;
 use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
 use Spatie\FlareClient\Recorders\ViewRecorder\ViewRecorder;
+use Spatie\FlareClient\Reporter;
 use Spatie\FlareClient\Resources\Resource;
 
 class CollectsResolver
 {
     /** @var array<class-string<FlareMiddleware>, array<string, mixed>> */
-    protected array $middlewares = [];
+    public array $middlewares = [];
 
     /** @var array<class-string<Recorder>, array<string, mixed>> */
-    protected array $recorders = [];
+    public array $recorders = [];
 
     /** @var array<class-string<HasSolutionsForThrowable>> */
-    protected array $solutionProviders = [];
+    public array $solutionProviders = [];
 
     /** @var array<callable(Resource, ContainerInterface):Resource> */
-    protected array $resourceModifiers = [];
+    public array $resourceModifiers = [];
 
     /** @var array<ArgumentReducer|class-string<ArgumentReducer>>|ArgumentReducers */
-    private array|ArgumentReducers $argumentReducers = [];
+    public array|ArgumentReducers $argumentReducers = [];
 
-    private bool $collectStackFrameArguments = false;
+    public bool $collectStackFrameArguments = false;
 
-    private bool $forcePHPStackFrameArgumentsIniSetting = false;
+    public bool $forcePHPStackFrameArgumentsIniSetting = false;
 
-    protected bool $collectErrorsWithTraces = false;
+    public bool $collectErrorsWithTraces = false;
 
-    /** @return array{middlewares: array<class-string<FlareMiddleware>, array>, recorders: array<class-string<Recorder>, array>, solutionProviders: array<class-string<HasSolutionsForThrowable>>, resourceModifiers: array<callable(Resource, ContainerInterface):Resource>, collectStackFrameArguments: bool, argumentReducers: array<class-string<ArgumentReducer>|ArgumentReducer>|ArgumentReducers, forcePHPStackFrameArgumentsIniSetting: bool, collectErrorsWithTraces:bool} */
     public function execute(
         array $collects,
-    ): array {
+    ): self {
         $this->middlewares = [];
         $this->recorders = [];
         $this->resourceModifiers = [];
@@ -79,7 +82,7 @@ class CollectsResolver
                 CollectType::GitInfo => $this->gitInfo($options),
                 CollectType::Cache => $this->cache($options),
                 CollectType::Glows => $this->glows($options),
-                CollectType::Logs => $this->logs($options),
+                CollectType::LogsWithErrors => $this->logsWithErrors($options),
                 CollectType::Solutions => $this->solutions($options),
                 CollectType::Dumps => $this->dumps($options),
                 CollectType::Queries => $this->queries($options),
@@ -98,16 +101,7 @@ class CollectsResolver
             };
         }
 
-        return [
-            'middlewares' => $this->middlewares,
-            'recorders' => $this->recorders,
-            'solutionProviders' => $this->solutionProviders,
-            'collectStackFrameArguments' => $this->collectStackFrameArguments,
-            'argumentReducers' => $this->argumentReducers,
-            'forcePHPStackFrameArgumentsIniSetting' => $this->forcePHPStackFrameArgumentsIniSetting,
-            'resourceModifiers' => $this->resourceModifiers,
-            'collectErrorsWithTraces' => $this->collectErrorsWithTraces,
-        ];
+        return $this;
     }
 
     protected function handleUnknownCollectType(
@@ -182,11 +176,9 @@ class CollectsResolver
         ]));
     }
 
-    protected function logs(array $options): void
+    protected function logsWithErrors(array $options): void
     {
-        $this->addRecorder($options['recorder'] ?? LogRecorder::class, $this->only($options, [
-            'with_traces',
-            'with_errors',
+        $this->addMiddleware($options['middleware'] ?? AddLogs::class, $this->only($options, [
             'max_items_with_errors',
             'minimal_level',
         ]));

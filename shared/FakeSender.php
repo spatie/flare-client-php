@@ -3,69 +3,81 @@
 namespace Spatie\FlareClient\Tests\Shared;
 
 use Closure;
-use Spatie\FlareClient\Enums\FlarePayloadType;
+use Spatie\FlareClient\Enums\FlareEntityType;
 use Spatie\FlareClient\Senders\Sender;
 use Spatie\FlareClient\Senders\Support\Response;
 
 class FakeSender implements Sender
 {
-    // TODO: I think this one can be removed
+    /** @var array<int, array{endpoint: string, apiToken: string, payload: array, type: FlareEntityType, test: bool}> */
+    public static array $sent = [];
 
-    /** @var array<int, array{verb: string, fullUrl: string, headers: array<string, string>, arguments: array<string, mixed>}> */
-    public static array $requests = [];
+    public static ?int $responseCode = 200;
 
-    public static function reset(): void
-    {
-        self::$requests = [];
-    }
-
-    public static function instance(): self
-    {
-        return new self();
-    }
+    public static mixed $responseBody = null;
 
     public function post(
         string $endpoint,
         string $apiToken,
         array $payload,
-        FlarePayloadType $type,
-        Closure $callback
+        FlareEntityType $type,
+        bool $test,
+        Closure $callback,
     ): void {
-        self::$requests[] = [
-            'verb' => 'POST',
-            'fullUrl' => $endpoint,
-            'headers' => ['X-API-KEY' => $apiToken],
-            'arguments' => $payload,
+        self::$sent[] = [
+            'endpoint' => $endpoint,
+            'apiToken' => $apiToken,
+            'payload' => $payload,
+            'type' => $type,
+            'test' => $test,
         ];
 
-        $callback(new Response(200, []));
+        $response = new Response(
+            code: self::$responseCode ?? 200,
+            body: '',
+        );
+
+        $callback($response);
     }
 
-    public function assertRequestsSent(int $expectedCount): void
+    public static function reset(): void
     {
-        expect(count(self::$requests))->toBe($expectedCount);
+        self::$sent = [];
+        self::$responseCode = 200;
     }
 
-    public function assertLastRequestAttribute(string $key, mixed $expectedContent = null): void
-    {
-        expect(count(self::$requests))->toBeGreaterThan(0, 'There were no requests sent');
+    public static function assertSent(
+        ?int $reports = 0,
+        ?int $traces = 0,
+        ?int $logs = 0,
+    ): void {
+        if ($reports !== null) {
+            $actualCount = count(array_filter(self::$sent, fn ($item) => $item['type'] === FlareEntityType::Errors));
 
-        $lastPayload = end(self::$requests) ? end(self::$requests)['arguments'] : null;
-
-        expect(array_key_exists($key, $lastPayload['attributes']))->toBeTrue('The last payload doesnt have the expected key. ');
-
-        if ($expectedContent === null) {
-            return;
+            expect($actualCount)->toBe($reports, "Expected {$reports} report requests, but {$actualCount} were sent.");
         }
 
-        $actualContent = $lastPayload['attributes'][$key];
+        if ($traces !== null) {
+            $actualCount = count(array_filter(self::$sent, fn ($item) => $item['type'] === FlareEntityType::Traces));
 
-        expect($actualContent)->toEqual($expectedContent);
+            expect($actualCount)->toBe($traces, "Expected {$traces} trace requests, but {$actualCount} were sent.");
+        }
+
+        if ($logs !== null) {
+            $actualCount = count(array_filter(self::$sent, fn ($item) => $item['type'] === FlareEntityType::Logs));
+
+            expect($actualCount)->toBe($logs, "Expected {$logs} log requests, but {$actualCount} were sent.");
+        }
     }
 
-    /** @return array<string, mixed>|null */
-    public function getLastPayload(): ?array
+
+    public static function assertNothingSent(): void
     {
-        return end(self::$requests) ? end(self::$requests)['arguments'] : null;
+        self::assertSent(0, 0, 0);
+    }
+
+    public static function setResponseCode(int $code): void
+    {
+        self::$responseCode = $code;
     }
 }

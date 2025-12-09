@@ -4,6 +4,7 @@ namespace Spatie\FlareClient\Senders;
 
 use Closure;
 use GuzzleHttp\Client;
+use Spatie\FlareClient\Enums\FlareEntityType;
 use Spatie\FlareClient\Enums\FlarePayloadType;
 use Spatie\FlareClient\Senders\Support\Response;
 
@@ -17,7 +18,7 @@ class GuzzleSender implements Sender
         $this->client = new Client($config);
     }
 
-    public function post(string $endpoint, string $apiToken, array $payload, FlarePayloadType $type, Closure $callback): void
+    public function post(string $endpoint, string $apiToken, array $payload, FlareEntityType $type, bool $test, Closure $callback): void
     {
         $response = $this->client->post($endpoint, [
             'headers' => [

@@ -19,7 +19,7 @@ class ExpectReportEvent
 
     public function expectType(
         FlareSpanType|FlareSpanEventType $type
-    ) {
+    ): self {
         expect($this->event['type'])->toBe($type);
 
         return $this;
@@ -27,7 +27,7 @@ class ExpectReportEvent
 
     public function expectStart(
         int|DateTimeInterface $start
-    ) {
+    ): self {
         $expectedStart = $start instanceof DateTimeInterface ? TimeHelper::dateTimeToNano($start) : $start;
 
         expect($this->event['startTimeUnixNano'])->toBe($expectedStart);
@@ -37,12 +37,17 @@ class ExpectReportEvent
 
     public function expectEnd(
         int|DateTimeInterface|null $end
-    ) {
+    ): self {
         $expectedEnd = $end instanceof DateTimeInterface ? TimeHelper::dateTimeToNano($end) : $end;
 
         expect($this->event['endTimeUnixNano'])->toBe($expectedEnd);
 
         return $this;
+    }
+
+    public function expectMissingEnd(): self
+    {
+        return $this->expectEnd(null);
     }
 
     protected function attributes(): array

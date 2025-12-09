@@ -3,6 +3,7 @@
 namespace Spatie\FlareClient\Exporters;
 
 use Spatie\FlareClient\Enums\FlareEntityType;
+use Spatie\FlareClient\ReportFactory;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Spans\Span;
@@ -18,20 +19,13 @@ class OpenTelemetryJsonExporter implements Exporter
     }
 
     /**
-     * @param array<string, array<string, Span>> $traces
+     * @param array<int, Span> $spans
      */
     public function traces(
         Resource $resource,
         Scope $scope,
-        array $traces,
+        array $spans,
     ): array {
-        $exportedSpans = [];
-
-        foreach ($traces as $spans) {
-            foreach ($spans as $span) {
-                $exportedSpans[] = $this->exportSpan($span);
-            }
-        }
 
         return [
             'resourceSpans' => [
@@ -40,7 +34,10 @@ class OpenTelemetryJsonExporter implements Exporter
                     'scopeSpans' => [
                         [
                             'scope' => $this->exportScope($scope),
-                            'spans' => $exportedSpans,
+                            'spans' => array_values(array_map(
+                                fn(Span $span) => $this->exportSpan($span),
+                                $spans,
+                            ))
                         ],
                     ],
                 ],
@@ -69,6 +66,11 @@ class OpenTelemetryJsonExporter implements Exporter
                 ],
             ],
         ];
+    }
+
+    public function report(ReportFactory $report): mixed
+    {
+        return $report->toArray();
     }
 
     protected function exportResource(Resource $resource, FlareEntityType $entityType): array

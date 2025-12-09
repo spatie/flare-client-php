@@ -10,7 +10,7 @@ use Spatie\LaravelFlare\Recorders\RedisCommandRecorder\RedisCommandRecorder as L
 
 class FakeTime implements Time
 {
-    protected static ?DateTimeImmutable $dateTime = null;
+    protected static ?int $time = null;
 
     protected static ?self $instance = null;
 
@@ -19,7 +19,7 @@ class FakeTime implements Time
         return static::$instance !== null;
     }
 
-    public static function setup(string|DateTimeImmutable $dateTime): self
+    public static function setup(string|DateTimeImmutable|int $dateTime): self
     {
         static::$instance ??= new self();
 
@@ -34,10 +34,10 @@ class FakeTime implements Time
 
     public function getCurrentTime(): int
     {
-        return static::$dateTime->getTimestamp() * 1000_000_000; // Nano seconds
+        return static::$time; // Nano seconds
     }
 
-    public static function setCurrentTime(string|DateTimeImmutable $dateTime): void
+    public static function setCurrentTime(string|DateTimeImmutable|int $dateTime): void
     {
         if(static::isSetup() === false){
             static::setup($dateTime);
@@ -49,7 +49,11 @@ class FakeTime implements Time
             $dateTime = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $dateTime);
         }
 
-        static::$dateTime = $dateTime;
+        if($dateTime instanceof DateTimeImmutable){
+            $dateTime = $dateTime->getTimestamp() * 1000_000_000;
+        }
+
+        static::$time = $dateTime;
     }
 
     public static function advance(int $seconds): void
@@ -58,12 +62,12 @@ class FakeTime implements Time
             throw new \Exception('FakeTime is not setup. Call FakeTime::setup() first.');
         }
 
-        static::$dateTime = static::$dateTime->add(new \DateInterval("PT{$seconds}S"));
+        static::$time += $seconds * 1000_000_000;
     }
 
-    public static function reset()
+    public static function reset(): void
     {
         static::$instance = null;
-        static::$dateTime = null;
+        static::$time = null;
     }
 }

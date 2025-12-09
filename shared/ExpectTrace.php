@@ -42,4 +42,9 @@ class ExpectTrace
     {
         return ExpectScope::create($this->trace['resourceSpans'][0]['scopeSpans'][0]['scope']);
     }
+
+    public function toArray(): array
+    {
+        return $this->trace;
+    }
 }

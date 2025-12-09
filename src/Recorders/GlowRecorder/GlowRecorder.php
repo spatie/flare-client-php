@@ -2,6 +2,7 @@
 
 namespace Spatie\FlareClient\Recorders\GlowRecorder;
 
+use Monolog\Level;
 use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanEventType;
@@ -17,7 +18,7 @@ class GlowRecorder extends SpanEventsRecorder
 
     public function record(
         string $name,
-        MessageLevels $level = MessageLevels::Info,
+        Level $level = Level::Info,
         array $context = [],
         array $attributes = [],
     ): ?SpanEvent {
@@ -26,7 +27,7 @@ class GlowRecorder extends SpanEventsRecorder
             attributes: fn () => [
                 'flare.span_event_type' => SpanEventType::Glow,
                 'glow.name' => $name,
-                'glow.level' => $level->value,
+                'glow.level' => strtolower($level->getName()),
                 'glow.context' => $context,
                 ...$attributes,
             ],

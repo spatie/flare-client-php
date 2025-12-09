@@ -2,6 +2,8 @@
 
 namespace Spatie\FlareClient\Support;
 
+use Monolog\Level;
+
 class SeverityMapper
 {
     public static function fromSyslog(string $level): int
@@ -17,5 +19,10 @@ class SeverityMapper
             'EMERGENCY' => 21, // FATAL 1
             default => 9, // INFO 1
         };
+    }
+
+    public static function fromMonolog(Level $level): int
+    {
+        return self::fromSyslog($level->getName());
     }
 }

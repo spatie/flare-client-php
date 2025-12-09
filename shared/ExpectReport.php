@@ -106,6 +106,18 @@ class ExpectReport
         return new ExpectStackTraceFrame($this->report['stacktrace'][$index]);
     }
 
+    public function expectPreviousCount(int $count): self
+    {
+        expect($this->report['previous'])->toHaveCount($count);
+
+        return $this;
+    }
+
+    public function expectPrevious(int $index): ExpectReportPrevious
+    {
+        return new ExpectReportPrevious($this->report['previous'][$index]);
+    }
+
     public function expectOverriddenGrouping(OverriddenGrouping $grouping): self
     {
         expect($this->report['overriddenGrouping'])->toBe($grouping);

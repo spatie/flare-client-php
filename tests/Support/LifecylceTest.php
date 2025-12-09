@@ -2,7 +2,9 @@
 
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\FlareConfig;
+use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Tests\Shared\FakeApi;
+use Spatie\FlareClient\Tests\Shared\FakeTime;
 
 it('will make a sampling decision at start', function () {
     $flare = setupFlare(fn (FlareConfig $config) => $config->sampleRate(0.5));
@@ -46,8 +48,8 @@ it('can continue a trace with a traceparent', function () {
         ->expectSpanCount(1)
         ->expectSpan(0)
         ->expectType(SpanType::Application)
-        ->expectTrace($traceId)
-        ->expectParent($spanId);
+        ->expectTraceId($traceId)
+        ->expectParentId($spanId);
 });
 
 it('can run through a lifecycle without subtasks, registration, booting or termination', function () {
@@ -271,3 +273,45 @@ it('will complete ignore all other lifecycle stages when using subtasks', functi
         ->expectStart(50)
         ->expectEnd(60);
 });
+
+it('will in the end call a shutdown function which tries to close the current trace when still running', function () {
+    FakeTime::setup(20);
+
+    $flare = setupFlare(alwaysSampleTraces: true);
+
+    $flare->lifecycle->start(timeUnixNano: 0);
+    $flare->lifecycle->terminating(timeUnixNano: 10);
+
+    invade($flare->lifecycle)->shutdown();
+
+    $trace = FakeApi::lastTrace()->expectSpanCount(2);
+
+    $trace->expectSpan(0)
+        ->expectType(SpanType::Application)
+        ->expectStart(0)
+        ->expectEnd(20);
+
+    $trace->expectSpan(1)
+        ->expectType(SpanType::ApplicationTerminating)
+        ->expectStart(10)
+        ->expectEnd(20);
+});
+
+it('will not finish a trace when shutting down if spans are not closed yet', function () {
+    FakeTime::setup(20);
+
+    $flare = setupFlare(alwaysSampleTraces: true);
+
+    $flare->lifecycle->start(timeUnixNano: 0);
+    $span = $flare->tracer->startSpan('Test Span', 5);
+    $flare->tracer->endSpan(time: 10);
+    $flare->lifecycle->terminating(timeUnixNano: 10);
+
+    // Force a span to be left open
+    $span->end = null;
+
+    invade($flare->lifecycle)->shutdown();
+
+    FakeApi::assertTracesSent(0);
+});
+

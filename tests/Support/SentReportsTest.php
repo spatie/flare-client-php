@@ -52,5 +52,5 @@ it('can be cleared', function () {
 // Helpers
 function getReport(string $fakeUuid = 'fake-uuid'): array
 {
-    return setupFlare()->report(new Exception(), fn (ReportFactory $report) => $report->trackingUuid($fakeUuid));
+    return setupFlare()->report(new Exception(), fn (ReportFactory $report) => $report->trackingUuid($fakeUuid))->toArray();
 }

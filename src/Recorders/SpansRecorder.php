@@ -128,6 +128,7 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
         ?int $time = null,
         Closure|array $additionalAttributes = [],
         ?Closure $spanCallback = null,
+        bool $includeMemoryUsage = false,
     ): ?Span {
         $span = array_pop($this->stack);
 
@@ -155,7 +156,7 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
             return $span;
         }
 
-        $this->tracer->endSpan($span);
+        $this->tracer->endSpan($span, includeMemoryUsage: $includeMemoryUsage);
 
         return $span;
     }
@@ -176,6 +177,7 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
         ?int $duration = null,
         ?Closure $additionalAttributes = null,
         ?Closure $spanCallback = null,
+        bool $includeMemoryUsage = false,
     ): ?Span {
         [$start, $end] = TimeInterval::resolve(
             time: $this->tracer->time,
@@ -199,8 +201,8 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
             time: $end,
             additionalAttributes: $additionalAttributes === null ? [] : $additionalAttributes,
             spanCallback: $spanCallback,
+            includeMemoryUsage: $includeMemoryUsage,
         );
-
 
         if ($this->withTraces && $this->tracer->sampling === true) {
             $this->backtraceEntry($span);

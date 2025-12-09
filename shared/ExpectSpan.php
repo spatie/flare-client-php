@@ -35,14 +35,14 @@ class ExpectSpan
         return $this;
     }
 
-    public function expectId(string $spanId): self
+    public function expectSpanId(string $spanId): self
     {
         expect($this->span['spanId'])->toEqual($spanId);
 
         return $this;
     }
 
-    public function expectTrace(string $expectTrace): self
+    public function expectTraceId(string $expectTrace): self
     {
         expect($this->span['traceId'])->toEqual($expectTrace);
 
@@ -50,7 +50,7 @@ class ExpectSpan
     }
 
 
-    public function expectParent(Span|ExpectSpan|string $expectedSpan): self
+    public function expectParentId(Span|ExpectSpan|string $expectedSpan): self
     {
         $id = match (true) {
             $expectedSpan instanceof Span => $expectedSpan->spanId,
@@ -63,7 +63,7 @@ class ExpectSpan
         return $this;
     }
 
-    public function expectMissingParent(): self
+    public function expectMissingParentId(): self
     {
         expect($this->span['parentSpanId'])->toBeNull();
 

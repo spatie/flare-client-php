@@ -26,11 +26,6 @@ parameters:
 			path: src/Flare.php
 
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:log\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\LogRecorder\\\\LogRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
-			count: 1
-			path: src/Flare.php
-
-		-
 			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:query\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\QueryRecorder\\\\QueryRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
 			count: 1
 			path: src/Flare.php
@@ -76,7 +71,7 @@ parameters:
 			path: src/FlareConfig.php
 
 		-
-			message: "#^Property Spatie\\\\FlareClient\\\\Logger\\:\\:\\$logs \\(array\\<int, array\\{time_unix_nano\\: int, observed_time_unix_nano\\: int, trace_id\\?\\: string, span_id\\?\\: string, flags\\?\\: string, severity_text\\?\\: string, severity_number\\?\\: int, body\\: mixed, \\.\\.\\.\\}\\>\\) does not accept non\\-empty\\-array\\<int, array\\{body\\: mixed, time_unix_nano\\?\\: int\\|int\\<1, max\\>, observed_time_unix_nano\\?\\: int\\|int\\<1, max\\>, trace_id\\?\\: string, span_id\\?\\: string, flags\\?\\: string, severity_text\\?\\: string, severity_number\\?\\: int\\|int\\<1, max\\>, \\.\\.\\.\\}\\>\\.$#"
+			message: "#^Property Spatie\\\\FlareClient\\\\Logger\\:\\:\\$logs \\(array\\<int, array\\{timeUnixNano\\: int, observedTimeUnixNano\\: int, traceId\\?\\: string, spanId\\?\\: string, flags\\?\\: string, severityText\\?\\: string, severityNumber\\?\\: int, body\\: mixed, \\.\\.\\.\\}\\>\\) does not accept non\\-empty\\-array\\<int, array\\{body\\: mixed, timeUnixNano\\?\\: int\\|int\\<1, max\\>, observedTimeUnixNano\\?\\: int\\|int\\<1, max\\>, traceId\\?\\: string, spanId\\?\\: string, flags\\?\\: string, severityText\\?\\: string, severityNumber\\?\\: int\\|int\\<1, max\\>, \\.\\.\\.\\}\\>\\.$#"
 			count: 1
 			path: src/Logger.php
 

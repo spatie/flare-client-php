@@ -2,42 +2,40 @@
 
 namespace Spatie\FlareClient\Tests\Shared;
 
-use Closure;
 use Spatie\FlareClient\Api;
-use Spatie\FlareClient\Enums\FlarePayloadType;
-use Spatie\FlareClient\Senders\Sender;
-use Spatie\FlareClient\Senders\Support\Response;
+use Spatie\FlareClient\ReportFactory;
 
 class FakeApi extends Api
 {
     public static array $reports = [];
+
     public static array $traces = [];
+
     public static array $logs = [];
 
-    public function report(array $report, bool $immediately = false): void
+    public function report(ReportFactory $report, bool $immediately = false, bool $test = false): array
     {
-//        parent::report($report, $immediately);
-
-        self::$reports[] = $report;
+        return self::$reports[] = $this->exporter->report(
+            $report,
+        );
     }
 
-    public function trace(array $trace, bool $immediately = false): void
+    public function trace(array $spans, bool $immediately = false, bool $test = false): array
     {
-//        parent::trace($trace, $immediately);
-
-        self::$traces[] = $trace;
+        return self::$traces[] = $this->exporter->traces(
+            $this->resource,
+            $this->scope,
+            $spans,
+        );
     }
 
-    public function log(array $log, bool $immediately = false): void
+    public function log(array $logs, bool $immediately = false, bool $test = false): array
     {
-//        parent::log($log, $immediately);
-
-        self::$logs[] = $log;
-    }
-
-    public static function lastLog(): array
-    {
-        return end(self::$logs);
+        return self::$logs[] = $this->exporter->logs(
+            $this->resource,
+            $this->scope,
+            $logs,
+        );
     }
 
     public static function assertSent(?int $reports = 0, ?int $traces = 0, ?int $logs = 0): void
@@ -70,6 +68,15 @@ class FakeApi extends Api
         expect(count(self::$logs))->toBe($expectedCount);
     }
 
+    public static function assertNothingSent(): void
+    {
+        self::assertSent(
+            reports: 0,
+            traces: 0,
+            logs: 0,
+        );
+    }
+
     public static function lastReport(): ExpectReport
     {
         return ExpectReport::create(end(self::$reports));
@@ -78,6 +85,11 @@ class FakeApi extends Api
     public static function lastTrace(): ExpectTrace
     {
         return ExpectTrace::create(end(self::$traces));
+    }
+
+    public static function lastLog(): ExpectLogData
+    {
+        return ExpectLogData::create(end(self::$logs));
     }
 
     public static function reset(): void

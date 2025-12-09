@@ -3,6 +3,7 @@ seenAtUnixNano: 1546305825000000000
 message: 'this is a custom error'
 solutions: {  }
 stacktrace: {  }
+previous: {  }
 openFrameIndex: null
 applicationPath: null
 trackingUuid: fake-uuid

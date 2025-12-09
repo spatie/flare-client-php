@@ -7,6 +7,9 @@ use Spatie\FlareClient\Api;
 use Spatie\FlareClient\Enums\LifecycleStage;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Logger;
+use Spatie\FlareClient\Memory\Memory;
+use Spatie\FlareClient\Resources\Resource;
+use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Time\Time;
 use Spatie\FlareClient\Time\TimeHelper;
 use Spatie\FlareClient\Tracer;
@@ -22,17 +25,19 @@ class Lifecycle
     public function __construct(
         protected Api $api,
         protected Time $time,
+        protected Memory $memory,
         protected Logger $logger,
         protected Tracer $tracer,
         protected Recorders $recorders,
         protected SentReports $sentReports,
+        protected Resource $resource,
         protected LifecycleStage $stage = LifecycleStage::Idle,
         protected ?Closure $isUsingSubtasksClosure = null,
         protected ?Closure $shouldMakeSamplingDecisionClosure = null,
     ) {
         $this->usesSubtasks = $this->isUsingSubtasks();
 
-        register_shutdown_function([$this, 'flush']);
+        register_shutdown_function([$this, 'shutdown']);
     }
 
     protected function isUsingSubtasks(): bool
@@ -85,7 +90,7 @@ class Lifecycle
             return;
         }
 
-        $serviceName = $this->tracer->resource->serviceName;
+        $serviceName = $this->resource->serviceName;
 
         $timeUnixNano ??= match (true) {
             array_key_exists('REQUEST_TIME_FLOAT', $_SERVER) => TimeHelper::phpMicroTime($_SERVER['REQUEST_TIME_FLOAT']),
@@ -264,6 +269,7 @@ class Lifecycle
         }
 
         $this->flush();
+        $this->memory->resetPeaMemoryUsage();
     }
 
     public function terminating(
@@ -274,7 +280,10 @@ class Lifecycle
             return;
         }
 
-        if ($this->stage !== LifecycleStage::Booted && $this->stage !== LifecycleStage::Registered && $this->stage !== LifecycleStage::Started) {
+        if ($this->stage !== LifecycleStage::Booted
+            && $this->stage !== LifecycleStage::Registered
+            && $this->stage !== LifecycleStage::Started
+        ) {
             $this->trash();
 
             return;
@@ -317,7 +326,7 @@ class Lifecycle
             return;
         }
 
-        $this->stage = LifecycleStage::Terminated; // TODO: is idle a better stage here?
+        $this->stage = LifecycleStage::Terminated;
 
         if ($this->tracer->sampling === false) {
             return;
@@ -345,6 +354,35 @@ class Lifecycle
         );
 
         $this->tracer->endTrace();
+
+        $this->flush();
+    }
+
+    protected function shutdown(): void
+    {
+        if (! $this->tracer->sampling) {
+            $this->flush();
+
+            return;
+        }
+
+        $this->tracer->gracefullyEndSpans(force: true);
+
+        $canEndTrace = true;
+
+        foreach ($this->tracer->currentTrace() as $span) {
+            if ($span->end === null) {
+                $canEndTrace = false;
+
+                break;
+            }
+        }
+
+        if ($canEndTrace) {
+            $this->tracer->endTrace();
+        }
+
+        $this->flush();
     }
 
     public function trash(): void
@@ -362,5 +400,10 @@ class Lifecycle
 
         $this->sentReports->clear();
         $this->recorders->reset();
+    }
+
+    public function getStage(): LifecycleStage
+    {
+        return $this->stage;
     }
 }

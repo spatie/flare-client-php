@@ -2,6 +2,7 @@
 
 namespace Spatie\FlareClient\Exporters;
 
+use Spatie\FlareClient\ReportFactory;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Spans\Span;
@@ -9,12 +10,12 @@ use Spatie\FlareClient\Spans\Span;
 interface Exporter
 {
     /**
-     * @param array<string, array<string, Span>> $traces
+     * @param array<int, Span> $spans
      */
     public function traces(
         Resource $resource,
         Scope $scope,
-        array $traces,
+        array $spans,
     ): mixed;
 
     /**
@@ -24,5 +25,9 @@ interface Exporter
         Resource $resource,
         Scope $scope,
         array $logs,
+    ): mixed;
+
+    public function report(
+        ReportFactory $report,
     ): mixed;
 }

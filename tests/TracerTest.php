@@ -10,6 +10,7 @@ use Spatie\FlareClient\Sampling\NeverSampler;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Tests\Shared\FakeApi;
 use Spatie\FlareClient\Tests\Shared\FakeIds;
+use Spatie\FlareClient\Tests\Shared\FakeMemory;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
 use Throwable;
 
@@ -276,8 +277,8 @@ it('can run a span using closure', function () {
     FakeApi::lastTrace()
         ->expectSpan(0)
         ->expectName('Some span')
-        ->expectTrace($traceId)
-        ->expectMissingParent()
+        ->expectTraceId($traceId)
+        ->expectMissingParentId()
         ->expectAttributes([
             'key' => 'value',
             'result' => 'do something',
@@ -405,4 +406,21 @@ it('will use the initial trace and span id until a trace is started', function (
 
     expect($span->traceId)->toBe($currentTraceId);
     expect($span->spanId)->toBe($currentSpanId);
+});
+
+it('can include the peak memory usage when ending a span', function () {
+    FakeMemory::setup()->nextMemoryUsage(1024 * 1024 * 5); // 5 MB
+
+    $tracer = setupFlare(alwaysSampleTraces: true)->tracer;
+
+    $tracer->startTrace();
+    $tracer->startSpan('Some span');
+    $tracer->endSpan(includeMemoryUsage: true);
+    $tracer->endTrace();
+
+    FakeApi::lastTrace()
+        ->expectSpan(0)
+        ->expectAttributes([
+            'flare.peak_memory_usage' => 5 * 1024 * 1024,
+        ]);
 });

@@ -62,4 +62,23 @@ class Ids
             'sampling' => $parts[3] === '01',
         ];
     }
+
+    public function setTraceparentSampling(
+        string $traceParent,
+        bool $sampling,
+    ): ?string {
+        $parsed = $this->parseTraceparent($traceParent);
+
+        if ($parsed === null) {
+            return null;
+        }
+
+        ['traceId' => $traceId, 'parentSpanId' => $parentSpanId] = $parsed;
+
+        return $this->traceParent(
+            traceId: $traceId,
+            parentSpanId: $parentSpanId,
+            sampling: $sampling,
+        );
+    }
 }

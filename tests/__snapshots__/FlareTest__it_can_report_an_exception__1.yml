@@ -3,6 +3,7 @@ seenAtUnixNano: 1546346096000000000
 message: 'This is a test'
 solutions: {  }
 stacktrace: {  }
+previous: {  }
 openFrameIndex: null
 applicationPath: null
 trackingUuid: fake-uuid

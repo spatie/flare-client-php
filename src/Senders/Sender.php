@@ -3,7 +3,9 @@
 namespace Spatie\FlareClient\Senders;
 
 use Closure;
+use Spatie\FlareClient\Enums\FlareEntityType;
 use Spatie\FlareClient\Enums\FlarePayloadType;
+use Spatie\FlareClient\Enums\SpanKind;
 use Spatie\FlareClient\Senders\Support\Response;
 
 interface Sender
@@ -15,7 +17,8 @@ interface Sender
         string $endpoint,
         string $apiToken,
         array $payload,
-        FlarePayloadType $type,
+        FlareEntityType $type,
+        bool $test,
         Closure $callback,
     ): void;
 }

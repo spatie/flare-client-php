@@ -93,6 +93,6 @@ class RequestRecorder extends SpansRecorder
             $attributes['http.response.body.size'] = $responseBodySize;
         }
 
-        return $this->endSpan(additionalAttributes: $attributes);
+        return $this->endSpan(additionalAttributes: $attributes, includeMemoryUsage: true);
     }
 }
