@@ -5,7 +5,6 @@ namespace Spatie\FlareClient\Senders;
 use Closure;
 use CurlHandle;
 use Spatie\FlareClient\Enums\FlareEntityType;
-use Spatie\FlareClient\Enums\FlarePayloadType;
 use Spatie\FlareClient\Senders\Exceptions\ConnectionError;
 use Spatie\FlareClient\Senders\Support\Response;
 

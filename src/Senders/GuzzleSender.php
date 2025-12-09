@@ -5,7 +5,6 @@ namespace Spatie\FlareClient\Senders;
 use Closure;
 use GuzzleHttp\Client;
 use Spatie\FlareClient\Enums\FlareEntityType;
-use Spatie\FlareClient\Enums\FlarePayloadType;
 use Spatie\FlareClient\Senders\Support\Response;
 
 class GuzzleSender implements Sender

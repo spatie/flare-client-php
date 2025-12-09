@@ -9,7 +9,6 @@ use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Logger;
 use Spatie\FlareClient\Memory\Memory;
 use Spatie\FlareClient\Resources\Resource;
-use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Time\Time;
 use Spatie\FlareClient\Time\TimeHelper;
 use Spatie\FlareClient\Tracer;

@@ -3,7 +3,6 @@
 namespace Spatie\FlareClient\Recorders\GlowRecorder;
 
 use Monolog\Level;
-use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Recorders\SpanEventsRecorder;

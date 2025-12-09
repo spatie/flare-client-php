@@ -23,7 +23,6 @@ it('can return the request context as an array', function () {
 
     $files = [
         'file-one' => new UploadedFile(
-
             getStubPath('file.txt'),
             'file-name.txt',
             'text/plain',

@@ -1,12 +1,9 @@
 <?php
 
-use Spatie\FlareClient\Enums\SamplingType;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
-use Spatie\FlareClient\Tests\Shared\Samplers\TestSampler;
 use Spatie\FlareClient\Tests\TestClasses\ConcreteSpansRecorder;
-use Spatie\FlareClient\Time\TimeHelper;
 
 beforeEach(function () {
     FakeTime::setup('2019-01-01 12:34:56');

@@ -6,7 +6,6 @@ use Spatie\FlareClient\Enums\FlareEntityType;
 use Spatie\FlareClient\Exporters\Exporter;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Scopes\Scope;
-use Spatie\FlareClient\Senders\CurlSender;
 use Spatie\FlareClient\Senders\Exceptions\BadResponseCode;
 use Spatie\FlareClient\Senders\Exceptions\InvalidData;
 use Spatie\FlareClient\Senders\Exceptions\NotFound;

@@ -4,7 +4,6 @@ namespace Spatie\FlareClient\Senders;
 
 use Closure;
 use Spatie\FlareClient\Enums\FlareEntityType;
-use Spatie\FlareClient\Enums\FlarePayloadType;
 use Spatie\FlareClient\Senders\Support\Response;
 
 class NullSender implements Sender

@@ -314,4 +314,3 @@ it('will not finish a trace when shutting down if spans are not closed yet', fun
 
     FakeApi::assertTracesSent(0);
 });
-

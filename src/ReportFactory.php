@@ -18,7 +18,6 @@ use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Support\Ids;
-use Spatie\FlareClient\Support\StacktraceMapper;
 use Spatie\FlareClient\Time\Time;
 use Throwable;
 
@@ -220,7 +219,7 @@ class ReportFactory implements WithAttributes
 
         $current = $this->throwable;
 
-        while ($previousThrowable = $current->getPrevious()){
+        while ($previousThrowable = $current->getPrevious()) {
             $stackTrace = $this->cleanupStackTraceForError(
                 $this->buildStacktrace(),
                 $this->throwable,

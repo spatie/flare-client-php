@@ -56,4 +56,3 @@ function createLargePreviousPayload(int $size): array
 
     return $payload;
 }
-

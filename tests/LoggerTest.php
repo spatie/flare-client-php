@@ -87,7 +87,7 @@ it('sends logs to the API when flushed', function () {
 });
 
 it('will not send logs when disabled', function () {
-    $flare = setupFlare(fn(FlareConfig $config) => $config->log(false));
+    $flare = setupFlare(fn (FlareConfig $config) => $config->log(false));
 
     $flare->logger->log(body: 'This log will not be sent');
 
@@ -105,7 +105,7 @@ it('will not send a request when flushing an empty log', function () {
 });
 
 it('will add context from the context recorder', function () {
-    $flare = setupFlare(fn(FlareConfig $config) => $config->collectContext());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectContext());
 
     $flare->context('user_id', 123);
     $flare->context('session_id', 'abc');

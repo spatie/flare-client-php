@@ -35,9 +35,9 @@ class OpenTelemetryJsonExporter implements Exporter
                         [
                             'scope' => $this->exportScope($scope),
                             'spans' => array_values(array_map(
-                                fn(Span $span) => $this->exportSpan($span),
+                                fn (Span $span) => $this->exportSpan($span),
                                 $spans,
-                            ))
+                            )),
                         ],
                     ],
                 ],

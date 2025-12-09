@@ -1,6 +1,5 @@
 <?php
 
-use Spatie\FlareClient\Flare;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Support\PhpStackFrameArgumentsFixer;
 use Spatie\FlareClient\Tests\TestClasses\TraceArguments;
@@ -8,7 +7,7 @@ use Spatie\FlareClient\Tests\TestClasses\TraceArguments;
 it('can enable stack trace arguments on a PHP level', function () {
     ini_set('zend.exception_ignore_args', 1);
 
-    $flare = setupFlare(fn(FlareConfig $config) => $config->collectStackFrameArguments(forcePHPIniSetting: false));
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectStackFrameArguments(forcePHPIniSetting: false));
 
     $report = $flare->report(TraceArguments::create()->exception('string', new DateTime()))->toArray();
 
@@ -26,7 +25,7 @@ it('can enable stack trace arguments on a PHP level', function () {
 it('can enables stack trace arguments on a PHP level by default', function () {
     ini_set('zend.exception_ignore_args', 1);
 
-    $flare = setupFlare(fn(FlareConfig $config) => $config->collectStackFrameArguments());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectStackFrameArguments());
 
     $report = $flare->report(TraceArguments::create()->exception('string', new DateTime()))->toArray();
 
@@ -34,4 +33,3 @@ it('can enables stack trace arguments on a PHP level by default', function () {
         ->toBeArray()
         ->toHaveCount(2);
 });
-

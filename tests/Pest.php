@@ -3,7 +3,6 @@
 use Spatie\FlareClient\Flare;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\FlareProvider;
-use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Support\Container;
 use Spatie\FlareClient\Tests\Shared\FakeApi;
 use Spatie\FlareClient\Tests\Shared\FakeIds;
@@ -41,7 +40,7 @@ function setupFlare(
         log: true,
     );
 
-    if($useFakeApi){
+    if ($useFakeApi) {
         $config->api = FakeApi::class;
     }
 
@@ -57,7 +56,7 @@ function setupFlare(
         $config->ids = FakeIds::class;
     }
 
-    if(FakeMemory::isSetup()){
+    if (FakeMemory::isSetup()) {
         $config->memory = FakeMemory::class;
     }
 

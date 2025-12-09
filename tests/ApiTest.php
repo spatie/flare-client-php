@@ -1,12 +1,8 @@
 <?php
 
 use Spatie\FlareClient\Api;
-use Spatie\FlareClient\Enums\FlareEntityType;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Senders\Exceptions\BadResponseCode;
-use Spatie\FlareClient\Senders\Exceptions\InvalidData;
-use Spatie\FlareClient\Senders\Exceptions\NotFound;
-use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Support\Container;
 use Spatie\FlareClient\Tests\Shared\FakeSender;
 
@@ -40,7 +36,7 @@ it('sends a report immediately when immediately is true', function () {
     FakeSender::assertSent(reports: 1);
 });
 
-it('will never throw an error when sending reports', function (){
+it('will never throw an error when sending reports', function () {
     $flare = setupFlare(fn (FlareConfig $config) => $config->sender = FakeSender::class, useFakeApi:  false);
 
     $api = Container::instance()->get(Api::class);
@@ -62,7 +58,7 @@ it('will never throw an error when sending reports', function (){
     FakeSender::assertSent(reports: 2);
 });
 
-it('will send test reports immediately', function (){
+it('will send test reports immediately', function () {
     $flare = setupFlare(fn (FlareConfig $config) => $config->sender = FakeSender::class, useFakeApi:  false);
 
     $api = Container::instance()->get(Api::class);
@@ -75,14 +71,14 @@ it('will send test reports immediately', function (){
     FakeSender::assertSent(reports: 1);
 });
 
-it('will throw errors when sending test reports', function (){
+it('will throw errors when sending test reports', function () {
     $flare = setupFlare(fn (FlareConfig $config) => $config->sender = FakeSender::class, useFakeApi:  false);
 
     $api = Container::instance()->get(Api::class);
 
     FakeSender::$responseCode = 500;
 
-    expect(fn() => $api->report(
+    expect(fn () => $api->report(
         $flare->createReport(new Exception('Test exception')),
         test: true
     ))->toThrow(BadResponseCode::class);
@@ -120,7 +116,7 @@ it('sends a trace immediately when immediately is true', function () {
     FakeSender::assertSent(traces: 1);
 });
 
-it('will never throw an error when sending traces', function (){
+it('will never throw an error when sending traces', function () {
     $flare = setupFlare(fn (FlareConfig $config) => $config->sender = FakeSender::class, useFakeApi:  false, alwaysSampleTraces: true);
 
     $api = Container::instance()->get(Api::class);
@@ -145,7 +141,7 @@ it('will never throw an error when sending traces', function (){
     FakeSender::assertSent(traces: 2);
 });
 
-it('will send test traces immediately', function (){
+it('will send test traces immediately', function () {
     $flare = setupFlare(fn (FlareConfig $config) => $config->sender = FakeSender::class, useFakeApi:  false, alwaysSampleTraces: true);
 
     $api = Container::instance()->get(Api::class);
@@ -159,7 +155,7 @@ it('will send test traces immediately', function (){
     FakeSender::assertSent(traces: 1);
 });
 
-it('will throw errors when sending test traces', function (){
+it('will throw errors when sending test traces', function () {
     $flare = setupFlare(fn (FlareConfig $config) => $config->sender = FakeSender::class, useFakeApi:  false, alwaysSampleTraces: true);
 
     $api = Container::instance()->get(Api::class);
@@ -170,7 +166,7 @@ it('will throw errors when sending test traces', function (){
     $span = $flare->tracer->startSpan('test span');
     $flare->tracer->endSpan($span);
 
-    expect(fn() => $api->trace($flare->tracer->currentTrace(), test: true))->toThrow(BadResponseCode::class);
+    expect(fn () => $api->trace($flare->tracer->currentTrace(), test: true))->toThrow(BadResponseCode::class);
 });
 
 it('queues a log when immediately is false', function () {
@@ -201,7 +197,7 @@ it('sends a log immediately when immediately is true', function () {
     FakeSender::assertSent(logs: 1);
 });
 
-it('will never throw an error when sending logs', function (){
+it('will never throw an error when sending logs', function () {
     $flare = setupFlare(fn (FlareConfig $config) => $config->sender = FakeSender::class, useFakeApi:  false);
 
     $api = Container::instance()->get(Api::class);
@@ -222,7 +218,7 @@ it('will never throw an error when sending logs', function (){
     FakeSender::assertSent(logs: 2);
 });
 
-it('will send test logs immediately', function (){
+it('will send test logs immediately', function () {
     $flare = setupFlare(fn (FlareConfig $config) => $config->sender = FakeSender::class, useFakeApi:  false);
 
     $api = Container::instance()->get(Api::class);
@@ -234,7 +230,7 @@ it('will send test logs immediately', function (){
     FakeSender::assertSent(logs: 1);
 });
 
-it('will throw errors when sending test logs', function (){
+it('will throw errors when sending test logs', function () {
     $flare = setupFlare(fn (FlareConfig $config) => $config->sender = FakeSender::class, useFakeApi:  false);
 
     $api = Container::instance()->get(Api::class);
@@ -243,5 +239,5 @@ it('will throw errors when sending test logs', function (){
 
     $flare->logger->log(body: 'test log message');
 
-    expect(fn() => $api->log($flare->logger->logs(), test: true))->toThrow(BadResponseCode::class);
+    expect(fn () => $api->log($flare->logger->logs(), test: true))->toThrow(BadResponseCode::class);
 });

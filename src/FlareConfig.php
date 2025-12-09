@@ -25,7 +25,6 @@ use Spatie\FlareClient\Contracts\FlareCollectType;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\CollectType;
 use Spatie\FlareClient\Enums\FlareEntityType;
-use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Enums\OverriddenGrouping;
 use Spatie\FlareClient\Exporters\OpenTelemetryJsonExporter;
 use Spatie\FlareClient\FlareMiddleware\AddLogs;
@@ -34,11 +33,9 @@ use Spatie\FlareClient\Memory\SystemMemory;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
 use Spatie\FlareClient\Recorders\DumpRecorder\DumpRecorder;
-use Spatie\FlareClient\Recorders\ErrorRecorder\ErrorRecorder;
 use Spatie\FlareClient\Recorders\ExternalHttpRecorder\ExternalHttpRecorder;
 use Spatie\FlareClient\Recorders\FilesystemRecorder\FilesystemRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
-use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
 use Spatie\FlareClient\Recorders\RedisCommandRecorder\RedisCommandRecorder;
 use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
@@ -339,7 +336,7 @@ class FlareConfig
         return $this->addCollect(CollectType::LogsWithErrors, [
             'max_items_with_errors' => $maxItems,
             'minimal_level' => $minimalLevel,
-            ...$extra
+            ...$extra,
         ]);
     }
 
@@ -768,7 +765,6 @@ class FlareConfig
 
         return $this;
     }
-
 
     protected function addCollect(
         FlareCollectType $type,

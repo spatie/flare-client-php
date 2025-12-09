@@ -1,7 +1,6 @@
 <?php
 
 use Monolog\Level;
-use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
 use Spatie\FlareClient\Spans\SpanEvent;

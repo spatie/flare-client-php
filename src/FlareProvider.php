@@ -12,7 +12,6 @@ use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\FlareMode;
 use Spatie\FlareClient\Exporters\Exporter;
 use Spatie\FlareClient\Memory\Memory;
-use Spatie\FlareClient\Recorders\ErrorRecorder\ErrorRecorder;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Sampling\NeverSampler;
 use Spatie\FlareClient\Sampling\Sampler;
