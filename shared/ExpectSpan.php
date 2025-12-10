@@ -18,14 +18,17 @@ class ExpectSpan
 {
     use ExpectAttributes;
 
+    public ?string $type;
+
     public static function fromSpan(array $span): self
     {
         return new self($span);
     }
 
     public function __construct(
-        public array $span
+        public array $span,
     ) {
+        $this->type =  $this->attributes()['flare.span_type'] ?? null;
     }
 
     public function expectName(string $name): self
