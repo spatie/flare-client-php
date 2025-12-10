@@ -33,7 +33,6 @@ use Throwable;
 
 class Flare
 {
-    // TODO: merge main and provide better test infrastructure
     // TODO: add tests to laravel-flare using workbench, checking real scenarios
     // TODO: make sure we've got a good UPGRADE guide
     // TODO: rewrite docs for these new releases

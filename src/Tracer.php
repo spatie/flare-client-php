@@ -355,13 +355,16 @@ class Tracer
         string $name,
         Closure $callback,
         array $attributes = [],
-        ?Closure $endAttributes = null
+        ?Closure $endAttributes = null,
+        ?int $startTime = null,
+        ?int $endTime = null,
+        bool $includeMemoryUsage = false,
     ): mixed {
         if ($this->sampling === false) {
             return $callback();
         }
 
-        $span = $this->startSpan($name, attributes: $attributes);
+        $span = $this->startSpan($name, time: $startTime, attributes: $attributes);
 
         try {
             $returned = $callback();
@@ -380,7 +383,7 @@ class Tracer
             ? []
             : ($endAttributes)($returned);
 
-        $this->endSpan($span, additionalAttributes: $additionalAttributes);
+        $this->endSpan($span, time: $endTime, additionalAttributes: $additionalAttributes, includeMemoryUsage: $includeMemoryUsage);
 
         return $returned;
     }

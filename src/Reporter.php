@@ -159,14 +159,6 @@ class Reporter
         return $this->report($throwable, handled: true);
     }
 
-    public function sendTestReport(Throwable $throwable): void
-    {
-        $this->api->report(
-            $this->reportFactory->new()->throwable($throwable),
-            test: true
-        );
-    }
-
     /**
      * @param class-string<HasSolutionsForThrowable> ...$solutionProviders
      */

@@ -16,10 +16,10 @@
         "psr/container": "^2.0",
         "spatie/backtrace": "^1.8.0",
         "spatie/error-solutions": "^2.0",
-        "symfony/http-foundation": "^5.2|^6.0|^7.0",
-        "symfony/mime": "^5.2|^6.0|^7.0",
-        "symfony/process": "^5.2|^6.0|^7.0",
-        "symfony/var-dumper": "^5.2|^6.0|^7.0",
+        "symfony/http-foundation": "^5.2|^6.0|^7.0|^8.0",
+        "symfony/mime": "^5.2|^6.0|^7.0|^8.0",
+        "symfony/process": "^5.2|^6.0|^7.0|^8.0",
+        "symfony/var-dumper": "^5.2|^6.0|^7.0|^8.0",
         "monolog/monolog": "^3.0"
     },
     "require-dev": {
