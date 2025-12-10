@@ -49,6 +49,7 @@ class FlareProvider
         protected ?Closure $isUsingSubtasksClosure = null,
         protected ?Closure $shouldMakeSamplingDecisionClosure = null,
         protected ?Closure $gracefulSpanEnderClosure = null,
+        protected bool $disableApiQueue = false
     ) {
         $this->registerRecorderAndMiddlewaresCallback ??= $this->defaultRegisterRecordersAndMiddlewaresCallback();
         $this->mode = match (true) {
@@ -73,6 +74,7 @@ class FlareProvider
             exporter: $this->container->get(Exporter::class),
             resource: $this->container->get(Resource::class),
             scope: $this->container->get(Scope::class),
+            disableQueue: $this->disableApiQueue,
         ));
 
         $this->container->singleton(Sampler::class, fn () => new $this->config->sampler(

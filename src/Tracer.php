@@ -25,6 +25,7 @@ class Tracer
     public const DEFAULT_MAX_SPAN_EVENTS_PER_SPAN_LIMIT = 128;
     public const DEFAULT_MAX_ATTRIBUTES_PER_SPAN_EVENT_LIMIT = 128;
 
+    public const DEFAULT_COLLECT_ERRORS_WITH_TRACES = true;
 
     /** @var array<Span> */
     protected array $spans = [];
@@ -170,14 +171,12 @@ class Tracer
         $this->spans = [];
     }
 
-    public function trashTrace(): void
+    public function unsample(): void
     {
         if ($this->sampling === false) {
             return;
         }
 
-        $this->currentTraceId = $this->ids->trace();
-        $this->currentSpanId = $this->ids->span();
         $this->currentSpanIdAvailable = true;
         $this->sampling = false;
         $this->spans = [];

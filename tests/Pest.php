@@ -33,6 +33,7 @@ function setupFlare(
     bool $withoutApiKey = false,
     bool $isUsingSubtasks = false,
     bool $useFakeApi = true,
+    bool $disableApiQueue = false,
 ): Flare {
     $config = new FlareConfig(
         apiToken: $withoutApiKey ? null : 'fake-api-key',
@@ -70,6 +71,7 @@ function setupFlare(
         $config,
         $container,
         isUsingSubtasksClosure: fn () => $isUsingSubtasks,
+        disableApiQueue: $disableApiQueue,
     );
 
     $provider->register();

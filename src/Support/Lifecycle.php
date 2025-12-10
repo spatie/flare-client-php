@@ -386,7 +386,7 @@ class Lifecycle
 
     public function trash(): void
     {
-        $this->tracer->trashTrace();
+        $this->tracer->unsample();
         $this->stage = LifecycleStage::Idle;
 
         $this->flush();

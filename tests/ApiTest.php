@@ -241,3 +241,32 @@ it('will throw errors when sending test logs', function () {
 
     expect(fn () => $api->log($flare->logger->logs(), test: true))->toThrow(BadResponseCode::class);
 });
+
+it('can disable the api queue', function () {
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config->sender = FakeSender::class,
+        useFakeApi:  false,
+        disableApiQueue: true,
+    );
+
+    $api = Container::instance()->get(Api::class);
+
+    // Trace
+    $flare->tracer->startTrace();
+    $span = $flare->tracer->startSpan('test span');
+    $flare->tracer->endSpan($span);
+
+    $api->trace($flare->tracer->currentTrace());
+
+    // Report
+    $api->report(
+        $flare->createReport(new Exception('Test exception')),
+    );
+
+    // Log
+    $flare->logger->log(body: 'test log message');
+
+    $api->log($flare->logger->logs());
+
+    FakeSender::assertSent(traces: 1, reports: 1, logs: 1);
+});

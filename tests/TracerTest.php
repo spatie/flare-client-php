@@ -240,18 +240,19 @@ it('can start a span resuming a propagated trace', function () {
     expect($span->spanId)->not()->toBeNull();
 });
 
-it('can trash a trace and all its spans', function () {
+it('can unsample a trace and all its spans', function () {
     $tracer = setupFlare(alwaysSampleTraces: true)->tracer;
 
     $tracer->startTrace();
 
     $span = $tracer->startSpan('Some span');
 
-    $tracer->trashTrace();
+    $tracer->unsample();
 
-    expect($tracer->currentTraceId())->not()->toBe($span->traceId);
-    expect($tracer->currentSpanId())->not()->toBe($span->spanId);
+    expect($tracer->currentTraceId())->toBe($span->traceId);
+    expect($tracer->currentSpanId())->toBe($span->spanId);
     expect($tracer->sampling)->toBeFalse();
+    expect($tracer->currentTrace())->toBeEmpty();
 });
 
 it('can run a span using closure', function () {

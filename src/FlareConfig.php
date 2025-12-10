@@ -330,7 +330,7 @@ class FlareConfig
     }
 
     public function collectErrorsWithTraces(
-        bool $withTraces = true,
+        bool $withTraces = Tracer::DEFAULT_COLLECT_ERRORS_WITH_TRACES,
     ): static {
         return $this->addCollect(CollectType::ErrorsWithTraces, [
             'with_traces' => $withTraces,
