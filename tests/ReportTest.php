@@ -77,8 +77,7 @@ it('will keep sent reports', function () {
 });
 
 it('can add a report to a trace', function () {
-    FakeIds::setup()->nextUuid('fake-uuid');
-    ;
+    FakeIds::setup()->nextUuid('fake-uuid');;
 
     $flare = setupFlare(
         fn (FlareConfig $config) => $config->collectErrorsWithTraces()->collectCommands()->trace()->alwaysSampleTraces()
@@ -97,7 +96,7 @@ it('can add a report to a trace', function () {
         ->expectType(SpanEventType::Exception)
         ->expectAttribute('exception.message', 'We failed')
         ->expectAttribute('exception.type', 'Spatie\FlareClient\Tests\TestClasses\ExceptionWithContext')
-        ->expectAttribute('exception.handled', null)
+        ->expectMissingAttribute('exception.handled', null) // Removed due to otel
         ->expectAttribute('exception.id', 'fake-uuid');
 });
 

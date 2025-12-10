@@ -28,7 +28,7 @@ use Spatie\FlareClient\Support\Recorders;
 use Spatie\FlareClient\Support\Redactor;
 use Spatie\FlareClient\Support\SentReports;
 use Spatie\FlareClient\Support\Telemetry;
-use Spatie\FlareClient\Support\Tests\TestPayloads;
+use Spatie\FlareClient\Support\Tester;
 use Spatie\FlareClient\Time\Time;
 
 class FlareProvider
@@ -254,7 +254,7 @@ class FlareProvider
             recorders: $this->container->get(Recorders::class),
         ));
 
-        $this->container->singleton(TestPayloads::class, fn () => new TestPayloads(
+        $this->container->singleton(Tester::class, fn () => new Tester(
             api: $this->container->get(Api::class),
             ids: $this->container->get(Ids::class),
             time: $this->container->get(Time::class),

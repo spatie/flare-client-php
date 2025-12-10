@@ -26,6 +26,7 @@ class Recorders
             /** @var class-string<Recorder> $recorderClass */
             $type = $recorderClass::type();
 
+
             $recorder = $container->get($recorderClass);
 
             $this->recorders[is_string($type) ? $type : $type->value] = $recorder;

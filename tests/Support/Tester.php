@@ -3,7 +3,7 @@
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Support\Container;
-use Spatie\FlareClient\Support\Tests\TestPayloads;
+use Spatie\FlareClient\Support\Tester;
 use Spatie\FlareClient\Tests\Shared\FakeApi;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
 
@@ -14,7 +14,7 @@ beforeEach(function () {
 it('can report an exception', function () {
     setupFlare();
 
-    $testPayloads = Container::instance()->get(TestPayloads::class);
+    $testPayloads = Container::instance()->get(Tester::class);
 
     $testPayloads->report();
 
@@ -26,7 +26,7 @@ it('can report an exception', function () {
 it('can send a trace', function () {
     setupFlare(alwaysSampleTraces: true);
 
-    $testPayloads = Container::instance()->get(TestPayloads::class);
+    $testPayloads = Container::instance()->get(Tester::class);
 
     $testPayloads->trace();
 
@@ -70,7 +70,7 @@ it('can send a trace', function () {
 it('can send logs', function () {
     setupFlare();
 
-    $testPayloads = Container::instance()->get(TestPayloads::class);
+    $testPayloads = Container::instance()->get(Tester::class);
 
     $testPayloads->log();
 

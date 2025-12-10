@@ -1,6 +1,6 @@
 <?php
 
-namespace Spatie\FlareClient\Support\Tests;
+namespace Spatie\FlareClient\Support;
 
 use Exception;
 use Monolog\Level;
@@ -14,14 +14,11 @@ use Spatie\FlareClient\ReportFactory;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Sampling\AlwaysSampler;
 use Spatie\FlareClient\Spans\Span;
-use Spatie\FlareClient\Support\Ids;
-use Spatie\FlareClient\Support\Recorders;
-use Spatie\FlareClient\Support\SeverityMapper;
 use Spatie\FlareClient\Time\Time;
 use Spatie\FlareClient\Tracer;
 use Throwable;
 
-class TestPayloads
+class Tester
 {
     public function __construct(
         protected Api $api,
