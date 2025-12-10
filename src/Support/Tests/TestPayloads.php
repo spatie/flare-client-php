@@ -138,7 +138,6 @@ class TestPayloads
         );
     }
 
-
     /** @return array<int, array{timeUnixNano: int, observedTimeUnixNano: int, traceId?: string, spanId?: string, flags?: string, severityText?: string, severityNumber?: int, body: mixed, attributes?: array<string, mixed>}> */
     public function buildLog(): array
     {
@@ -207,7 +206,6 @@ class TestPayloads
                     $base->disableQueue
                 );
             }
-
 
             protected function sendEntity(FlareEntityType $type, mixed $payload, bool $immediately, bool $test = false): void
             {
