@@ -20,6 +20,7 @@ class Lifecycle
     /**
      * @param Closure():bool|null $isUsingSubtasksClosure
      * @param Closure(bool):bool|null $shouldMakeSamplingDecisionClosure
+     * @param Closure():void|null $subtaskEndedClosure
      */
     public function __construct(
         protected Api $api,
@@ -33,6 +34,7 @@ class Lifecycle
         protected LifecycleStage $stage = LifecycleStage::Idle,
         protected ?Closure $isUsingSubtasksClosure = null,
         protected ?Closure $shouldMakeSamplingDecisionClosure = null,
+        protected ?Closure $subtaskEndedClosure = null,
     ) {
         $this->usesSubtasks = $this->isUsingSubtasks();
 
@@ -269,6 +271,10 @@ class Lifecycle
 
         $this->flush();
         $this->memory->resetPeaMemoryUsage();
+
+        if ($this->subtaskEndedClosure) {
+            ($this->subtaskEndedClosure)();
+        }
     }
 
     public function terminating(
