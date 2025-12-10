@@ -74,39 +74,53 @@ class FlareConfig
      * @param class-string<CollectsResolver> $collectsResolver
      */
     public function __construct(
+        // Flare
         public ?string $apiToken = null,
         public string $baseUrl = Api::BASE_URL,
         public array $collects = [],
-        public ?int $reportErrorLevels = null,
-        public ?Closure $filterExceptionsCallable = null,
-        public ?Closure $filterReportsCallable = null,
+
+        // App
         public ?string $applicationPath = null,
         public string $applicationName = 'PHP application',
         public ?string $applicationVersion = null,
         public ?string $applicationStage = null,
-        public string $sender = CurlSender::class,
-        public array $senderConfig = [],
-        public string $solutionsProviderRepository = SolutionProviderRepository::class,
-        public bool $trace = true,
-        public bool $log = false,
+
+        // Censoring
+        public bool $censorClientIps = false,
+        public array $censorHeaders = [],
+        public array $censorBodyFields = [],
+
+        // Reporting
         public bool $report = true,
-        public string $sampler = RateSampler::class,
-        public array $samplerConfig = [],
+        public ?int $reportErrorLevels = null,
+        public ?Closure $filterExceptionsCallable = null,
+        public ?Closure $filterReportsCallable = null,
+        public array $overriddenGroupings = [],
+
+        // Tracing
+        public bool $trace = true,
         public ?array $traceLimits = null,
         public ?Closure $configureScopeCallable = null,
         public ?Closure $configureResourceCallable = null,
         public ?Closure $configureSpansCallable = null,
         public ?Closure $configureSpanEventsCallable = null,
-        public bool $censorClientIps = false,
-        public array $censorHeaders = [],
-        public array $censorBodyFields = [],
+
+        // Logging
+        public bool $log = false,
+        public ?Level $minimalLogLevel = null,
+
+        // Client Infrastructure
+        public string $sender = CurlSender::class,
+        public array $senderConfig = [],
+        public string $solutionsProviderRepository = SolutionProviderRepository::class,
+        public string $sampler = RateSampler::class,
+        public array $samplerConfig = [],
         public string $userAttributesProvider = EmptyUserAttributesProvider::class,
         public string $exporter = OpenTelemetryJsonExporter::class,
         public string $collectsResolver = CollectsResolver::class,
         public string $ids = Ids::class,
         public string $time = SystemTime::class,
         public string $memory = SystemMemory::class,
-        public array $overriddenGroupings = [],
         public string $api = Api::class,
     ) {
     }
@@ -627,8 +641,10 @@ class FlareConfig
 
     public function log(
         bool $log = true,
+        ?Level $minimalLevel = null,
     ): static {
         $this->log = $log;
+        $this->minimalLogLevel = $minimalLevel;
 
         return $this;
     }

@@ -33,6 +33,18 @@ use Throwable;
 
 class Flare
 {
+    // TODO: merge main and provide better test infrastructure
+    // TODO: add tests to laravel-flare using workbench, checking real scenarios
+    // TODO: make sure we've got a good UPGRADE guide
+    // TODO: rewrite docs for these new releases
+    // TODO: update install instructions on Flare
+    // TODO: check current GH PR's and issues if we need to make changes
+    // TODO: quick tests on Vapor
+    // TODO: make sure in the docs that we explain how log levels influence each other, e.g. logger minimal level dictates everything, exception log level should always be equal or higher
+    // TODO (nice to have): add ability to ignore certain commands and requests like we do with jobs
+    // TODO (nice to have): dynamic sampling based upon context would be cool
+    // TODO (less important): write a framework integration guide
+
     public function __construct(
         public readonly Lifecycle $lifecycle,
         public readonly Tracer $tracer,

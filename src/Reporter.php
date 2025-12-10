@@ -98,6 +98,7 @@ class Reporter
 
         $this->tracer->gracefullyEndSpans();
 
+
         if ($this->filterReportsCallable && ($this->filterReportsCallable)($report) === false) {
             return null;
         }

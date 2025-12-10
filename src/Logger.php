@@ -19,13 +19,19 @@ class Logger
     /** @var array<int, LogRecord> */
     protected array $logs = [];
 
+    protected ?int $minimalSeverityNumber = null;
+
     public function __construct(
         protected readonly Api $api,
         protected readonly Time $time,
         protected readonly Tracer $tracer,
         protected readonly Recorders $recorders,
         protected readonly bool $disabled,
+        ?Level $minimalLogLevel
     ) {
+        if ($minimalLogLevel) {
+            $this->minimalSeverityNumber = SeverityMapper::fromMonolog($minimalLogLevel);
+        }
     }
 
     public function record(
@@ -36,7 +42,7 @@ class Logger
     ): void {
         $this->log(
             body: $message,
-            severityText:  strtolower($level->getName()),
+            severityText: strtolower($level->getName()),
             severityNumber: SeverityMapper::fromMonolog($level),
             attributes: [
                 'log.context' => $context,
@@ -57,6 +63,14 @@ class Logger
         ?string $flags = null,
     ): void {
         if ($this->disabled) {
+            return;
+        }
+
+        if ($this->minimalSeverityNumber && $severityNumber === null) {
+            return;
+        }
+
+        if ($this->minimalSeverityNumber && $severityNumber < $this->minimalSeverityNumber) {
             return;
         }
 

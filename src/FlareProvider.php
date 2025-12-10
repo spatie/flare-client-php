@@ -199,6 +199,7 @@ class FlareProvider
             tracer: $this->container->get(Tracer::class),
             recorders: $this->container->get(Recorders::class),
             disabled: $this->config->log === false || $this->mode === FlareMode::Disabled,
+            minimalLogLevel: $this->config->minimalLogLevel,
         ));
 
         $this->container->singleton(ReportFactory::class, fn () => new ReportFactory(

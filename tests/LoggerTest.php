@@ -1,5 +1,6 @@
 <?php
 
+use Monolog\Level;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Tests\Shared\FakeApi;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
@@ -127,4 +128,39 @@ it('will add context from the context recorder', function () {
             'user_id' => 123,
             'session_id' => 'abc',
         ]);
+});
+
+it('can set a minimal severity number for logs', function () {
+    $flare = setupFlare(fn (FlareConfig $config) => $config->log(minimalLevel: Level::Error));
+
+    $flare->logger->record('Debug message', Level::Debug);
+    $flare->logger->record('Info message', Level::Info);
+    $flare->logger->record('Notice message', Level::Notice);
+    $flare->logger->record('Warning message', Level::Warning);
+    $flare->logger->record('Error message', Level::Error);
+    $flare->logger->record('Critical message', Level::Critical);
+    $flare->logger->record('Alert message', Level::Alert);
+    $flare->logger->record('Emergency message', Level::Emergency);
+
+    $flare->logger->flush();
+
+    FakeApi::assertSent(logs: 1);
+
+    $log = FakeApi::lastLog()->expectLogCount(4);
+
+    $log
+        ->expectLog(0)
+        ->expectBody('Error message');
+
+    $log
+        ->expectLog(1)
+        ->expectBody('Critical message');
+
+    $log
+        ->expectLog(2)
+        ->expectBody('Alert message');
+
+    $log
+        ->expectLog(3)
+        ->expectBody('Emergency message');
 });
