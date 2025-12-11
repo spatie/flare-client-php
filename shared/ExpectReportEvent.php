@@ -20,7 +20,13 @@ class ExpectReportEvent
     public function expectType(
         FlareSpanType|FlareSpanEventType $type
     ): self {
-        expect($this->event['type'])->toBe($type->value);
+        $type = $this->attributes()['flare.span_type'];
+
+        if(is_object($type)) {
+            $type = $type->value;
+        }
+
+        expect($type)->toEqual($type->value);
 
         return $this;
     }
