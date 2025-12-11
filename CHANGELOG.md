@@ -2,6 +2,14 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 2.7.0 - 2025-12-11
+
+### What's Changed
+
+* Add exception `code` to report by @AlexVanderbist in https://github.com/spatie/flare-client-php/pull/60
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/2.6.0...2.7.0
+
 ## 2.6.0 - 2025-11-28
 
 ### What's Changed
