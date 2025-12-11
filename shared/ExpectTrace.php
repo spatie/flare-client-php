@@ -78,6 +78,8 @@ class ExpectTrace
             expect($expectSpan->span['endTimeUnixNano'] ?? null)->not->toBeNull("Span with ID {$expectSpan->span['spanId']} is not closed.");
             expect($expectSpan->span['startTimeUnixNano'] ?? null)->not->toBeNull("Span with ID {$expectSpan->span['spanId']} is not closed.");
         }
+
+        return $this;
     }
 
     /**
