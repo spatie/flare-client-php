@@ -72,17 +72,25 @@ class ExpectTrace
         return ExpectScope::create($this->trace['resourceSpans'][0]['scopeSpans'][0]['scope']);
     }
 
+    public function expectAllSpansClosed(): self
+    {
+        foreach ($this->expectSpans as $expectSpan) {
+            expect($expectSpan->span['endTimeUnixNano'] ?? null)->not->toBeNull("Span with ID {$expectSpan->span['spanId']} is not closed.");
+            expect($expectSpan->span['startTimeUnixNano'] ?? null)->not->toBeNull("Span with ID {$expectSpan->span['spanId']} is not closed.");
+        }
+    }
+
     /**
      * @param (Closure(&$spanIndex int, $currentSpan ExpectSpan):void)|null $applicationSpans
      * @param (Closure(&$spanIndex int, $currentSpan ExpectSpan):void)|null $terminatingSpans
      */
-    public function expectLifecyle(
+    public function expectLifecycle(
         bool $registration = true,
         bool $boot = true,
         Closure|null $applicationSpans = null,
         bool $terminating = true,
         Closure|null $terminatingSpans = null,
-    ) {
+    ): self {
         $spanIndex = 0;
 
         $applicationSpan = $this->expectSpan($spanIndex++)
@@ -129,6 +137,8 @@ class ExpectTrace
             $terminatingSpans($spanIndex);
         }
 
+        $this->expectAllSpansClosed();
+
         return $this;
     }
 
@@ -147,8 +157,8 @@ class ExpectTrace
         bool $globalAfterMiddleware = true,
         bool $terminating = true,
         Closure|null $terminatingSpans = null,
-    ) {
-        return $this->expectLifecyle(
+    ): self {
+        return $this->expectLifecycle(
             registration: $registration,
             boot: $boot,
             applicationSpans: function (&$spanIndex, $applicationSpan) use (
