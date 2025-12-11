@@ -5,6 +5,7 @@ namespace Spatie\FlareClient\Recorders\RequestRecorder;
 use Closure;
 use Psr\Container\ContainerInterface;
 use Spatie\FlareClient\AttributesProviders\RequestAttributesProvider;
+use Spatie\FlareClient\AttributesProviders\ResponseAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
@@ -14,6 +15,7 @@ use Spatie\FlareClient\Support\BackTracer;
 use Spatie\FlareClient\Support\Redactor;
 use Spatie\FlareClient\Tracer;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class RequestRecorder extends SpansRecorder
 {
@@ -31,6 +33,9 @@ class RequestRecorder extends SpansRecorder
             new RequestAttributesProvider(
                 $container->get(Redactor::class),
                 $container->get(UserAttributesProvider::class)
+            ),
+            new ResponseAttributesProvider(
+                $container->get(Redactor::class)
             )
         );
     }
@@ -40,6 +45,7 @@ class RequestRecorder extends SpansRecorder
         BackTracer $backTracer,
         array $config,
         protected RequestAttributesProvider $requestAttributesProvider,
+        protected ResponseAttributesProvider $responseAttributesProvider,
     ) {
         parent::__construct($tracer, $backTracer, $config);
     }
@@ -81,16 +87,13 @@ class RequestRecorder extends SpansRecorder
     }
 
     public function recordEnd(
-        ?int $responseStatusCode = null,
-        ?int $responseBodySize = null,
+        ?Response $response = null,
         array $attributes = [],
     ): ?Span {
-        if ($responseStatusCode) {
-            $attributes['http.response.status_code'] = $responseStatusCode;
-        }
+        if ($response) {
+            $responseAttributes = $this->responseAttributesProvider->toArray($response);
 
-        if ($responseBodySize) {
-            $attributes['http.response.body.size'] = $responseBodySize;
+            $attributes = [...$attributes, ...$responseAttributes];
         }
 
         return $this->endSpan(additionalAttributes: $attributes, includeMemoryUsage: true);

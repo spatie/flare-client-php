@@ -6,5 +6,5 @@ interface Memory
 {
     public function getPeakMemoryUsage(): int;
 
-    public function resetPeaMemoryUsage(): void;
+    public function resetPeakMemoryUsage(): void;
 }

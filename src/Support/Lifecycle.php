@@ -270,7 +270,7 @@ class Lifecycle
         }
 
         $this->flush();
-        $this->memory->resetPeaMemoryUsage();
+        $this->memory->resetPeakMemoryUsage();
 
         if ($this->subtaskEndedClosure) {
             ($this->subtaskEndedClosure)();

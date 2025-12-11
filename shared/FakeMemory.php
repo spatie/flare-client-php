@@ -35,7 +35,7 @@ class FakeMemory implements Memory
         return array_shift(static::$nextMemoryUsages) ?? throw new Exception("No more fake memory usages left");
     }
 
-    public function resetPeaMemoryUsage(): void
+    public function resetPeakMemoryUsage(): void
     {
 
     }

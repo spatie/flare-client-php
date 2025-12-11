@@ -6,6 +6,7 @@ use Closure;
 use DateTimeInterface;
 use Exception;
 use Spatie\FlareClient\Concerns\HasAttributes;
+use Spatie\FlareClient\Contracts\FlareSpanEventType;
 use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Contracts\WithAttributes;
 use Spatie\FlareClient\Spans\Span;
@@ -20,6 +21,9 @@ class ExpectSpan
 
     public ?string $type;
 
+    /** @var array<int, ExpectSpanEvent> */
+    protected array $expectSpanEvents;
+
     public static function fromSpan(array $span): self
     {
         return new self($span);
@@ -29,6 +33,11 @@ class ExpectSpan
         public array $span,
     ) {
         $this->type =  $this->attributes()['flare.span_type'] ?? null;
+
+        $this->expectSpanEvents = array_map(
+            fn (array $spanEvent) => new ExpectSpanEvent($spanEvent),
+            $this->span['events'] ?? []
+        );
     }
 
     public function expectName(string $name): self
@@ -122,7 +131,26 @@ class ExpectSpan
         return new ExpectSpanEvent($this->span['events'][$index]);
     }
 
-    protected function attributes(): array
+    public function expectSpanEvents(FlareSpanEventType $type, Closure ...$closures): self
+    {
+        $eventsWithType = array_values(array_filter(
+            $this->expectSpanEvents,
+            fn (ExpectSpanEvent $event) => $event->type === $type->value
+        ));
+
+        $expectedCount = count($closures);
+        $realCount = count($eventsWithType);
+
+        expect($eventsWithType)->toHaveCount($expectedCount, "Expected to find {$expectedCount} span events of type {$type->value} but found {$realCount}.");
+
+        foreach ($closures as $i => $closure) {
+            $closure($eventsWithType[$i]);
+        }
+
+        return $this;
+    }
+
+    public function attributes(): array
     {
         return (new OpenTelemetryAttributeMapper)->attributesToPHP($this->span['attributes']);
     }

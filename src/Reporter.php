@@ -262,7 +262,7 @@ class Reporter
                 'flare.span_event_type' => SpanEventType::Exception,
                 'exception.message' => $throwable->getMessage(),
                 'exception.type' => $throwableClass,
-                'exception.handled' => $handled,
+                'exception.handled' => $report->handled ?? $handled,
                 'exception.id' => $report->trackingUuid,
             ]
         );

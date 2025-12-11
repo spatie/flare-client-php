@@ -21,7 +21,7 @@ class ExpectResource
     ) {
     }
 
-    protected function attributes(): array
+    public function attributes(): array
     {
         return (new OpenTelemetryAttributeMapper())->attributesToPHP($this->resource['attributes']);
     }

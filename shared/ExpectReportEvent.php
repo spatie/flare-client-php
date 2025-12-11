@@ -20,7 +20,7 @@ class ExpectReportEvent
     public function expectType(
         FlareSpanType|FlareSpanEventType $type
     ): self {
-        expect($this->event['type'])->toBe($type);
+        expect($this->event['type'])->toBe($type->value);
 
         return $this;
     }
@@ -50,7 +50,7 @@ class ExpectReportEvent
         return $this->expectEnd(null);
     }
 
-    protected function attributes(): array
+    public function attributes(): array
     {
         return $this->event['attributes'];
     }

@@ -34,6 +34,7 @@ use Throwable;
 class Flare
 {
     // TODO: add tests to laravel-flare using workbench, checking real scenarios
+    // TODO: agent
     // TODO: make sure we've got a good UPGRADE guide
     // TODO: rewrite docs for these new releases
     // TODO: update install instructions on Flare

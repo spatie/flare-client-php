@@ -12,6 +12,8 @@ class ExpectSpanEvent
 {
     use ExpectAttributes;
 
+    public ?string $type;
+
     public static function create(array $spanEvent): self
     {
         return new self($spanEvent);
@@ -20,6 +22,7 @@ class ExpectSpanEvent
     public function __construct(
         public array $spanEvent
     ) {
+        $this->type =  $this->attributes()['flare.span_event_type'] ?? null;
     }
 
     public function expectName(string $name): self
@@ -36,7 +39,7 @@ class ExpectSpanEvent
         return $this;
     }
 
-    protected function attributes(): array
+    public function attributes(): array
     {
         return (new OpenTelemetryAttributeMapper())->attributesToPHP($this->spanEvent['attributes']);
     }

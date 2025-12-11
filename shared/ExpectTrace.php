@@ -32,14 +32,41 @@ class ExpectTrace
             return $this->expectSpans[$index];
         }
 
-        $spansWithType = array_filter(
-            $this->expectSpans,
-            fn (ExpectSpan $span) => $span->type === $index->value,
+        $expectedSpan = null;
+
+        $this->expectSpans(
+            $index,
+            function (ExpectSpan $span) use (&$expectedSpan) {
+                $expectedSpan = $span;
+            }
         );
 
-        expect($spansWithType)->toHaveCount(1, "More than one or no span with type {$index->value} found.");
+        return $expectedSpan;
+    }
 
-        return array_values($spansWithType)[0];
+    /**
+     * @param Closure(ExpectSpan):void ...$closures
+     */
+    public function expectSpans(
+        FlareSpanType $type,
+        Closure ...$closures
+    ): self
+    {
+        $spansWithType = array_values(array_filter(
+            $this->expectSpans,
+            fn (ExpectSpan $span) => $span->type === $type->value
+        ));
+
+        $expectedCount = count($closures);
+        $realCount = count($spansWithType);
+
+        expect($spansWithType)->toHaveCount($expectedCount, "Expected to find {$expectedCount} spans of type {$type->value} but found {$realCount}.");
+
+        foreach ($closures as $i => $closure) {
+            $closure($spansWithType[$i]);
+        }
+
+        return $this;
     }
 
     public function expectSpanCount(int $count, ?FlareSpanType $type = null): self
@@ -133,10 +160,12 @@ class ExpectTrace
             $terminatingSpan = $this->expectSpan($spanIndex)
                 ->expectParentId($applicationSpan)
                 ->expectType(SpanType::ApplicationTerminating);
-        }
 
-        if ($terminatingSpans && $terminating) {
-            $terminatingSpans($spanIndex);
+            if($terminatingSpans){
+                $spanIndex++;
+
+                $terminatingSpans($spanIndex, $terminatingSpan);
+            }
         }
 
         $this->expectAllSpansClosed();

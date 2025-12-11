@@ -130,7 +130,7 @@ class ExpectReport
         return $this->report;
     }
 
-    protected function attributes(): array
+    public function attributes(): array
     {
         return $this->report['attributes'];
     }

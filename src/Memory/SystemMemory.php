@@ -9,7 +9,7 @@ class SystemMemory implements Memory
         return memory_get_peak_usage();
     }
 
-    public function resetPeaMemoryUsage(): void
+    public function resetPeakMemoryUsage(): void
     {
         memory_reset_peak_usage();
     }

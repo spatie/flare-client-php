@@ -6,7 +6,7 @@ use Closure;
 
 trait ExpectAttributes
 {
-    abstract protected function attributes(): array;
+    abstract public function attributes(): array;
 
     public function expectAttributesCount(int $count): self
     {

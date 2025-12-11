@@ -19,7 +19,7 @@ class ExpectScope
     ) {
     }
 
-    protected function attributes(): array
+    public function attributes(): array
     {
         return (new OpenTelemetryAttributeMapper())->attributesToPHP($this->scope['attributes']);
     }

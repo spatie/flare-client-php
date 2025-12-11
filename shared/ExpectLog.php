@@ -95,7 +95,7 @@ class ExpectLog
         return $this;
     }
 
-    protected function attributes(): array
+    public function attributes(): array
     {
         if (! array_key_exists('attributes', $this->log)) {
             return [];
