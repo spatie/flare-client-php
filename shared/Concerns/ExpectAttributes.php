@@ -2,6 +2,8 @@
 
 namespace Spatie\FlareClient\Tests\Shared\Concerns;
 
+use Closure;
+
 trait ExpectAttributes
 {
     abstract protected function attributes(): array;
@@ -15,6 +17,12 @@ trait ExpectAttributes
 
     public function expectAttribute(string $key, mixed $value): self
     {
+        if($value instanceof Closure){
+            $value($this->attributes()[$key]);
+
+            return $this;
+        }
+
         expect($this->attributes()[$key])->toBe($value);
 
         return $this;
