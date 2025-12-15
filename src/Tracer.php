@@ -56,6 +56,7 @@ class Tracer
         public ?Closure $configureSpansCallable = null,
         public ?Closure $configureSpanEventsCallable = null,
         public bool $sampling = false,
+        public bool $pausedSampling = false,
         public readonly bool $disabled = false,
         protected Closure|null $gracefulSpanEnderClosure = null,
     ) {
@@ -180,6 +181,26 @@ class Tracer
         $this->currentSpanIdAvailable = true;
         $this->sampling = false;
         $this->spans = [];
+    }
+
+    public function pauseSampling()
+    {
+        if ($this->sampling === false) {
+            return;
+        }
+
+        $this->sampling = false;
+        $this->pausedSampling = true;
+    }
+
+    public function resumeSampling()
+    {
+        if ($this->pausedSampling === false) {
+            return;
+        }
+
+        $this->sampling = true;
+        $this->pausedSampling = false;
     }
 
     public function isSampling(): bool

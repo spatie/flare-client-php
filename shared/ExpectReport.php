@@ -4,6 +4,8 @@ namespace Spatie\FlareClient\Tests\Shared;
 
 use Closure;
 use Exception;
+use Spatie\FlareClient\Contracts\FlareSpanEventType;
+use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Contracts\WithAttributes;
 use Spatie\FlareClient\Enums\OverriddenGrouping;
 use Spatie\FlareClient\ReportFactory;
@@ -12,6 +14,9 @@ use Spatie\FlareClient\Tests\Shared\Concerns\ExpectAttributes;
 class ExpectReport
 {
     use ExpectAttributes;
+
+    /** @var array<int, ExpectReportEvent> */
+    public array $expectReportEvents;
 
     public static function create(array|ReportFactory $report): self
     {
@@ -31,6 +36,10 @@ class ExpectReport
     public function __construct(
         protected array $report,
     ) {
+        $this->expectReportEvents = array_map(
+            fn (array $event) => new ExpectReportEvent($event),
+            $this->report['events'] ?? []
+        );
     }
 
     public function expectExceptionClass(string $exceptionClass): self
@@ -82,17 +91,56 @@ class ExpectReport
         return $this;
     }
 
-    public function expectEventCount(int $count): self
+    public function expectEventCount(int $count, null|FlareSpanType|FlareSpanEventType $type = null): self
     {
-        expect($this->report['events'])->toHaveCount($count);
+        $events = $this->expectReportEvents;
+
+        if ($type !== null) {
+            $events = array_filter($events, fn (ExpectReportEvent $span) => $span->type === $type->value);
+        }
+
+        expect($events)->toHaveCount($count);
 
         return $this;
     }
 
-    public function expectEvent(int $index): ExpectReportEvent
+    public function expectEvent(int|FlareSpanType|FlareSpanEventType $index): ExpectReportEvent
     {
-        return new ExpectReportEvent($this->report['events'][$index]);
+        if (is_int($index)) {
+            return $this->expectReportEvents[$index];
+        }
+
+        $expectedSpan = null;
+
+        $this->expectEvents(
+            $index,
+            function (ExpectReportEvent $event) use (&$expectedSpan) {
+                $expectedSpan = $event;
+            }
+        );
+
+        return $expectedSpan;
     }
+
+    public function expectEvents(FlareSpanType|FlareSpanEventType $type, Closure ...$closures): self
+    {
+        $eventsWithType = array_values(array_filter(
+            $this->expectReportEvents,
+            fn (ExpectReportEvent $event) => $event->type === $type->value
+        ));
+
+        $expectedCount = count($closures);
+        $realCount = count($eventsWithType);
+
+        expect($eventsWithType)->toHaveCount($expectedCount, "Expected to find {$expectedCount} report events of type {$type->value} but found {$realCount}.");
+
+        foreach ($closures as $i => $closure) {
+            $closure($eventsWithType[$i]);
+        }
+
+        return $this;
+    }
+
 
     public function expectStacktraceCount(int $count): self
     {

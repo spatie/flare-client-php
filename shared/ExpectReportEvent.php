@@ -12,21 +12,24 @@ class ExpectReportEvent
 {
     use ExpectAttributes;
 
+    public string $type;
+
     public function __construct(
-        public array $event
+        public array $event,
     ) {
+        $type = $this->event['type'];
+
+        if(is_object($type)) {
+            $type = $type->value;
+        }
+
+        $this->type = $type;
     }
 
     public function expectType(
         FlareSpanType|FlareSpanEventType $type
     ): self {
-        $spanEventType = $this->event['type'];
-
-        if(is_object($spanEventType)) {
-            $spanEventType = $spanEventType->value;
-        }
-
-        expect($spanEventType)->toEqual($type->value);
+        expect($this->type)->toEqual($type->value);
 
         return $this;
     }

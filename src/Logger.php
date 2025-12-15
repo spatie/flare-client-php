@@ -122,5 +122,7 @@ class Logger
         }
 
         $this->api->log($this->logs);
+
+        $this->logs = [];
     }
 }

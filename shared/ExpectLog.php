@@ -74,11 +74,15 @@ class ExpectLog
     public function expectSampling(): self
     {
         expect($this->log['flags'])->toBe('01');
+
+        return $this;
     }
 
     public function expectNotSampling(): self
     {
         expect($this->log['flags'])->toBe('00');
+
+        return $this;
     }
 
     public function expectSeverityText(string $severityText): self
@@ -91,6 +95,14 @@ class ExpectLog
     public function expectSeverityNumber(int $severityNumber): self
     {
         expect($this->log['severityNumber'])->toBe($severityNumber);
+
+        return $this;
+    }
+
+    public function expectMatchesSpan(ExpectSpan $expectSpan): self
+    {
+        $this->expectTraceId($expectSpan->span['traceId']);
+        $this->expectSpanId($expectSpan->span['spanId']);
 
         return $this;
     }

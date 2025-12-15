@@ -118,17 +118,35 @@ class ExpectSpan
         return $this;
     }
 
-    public function expectSpanEventCount(int $count): self
+    public function expectSpanEventCount(int $count, ?FlareSpanEventType $type = null): self
     {
-        expect($this->span['events'])->toHaveCount($count);
+        $spans = $this->expectSpanEvents;
+
+        if ($type !== null) {
+            $spans = array_filter($spans, fn (ExpectSpanEvent $span) => $span->type === $type->value);
+        }
+
+        expect($spans)->toHaveCount($count);
 
         return $this;
     }
 
-    public function expectSpanEvent(
-        int $index,
-    ): ExpectSpanEvent {
-        return new ExpectSpanEvent($this->span['events'][$index]);
+    public function expectSpanEvent(int|FlareSpanEventType $index): ExpectSpanEvent
+    {
+        if (is_int($index)) {
+            return $this->expectSpanEvents[$index];
+        }
+
+        $expectedSpan = null;
+
+        $this->expectSpanEvents(
+            $index,
+            function (ExpectSpanEvent $event) use (&$expectedSpan) {
+                $expectedSpan = $event;
+            }
+        );
+
+        return $expectedSpan;
     }
 
     public function expectSpanEvents(FlareSpanEventType $type, Closure ...$closures): self

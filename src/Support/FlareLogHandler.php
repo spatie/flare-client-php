@@ -27,7 +27,6 @@ class FlareLogHandler extends AbstractProcessingHandler
             severityText: strtolower($record->level->getName()),
             severityNumber: SeverityMapper::fromSyslog($record->level->getName()),
             attributes: [
-                'log.channel' => $record->channel,
                 'log.context' => $record->context,
             ]
         );
