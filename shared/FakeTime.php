@@ -34,7 +34,7 @@ class FakeTime implements Time
 
     public function getCurrentTime(): int
     {
-        return static::$time; // Nano seconds
+        return static::$time ?? 0; // Nano seconds
     }
 
     public static function setCurrentTime(string|DateTimeImmutable|int $dateTime): void
