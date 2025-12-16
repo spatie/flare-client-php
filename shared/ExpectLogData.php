@@ -4,6 +4,9 @@ namespace Spatie\FlareClient\Tests\Shared;
 
 class ExpectLogData
 {
+    /** @var array<ExpectLog> */
+    public array $expectLogs;
+
     public static function create(array $logData): self
     {
         return new self($logData);
@@ -12,23 +15,27 @@ class ExpectLogData
     public function __construct(
         public array $logData
     ) {
+        $this->expectLogs = array_map(
+            fn (array $log) => new ExpectLog($log),
+            $this->logData['resourceLogs'][0]['scopeLogs'][0]['logRecords'],
+        );
     }
 
     public function expectLog(int $index): ExpectLog
     {
-        return new ExpectLog($this->logData['resourceLogs'][0]['scopeLogs'][0]['logRecords'][$index]);
+        return $this->expectLogs[$index];
     }
 
     public function expectLogCount(int $count): self
     {
-        expect($this->logData['resourceLogs'][0]['scopeLogs'][0]['logRecords'])->toHaveCount($count);
+        expect($this->expectLogs)->toHaveCount($count);
 
         return $this;
     }
 
     public function expectNoLogs(): self
     {
-        expect($this->logData['resourceLogs'][0]['scopeLogs'][0]['logRecords'])->toBeEmpty();
+        expect($this->expectLogs)->toBeEmpty();
 
         return $this;
     }
@@ -46,5 +53,10 @@ class ExpectLogData
     public function toArray(): array
     {
         return $this->logData;
+    }
+
+    public function toString(): string
+    {
+        return implode(PHP_EOL, array_map(fn(ExpectLog $log) => $log->toString(), $this->expectLogs));
     }
 }

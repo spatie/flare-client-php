@@ -14,13 +14,9 @@ class ExpectSpanEvent
 
     public ?string $type;
 
-    public static function create(array $spanEvent): self
-    {
-        return new self($spanEvent);
-    }
-
     public function __construct(
-        public array $spanEvent
+        public array $spanEvent,
+        public int $depth,
     ) {
         $this->type =  $this->attributes()['flare.span_event_type'] ?? null;
     }
@@ -42,5 +38,18 @@ class ExpectSpanEvent
     public function attributes(): array
     {
         return (new OpenTelemetryAttributeMapper())->attributesToPHP($this->spanEvent['attributes']);
+    }
+
+    public function toString(): string
+    {
+        $indentPrefix = $this->getIndentPrefix($this->depth);
+
+        $output = [
+            "{$indentPrefix}◆ {$this->spanEvent['name']} - " . $this->type ?? 'undefined type'
+        ];
+
+        array_push($output, ...$this->attributesToStrings($this->depth, prefix: '  •'));
+
+        return implode(PHP_EOL, $output);
     }
 }

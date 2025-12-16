@@ -6,6 +6,7 @@ use Closure;
 use Exception;
 use Spatie\FlareClient\Contracts\FlareSpanType;
 use Spatie\FlareClient\Enums\SpanType;
+use Stringable;
 
 class ExpectTrace
 {
@@ -20,9 +21,11 @@ class ExpectTrace
     public function __construct(
         public array $trace
     ) {
+        $spans = $this->trace['resourceSpans'][0]['scopeSpans'][0]['spans'];
+
         $this->expectSpans = array_map(
-            fn (array $span) => new ExpectSpan($span),
-            $this->trace['resourceSpans'][0]['scopeSpans'][0]['spans'],
+            fn (array $span) => new ExpectSpan($span, $this->getIndentLevel($spans, $span['parentSpanId'] ?? null)),
+            $spans,
         );
     }
 
@@ -259,63 +262,23 @@ class ExpectTrace
         );
     }
 
-    public function dump(): self
-    {
-        $output = [];
-
-        foreach ($this->expectSpans as $expectSpan) {
-            $parentId = $expectSpan->span['parentSpanId'] ?? null;
-            $name = $expectSpan->span['name'];
-            $type = $expectSpan->type;
-
-            $indent = $this->getIndentLevel($parentId);
-            $prefix = str_repeat('  ', $indent);
-
-            if ($indent > 0) {
-                $prefix .= '├─ ';
-            }
-
-            $output[] = "{$prefix}{$name}" . ($type ? " ({$type})" : '');
-
-            $filteredAttributes = array_filter(
-                $expectSpan->attributes(),
-                fn ($key) => ! in_array($key, ['flare.span_type', 'flare.span_event_type']),
-                ARRAY_FILTER_USE_KEY
-            );
-
-            if (! empty($filteredAttributes)) {
-                $attributePrefix = str_repeat('  ', $indent);
-                if ($indent > 0) {
-                    $attributePrefix .= '│  ';
-                }
-
-                foreach ($filteredAttributes as $key => $value) {
-                    $valueStr = is_array($value) ? json_encode($value) : (string) $value;
-                    $output[] = "{$attributePrefix}• {$key}: {$valueStr}";
-                }
-            }
-        }
-
-        dump(implode("\n", $output));
-
-        return $this;
-    }
-
-    protected function getIndentLevel(?string $parentId): int
+    protected function getIndentLevel(array $spans, ?string $parentId): int
     {
         if ($parentId === null) {
             return 0;
         }
 
         $level = 1;
+
         $currentParentId = $parentId;
 
         while ($currentParentId !== null) {
             $parentSpan = null;
 
-            foreach ($this->expectSpans as $span) {
-                if ($span->span['spanId'] === $currentParentId) {
+            foreach ($spans as $span) {
+                if ($span['spanId'] === $currentParentId) {
                     $parentSpan = $span;
+
                     break;
                 }
             }
@@ -324,7 +287,7 @@ class ExpectTrace
                 break;
             }
 
-            $currentParentId = $parentSpan->span['parentSpanId'] ?? null;
+            $currentParentId = $parentSpan['parentSpanId'] ?? null;
 
             if ($currentParentId !== null) {
                 $level++;
@@ -337,5 +300,16 @@ class ExpectTrace
     public function toArray(): array
     {
         return $this->trace;
+    }
+
+    public function toString(): string
+    {
+        $output = [];
+
+        foreach ($this->expectSpans as $expectSpan) {
+            $output[] = $expectSpan->toString();
+        }
+
+        return implode(PHP_EOL, $output);
     }
 }

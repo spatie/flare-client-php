@@ -115,4 +115,16 @@ class ExpectLog
 
         return (new OpenTelemetryAttributeMapper)->attributesToPHP($this->log['attributes']);
     }
+
+    public function toString(): string
+    {
+        $body = json_encode($this->log['body'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+        $output = [
+            "{$this->log['timeUnixNano']} - {$this->log['severityText']} ({$this->log['severityNumber']}): {$body}",
+            ...$this->attributesToStrings(0)
+        ];
+
+        return implode(PHP_EOL, $output);
+    }
 }

@@ -425,3 +425,34 @@ it('can include the peak memory usage when ending a span', function () {
             'flare.peak_memory_usage' => 5 * 1024 * 1024,
         ]);
 });
+
+it('can temporarily pause a trace sampling', function () {
+    $tracer = setupFlare(alwaysSampleTraces: true)->tracer;
+
+    $tracer->startTrace();
+    $tracer->startSpan('Parent span');
+    $tracer->startSpan('Some span');
+    $tracer->pauseSampling();
+    $tracer->startSpan('Some other span - unsampled');
+    $tracer->endSpan();
+    $tracer->resumeSampling();
+    $tracer->startSpan('Some other span - sampled');
+    $tracer->endSpan();
+    $tracer->endSpan();
+    $tracer->endSpan();
+    $tracer->endTrace();
+
+    $trace = FakeApi::lastTrace()->expectSpanCount(3)->expectAllSpansClosed();
+
+    $parentSpan = $trace->expectSpan(0)
+        ->expectName('Parent span')
+        ->expectMissingParentId();
+
+    $nestedSpan = $trace->expectSpan(1)
+        ->expectName('Some span')
+        ->expectParentId($parentSpan);
+
+    $sampledNestedSpan = $trace->expectSpan(2)
+        ->expectName('Some other span - sampled')
+        ->expectParentId($nestedSpan);
+});

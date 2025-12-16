@@ -183,7 +183,7 @@ class Tracer
         $this->spans = [];
     }
 
-    public function pauseSampling()
+    public function pauseSampling(): void
     {
         if ($this->sampling === false) {
             return;
@@ -193,7 +193,7 @@ class Tracer
         $this->pausedSampling = true;
     }
 
-    public function resumeSampling()
+    public function resumeSampling(): void
     {
         if ($this->pausedSampling === false) {
             return;
@@ -333,7 +333,11 @@ class Tracer
         ?int $time = null,
         array|Closure $additionalAttributes = [],
         bool $includeMemoryUsage = false,
-    ): Span {
+    ): ?Span {
+        if($this->sampling === false) {
+            return null;
+        }
+
         $span ??= $this->currentSpan();
 
         if ($span === null) {
