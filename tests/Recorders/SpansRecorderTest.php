@@ -208,4 +208,6 @@ it('will correctly nest spans', function () {
     $recorder->popSpan();
 
     expect($flare->tracer->currentSpanId())->toBe($parentSpan->spanId);
+
+    $recorder->popSpan();
 });
