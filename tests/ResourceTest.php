@@ -40,7 +40,7 @@ test('it can include git data', function () {
     expect($exported)->toHaveKeys([
         'git.branch',
         'git.hash',
-        'git.message',
+//        'git.message', CI environments may not have access to commit messages
         'git.remote',
     ]);
 });
