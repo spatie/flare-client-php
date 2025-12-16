@@ -334,7 +334,7 @@ class Tracer
         array|Closure $additionalAttributes = [],
         bool $includeMemoryUsage = false,
     ): ?Span {
-        if($this->sampling === false) {
+        if ($this->sampling === false) {
             return null;
         }
 
