@@ -9,6 +9,7 @@ use Spatie\ErrorSolutions\Contracts\SolutionProviderRepository as SolutionProvid
 use Spatie\FlareClient\AttributesProviders\ConsoleAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\GitAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\RequestAttributesProvider;
+use Spatie\FlareClient\AttributesProviders\ResponseAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\FlareMode;
@@ -107,11 +108,9 @@ class FlareProvider
 
         $this->container->singleton(UserAttributesProvider::class, $this->config->userAttributesProvider);
         $this->container->singleton(GitAttributesProvider::class, fn () => new GitAttributesProvider($this->config->applicationPath));
-        $this->container->singleton(RequestAttributesProvider::class, fn () => new ($this->config->requestAttributesProvider)(
-            $this->container->get(Redactor::class),
-            $this->container->get(UserAttributesProvider::class)
-        ));
-        $this->container->singleton(ConsoleAttributesProvider::class, fn () => new ($this->config->consoleAttributesProvider)());
+        $this->container->singleton(RequestAttributesProvider::class, $this->config->requestAttributesProvider);
+        $this->container->singleton(ResponseAttributesProvider::class, $this->config->responseAttributesProvider);
+        $this->container->singleton(ConsoleAttributesProvider::class, $this->config->consoleAttributesProvider);
 
         /** @var CollectsResolver $collects */
         $collects = (new ($this->collectsResolver ?? CollectsResolver::class))->execute($this->config->collects);

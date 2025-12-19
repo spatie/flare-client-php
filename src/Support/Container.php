@@ -48,7 +48,7 @@ class Container implements ContainerInterface
     {
         $this->singletons[$class] = match (true) {
             $builder === null => fn () => new $class(),
-            is_string($builder) => fn () => new $builder(),
+            is_string($builder) => fn () => $this->tryAutowiringDefinition($builder),
             default => $builder,
         };
     }

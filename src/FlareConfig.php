@@ -22,6 +22,7 @@ use Spatie\ErrorSolutions\SolutionProviders\UndefinedPropertySolutionProvider;
 use Spatie\FlareClient\AttributesProviders\ConsoleAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\EmptyUserAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\RequestAttributesProvider;
+use Spatie\FlareClient\AttributesProviders\ResponseAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\Contracts\FlareCollectType;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
@@ -73,6 +74,7 @@ class FlareConfig
      * @param array<string> $censorBodyFields
      * @param class-string<UserAttributesProvider> $userAttributesProvider
      * @param class-string<RequestAttributesProvider> $requestAttributesProvider
+     * @param class-string<ResponseAttributesProvider> $responseAttributesProvider
      * @param class-string<ConsoleAttributesProvider> $consoleAttributesProvider
      * @param array<class-string, OverriddenGrouping> $overriddenGroupings
      * @param class-string<CollectsResolver> $collectsResolver
@@ -121,6 +123,7 @@ class FlareConfig
         public array $samplerConfig = [],
         public string $userAttributesProvider = EmptyUserAttributesProvider::class,
         public string $requestAttributesProvider = RequestAttributesProvider::class,
+        public string $responseAttributesProvider = ResponseAttributesProvider::class,
         public string $consoleAttributesProvider = ConsoleAttributesProvider::class,
         public string $exporter = OpenTelemetryJsonExporter::class,
         public string $collectsResolver = CollectsResolver::class,
