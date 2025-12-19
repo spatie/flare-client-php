@@ -31,9 +31,7 @@ class RequestRecorder extends SpansRecorder
             $container->get(BackTracer::class),
             $config,
             $container->get(RequestAttributesProvider::class),
-            new ResponseAttributesProvider(
-                $container->get(Redactor::class)
-            )
+            $container->get(ResponseAttributesProvider::class),
         );
     }
 
