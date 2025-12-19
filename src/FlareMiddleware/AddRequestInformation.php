@@ -16,10 +16,7 @@ class AddRequestInformation implements FlareMiddleware
     public static function register(ContainerInterface $container, array $config): Closure
     {
         return fn () => new self(
-            new RequestAttributesProvider(
-                $container->get(Redactor::class),
-                $container->get(UserAttributesProvider::class)
-            ),
+            $container->get(RequestAttributesProvider::class),
         );
     }
 

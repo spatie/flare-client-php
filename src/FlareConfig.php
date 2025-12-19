@@ -18,7 +18,9 @@ use Spatie\ErrorSolutions\SolutionProviderRepository;
 use Spatie\ErrorSolutions\SolutionProviders\BadMethodCallSolutionProvider;
 use Spatie\ErrorSolutions\SolutionProviders\MergeConflictSolutionProvider;
 use Spatie\ErrorSolutions\SolutionProviders\UndefinedPropertySolutionProvider;
+use Spatie\FlareClient\AttributesProviders\ConsoleAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\EmptyUserAttributesProvider;
+use Spatie\FlareClient\AttributesProviders\RequestAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\Contracts\FlareCollectType;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
@@ -71,6 +73,8 @@ class FlareConfig
      * @param array<string> $censorHeaders
      * @param array<string> $censorBodyFields
      * @param class-string<UserAttributesProvider> $userAttributesProvider
+     * @param class-string<RequestAttributesProvider> $requestAttributesProvider
+     * @param class-string<ConsoleAttributesProvider> $consoleAttributesProvider
      * @param array<class-string, OverriddenGrouping> $overriddenGroupings
      * @param class-string<CollectsResolver> $collectsResolver
      */
@@ -101,6 +105,8 @@ class FlareConfig
         public array $censorHeaders = [],
         public array $censorBodyFields = [],
         public string $userAttributesProvider = EmptyUserAttributesProvider::class,
+        public string $requestAttributesProvider = RequestAttributesProvider::class,
+        public string $consoleAttributesProvider = ConsoleAttributesProvider::class,
         public string $traceExporter = OpenTelemetryJsonTraceExporter::class,
         public string $stacktraceMapper = StacktraceMapper::class,
         public string $collectsResolver = CollectsResolver::class,
@@ -723,6 +729,28 @@ class FlareConfig
         string $userAttributesProvider
     ): static {
         $this->userAttributesProvider = $userAttributesProvider;
+
+        return $this;
+    }
+
+    /**
+     * @param class-string<RequestAttributesProvider> $requestAttributesProvider
+     */
+    public function requestAttributesProvider(
+        string $requestAttributesProvider
+    ): static {
+        $this->requestAttributesProvider = $requestAttributesProvider;
+
+        return $this;
+    }
+
+    /**
+     * @param class-string<ConsoleAttributesProvider> $consoleAttributesProvider
+     */
+    public function consoleAttributesProvider(
+        string $consoleAttributesProvider
+    ): static {
+        $this->consoleAttributesProvider = $consoleAttributesProvider;
 
         return $this;
     }
