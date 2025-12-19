@@ -31,6 +31,7 @@ attributes:
     process.command: fake-process-command
     process.command_args: fake-process-command-args
     process.owner: fake-process-owner
+code: 0
 events: {  }
 isLog: false
 overriddenGrouping: null

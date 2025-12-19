@@ -18,7 +18,7 @@ beforeEach(function () {
 it('can create a report', function () {
     $flare = setupFlare(fn (FlareConfig $config) => $config);
 
-    $report = $flare->report(new Exception('this is an exception'));
+    $report = $flare->report(new Exception('this is an exception', 1337));
 
     $this->assertMatchesReportSnapshot($report->toArray());
 });
@@ -38,7 +38,6 @@ it('can create an error exception report', function () {
 
     $this->assertMatchesReportSnapshot(FakeApi::lastReport()->toArray());
 });
-
 
 it('will generate a uuid', function () {
     FakeIds::setup()->nextUuid($fakeUuid = '123e4567-e89b-12d3-a456-426614174000');

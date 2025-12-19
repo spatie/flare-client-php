@@ -2,6 +2,40 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 2.7.0 - 2025-12-11
+
+### What's Changed
+
+* Add exception `code` to report by @AlexVanderbist in https://github.com/spatie/flare-client-php/pull/60
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/2.6.0...2.7.0
+
+## 2.6.0 - 2025-11-28
+
+### What's Changed
+
+* send testtrace function for flare:test command by @Marcel-Wil in https://github.com/spatie/flare-client-php/pull/59
+
+### New Contributors
+
+* @Marcel-Wil made their first contribution in https://github.com/spatie/flare-client-php/pull/59
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/2.5.3...2.6.0
+
+## 2.5.3 - 2025-11-26
+
+### What's Changed
+
+* Fix for composer format by @YasserB94 in https://github.com/spatie/flare-client-php/pull/57
+* Added Symfony 8 support to all symfony/* packages. by @thecaliskan in https://github.com/spatie/flare-client-php/pull/58
+
+### New Contributors
+
+* @YasserB94 made their first contribution in https://github.com/spatie/flare-client-php/pull/57
+* @thecaliskan made their first contribution in https://github.com/spatie/flare-client-php/pull/58
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/2.5.2...2.5.3
+
 ## 2.5.2 - 2025-11-18
 
 - Allow body field censoring using dot and wildcard syntax

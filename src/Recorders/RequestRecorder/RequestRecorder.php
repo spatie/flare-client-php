@@ -30,10 +30,7 @@ class RequestRecorder extends SpansRecorder
             $container->get(Tracer::class),
             $container->get(BackTracer::class),
             $config,
-            new RequestAttributesProvider(
-                $container->get(Redactor::class),
-                $container->get(UserAttributesProvider::class)
-            ),
+            $container->get(RequestAttributesProvider::class),
             new ResponseAttributesProvider(
                 $container->get(Redactor::class)
             )
@@ -64,7 +61,8 @@ class RequestRecorder extends SpansRecorder
     ): ?Span {
         return $this->startSpan(nameAndAttributes: function () use ($entryPointClass, $route, $request, $attributes) {
             $requestAttributes = $this->requestAttributesProvider->toArray(
-                $request ?? Request::createFromGlobals()
+                $request ?? Request::createFromGlobals(),
+                includeContents: false,
             );
 
             if ($route) {

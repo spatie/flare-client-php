@@ -6,7 +6,9 @@ use Closure;
 use Illuminate\Contracts\Container\Container as IlluminateContainer;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\ErrorSolutions\Contracts\SolutionProviderRepository as SolutionProviderRepositoryContract;
+use Spatie\FlareClient\AttributesProviders\ConsoleAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\GitAttributesProvider;
+use Spatie\FlareClient\AttributesProviders\RequestAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\FlareMode;
@@ -105,6 +107,11 @@ class FlareProvider
 
         $this->container->singleton(UserAttributesProvider::class, $this->config->userAttributesProvider);
         $this->container->singleton(GitAttributesProvider::class, fn () => new GitAttributesProvider($this->config->applicationPath));
+        $this->container->singleton(RequestAttributesProvider::class, fn () => new ($this->config->requestAttributesProvider)(
+            $this->container->get(Redactor::class),
+            $this->container->get(UserAttributesProvider::class)
+        ));
+        $this->container->singleton(ConsoleAttributesProvider::class, fn () => new ($this->config->consoleAttributesProvider)());
 
         /** @var CollectsResolver $collects */
         $collects = (new ($this->collectsResolver ?? CollectsResolver::class))->execute($this->config->collects);

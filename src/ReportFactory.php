@@ -199,6 +199,7 @@ class ReportFactory implements WithAttributes
             'trackingUuid' => $this->trackingUuid ?? $this->ids->uuid(),
             'handled' => $this->handled,
             'attributes' => $attributes,
+            'code' => $this->throwable->getCode(),
             'events' => array_values(array_filter(
                 array_map(fn (Span|SpanEvent $span) => $span->toEvent(), $this->events),
             )),
