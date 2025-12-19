@@ -5,13 +5,11 @@ namespace Spatie\FlareClient\Recorders\RequestRecorder;
 use Closure;
 use Psr\Container\ContainerInterface;
 use Spatie\FlareClient\AttributesProviders\RequestAttributesProvider;
-use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Recorders\SpansRecorder;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Support\BackTracer;
-use Spatie\FlareClient\Support\Redactor;
 use Spatie\FlareClient\Tracer;
 use Symfony\Component\HttpFoundation\Request;
 
