@@ -2,6 +2,10 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 2.8.0 - 2025-12-19
+
+- Allow configuring the Request and Console attribute providers
+
 ## 2.7.0 - 2025-12-11
 
 ### What's Changed
