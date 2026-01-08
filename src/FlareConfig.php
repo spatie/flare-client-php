@@ -95,6 +95,8 @@ class FlareConfig
         public bool $censorClientIps = false,
         public array $censorHeaders = [],
         public array $censorBodyFields = [],
+        public bool $censorCookies = false,
+        public bool $censorSession = false,
 
         // Reporting
         public bool $report = true,
@@ -156,6 +158,20 @@ class FlareConfig
     public function censorBodyFields(string ...$fields): static
     {
         array_push($this->censorBodyFields, ...$fields);
+
+        return $this;
+    }
+
+    public function censorCookies(bool $censorCookies = true): static
+    {
+        $this->censorCookies = $censorCookies;
+
+        return $this;
+    }
+
+    public function censorSession(bool $censorSession = true): static
+    {
+        $this->censorSession = $censorSession;
 
         return $this;
     }

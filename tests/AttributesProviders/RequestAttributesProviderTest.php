@@ -6,6 +6,8 @@ use Spatie\FlareClient\Support\Redactor;
 use Spatie\FlareClient\Tests\Concerns\MatchesCodeSnippetSnapshots;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Session\Session;
+use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 
 uses(MatchesCodeSnippetSnapshots::class);
 
@@ -326,3 +328,65 @@ it('can retrieve the body contents of a GET request', function () {
 
     expect($provider->toArray($request)['http.request.body.contents'])->toBe(['key' => 'value']);
 });
+
+it('can censor cookies', function () {
+    $cookies = [
+        'session_id' => 'abc123',
+        'auth_token' => 'secret',
+    ];
+
+    $request = new Request(cookies: $cookies);
+
+    $provider = new RequestAttributesProvider(
+        new Redactor(),
+        new EmptyUserAttributesProvider()
+    );
+
+    $attributes = $provider->toArray($request);
+
+    expect($attributes)->toHaveKey('http.request.cookies', [
+        'session_id' => 'abc123',
+        'auth_token' => 'secret',
+    ]);
+
+    $provider = new RequestAttributesProvider(
+        new Redactor(censorCookies: true),
+        new EmptyUserAttributesProvider()
+    );
+
+    $attributes = $provider->toArray($request);
+
+    expect($attributes)->not->toHaveKey('http.request.cookies');
+});
+
+it('can censor session', function () {
+    $request = new Request();
+
+    $session = new Session(new MockArraySessionStorage());
+    $session->set('user_id', 123);
+    $session->set('cart', ['item1', 'item2']);
+
+    $request->setSession($session);
+
+    $provider = new RequestAttributesProvider(
+        new Redactor(),
+        new EmptyUserAttributesProvider()
+    );
+
+    $attributes = $provider->toArray($request);
+
+    expect($attributes)->toHaveKey('http.request.session', [
+        'user_id' => 123,
+        'cart' => ['item1', 'item2'],
+    ]);
+
+    $provider = new RequestAttributesProvider(
+        new Redactor(censorSession: true),
+        new EmptyUserAttributesProvider()
+    );
+
+    $attributes = $provider->toArray($request);
+
+    expect($attributes)->not->toHaveKey('http.request.session');
+});
+

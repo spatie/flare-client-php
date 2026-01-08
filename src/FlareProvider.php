@@ -104,6 +104,8 @@ class FlareProvider
             censorClientIps: $this->config->censorClientIps,
             censorHeaders: $this->config->censorHeaders,
             censorBodyFields: $this->config->censorBodyFields,
+            censorCookies: $this->config->censorCookies,
+            censorSession: $this->config->censorSession,
         ));
 
         $this->container->singleton(UserAttributesProvider::class, $this->config->userAttributesProvider);

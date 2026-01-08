@@ -5,9 +5,7 @@ namespace Spatie\FlareClient\FlareMiddleware;
 use Closure;
 use Psr\Container\ContainerInterface;
 use Spatie\FlareClient\AttributesProviders\RequestAttributesProvider;
-use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\ReportFactory;
-use Spatie\FlareClient\Support\Redactor;
 use Spatie\FlareClient\Support\Runtime;
 use Symfony\Component\HttpFoundation\Request;
 
