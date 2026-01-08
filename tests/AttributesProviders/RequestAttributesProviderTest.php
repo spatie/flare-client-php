@@ -389,4 +389,3 @@ it('can censor session', function () {
 
     expect($attributes)->not->toHaveKey('http.request.session');
 });
-
