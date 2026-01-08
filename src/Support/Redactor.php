@@ -12,6 +12,8 @@ class Redactor
         protected bool $censorClientIps = false,
         protected array $censorHeaders = [],
         protected array $censorBodyFields = [],
+        protected bool $censorCookies = false,
+        protected bool $censorSession = false,
     ) {
         $this->censorHeaders = array_map(
             fn (string $header) => $this->normalizeHeaderName($header),
@@ -47,6 +49,16 @@ class Redactor
     public function shouldCensorClientIps(): bool
     {
         return $this->censorClientIps;
+    }
+
+    public function shouldCensorCookies(): bool
+    {
+        return $this->censorCookies;
+    }
+
+    public function shouldCensorSession(): bool
+    {
+        return $this->censorSession;
     }
 
     public function normalizeHeaderName(string $name): string

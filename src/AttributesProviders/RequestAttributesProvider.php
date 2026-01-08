@@ -20,15 +20,20 @@ class RequestAttributesProvider
     ) {
     }
 
-    public function toArray(Request $request, bool $includeContents = true): array
-    {
+    public function toArray(
+        Request $request,
+        bool $includeContents = true,
+    ): array {
         $user = $this->getUser($request);
+
+        $cookies = $this->redactor->shouldCensorCookies() ? [] : $this->getCookies($request);
+        $session = $this->redactor->shouldCensorSession() ? [] : $this->getSession($request);
 
         return [
             ...$this->getRequest($request, $includeContents),
             ...$this->getHeaders($request),
-            ...$this->getCookies($request),
-            ...$this->getSession($request),
+            ...$cookies,
+            ...$session,
             ...$user ? $this->userAttributesProvider->toArray($user) : [],
         ];
     }

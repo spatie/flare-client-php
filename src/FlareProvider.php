@@ -107,6 +107,8 @@ class FlareProvider
             censorClientIps: $this->config->censorClientIps,
             censorHeaders: $this->config->censorHeaders,
             censorBodyFields: $this->config->censorBodyFields,
+            censorCookies: $this->config->censorCookies,
+            censorSession: $this->config->censorSession,
         ));
 
         $this->container->singleton(ContextRecorder::class, fn () => new ContextRecorder());
