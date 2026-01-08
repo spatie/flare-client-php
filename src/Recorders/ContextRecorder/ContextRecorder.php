@@ -25,15 +25,10 @@ class ContextRecorder implements Recorder
 
     public function reset(): void
     {
-        // Only reset when explicitly called.
-    }
-
-    public function resetContext(): void
-    {
         $this->context = [];
     }
 
-    public function context(
+    public function record(
         string $group,
         string|array $key,
         mixed $value = null

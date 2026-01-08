@@ -39,7 +39,6 @@ class CommandRecorder extends SpansRecorder
                     ...$attributes,
                 ];
             },
-            canStartTrace: true,
         );
     }
 
@@ -50,7 +49,7 @@ class CommandRecorder extends SpansRecorder
         return $this->endSpan(additionalAttributes: [
             'process.exit_code' => $exitCode,
             ...$attributes,
-        ]);
+        ], includeMemoryUsage: true);
     }
 
     protected function getArguments(?InputInterface $input): array

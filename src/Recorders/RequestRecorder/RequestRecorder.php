@@ -5,6 +5,7 @@ namespace Spatie\FlareClient\Recorders\RequestRecorder;
 use Closure;
 use Psr\Container\ContainerInterface;
 use Spatie\FlareClient\AttributesProviders\RequestAttributesProvider;
+use Spatie\FlareClient\AttributesProviders\ResponseAttributesProvider;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Recorders\SpansRecorder;
@@ -12,6 +13,7 @@ use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Support\BackTracer;
 use Spatie\FlareClient\Tracer;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class RequestRecorder extends SpansRecorder
 {
@@ -27,6 +29,7 @@ class RequestRecorder extends SpansRecorder
             $container->get(BackTracer::class),
             $config,
             $container->get(RequestAttributesProvider::class),
+            $container->get(ResponseAttributesProvider::class),
         );
     }
 
@@ -35,6 +38,7 @@ class RequestRecorder extends SpansRecorder
         BackTracer $backTracer,
         array $config,
         protected RequestAttributesProvider $requestAttributesProvider,
+        protected ResponseAttributesProvider $responseAttributesProvider,
     ) {
         parent::__construct($tracer, $backTracer, $config);
     }
@@ -77,18 +81,15 @@ class RequestRecorder extends SpansRecorder
     }
 
     public function recordEnd(
-        ?int $responseStatusCode = null,
-        ?int $responseBodySize = null,
+        ?Response $response = null,
         array $attributes = [],
     ): ?Span {
-        if ($responseStatusCode) {
-            $attributes['http.response.status_code'] = $responseStatusCode;
+        if ($response) {
+            $responseAttributes = $this->responseAttributesProvider->toArray($response);
+
+            $attributes = [...$attributes, ...$responseAttributes];
         }
 
-        if ($responseBodySize) {
-            $attributes['http.response.body.size'] = $responseBodySize;
-        }
-
-        return $this->endSpan(additionalAttributes: $attributes);
+        return $this->endSpan(additionalAttributes: $attributes, includeMemoryUsage: true);
     }
 }

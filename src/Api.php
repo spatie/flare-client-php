@@ -2,175 +2,184 @@
 
 namespace Spatie\FlareClient;
 
-use Exception;
-use Spatie\FlareClient\Enums\FlarePayloadType;
-use Spatie\FlareClient\Senders\CurlSender;
+use Spatie\FlareClient\Enums\FlareEntityType;
+use Spatie\FlareClient\Exporters\Exporter;
+use Spatie\FlareClient\Resources\Resource;
+use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Senders\Exceptions\BadResponseCode;
 use Spatie\FlareClient\Senders\Exceptions\InvalidData;
 use Spatie\FlareClient\Senders\Exceptions\NotFound;
 use Spatie\FlareClient\Senders\Sender;
 use Spatie\FlareClient\Senders\Support\Response;
+use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Truncation\ReportTrimmer;
+use Throwable;
 
 class Api
 {
     public const BASE_URL = 'https://ingress.flareapp.io';
 
-    /** @var array<int, Report> */
+    /** @var array<int, mixed> */
     protected array $reportQueue = [];
 
-    /** @var array<int, array> */
+    /** @var array<int, mixed> */
     protected array $traceQueue = [];
+
+    /** @var array<int, mixed> */
+    protected array $logQueue = [];
 
     public function __construct(
         protected string $apiToken,
         protected string $baseUrl,
-        protected Sender $sender = new CurlSender(),
-        protected bool $sendReportsImmediately = false,
+        protected Exporter $exporter,
+        protected Resource $resource,
+        protected Scope $scope,
+        protected Sender $sender,
+        protected bool $disableQueue
     ) {
-        register_shutdown_function([$this, 'sendQueue']);
-    }
 
-    public function sendReportsImmediately(bool $sendReportsImmediately = true): self
-    {
-        $this->sendReportsImmediately = $sendReportsImmediately;
-
-        return $this;
     }
 
     public function report(
-        Report $report,
+        ReportFactory $report,
         bool $immediately = false,
-    ): void {
-        try {
-            $immediately || $this->sendReportsImmediately
-                ? $this->sendReportToApi($report)
-                : $this->addReportToQueue($report);
-        } catch (Exception $e) {
+        bool $test = false,
+    ): array {
+        $payload = $this->exporter->report($report);
 
-        }
+        $payload = (new ReportTrimmer())->trim($payload);
+
+        $this->sendEntity(
+            type: FlareEntityType::Errors,
+            payload: $payload,
+            immediately: $immediately,
+            test: $test
+        );
+
+        return $payload;
     }
 
+    /** @param array<int, Span> $spans */
     public function trace(
-        array $trace,
+        array $spans,
         bool $immediately = false,
-    ): void {
+        bool $test = false,
+    ): array {
+        $payload = $this->exporter->traces(
+            $this->resource,
+            $this->scope,
+            $spans
+        );
+
+        $this->sendEntity(
+            type: FlareEntityType::Traces,
+            payload: $payload,
+            immediately: $immediately,
+            test: $test
+        );
+
+        return $payload;
+    }
+
+    public function log(
+        array $logs,
+        bool $immediately = false,
+        bool $test = false,
+    ): array {
+        $payload = $this->exporter->logs(
+            $this->resource,
+            $this->scope,
+            $logs
+        );
+
+        $this->sendEntity(
+            type: FlareEntityType::Logs,
+            payload: $payload,
+            immediately: $immediately,
+            test: $test
+        );
+
+        return $payload;
+    }
+
+    public function sendQueue(): void
+    {
+        foreach ($this->reportQueue as $report) {
+            $this->sendEntity(
+                FlareEntityType::Errors,
+                $report,
+                immediately: true,
+            );
+        }
+
+        $this->reportQueue = [];
+
+        foreach ($this->traceQueue as $trace) {
+            $this->sendEntity(
+                FlareEntityType::Traces,
+                $trace,
+                immediately: true,
+            );
+        }
+
+        $this->traceQueue = [];
+
+        foreach ($this->logQueue as $logData) {
+            $this->sendEntity(
+                FlareEntityType::Logs,
+                $logData,
+                immediately: true,
+            );
+        }
+
+        $this->logQueue = [];
+    }
+
+    protected function sendEntity(FlareEntityType $type, mixed $payload, bool $immediately, bool $test = false): void
+    {
+        if ($immediately === false && $test === false && $this->disableQueue === false) {
+            match ($type) {
+                FlareEntityType::Errors => $this->reportQueue[] = $payload,
+                FlareEntityType::Traces => $this->traceQueue[] = $payload,
+                FlareEntityType::Logs => $this->logQueue[] = $payload,
+            };
+
+            return;
+        }
+
+        $endpoint = match ($type) {
+            FlareEntityType::Errors => "{$this->baseUrl}/v1/errors",
+            FlareEntityType::Traces => "{$this->baseUrl}/v1/traces",
+            FlareEntityType::Logs => "{$this->baseUrl}/v1/logs",
+        };
+
         try {
-            $immediately || $this->sendReportsImmediately
-                ? $this->sendTraceToApi($trace)
-                : $this->addTraceToQueue($trace);
-        } catch (Exception $e) {
+            $this->sender->post(
+                $endpoint,
+                $this->apiToken,
+                $payload,
+                $type,
+                $test,
+                function (Response $response) {
+                    if ($response->code === 422) {
+                        throw new InvalidData($response);
+                    }
 
-        }
-    }
+                    if ($response->code === 404) {
+                        throw new NotFound($response);
+                    }
 
-    public function test(
-        Report $report
-    ): void {
-        $this->sendReportToApi($report, isTest: true);
-    }
-
-    public function testTrace(array $trace): void
-    {
-        $this->sendTraceToApi($trace);
-    }
-
-    protected function addReportToQueue(Report $report): self
-    {
-        $this->reportQueue[] = $report;
-
-        return $this;
-    }
-
-    protected function addTraceToQueue(array $trace): self
-    {
-        $this->traceQueue[] = $trace;
-
-        return $this;
-    }
-
-    public function sendQueue(
-        bool $reports = true,
-        bool $traces = true,
-    ): void {
-        if ($reports) {
-            foreach ($this->reportQueue as $report) {
-                try {
-                    $this->sendReportToApi($report);
-                } catch (Exception $e) {
-                    continue;
+                    if ($response->code < 200 || $response->code >= 300) {
+                        throw new BadResponseCode($response);
+                    }
                 }
+            );
+        } catch (Throwable $throwable) {
+            if ($test === false) {
+                return;
             }
 
-            $this->reportQueue = [];
+            throw $throwable;
         }
-
-        if ($traces) {
-            foreach ($this->traceQueue as $trace) {
-                try {
-                    $this->sendTraceToApi($trace);
-                } catch (Exception $e) {
-                    continue;
-                }
-            }
-
-            $this->traceQueue = [];
-        }
-    }
-
-    protected function sendReportToApi(Report $report, bool $isTest = false): void
-    {
-        $payload = $this->truncateReport($report->toArray());
-
-        $this->post(
-            "{$this->baseUrl}/v1/errors",
-            $payload,
-            $isTest ? FlarePayloadType::TestError : FlarePayloadType::Error
-        );
-    }
-
-    protected function sendTraceToApi(array $trace): void
-    {
-        $this->post(
-            "{$this->baseUrl}/v1/traces",
-            $trace,
-            FlarePayloadType::Traces,
-        );
-    }
-
-    protected function post(
-        string $endpoint,
-        array $payload,
-        FlarePayloadType $type,
-    ): void {
-        $this->sender->post(
-            $endpoint,
-            $this->apiToken,
-            $payload,
-            $type,
-            function (Response $response) {
-                if ($response->code === 422) {
-                    throw new InvalidData($response);
-                }
-
-                if ($response->code === 404) {
-                    throw new NotFound($response);
-                }
-
-                if ($response->code < 200 || $response->code >= 300) {
-                    throw new BadResponseCode($response);
-                }
-            }
-        );
-    }
-
-    /**
-     * @param array<int|string, mixed> $payload
-     *
-     * @return array<int|string, mixed>
-     */
-    protected function truncateReport(array $payload): array
-    {
-        return (new ReportTrimmer())->trim($payload);
     }
 }
