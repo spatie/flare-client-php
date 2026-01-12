@@ -7,4 +7,5 @@ enum OverriddenGrouping: string
     case ExceptionClass = 'exception_class';
     case ExceptionMessage = 'exception_message';
     case ExceptionMessageAndClass = 'exception_message_and_class';
+    case FullStacktraceAndExceptionClassAndCode = 'full_stacktrace_and_exception_class_and_code';
 }
