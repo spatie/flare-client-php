@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./vendor/bin/pest tests/ApiTest.php:*)",
+      "Bash(./vendor/bin/pest:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

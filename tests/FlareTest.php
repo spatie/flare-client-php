@@ -1,32 +1,25 @@
 <?php
 
+use Monolog\Level;
 use PHPUnit\Framework\Exception;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
-use Spatie\FlareClient\Disabled\DisabledFlare;
 use Spatie\FlareClient\Enums\CacheOperation;
 use Spatie\FlareClient\Enums\CacheResult;
-use Spatie\FlareClient\Enums\MessageLevels;
 use Spatie\FlareClient\Enums\OverriddenGrouping;
+use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Enums\TransactionStatus;
 use Spatie\FlareClient\FlareConfig;
-use Spatie\FlareClient\Report;
 use Spatie\FlareClient\ReportFactory;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Tests\Concerns\MatchesReportSnapshots;
-use Spatie\FlareClient\Tests\Shared\ExpectResource;
-use Spatie\FlareClient\Tests\Shared\ExpectScope;
-use Spatie\FlareClient\Tests\Shared\ExpectSpan;
-use Spatie\FlareClient\Tests\Shared\ExpectSpanEvent;
-use Spatie\FlareClient\Tests\Shared\ExpectTrace;
-use Spatie\FlareClient\Tests\Shared\ExpectTracer;
-use Spatie\FlareClient\Tests\Shared\FakeSender;
+use Spatie\FlareClient\Tests\Shared\FakeApi;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
-use Spatie\FlareClient\Tests\TestClasses\DeprecatedSpansRecorder as FakeSpansRecorder;
+use Spatie\FlareClient\Tests\TestClasses\ConcreteSpansRecorder as FakeSpansRecorder;
 use Spatie\FlareClient\Tests\TestClasses\ExceptionWithContext;
 use Spatie\FlareClient\Tests\TestClasses\FakeFlareMiddleware;
 use Spatie\FlareClient\Tests\TestClasses\TraceArguments;
@@ -43,83 +36,72 @@ it('can report an exception', function () {
 
     reportException();
 
-    FakeSender::instance()->assertRequestsSent(1);
+    FakeApi::assertSent(reports: 1);
 
-    $report = FakeSender::instance()->getLastPayload();
-
-    $this->assertMatchesReportSnapshot($report);
+    $this->assertMatchesReportSnapshot(
+        FakeApi::lastReport()->toArray()
+    );
 });
 
 
 it('can reset queued exceptions', function () {
-    $flare = setupFlare();
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectContext());
 
     $flare->context('test_key', 'test_value');
-    expect($flare->contextRecorder->toArray())->toBe(['context.custom' => ['test_key' => 'test_value']]);
+
+    expect($flare->recorder(RecorderType::Context)->toArray())->toBe(['context.custom' => ['test_key' => 'test_value']]);
 
     reportException();
 
-    $flare->reset();
+    $flare->lifecycle->flush();
 
-    FakeSender::instance()->assertRequestsSent(1);
-    expect($flare->contextRecorder->toArray())->toBe([]);
+    FakeApi::assertSent(reports: 1);
 
-    $flare->reset();
+    expect($flare->recorder(RecorderType::Context)->toArray())->toBe([]);
 
-    FakeSender::instance()->assertRequestsSent(1);
-    expect($flare->contextRecorder->toArray())->toBe([]);
+    $flare->lifecycle->flush();
+
+    FakeApi::assertSent(reports: 1);
+
+    expect($flare->recorder(RecorderType::Context)->toArray())->toBe([]);
 });
 
 it('can reset queued traces', function () {
-    $flare = setupFlare(alwaysSampleTraces: true);
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectContext(), alwaysSampleTraces: true);
 
     $flare->context('test_key', 'test_value');
-    expect($flare->contextRecorder->toArray())->toBe(['context.custom' => ['test_key' => 'test_value']]);
+
+    expect($flare->recorder(RecorderType::Context)->toArray())->toBe(['context.custom' => ['test_key' => 'test_value']]);
 
     $flare->tracer->startTrace();
     $span = $flare->tracer->startSpan('Test Span');
     $flare->tracer->endSpan($span);
-    $flare->tracer->endTrace(); // This should trigger the trace to be exported and queued
+    $flare->tracer->endTrace();
 
-    expect(count(FakeSender::$requests))->toBe(1);
+    FakeApi::assertSent(traces: 1);
 
-    $flare->reset(traces: false);
+    $flare->lifecycle->flush();
 
-    expect(count(FakeSender::$requests))->toBe(1);
-    expect($flare->contextRecorder->toArray())->toBe([]);
-});
+    FakeApi::assertSent(traces: 1);
 
-it('can reset queued exceptions but keep custom context', function () {
-    $flare = setupFlare();
-
-    $flare->context('test_key', 'test_value');
-    expect($flare->contextRecorder->toArray())->toBe(['context.custom' => ['test_key' => 'test_value']]);
-
-    reportException();
-
-    $flare->reset(clearCustomContext: false);
-
-    FakeSender::instance()->assertRequestsSent(1);
-    expect($flare->contextRecorder->toArray())->toBe(['context.custom' => ['test_key' => 'test_value']]);
-
-    $flare->reset(clearCustomContext: true);
-
-    FakeSender::instance()->assertRequestsSent(1);
-    expect($flare->contextRecorder->toArray())->toBe([]);
+    expect($flare->recorder(RecorderType::Context)->toArray())->toBe([]);
 });
 
 it('can add user provided context', function () {
-    $flare = setupFlare();
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectContext());
 
     $flare->context('my key', 'my value');
 
     reportException();
 
-    FakeSender::instance()->assertLastRequestAttribute('context.custom', ['my key' => 'my value']);
+    FakeApi::lastReport()->expectAttribute(
+        'context.custom',
+        ['my key' => 'my value']
+    );
 });
 
 it('can add user provided context easily as an array', function () {
-    $flare = setupFlare();
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectContext());
 
     $flare->context(
         ['my key' => 'my value'],
@@ -127,12 +109,15 @@ it('can add user provided context easily as an array', function () {
 
     reportException();
 
-    FakeSender::instance()->assertLastRequestAttribute('context.custom', ['my key' => 'my value']);
+    FakeApi::lastReport()->expectAttribute(
+        'context.custom',
+        ['my key' => 'my value']
+    );
 });
 
 test('callbacks can modify the report', function () {
     $flare = setupFlare(
-        fn (FlareConfig $config) => $config->applicationStage('production')
+        fn (FlareConfig $config) => $config->applicationStage('production')->collectContext()
     );
 
     $flare->context('my key', 'my value');
@@ -144,9 +129,9 @@ test('callbacks can modify the report', function () {
         $report->handled = true;
     });
 
-    FakeSender::instance()->assertLastRequestAttribute('context.custom', ['my key' => 'new value']);
-
-    expect(FakeSender::instance()->getLastPayload()['handled'])->toBeTrue();
+    FakeApi::lastReport()
+        ->expectAttribute('context.custom', ['my key' => 'new value'])
+        ->expectHandled(true);
 });
 
 it('can censor request data', function () {
@@ -162,14 +147,15 @@ it('can censor request data', function () {
 
     reportException();
 
-    FakeSender::instance()->assertLastRequestAttribute('http.request.body.contents', [
-        'user' => '<CENSORED:string>',
-        'password' => '<CENSORED:string>',
-    ]);
+    FakeApi::lastReport()
+        ->expectAttribute('http.request.body.contents', [
+            'user' => '<CENSORED:string>',
+            'password' => '<CENSORED:string>',
+        ]);
 });
 
 it('can merge user provided context', function () {
-    $flare = setupFlare();
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectContext());
 
     $flare->context('my key', 'my value');
 
@@ -177,14 +163,17 @@ it('can merge user provided context', function () {
 
     reportException();
 
-    FakeSender::instance()->assertLastRequestAttribute('context.custom', [
-        'my key' => 'my value',
-        'another key' => 'another value',
-    ]);
+    FakeApi::lastReport()->expectAttribute(
+        'context.custom',
+        [
+            'my key' => 'my value',
+            'another key' => 'another value',
+        ]
+    );
 });
 
 it('can add custom exception context', function () {
-    $flare = setupFlare();
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectContext());
 
     $flare->context('my key', 'my value');
 
@@ -192,18 +181,18 @@ it('can add custom exception context', function () {
 
     $flare->report($throwable);
 
-    FakeSender::instance()->assertLastRequestAttribute('context.custom', [
-        'my key' => 'my value',
-    ]);
-
-    FakeSender::instance()->assertLastRequestAttribute('context.exception', [
-        'another key' => 'another value',
-    ]);
+    FakeApi::lastReport()
+        ->expectAttribute('context.custom', [
+            'my key' => 'my value',
+        ])
+        ->expectAttribute('context.exception', [
+            'another key' => 'another value',
+        ]);
 });
 
 
 it('can merge groups', function () {
-    $flare = setupFlare();
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectContext());
 
     $flare->context(['my key' => 'my value']);
 
@@ -211,10 +200,13 @@ it('can merge groups', function () {
 
     reportException();
 
-    FakeSender::instance()->assertLastRequestAttribute('context.custom', [
-        'my key' => 'my value',
-        'another key' => 'another value',
-    ]);
+    FakeApi::lastReport()->expectAttribute(
+        'context.custom',
+        [
+            'my key' => 'my value',
+            'another key' => 'another value',
+        ]
+    );
 });
 
 it('can set stages', function () {
@@ -222,7 +214,10 @@ it('can set stages', function () {
 
     reportException();
 
-    expect(FakeSender::instance()->getLastPayload()['attributes']['service.stage'])->toBe('production');
+    FakeApi::lastReport()->expectAttribute(
+        'service.stage',
+        'production'
+    );
 });
 
 it('can add cache events', function () {
@@ -244,53 +239,49 @@ it('can add cache events', function () {
 
     reportException();
 
-    $payload = FakeSender::instance()->getLastPayload();
+    $payload = FakeApi::lastReport();
 
-    expect($payload['events'])->toHaveCount(4);
+    $payload->expectEventCount(4);
 
-    expect($payload['events'][0])
-        ->toHaveKey('startTimeUnixNano', 1546346096000000000)
-        ->toHaveKey('endTimeUnixNano', null)
-        ->toHaveKey('type', SpanEventType::Cache)
-        ->attributes
-        ->toHaveCount(4)
-        ->toHaveKey('cache.key', 'key')
-        ->toHaveKey('cache.store', 'store')
-        ->toHaveKey('cache.operation', CacheOperation::Get)
-        ->toHaveKey('cache.result', CacheResult::Hit);
+    $payload->expectEvent(0)
+        ->expectStart(1546346096000000000)
+        ->expectEnd(null)
+        ->expectType(SpanEventType::Cache)
+        ->expectAttributesCount(4)
+        ->expectAttribute('cache.key', 'key')
+        ->expectAttribute('cache.store', 'store')
+        ->expectAttribute('cache.operation', CacheOperation::Get)
+        ->expectAttribute('cache.result', CacheResult::Hit);
 
-    expect($payload['events'][1])
-        ->toHaveKey('startTimeUnixNano', 1546346097000000000)
-        ->toHaveKey('endTimeUnixNano', null)
-        ->toHaveKey('type', SpanEventType::Cache)
-        ->attributes
-        ->toHaveCount(4)
-        ->toHaveKey('cache.key', 'key')
-        ->toHaveKey('cache.store', 'store')
-        ->toHaveKey('cache.operation', CacheOperation::Get)
-        ->toHaveKey('cache.result', CacheResult::Miss);
+    $payload->expectEvent(1)
+        ->expectStart(1546346097000000000)
+        ->expectEnd(null)
+        ->expectType(SpanEventType::Cache)
+        ->expectAttributesCount(4)
+        ->expectAttribute('cache.key', 'key')
+        ->expectAttribute('cache.store', 'store')
+        ->expectAttribute('cache.operation', CacheOperation::Get)
+        ->expectAttribute('cache.result', CacheResult::Miss);
 
-    expect($payload['events'][2])
-        ->toHaveKey('startTimeUnixNano', 1546346098000000000)
-        ->toHaveKey('endTimeUnixNano', null)
-        ->toHaveKey('type', SpanEventType::Cache)
-        ->attributes
-        ->toHaveCount(4)
-        ->toHaveKey('cache.key', 'key')
-        ->toHaveKey('cache.store', 'store')
-        ->toHaveKey('cache.operation', CacheOperation::Set)
-        ->toHaveKey('cache.result', CacheResult::Success);
+    $payload->expectEvent(2)
+        ->expectStart(1546346098000000000)
+        ->expectEnd(null)
+        ->expectType(SpanEventType::Cache)
+        ->expectAttributesCount(4)
+        ->expectAttribute('cache.key', 'key')
+        ->expectAttribute('cache.store', 'store')
+        ->expectAttribute('cache.operation', CacheOperation::Set)
+        ->expectAttribute('cache.result', CacheResult::Success);
 
-    expect($payload['events'][3])
-        ->toHaveKey('startTimeUnixNano', 1546346099000000000)
-        ->toHaveKey('endTimeUnixNano', null)
-        ->toHaveKey('type', SpanEventType::Cache)
-        ->attributes
-        ->toHaveCount(4)
-        ->toHaveKey('cache.key', 'key')
-        ->toHaveKey('cache.store', 'store')
-        ->toHaveKey('cache.operation', CacheOperation::Forget)
-        ->toHaveKey('cache.result', CacheResult::Success);
+    $payload->expectEvent(3)
+        ->expectStart(1546346099000000000)
+        ->expectEnd(null)
+        ->expectType(SpanEventType::Cache)
+        ->expectAttributesCount(4)
+        ->expectAttribute('cache.key', 'key')
+        ->expectAttribute('cache.store', 'store')
+        ->expectAttribute('cache.operation', CacheOperation::Forget)
+        ->expectAttribute('cache.result', CacheResult::Success);
 });
 
 it('can add glows', function () {
@@ -298,7 +289,7 @@ it('can add glows', function () {
 
     $flare->glow()->record(
         'my glow',
-        MessageLevels::Info,
+        Level::Info,
         ['my key' => 'my value']
     );
 
@@ -306,44 +297,41 @@ it('can add glows', function () {
 
     $flare->glow()->record(
         'another glow',
-        MessageLevels::Error,
+        Level::Error,
         ['another key' => 'another value']
     );
 
     reportException();
 
-    $payload = FakeSender::instance()->getLastPayload();
+    $report = FakeApi::lastReport();
 
-    $this->assertEquals([
-        [
-            'attributes' => [
-                'glow.name' => 'my glow',
-                'glow.level' => 'info',
-                'glow.context' => ['my key' => 'my value'],
-            ],
-            'startTimeUnixNano' => 1546346096000000000,
-            'endTimeUnixNano' => null,
-            'type' => SpanEventType::Glow,
-        ],
-        [
-            'attributes' => [
-                'glow.name' => 'another glow',
-                'glow.level' => 'error',
-                'glow.context' => ['another key' => 'another value'],
-            ],
-            'startTimeUnixNano' => 1546346097000000000,
-            'endTimeUnixNano' => null,
-            'type' => SpanEventType::Glow,
-        ],
-    ], $payload['events']);
+    $report->expectEventCount(2);
+
+    $report->expectEvent(0)
+        ->expectType(SpanEventType::Glow)
+        ->expectStart(1546346096000000000)
+        ->expectEnd(null)
+        ->expectAttributesCount(3)
+        ->expectAttribute('glow.name', 'my glow')
+        ->expectAttribute('glow.level', 'info')
+        ->expectAttribute('glow.context', ['my key' => 'my value']);
+
+    $report->expectEvent(1)
+        ->expectType(SpanEventType::Glow)
+        ->expectStart(1546346097000000000)
+        ->expectEnd(null)
+        ->expectAttributesCount(3)
+        ->expectAttribute('glow.name', 'another glow')
+        ->expectAttribute('glow.level', 'error')
+        ->expectAttribute('glow.context', ['another key' => 'another value']);
 });
 
 it('can add logs', function () {
-    $flare = setupFlare(fn (FlareConfig $config) => $config->collectLogs());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectLogsWithErrors());
 
     $flare->log()->record(
         'my log',
-        MessageLevels::Info,
+        Level::Info,
         ['my key' => 'my value']
     );
 
@@ -351,36 +339,33 @@ it('can add logs', function () {
 
     $flare->log()->record(
         'another log',
-        MessageLevels::Error,
+        Level::Error,
         ['another key' => 'another value']
     );
 
     reportException();
 
-    $payload = FakeSender::instance()->getLastPayload();
+    $report = FakeApi::lastReport();
 
-    $this->assertEquals([
-        [
-            'attributes' => [
-                'log.message' => 'my log',
-                'log.level' => 'info',
-                'log.context' => ['my key' => 'my value'],
-            ],
-            'startTimeUnixNano' => 1546346096000000000,
-            'endTimeUnixNano' => null,
-            'type' => SpanEventType::Log,
-        ],
-        [
-            'attributes' => [
-                'log.message' => 'another log',
-                'log.level' => 'error',
-                'log.context' => ['another key' => 'another value'],
-            ],
-            'startTimeUnixNano' => 1546346097000000000,
-            'endTimeUnixNano' => null,
-            'type' => SpanEventType::Log,
-        ],
-    ], $payload['events']);
+    $report->expectEventCount(2);
+
+    $report->expectEvent(0)
+        ->expectType(SpanEventType::Log)
+        ->expectStart(1546346096000000000)
+        ->expectEnd(null)
+        ->expectAttributesCount(3)
+        ->expectAttribute('log.message', 'my log')
+        ->expectAttribute('log.level', 'info')
+        ->expectAttribute('log.context', ['my key' => 'my value']);
+
+    $report->expectEvent(1)
+        ->expectType(SpanEventType::Log)
+        ->expectStart(1546346097000000000)
+        ->expectEnd(null)
+        ->expectAttributesCount(3)
+        ->expectAttribute('log.message', 'another log')
+        ->expectAttribute('log.level', 'error')
+        ->expectAttribute('log.context', ['another key' => 'another value']);
 });
 
 it('can add queries', function () {
@@ -406,29 +391,29 @@ it('can add queries', function () {
 
     reportException();
 
-    $payload = FakeSender::instance()->getLastPayload();
+    $report = FakeApi::lastReport();
 
-    expect($payload['events'])->toHaveCount(2);
+    $report->expectEventCount(2);
 
-    expect($payload['events'][0])
-        ->toHaveKey('startTimeUnixNano', 1546346096000000000 - TimeHelper::milliseconds(250))
-        ->toHaveKey('endTimeUnixNano', 1546346096000000000)
-        ->toHaveKey('type', SpanType::Query)
-        ->attributes
-        ->toHaveKey('db.system', 'mysql')
-        ->toHaveKey('db.name', 'users')
-        ->toHaveKey('db.statement', 'select * from users where id = ?')
-        ->toHaveKey('db.sql.bindings', ['id' => 1]);
+    $report->expectEvent(0)
+        ->expectType(SpanType::Query)
+        ->expectStart(1546346096000000000 - TimeHelper::milliseconds(250))
+        ->expectEnd(1546346096000000000)
+        ->expectAttributesCount(4)
+        ->expectAttribute('db.system', 'mysql')
+        ->expectAttribute('db.name', 'users')
+        ->expectAttribute('db.statement', 'select * from users where id = ?')
+        ->expectAttribute('db.sql.bindings', ['id' => 1]);
 
-    expect($payload['events'][1])
-        ->toHaveKey('startTimeUnixNano', 1546346097000000000 - TimeHelper::milliseconds(125))
-        ->toHaveKey('endTimeUnixNano', 1546346097000000000)
-        ->toHaveKey('type', SpanType::Query)
-        ->attributes
-        ->toHaveKey('db.system', 'mysql')
-        ->toHaveKey('db.name', 'users')
-        ->toHaveKey('db.statement', 'select * from users where id = ?')
-        ->toHaveKey('db.sql.bindings', ['id' => 2]);
+    $report->expectEvent(1)
+        ->expectType(SpanType::Query)
+        ->expectStart(1546346097000000000 - TimeHelper::milliseconds(125))
+        ->expectEnd(1546346097000000000)
+        ->expectAttributesCount(4)
+        ->expectAttribute('db.system', 'mysql')
+        ->expectAttribute('db.name', 'users')
+        ->expectAttribute('db.statement', 'select * from users where id = ?')
+        ->expectAttribute('db.sql.bindings', ['id' => 2]);
 });
 
 it('can begin and commit transactions', function () {
@@ -442,16 +427,16 @@ it('can begin and commit transactions', function () {
 
     reportException();
 
-    $payload = FakeSender::instance()->getLastPayload();
+    $report = FakeApi::lastReport();
 
-    expect($payload['events'])->toHaveCount(1);
+    $report->expectEventCount(1);
 
-    expect($payload['events'][0])
-        ->toHaveKey('startTimeUnixNano', 1546346096000000000)
-        ->toHaveKey('endTimeUnixNano', 1546346097000000000)
-        ->toHaveKey('type', SpanType::Transaction)
-        ->attributes
-        ->toHaveKey('db.transaction.status', TransactionStatus::Committed);
+    $report->expectEvent(0)
+        ->expectStart(1546346096000000000)
+        ->expectEnd(1546346097000000000)
+        ->expectType(SpanType::Transaction)
+        ->expectAttributesCount(1)
+        ->expectAttribute('db.transaction.status', TransactionStatus::Committed);
 });
 
 it('can begin and rollback transactions', function () {
@@ -465,16 +450,16 @@ it('can begin and rollback transactions', function () {
 
     reportException();
 
-    $payload = FakeSender::instance()->getLastPayload();
+    $report = FakeApi::lastReport();
 
-    expect($payload['events'])->toHaveCount(1);
+    $report->expectEventCount(1);
 
-    expect($payload['events'][0])
-        ->toHaveKey('startTimeUnixNano', 1546346096000000000)
-        ->toHaveKey('endTimeUnixNano', 1546346097000000000)
-        ->toHaveKey('type', SpanType::Transaction)
-        ->attributes
-        ->toHaveKey('db.transaction.status', TransactionStatus::RolledBack);
+    $report->expectEvent(0)
+        ->expectStart(1546346096000000000)
+        ->expectEnd(1546346097000000000)
+        ->expectType(SpanType::Transaction)
+        ->expectAttributesCount(1)
+        ->expectAttribute('db.transaction.status', TransactionStatus::RolledBack);
 
 });
 
@@ -483,9 +468,10 @@ test('a version is by default null', function () {
 
     reportException();
 
-    $payload = FakeSender::instance()->getLastPayload();
-
-    expect($payload['attributes']['service.version'])->toBeNull();
+    $report = FakeApi::lastReport()->expectAttribute(
+        'service.version',
+        null
+    );
 });
 
 it('will add the version to the report', function () {
@@ -495,9 +481,10 @@ it('will add the version to the report', function () {
 
     reportException();
 
-    $payload = FakeSender::instance()->getLastPayload();
-
-    expect($payload['attributes']['service.version'])->toEqual('123');
+    FakeApi::lastReport()->expectAttribute(
+        'service.version',
+        '123'
+    );
 });
 
 it('will add the application name to the report', function () {
@@ -507,9 +494,10 @@ it('will add the application name to the report', function () {
 
     reportException();
 
-    $payload = FakeSender::instance()->getLastPayload();
-
-    expect($payload['attributes']['service.name'])->toEqual('Flare');
+    FakeApi::lastReport()->expectAttribute(
+        'service.name',
+        'Flare'
+    );
 });
 
 it('is possible to configure the version on the flare instance', function () {
@@ -521,9 +509,10 @@ it('is possible to configure the version on the flare instance', function () {
 
     reportException();
 
-    $payload = FakeSender::instance()->getLastPayload();
-
-    expect($payload['attributes']['service.version'])->toEqual('123');
+    FakeApi::lastReport()->expectAttribute(
+        'service.version',
+        '123'
+    );
 });
 
 it('is possible to configure the application name on the flare instance', function () {
@@ -535,9 +524,10 @@ it('is possible to configure the application name on the flare instance', functi
 
     reportException();
 
-    $payload = FakeSender::instance()->getLastPayload();
-
-    expect($payload['attributes']['service.name'])->toEqual('Flare');
+    FakeApi::lastReport()->expectAttribute(
+        'service.name',
+        'Flare'
+    );
 });
 
 it('is possible to configure the application stage on the flare instance', function () {
@@ -549,9 +539,10 @@ it('is possible to configure the application stage on the flare instance', funct
 
     reportException();
 
-    $payload = FakeSender::instance()->getLastPayload();
-
-    expect($payload['attributes']['service.stage'])->toEqual('Development');
+    FakeApi::lastReport()->expectAttribute(
+        'service.stage',
+        'Development'
+    );
 });
 
 it('will add the php version to the report', function () {
@@ -559,9 +550,10 @@ it('will add the php version to the report', function () {
 
     reportException();
 
-    $payload = FakeSender::instance()->getLastPayload();
-
-    expect($payload['attributes']['process.runtime.version'])->toEqual(phpversion());
+    FakeApi::lastReport()->expectAttribute(
+        'process.runtime.version',
+        phpversion()
+    );
 });
 
 it('can filter exceptions being reported', function () {
@@ -569,7 +561,7 @@ it('can filter exceptions being reported', function () {
 
     reportException();
 
-    FakeSender::instance()->assertRequestsSent(0);
+    FakeApi::assertSent(reports: 0);
 });
 
 it('can filter exceptions being reported and allow them', function () {
@@ -577,7 +569,7 @@ it('can filter exceptions being reported and allow them', function () {
 
     reportException();
 
-    FakeSender::instance()->assertRequestsSent(1);
+    FakeApi::assertSent(reports: 1);
 });
 
 it('can filter exceptions being reported by setting it on the flare instance', function () {
@@ -587,25 +579,25 @@ it('can filter exceptions being reported by setting it on the flare instance', f
 
     reportException();
 
-    FakeSender::instance()->assertRequestsSent(0);
+    FakeApi::assertSent(reports: 0);
 });
 
 it('can filter reports', function () {
-    setupFlare(fn (FlareConfig $config) => $config->filterReportsUsing(fn (Report $report) => false));
+    setupFlare(fn (FlareConfig $config) => $config->filterReportsUsing(fn (ReportFactory $report) => false));
 
     reportException();
 
-    FakeSender::instance()->assertRequestsSent(0);
+    FakeApi::assertSent(reports: 0);
 });
 
 it('can filter reports by setting it on the flare instance', function () {
     $flare = setupFlare();
 
-    $flare->filterReportsUsing(fn (Report $report) => false);
+    $flare->filterReportsUsing(fn (ReportFactory $report) => false);
 
     reportException();
 
-    FakeSender::instance()->assertRequestsSent(0);
+    FakeApi::assertSent(reports: 0);
 });
 
 it('can filter errors based on their level', function () {
@@ -614,7 +606,7 @@ it('can filter errors based on their level', function () {
     reportError(E_NOTICE);
     reportError(E_WARNING);
 
-    FakeSender::instance()->assertRequestsSent(1);
+    FakeApi::assertSent(reports: 1);
 });
 
 it('can filter error exceptions based on their severity', function () {
@@ -623,7 +615,7 @@ it('can filter error exceptions based on their severity', function () {
     $flare->report(new ErrorException('test', 0, E_NOTICE));
     $flare->report(new ErrorException('test', 0, E_WARNING));
 
-    FakeSender::instance()->assertRequestsSent(1);
+    FakeApi::assertSent(reports: 1);
 });
 
 it('will add arguments to a stack trace by default', function () {
@@ -639,26 +631,25 @@ it('will add arguments to a stack trace by default', function () {
 
     $flare->report($exception);
 
-    $payload = FakeSender::instance()->getLastPayload();
+    $frame = FakeApi::lastReport()->expectStacktraceFrame(1);
 
-    expect($payload['stacktrace'][1]['arguments'])->toEqual([
-        [
-            "name" => "string",
-            "value" => "a message",
-            "passed_by_reference" => false,
-            "is_variadic" => false,
-            "truncated" => false,
-            'original_type' => 'string',
-        ],
-        [
-            "name" => "dateTime",
-            "value" => '16 May 2020 14:00:00 Europe/Brussels',
-            "passed_by_reference" => false,
-            "is_variadic" => false,
-            "truncated" => false,
-            'original_type' => DateTime::class,
-        ],
-    ]);
+    $frame->expectArgumentCount(2);
+
+    $frame->expectArgument(0)
+        ->expectName('string')
+        ->expectValue('a message')
+        ->expectPassedByReference(false)
+        ->expectIsVariadic(false)
+        ->expectTruncated(false)
+        ->expectOriginalType('string');
+
+    $frame->expectArgument(1)
+        ->expectName('dateTime')
+        ->expectValue('16 May 2020 14:00:00 Europe/Brussels')
+        ->expectPassedByReference(false)
+        ->expectIsVariadic(false)
+        ->expectTruncated(false)
+        ->expectOriginalType(DateTime::class);
 });
 
 it('is possible to disable stack frame arguments', function () {
@@ -673,7 +664,7 @@ it('is possible to disable stack frame arguments', function () {
 
     $flare->report($exception);
 
-    expect(FakeSender::instance()->getLastPayload()['stacktrace'][1]['arguments'])->toBeNull();
+    FakeApi::lastReport()->expectStacktraceFrame(1)->expectNoArguments();
 });
 
 it('is possible to disable stack frame arguments with zend.exception_ignore_args', function () {
@@ -688,7 +679,7 @@ it('is possible to disable stack frame arguments with zend.exception_ignore_args
 
     $flare->report($exception);
 
-    expect(FakeSender::instance()->getLastPayload()['stacktrace'][1]['arguments'])->toBeNull();
+    FakeApi::lastReport()->expectStacktraceFrame(1)->expectNoArguments();
 });
 
 it('can report a handled error', function () {
@@ -698,16 +689,13 @@ it('can report a handled error', function () {
 
     $flare->reportHandled($throwable);
 
-    FakeSender::instance()->assertRequestsSent(1);
-
-    $report = FakeSender::instance()->getLastPayload();
-
-    expect($report['handled'])->toBeTrue();
+    FakeApi::lastReport()->expectHandled();
 });
 
 it('is possible to manually add spans and span events', function () {
     $flare = setupFlare(alwaysSampleTraces: true);
 
+    $flare->tracer->startTrace();
     $flare->tracer->span('Test Span', function () use ($flare) {
         $flare->tracer->span('Test Child Span', function () use ($flare) {
             $flare->tracer->spanEvent('Test Child Span Event');
@@ -715,27 +703,25 @@ it('is possible to manually add spans and span events', function () {
 
         $flare->tracer->spanEvent('Test Span Event');
     });
+    $flare->tracer->endTrace();
 
-    ExpectTracer::create($flare)
-        ->trace(
-            fn (ExpectTrace $trace) => $trace
-                ->hasSpanCount(2)
-                ->span(
-                    fn (ExpectSpan $span) => $span
-                        ->hasName('Test Span')
-                        ->missingParent()
-                        ->hasSpanEventCount(1)
-                        ->spanEvent(fn (ExpectSpanEvent $spanEvent) => $spanEvent->hasName('Test Span Event')),
-                    $parentSpan
-                )
-                ->span(
-                    fn (ExpectSpan $span) => $span
-                        ->hasName('Test Child Span')
-                        ->hasParent($parentSpan)
-                        ->hasSpanEventCount(1)
-                        ->spanEvent(fn (ExpectSpanEvent $spanEvent) => $spanEvent->hasName('Test Child Span Event'))
-                )
-        );
+    $trace = FakeApi::lastTrace();
+
+    $trace->expectSpanCount(2);
+
+    $parentSpan = $trace->expectSpan(0)
+        ->expectName('Test Span')
+        ->expectMissingParentId()
+        ->expectSpanEventCount(1);
+
+    $parentSpan->expectSpanEvent(0)->expectName('Test Span Event');
+
+    $childSpan = $trace->expectSpan(1)
+        ->expectName('Test Child Span')
+        ->expectParentId($parentSpan)
+        ->expectSpanEventCount(1);
+
+    $childSpan->expectSpanEvent(0)->expectName('Test Child Span Event');
 });
 
 it('is possible to configure a tracing resource', function () {
@@ -749,8 +735,11 @@ it('is possible to configure a tracing resource', function () {
 
     $flare->tracer->span('Test Span', fn () => null);
 
-    ExpectTracer::create($flare)->resource(
-        fn (ExpectResource $resource) => $resource->hasAttribute('custom_attribute', 'test')
+    $flare->tracer->endTrace();
+
+    FakeApi::lastTrace()->expectResource()->expectAttribute(
+        'custom_attribute',
+        'test'
     );
 });
 
@@ -765,8 +754,11 @@ it('it is possible to configure a tracing scope', function () {
 
     $flare->tracer->span('Test Span', fn () => null);
 
-    ExpectTracer::create($flare)->scope(
-        fn (ExpectScope $scope) => $scope->hasAttribute('custom_attribute', 'test')
+    $flare->tracer->endTrace();
+
+    FakeApi::lastTrace()->expectScope()->expectAttribute(
+        'custom_attribute',
+        'test'
     );
 });
 
@@ -781,10 +773,11 @@ it('is possible to configure a span when ended', function () {
 
     $flare->tracer->span('Test Span', fn () => null);
 
-    ExpectTracer::create($flare)->trace(
-        fn (ExpectTrace $trace) => $trace->span(
-            fn (ExpectSpan $span) => $span->hasAttribute('custom_attribute', 'test')
-        )
+    $flare->tracer->endTrace();
+
+    FakeApi::lastTrace()->expectSpan(0)->expectAttribute(
+        'custom_attribute',
+        'test'
     );
 });
 
@@ -799,12 +792,11 @@ it('is possible to configure a span event when ended', function () {
 
     $flare->tracer->span('Test Span', fn () => $flare->tracer->spanEvent('Test Span Event'));
 
-    ExpectTracer::create($flare)->trace(
-        fn (ExpectTrace $trace) => $trace->span(
-            fn (ExpectSpan $span) => $span->spanEvent(
-                fn (ExpectSpanEvent $spanEvent) => $spanEvent->hasAttribute('custom_attribute', 'test')
-            )
-        )
+    $flare->tracer->endTrace();
+
+    FakeApi::lastTrace()->expectSpan(0)->expectSpanEvent(0)->expectAttribute(
+        'custom_attribute',
+        'test'
     );
 });
 
@@ -823,11 +815,7 @@ it('can override the grouping algorithm for specific classes', function () {
 
     $flare->reportHandled($throwable);
 
-    FakeSender::instance()->assertRequestsSent(1);
-
-    $payload = FakeSender::instance()->getLastPayload();
-
-    expect($payload['overriddenGrouping'])->toBe('exception_message_and_class');
+    FakeApi::lastReport()->expectOverriddenGrouping(OverriddenGrouping::ExceptionMessageAndClass);
 });
 
 it('can add an additional recorders', function () {
@@ -845,11 +833,7 @@ it('can add an additional recorders', function () {
 
     $flare->reportHandled($throwable);
 
-    FakeSender::instance()->assertRequestsSent(1);
-
-    $payload = FakeSender::instance()->getLastPayload();
-
-    expect($payload['events'])->toHaveCount(1);
+    FakeApi::lastReport()->expectEventCount(1);
 });
 
 it('it can add additional middleware', function () {
@@ -865,163 +849,35 @@ it('it can add additional middleware', function () {
 
     $flare->reportHandled($throwable);
 
-    FakeSender::instance()->assertRequestsSent(1);
-
-    $payload = FakeSender::instance()->getLastPayload();
-
-    expect($payload['attributes']['context.custom'])->toEqual([
-        'extra' => ['key' => 'value'],
-    ]);
+    FakeApi::lastReport()->expectAttribute(
+        'context.custom',
+        [
+            'extra' => ['key' => 'value'],
+        ]
+    );
 });
 
 it('can setup a disabled flare', function () {
-    $flare = DisabledFlare::make('');
+    $flare = setupFlare(
+        closure: fn (FlareConfig $config) => $config->useDefaults(),
+        withoutApiKey: true,
+        alwaysSampleTraces: true
+    );
 
-    $flare->sentReports()->all();
-    $flare->application()->recordBooting();
-    $flare->tracer->startSpan('test');
+    $flare->report(new Exception('This is a test'));
 
-    expect(true)->toBeTrue();
-});
+    $flare->glow()?->record('Hello', Level::Info);
+    $flare->context('test', 'value');
+    $flare->log()?->record('Hello', Level::Info);
 
-it('can send a test trace', function () {
-    setupFlare();
+    $flare->lifecycle->start();
+    $flare->lifecycle->booted();
+    $flare->tracer->span('test', fn () => null);
+    $flare->lifecycle->terminated();
 
-    $trace = [
-        'resourceSpans' => [
-            [
-                'resource' => [
-                    'attributes' => [
-                        'service.name' => 'test-service',
-                    ],
-                    'droppedAttributesCount' => 0,
-                ],
-                'scopeSpans' => [
-                    [
-                        'scope' => [
-                            'name' => 'test-scope',
-                            'version' => '1.0.0',
-                        ],
-                        'spans' => [
-                            [
-                                'traceId' => 'abc123',
-                                'spanId' => 'span123',
-                                'parentSpanId' => null,
-                                'name' => 'Test Span',
-                                'startTimeUnixNano' => 1546346096000000000,
-                                'endTimeUnixNano' => 1546346097000000000,
-                                'attributes' => [],
-                            ],
-                        ],
-                    ],
-                ],
-            ],
-        ],
-    ];
+    expect($flare->sentReports->all())->toBeEmpty();
 
-    test()->flare->sendTestTrace($trace);
-
-    FakeSender::instance()->assertRequestsSent(1);
-
-    $payload = FakeSender::instance()->getLastPayload();
-
-    expect($payload)->toBeArray()
-        ->and($payload['resourceSpans'])->toBeArray()
-        ->and($payload['resourceSpans'][0]['scopeSpans'][0]['spans'][0]['name'])->toBe('Test Span');
-});
-
-it('replaces timestamps when sending test trace', function () {
-    setupFlare();
-
-    $originalStartTime = 1000000000000000000;
-    $originalEndTime = 2000000000000000000;
-
-    $trace = [
-        'resourceSpans' => [
-            [
-                'resource' => [
-                    'attributes' => [],
-                ],
-                'scopeSpans' => [
-                    [
-                        'spans' => [
-                            [
-                                'traceId' => 'abc123',
-                                'spanId' => 'span123',
-                                'parentSpanId' => null,
-                                'name' => 'Test Span',
-                                'startTimeUnixNano' => $originalStartTime,
-                                'endTimeUnixNano' => $originalEndTime,
-                            ],
-                        ],
-                    ],
-                ],
-            ],
-        ],
-    ];
-
-    test()->flare->sendTestTrace($trace);
-
-    FakeSender::instance()->assertRequestsSent(1);
-
-    $payload = FakeSender::instance()->getLastPayload();
-
-    expect($payload['resourceSpans'][0]['scopeSpans'][0]['spans'][0])->toHaveKey('startTimeUnixNano')
-        ->and($payload['resourceSpans'][0]['scopeSpans'][0]['spans'][0])->toHaveKey('endTimeUnixNano');
-
-    $startTime = $payload['resourceSpans'][0]['scopeSpans'][0]['spans'][0]['startTimeUnixNano'];
-    $endTime = $payload['resourceSpans'][0]['scopeSpans'][0]['spans'][0]['endTimeUnixNano'];
-
-    expect($startTime)->not()->toBe($originalStartTime)
-        ->and($endTime)->not()->toBe($originalEndTime)
-        ->and($endTime)->toBeGreaterThan($startTime)
-        ->and($endTime - $startTime)->toBe(100000000);
-});
-
-it('replaces trace ids when sending test trace', function () {
-    setupFlare();
-
-    $originalTraceId = 'abc123';
-    $originalSpanId = 'span123';
-
-    $trace = [
-        'resourceSpans' => [
-            [
-                'resource' => [
-                    'attributes' => [],
-                ],
-                'scopeSpans' => [
-                    [
-                        'spans' => [
-                            [
-                                'traceId' => $originalTraceId,
-                                'spanId' => $originalSpanId,
-                                'parentSpanId' => null,
-                                'name' => 'Test Span',
-                                'startTimeUnixNano' => 1000000000000000000,
-                                'endTimeUnixNano' => 2000000000000000000,
-                            ],
-                        ],
-                    ],
-                ],
-            ],
-        ],
-    ];
-
-    test()->flare->sendTestTrace($trace);
-
-    FakeSender::instance()->assertRequestsSent(1);
-
-    $payload = FakeSender::instance()->getLastPayload();
-
-    expect($payload['resourceSpans'][0]['scopeSpans'][0]['spans'][0])->toHaveKey('traceId')
-        ->and($payload['resourceSpans'][0]['scopeSpans'][0]['spans'][0])->toHaveKey('spanId');
-
-    $traceId = $payload['resourceSpans'][0]['scopeSpans'][0]['spans'][0]['traceId'];
-    $spanId = $payload['resourceSpans'][0]['scopeSpans'][0]['spans'][0]['spanId'];
-
-    expect($traceId)->not()->toBe($originalTraceId)
-        ->and($spanId)->not()->toBe($originalSpanId);
+    FakeApi::assertSent(reports: 0, traces: 0, logs: 0);
 });
 
 // Helpers

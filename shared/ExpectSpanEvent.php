@@ -5,32 +5,51 @@ namespace Spatie\FlareClient\Tests\Shared;
 use Spatie\FlareClient\Contracts\FlareSpanEventType;
 use Spatie\FlareClient\Contracts\WithAttributes;
 use Spatie\FlareClient\Spans\SpanEvent;
+use Spatie\FlareClient\Support\OpenTelemetryAttributeMapper;
+use Spatie\FlareClient\Tests\Shared\Concerns\ExpectAttributes;
 
 class ExpectSpanEvent
 {
-    use Concerns\ExpectAttributes;
+    use ExpectAttributes;
+
+    public ?string $type;
 
     public function __construct(
-        public SpanEvent $spanEvent
+        public array $spanEvent,
+        public int $depth,
     ) {
+        $this->type =  $this->attributes()['flare.span_event_type'] ?? null;
     }
 
-    public function hasName(string $name): self
+    public function expectName(string $name): self
     {
-        expect($this->spanEvent->name)->toEqual($name);
+        expect($this->spanEvent['name'])->toEqual($name);
 
         return $this;
     }
 
-    public function hasType(FlareSpanEventType $type): self
+    public function expectType(FlareSpanEventType $type): self
     {
-        expect($this->spanEvent->attributes['flare.span_event_type'])->toEqual($type);
+        expect($this->attributes()['flare.span_event_type'])->toEqual($type->value);
 
         return $this;
     }
 
-    protected function entity(): WithAttributes
+    public function attributes(): array
     {
-        return $this->spanEvent;
+        return (new OpenTelemetryAttributeMapper())->attributesToPHP($this->spanEvent['attributes']);
+    }
+
+    public function toString(): string
+    {
+        $indentPrefix = $this->getIndentPrefix($this->depth);
+
+        $output = [
+            "{$indentPrefix}◆ {$this->spanEvent['name']} - " . $this->type ?? 'undefined type'
+        ];
+
+        array_push($output, ...$this->attributesToStrings($this->depth, prefix: '  •'));
+
+        return implode(PHP_EOL, $output);
     }
 }

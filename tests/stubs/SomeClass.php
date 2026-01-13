@@ -2,7 +2,7 @@
 
 namespace Spatie\FlareClient\Tests\stubs;
 
-class SomeClass
+class SomeClass implements SomeInterface
 {
 
 }

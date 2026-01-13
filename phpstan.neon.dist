@@ -16,4 +16,3 @@ parameters:
 
     tmpDir: build/phpstan
     checkMissingIterableValueType: true
-

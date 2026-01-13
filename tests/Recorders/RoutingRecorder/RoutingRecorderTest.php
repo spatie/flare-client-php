@@ -4,18 +4,18 @@ namespace Spatie\FlareClient\Tests\Shared\Recorders\RoutingRecorder;
 
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\FlareConfig;
-use Spatie\FlareClient\Spans\Span;
+use Spatie\FlareClient\Tests\Shared\FakeApi;
 use Spatie\FlareClient\Tests\Shared\FakeIds;
-use Spatie\FlareClient\Tests\Shared\FakeSender;
 
 test('it can run through a routing lifecycle', function () {
-    $flare = setupFlare(fn (FlareConfig $config) => $config->collectRequests(), alwaysSampleTraces: true);
-
     FakeIds::setup()
         ->nextTraceIdTimes('fake-trace-id', 6)
         ->nextSpanId('fake-app-id', 'fake-global-before-id',  'fake-routing-id', 'fake-before-id', 'fake-after-id', 'fake-global-after-id');
 
-    $flare->application()->recordStart(time: 0);
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectRequests(), alwaysSampleTraces: true);
+
+    $flare->lifecycle->start(timeUnixNano: 0);
+
     $flare->routing()->recordGlobalBeforeMiddlewareStart(time: 10);
     $flare->routing()->recordGlobalBeforeMiddlewareEnd(time: 20);
     $flare->routing()->recordRoutingStart(time: 30);
@@ -26,180 +26,159 @@ test('it can run through a routing lifecycle', function () {
     $flare->routing()->recordAfterMiddlewareEnd(time: 80);
     $flare->routing()->recordGlobalAfterMiddlewareStart(time: 90);
     $flare->routing()->recordGlobalAfterMiddlewareEnd(time: 100);
-    $flare->application()->recordEnd(time: 110);
 
-    FakeSender::instance()->assertRequestsSent(1);
-    $payload = FakeSender::instance()->getLastPayload();
+    $flare->lifecycle->terminated(timeUnixNano: 110);
 
-    expect($payload)->toHaveCount(6);
+    $trace = FakeApi::lastTrace()->expectSpanCount(6);
 
-    expect($payload[0])
-        ->toBeInstanceOf(Span::class)
-        ->traceId->toBe('fake-trace-id')
-        ->spanId->toBe('fake-app-id')
-        ->start->toBe(0)
-        ->end->toBe(110)
-        ->attributes->toHaveKey('flare.span_type', SpanType::Application);
+    $trace->expectSpan(0)
+        ->expectTraceId('fake-trace-id')
+        ->expectSpanId('fake-app-id')
+        ->expectStart(0)
+        ->expectEnd(110)
+        ->expectType(SpanType::Application);
 
-    expect($payload[1])
-        ->toBeInstanceOf(Span::class)
-        ->traceId->toBe('fake-trace-id')
-        ->spanId->toBe('fake-global-before-id')
-        ->start->toBe(10)
-        ->end->toBe(20)
-        ->attributes->toHaveKey('flare.span_type', SpanType::GlobalBeforeMiddleware);
+    $trace->expectSpan(1)
+        ->expectTraceId('fake-trace-id')
+        ->expectSpanId('fake-global-before-id')
+        ->expectStart(10)
+        ->expectEnd(20)
+        ->expectType(SpanType::GlobalBeforeMiddleware);
 
-    expect($payload[2])
-        ->toBeInstanceOf(Span::class)
-        ->traceId->toBe('fake-trace-id')
-        ->spanId->toBe('fake-routing-id')
-        ->start->toBe(30)
-        ->end->toBe(40)
-        ->attributes->toHaveKey('flare.span_type', SpanType::Routing);
+    $trace->expectSpan(2)
+        ->expectTraceId('fake-trace-id')
+        ->expectSpanId('fake-routing-id')
+        ->expectStart(30)
+        ->expectEnd(40)
+        ->expectType(SpanType::Routing);
 
-    expect($payload[3])
-        ->toBeInstanceOf(Span::class)
-        ->traceId->toBe('fake-trace-id')
-        ->spanId->toBe('fake-before-id')
-        ->start->toBe(50)
-        ->end->toBe(60)
-        ->attributes->toHaveKey('flare.span_type', SpanType::BeforeMiddleware);
+    $trace->expectSpan(3)
+        ->expectTraceId('fake-trace-id')
+        ->expectSpanId('fake-before-id')
+        ->expectStart(50)
+        ->expectEnd(60)
+        ->expectType(SpanType::BeforeMiddleware);
 
-    expect($payload[4])
-        ->toBeInstanceOf(Span::class)
-        ->traceId->toBe('fake-trace-id')
-        ->spanId->toBe('fake-after-id')
-        ->start->toBe(70)
-        ->end->toBe(80)
-        ->attributes->toHaveKey('flare.span_type', SpanType::AfterMiddleware);
+    $trace->expectSpan(4)
+        ->expectTraceId('fake-trace-id')
+        ->expectSpanId('fake-after-id')
+        ->expectStart(70)
+        ->expectEnd(80)
+        ->expectType(SpanType::AfterMiddleware);
 
-    expect($payload[5])
-        ->toBeInstanceOf(Span::class)
-        ->traceId->toBe('fake-trace-id')
-        ->spanId->toBe('fake-global-after-id')
-        ->start->toBe(90)
-        ->end->toBe(100)
-        ->attributes->toHaveKey('flare.span_type', SpanType::GlobalAfterMiddleware);
+    $trace->expectSpan(5)
+        ->expectTraceId('fake-trace-id')
+        ->expectSpanId('fake-global-after-id')
+        ->expectStart(90)
+        ->expectEnd(100)
+        ->expectType(SpanType::GlobalAfterMiddleware);
 });
 
 test('it can run through a routing lifecycle without global middleware', function () {
-    $flare = setupFlare(fn (FlareConfig $config) => $config->collectRequests(), alwaysSampleTraces: true);
-
     FakeIds::setup()
         ->nextTraceIdTimes('fake-trace-id', 6)
         ->nextSpanId('fake-app-id',  'fake-routing-id', 'fake-before-id', 'fake-after-id');
 
-    $flare->application()->recordStart(time: 0);
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectRequests(), alwaysSampleTraces: true);
+
+    $flare->lifecycle->start(timeUnixNano: 0);
+
     $flare->routing()->recordRouting(start: 0, end: 10);
     $flare->routing()->recordBeforeMiddleware(start: 10, end: 20);
     $flare->routing()->recordAfterMiddleware(start: 20, end: 30);
-    $flare->application()->recordEnd(time: 30);
 
-    FakeSender::instance()->assertRequestsSent(1);
-    $payload = FakeSender::instance()->getLastPayload();
+    $flare->lifecycle->terminated(timeUnixNano: 30);
 
-    expect($payload)->toHaveCount(4);
+    $trace = FakeApi::lastTrace()->expectSpanCount(4);
 
-    expect($payload[0])
-        ->toBeInstanceOf(Span::class)
-        ->traceId->toBe('fake-trace-id')
-        ->spanId->toBe('fake-app-id')
-        ->start->toBe(0)
-        ->end->toBe(30)
-        ->attributes->toHaveKey('flare.span_type', SpanType::Application);
+    $trace->expectSpan(0)
+        ->expectTraceId('fake-trace-id')
+        ->expectSpanId('fake-app-id')
+        ->expectStart(0)
+        ->expectEnd(30)
+        ->expectType(SpanType::Application);
 
-    expect($payload[1])
-        ->toBeInstanceOf(Span::class)
-        ->traceId->toBe('fake-trace-id')
-        ->spanId->toBe('fake-routing-id')
-        ->start->toBe(0)
-        ->end->toBe(10)
-        ->attributes->toHaveKey('flare.span_type', SpanType::Routing);
+    $trace->expectSpan(1)
+        ->expectTraceId('fake-trace-id')
+        ->expectSpanId('fake-routing-id')
+        ->expectStart(0)
+        ->expectEnd(10)
+        ->expectType(SpanType::Routing);
 
-    expect($payload[2])
-        ->toBeInstanceOf(Span::class)
-        ->traceId->toBe('fake-trace-id')
-        ->spanId->toBe('fake-before-id')
-        ->start->toBe(10)
-        ->end->toBe(20)
-        ->attributes->toHaveKey('flare.span_type', SpanType::BeforeMiddleware);
+    $trace->expectSpan(2)
+        ->expectTraceId('fake-trace-id')
+        ->expectSpanId('fake-before-id')
+        ->expectStart(10)
+        ->expectEnd(20)
+        ->expectType(SpanType::BeforeMiddleware);
 
-    expect($payload[3])
-        ->toBeInstanceOf(Span::class)
-        ->traceId->toBe('fake-trace-id')
-        ->spanId->toBe('fake-after-id')
-        ->start->toBe(20)
-        ->end->toBe(30)
-        ->attributes->toHaveKey('flare.span_type', SpanType::AfterMiddleware);
+    $trace->expectSpan(3)
+        ->expectTraceId('fake-trace-id')
+        ->expectSpanId('fake-after-id')
+        ->expectStart(20)
+        ->expectEnd(30)
+        ->expectType(SpanType::AfterMiddleware);
 });
 
 it('will automatically close other fases of the routing', function () {
-    $flare = setupFlare(fn (FlareConfig $config) => $config->collectRequests(), alwaysSampleTraces: true);
-
     FakeIds::setup()
         ->nextTraceIdTimes('fake-trace-id', 6)
         ->nextSpanId('fake-app-id', 'fake-global-before-id',  'fake-routing-id', 'fake-before-id', 'fake-after-id', 'fake-global-after-id');
 
-    $flare->application()->recordStart(time: 0);
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectRequests(), alwaysSampleTraces: true);
+
+    $flare->lifecycle->start(timeUnixNano: 0);
+
     $flare->routing()->recordGlobalBeforeMiddlewareStart(time: 10);
     $flare->routing()->recordRoutingStart(time: 20);
     $flare->routing()->recordBeforeMiddlewareStart(time: 30);
     $flare->routing()->recordAfterMiddlewareStart(time: 40);
     $flare->routing()->recordGlobalAfterMiddlewareStart(time: 50);
     $flare->routing()->recordGlobalAfterMiddlewareEnd(time: 60);
-    $flare->application()->recordEnd(time: 60);
 
-    FakeSender::instance()->assertRequestsSent(1);
+    $flare->lifecycle->terminated(timeUnixNano: 60);
 
-    $payload = FakeSender::instance()->getLastPayload();
+    $trace = FakeApi::lastTrace()->expectSpanCount(6);
 
-    expect($payload)->toHaveCount(6);
+    $trace->expectSpan(0)
+        ->expectTraceId('fake-trace-id')
+        ->expectSpanId('fake-app-id')
+        ->expectStart(0)
+        ->expectEnd(60)
+        ->expectType(SpanType::Application);
 
-    expect($payload[0])
-        ->toBeInstanceOf(Span::class)
-        ->traceId->toBe('fake-trace-id')
-        ->spanId->toBe('fake-app-id')
-        ->start->toBe(0)
-        ->end->toBe(60)
-        ->attributes->toHaveKey('flare.span_type', SpanType::Application);
+    $trace->expectSpan(1)
+        ->expectTraceId('fake-trace-id')
+        ->expectSpanId('fake-global-before-id')
+        ->expectStart(10)
+        ->expectEnd(20)
+        ->expectType(SpanType::GlobalBeforeMiddleware);
 
-    expect($payload[1])
-        ->toBeInstanceOf(Span::class)
-        ->traceId->toBe('fake-trace-id')
-        ->spanId->toBe('fake-global-before-id')
-        ->start->toBe(10)
-        ->end->toBe(20)
-        ->attributes->toHaveKey('flare.span_type', SpanType::GlobalBeforeMiddleware);
+    $trace->expectSpan(2)
+        ->expectTraceId('fake-trace-id')
+        ->expectSpanId('fake-routing-id')
+        ->expectStart(20)
+        ->expectEnd(30)
+        ->expectType(SpanType::Routing);
 
-    expect($payload[2])
-        ->toBeInstanceOf(Span::class)
-        ->traceId->toBe('fake-trace-id')
-        ->spanId->toBe('fake-routing-id')
-        ->start->toBe(20)
-        ->end->toBe(30)
-        ->attributes->toHaveKey('flare.span_type', SpanType::Routing);
+    $trace->expectSpan(3)
+        ->expectTraceId('fake-trace-id')
+        ->expectSpanId('fake-before-id')
+        ->expectStart(30)
+        ->expectEnd(40)
+        ->expectType(SpanType::BeforeMiddleware);
 
-    expect($payload[3])
-        ->toBeInstanceOf(Span::class)
-        ->traceId->toBe('fake-trace-id')
-        ->spanId->toBe('fake-before-id')
-        ->start->toBe(30)
-        ->end->toBe(40)
-        ->attributes->toHaveKey('flare.span_type', SpanType::BeforeMiddleware);
+    $trace->expectSpan(4)
+        ->expectTraceId('fake-trace-id')
+        ->expectSpanId('fake-after-id')
+        ->expectStart(40)
+        ->expectEnd(50)
+        ->expectType(SpanType::AfterMiddleware);
 
-    expect($payload[4])
-        ->toBeInstanceOf(Span::class)
-        ->traceId->toBe('fake-trace-id')
-        ->spanId->toBe('fake-after-id')
-        ->start->toBe(40)
-        ->end->toBe(50)
-        ->attributes->toHaveKey('flare.span_type', SpanType::AfterMiddleware);
-
-    expect($payload[5])
-        ->toBeInstanceOf(Span::class)
-        ->traceId->toBe('fake-trace-id')
-        ->spanId->toBe('fake-global-after-id')
-        ->start->toBe(50)
-        ->end->toBe(60)
-        ->attributes->toHaveKey('flare.span_type', SpanType::GlobalAfterMiddleware);
+    $trace->expectSpan(5)
+        ->expectTraceId('fake-trace-id')
+        ->expectSpanId('fake-global-after-id')
+        ->expectStart(50)
+        ->expectEnd(60)
+        ->expectType(SpanType::GlobalAfterMiddleware);
 });

@@ -8,8 +8,9 @@ class ReportTrimmer
 
     /** @var array<int, class-string<\Spatie\FlareClient\Truncation\TruncationStrategy>> */
     protected array $strategies = [
-        TrimStringsStrategy::class,
+        TrimPreviousStrategy::class,
         TrimStackFrameArgumentsStrategy::class,
+        TrimStringsStrategy::class,
         TrimAttributesStrategy::class,
     ];
 
@@ -38,7 +39,7 @@ class ReportTrimmer
      */
     public function needsToBeTrimmed(array $payload): bool
     {
-        return strlen((string)json_encode($payload)) > self::getMaxPayloadSize();
+        return strlen((string) json_encode($payload)) > self::getMaxPayloadSize();
     }
 
     public static function getMaxPayloadSize(): int

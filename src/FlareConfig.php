@@ -4,6 +4,7 @@ namespace Spatie\FlareClient;
 
 use Closure;
 use Exception;
+use Monolog\Level;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\Backtrace\Arguments\Reducers\ArgumentReducer;
 use Spatie\Backtrace\Arguments\Reducers\ArrayArgumentReducer;
@@ -21,22 +22,23 @@ use Spatie\ErrorSolutions\SolutionProviders\UndefinedPropertySolutionProvider;
 use Spatie\FlareClient\AttributesProviders\ConsoleAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\EmptyUserAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\RequestAttributesProvider;
+use Spatie\FlareClient\AttributesProviders\ResponseAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\Contracts\FlareCollectType;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\CollectType;
-use Spatie\FlareClient\Enums\MessageLevels;
+use Spatie\FlareClient\Enums\FlareEntityType;
 use Spatie\FlareClient\Enums\OverriddenGrouping;
-use Spatie\FlareClient\FlareMiddleware\AddGitInformation;
+use Spatie\FlareClient\Exporters\OpenTelemetryJsonExporter;
+use Spatie\FlareClient\FlareMiddleware\AddLogs;
 use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
+use Spatie\FlareClient\Memory\SystemMemory;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
 use Spatie\FlareClient\Recorders\DumpRecorder\DumpRecorder;
-use Spatie\FlareClient\Recorders\ErrorRecorder\ErrorRecorder;
 use Spatie\FlareClient\Recorders\ExternalHttpRecorder\ExternalHttpRecorder;
 use Spatie\FlareClient\Recorders\FilesystemRecorder\FilesystemRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
-use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
 use Spatie\FlareClient\Recorders\RedisCommandRecorder\RedisCommandRecorder;
 use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
@@ -53,19 +55,17 @@ use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Support\CollectsResolver;
 use Spatie\FlareClient\Support\Ids;
-use Spatie\FlareClient\Support\StacktraceMapper;
-use Spatie\FlareClient\Support\TraceLimits;
 use Spatie\FlareClient\Time\SystemTime;
-use Spatie\FlareClient\TraceExporters\OpenTelemetryJsonTraceExporter;
 
 class FlareConfig
 {
     /**
      * @param null|Closure(Exception): bool $filterExceptionsCallable
-     * @param null|Closure(Report): bool $filterReportsCallable
+     * @param null|Closure(ReportFactory): bool $filterReportsCallable
      * @param array<string, array{type: FlareCollectType, ignored: ?bool, options: array}> $collects
      * @param class-string<Sender> $sender
      * @param class-string<SolutionProviderRepository> $solutionsProviderRepository
+     * @param array{max_spans: int, max_attributes_per_span: int, max_span_events_per_span:int, max_attributes_per_span_event:int}|null $traceLimits
      * @param Closure(Scope):void|null $configureScopeCallable
      * @param Closure(Resource):void|null $configureResourceCallable
      * @param Closure(Span):(void|Span)|null $configureSpansCallable
@@ -74,48 +74,65 @@ class FlareConfig
      * @param array<string> $censorBodyFields
      * @param class-string<UserAttributesProvider> $userAttributesProvider
      * @param class-string<RequestAttributesProvider> $requestAttributesProvider
+     * @param class-string<ResponseAttributesProvider> $responseAttributesProvider
      * @param class-string<ConsoleAttributesProvider> $consoleAttributesProvider
      * @param array<class-string, OverriddenGrouping> $overriddenGroupings
      * @param class-string<CollectsResolver> $collectsResolver
      */
     public function __construct(
+        // Flare
         public ?string $apiToken = null,
         public string $baseUrl = Api::BASE_URL,
-        public bool $sendReportsImmediately = false,
         public array $collects = [],
-        public ?int $reportErrorLevels = null,
-        public ?Closure $filterExceptionsCallable = null,
-        public ?Closure $filterReportsCallable = null,
+
+        // App
         public ?string $applicationPath = null,
         public string $applicationName = 'PHP application',
         public ?string $applicationVersion = null,
         public ?string $applicationStage = null,
-        public string $sender = CurlSender::class,
-        public array $senderConfig = [],
-        public string $solutionsProviderRepository = SolutionProviderRepository::class,
-        public bool $trace = false,
-        public string $sampler = RateSampler::class,
-        public array $samplerConfig = [],
-        public ?TraceLimits $traceLimits = null,
-        public ?Closure $configureScopeCallable = null,
-        public ?Closure $configureResourceCallable = null,
-        public ?Closure $configureSpansCallable = null,
-        public ?Closure $configureSpanEventsCallable = null,
+
+        // Censoring
         public bool $censorClientIps = false,
         public array $censorHeaders = [],
         public array $censorBodyFields = [],
         public bool $censorCookies = false,
         public bool $censorSession = false,
+
+        // Reporting
+        public bool $report = true,
+        public ?int $reportErrorLevels = null,
+        public ?Closure $filterExceptionsCallable = null,
+        public ?Closure $filterReportsCallable = null,
+        public array $overriddenGroupings = [],
+
+        // Tracing
+        public bool $trace = true,
+        public ?array $traceLimits = null,
+        public ?Closure $configureScopeCallable = null,
+        public ?Closure $configureResourceCallable = null,
+        public ?Closure $configureSpansCallable = null,
+        public ?Closure $configureSpanEventsCallable = null,
+
+        // Logging
+        public bool $log = false,
+        public ?Level $minimalLogLevel = null,
+
+        // Client Infrastructure
+        public string $sender = CurlSender::class,
+        public array $senderConfig = [],
+        public string $solutionsProviderRepository = SolutionProviderRepository::class,
+        public string $sampler = RateSampler::class,
+        public array $samplerConfig = [],
         public string $userAttributesProvider = EmptyUserAttributesProvider::class,
         public string $requestAttributesProvider = RequestAttributesProvider::class,
+        public string $responseAttributesProvider = ResponseAttributesProvider::class,
         public string $consoleAttributesProvider = ConsoleAttributesProvider::class,
-        public string $traceExporter = OpenTelemetryJsonTraceExporter::class,
-        public string $stacktraceMapper = StacktraceMapper::class,
+        public string $exporter = OpenTelemetryJsonExporter::class,
         public string $collectsResolver = CollectsResolver::class,
         public string $ids = Ids::class,
         public string $time = SystemTime::class,
-        public array $overriddenGroupings = [],
-        public bool $includeStackTraceWithMessages = false,
+        public string $memory = SystemMemory::class,
+        public string $api = Api::class,
     ) {
     }
 
@@ -164,10 +181,11 @@ class FlareConfig
         return $this
             ->collectErrorsWithTraces()
             ->collectDumps()
+            ->collectContext()
             ->collectCommands()
             ->collectRequests()
             ->collectCacheEvents()
-            ->collectLogs()
+            ->collectLogsWithErrors()
             ->collectQueries()
             ->collectTransactions()
             ->collectExternalHttp()
@@ -246,11 +264,13 @@ class FlareConfig
     }
 
     public function collectGitInfo(
-        bool $useProcess = AddGitInformation::DEFAULT_USE_PROCESS,
+        bool $useProcess = Resource::DEFAULT_GIT_USE_PROCESS,
+        bool|FlareEntityType|array $entityTypes = Resource::DEFAULT_GIT_ENTITY_TYPES,
         array $extra = []
     ): static {
         return $this->addCollect(CollectType::GitInfo, [
             'use_process' => $useProcess,
+            'entity_types' => $entityTypes,
             ...$extra,
         ]);
     }
@@ -298,25 +318,6 @@ class FlareConfig
         return $this->ignoreCollect(CollectType::Glows);
     }
 
-    public function collectLogs(
-        bool $withTraces = LogRecorder::DEFAULT_WITH_TRACES,
-        bool $withErrors = LogRecorder::DEFAULT_WITH_ERRORS,
-        ?int $maxItemsWithErrors = LogRecorder::DEFAULT_MAX_ITEMS_WITH_ERRORS,
-        MessageLevels $minimalLevel = MessageLevels::Debug,
-    ): static {
-        return $this->addCollect(CollectType::Logs, [
-            'with_traces' => $withTraces,
-            'with_errors' => $withErrors,
-            'max_items_with_errors' => $maxItemsWithErrors,
-            'minimal_level' => $minimalLevel,
-        ]);
-    }
-
-    public function ignoreLogs(): static
-    {
-        return $this->ignoreCollect(CollectType::Logs);
-    }
-
     public function collectSolutions(
         ?array $solutionProviders = null,
         array $extra = [],
@@ -354,7 +355,7 @@ class FlareConfig
     }
 
     public function collectErrorsWithTraces(
-        bool $withTraces = ErrorRecorder::DEFAULT_WITH_TRACES,
+        bool $withTraces = Tracer::DEFAULT_COLLECT_ERRORS_WITH_TRACES,
     ): static {
         return $this->addCollect(CollectType::ErrorsWithTraces, [
             'with_traces' => $withTraces,
@@ -364,6 +365,23 @@ class FlareConfig
     public function ignoreErrorsWithTraces(): static
     {
         return $this->ignoreCollect(CollectType::ErrorsWithTraces);
+    }
+
+    public function collectLogsWithErrors(
+        ?int $maxItems = AddLogs::DEFAULT_MAX_LOGS_WITH_ERRORS,
+        Level $minimalLevel = AddLogs::DEFAULT_MINIMAL_LOG_LEVEL_WITH_ERRORS,
+        array $extra = [],
+    ): static {
+        return $this->addCollect(CollectType::LogsWithErrors, [
+            'max_items_with_errors' => $maxItems,
+            'minimal_level' => $minimalLevel,
+            ...$extra,
+        ]);
+    }
+
+    public function ignoreLogsWithErrors(): static
+    {
+        return $this->ignoreCollect(CollectType::LogsWithErrors);
     }
 
     public function collectQueries(
@@ -484,11 +502,19 @@ class FlareConfig
         return $this->ignoreCollect(CollectType::Views);
     }
 
+    /**
+     * @param bool|array<int, FlareEntityType>|FlareEntityType $host
+     * @param bool|array<int, FlareEntityType>|FlareEntityType $os
+     * @param bool|array<int, FlareEntityType>|FlareEntityType $php
+     * @param bool|array<int, FlareEntityType>|FlareEntityType $composer
+     * @param bool|array<int, FlareEntityType>|FlareEntityType $composerPackages
+     */
     public function collectServerInfo(
-        bool $host = true,
-        bool $os = true,
-        bool $php = true,
-        bool $composer = true,
+        bool|array|FlareEntityType $host = Resource::DEFAULT_HOST_ENTITY_TYPES,
+        bool|array|FlareEntityType $os = Resource::DEFAULT_OS_ENTITY_TYPES,
+        bool|array|FlareEntityType $php = Resource::DEFAULT_PHP_ENTITY_TYPES,
+        bool|array|FlareEntityType $composer = false,
+        bool|array|FlareEntityType $composerPackages = Resource::DEFAULT_COMPOSER_PACKAGES_ENTITY_TYPES,
         array $extra = [],
     ): static {
         return $this->addCollect(CollectType::ServerInfo, [
@@ -496,6 +522,7 @@ class FlareConfig
             'os' => $os,
             'php' => $php,
             'composer' => $composer,
+            'composer_packages' => $composerPackages,
             ...$extra,
         ]);
     }
@@ -503,6 +530,16 @@ class FlareConfig
     public function ignoreServerInfo(): static
     {
         return $this->ignoreCollect(CollectType::ServerInfo);
+    }
+
+    public function collectContext(): static
+    {
+        return $this->addCollect(CollectType::Context);
+    }
+
+    public function ignoreContext(): static
+    {
+        return $this->ignoreCollect(CollectType::Context);
     }
 
     /** @param array<class-string<Recorder>, array<string, mixed>> $recorders */
@@ -592,7 +629,7 @@ class FlareConfig
     }
 
     /**
-     * @param Closure(Report): bool $filterReportsCallable
+     * @param Closure(ReportFactory): bool $filterReportsCallable
      */
     public function filterReportsUsing(Closure $filterReportsCallable): static
     {
@@ -610,18 +647,37 @@ class FlareConfig
 
     public function trace(
         bool $trace = true,
-        int $maxSpans = 512,
-        int $maxAttributesPerSpan = 128,
-        int $maxSpanEventsPerSpan = 128,
-        int $maxAttributesPerSpanEvent = 128,
+        int $maxSpans = Tracer::DEFAULT_MAX_SPANS_LIMIT,
+        int $maxAttributesPerSpan = Tracer::DEFAULT_MAX_ATTRIBUTES_PER_SPAN_LIMIT,
+        int $maxSpanEventsPerSpan = Tracer::DEFAULT_MAX_SPAN_EVENTS_PER_SPAN_LIMIT,
+        int $maxAttributesPerSpanEvent = Tracer::DEFAULT_MAX_ATTRIBUTES_PER_SPAN_EVENT_LIMIT,
     ): static {
         $this->trace = $trace;
-        $this->traceLimits = new TraceLimits(
-            $maxSpans,
-            $maxAttributesPerSpan,
-            $maxSpanEventsPerSpan,
-            $maxAttributesPerSpanEvent,
-        );
+
+        $this->traceLimits = [
+            'max_spans' => $maxSpans,
+            'max_attributes_per_span' => $maxAttributesPerSpan,
+            'max_span_events_per_span' => $maxSpanEventsPerSpan,
+            'max_attributes_per_span_event' => $maxAttributesPerSpanEvent,
+        ];
+
+        return $this;
+    }
+
+    public function log(
+        bool $log = true,
+        ?Level $minimalLevel = null,
+    ): static {
+        $this->log = $log;
+        $this->minimalLogLevel = $minimalLevel;
+
+        return $this;
+    }
+
+    public function report(
+        bool $report = true,
+    ): static {
+        $this->report = $report;
 
         return $this;
     }
@@ -699,13 +755,6 @@ class FlareConfig
         return $this;
     }
 
-    public function sendReportsImmediately(bool $sendReportsImmediately = true): static
-    {
-        $this->sendReportsImmediately = $sendReportsImmediately;
-
-        return $this;
-    }
-
     /**
      * @param class-string<Sender> $senderClass
      */
@@ -731,9 +780,18 @@ class FlareConfig
         return $this;
     }
 
-    public function traceLimits(TraceLimits $traceLimits): static
-    {
-        $this->traceLimits = $traceLimits;
+    public function traceLimits(
+        int $maxSpans = Tracer::DEFAULT_MAX_SPANS_LIMIT,
+        int $maxAttributesPerSpan = Tracer::DEFAULT_MAX_ATTRIBUTES_PER_SPAN_LIMIT,
+        int $maxSpanEventsPerSpan = Tracer::DEFAULT_MAX_SPAN_EVENTS_PER_SPAN_LIMIT,
+        int $maxAttributesPerSpanEvent = Tracer::DEFAULT_MAX_ATTRIBUTES_PER_SPAN_EVENT_LIMIT,
+    ): static {
+        $this->traceLimits = [
+            'max_spans' => $maxSpans,
+            'max_attributes_per_span' => $maxAttributesPerSpan,
+            'max_span_events_per_span' => $maxSpanEventsPerSpan,
+            'max_attributes_per_span_event' => $maxAttributesPerSpanEvent,
+        ];
 
         return $this;
     }
@@ -767,14 +825,6 @@ class FlareConfig
         string $consoleAttributesProvider
     ): static {
         $this->consoleAttributesProvider = $consoleAttributesProvider;
-
-        return $this;
-    }
-
-    public function includeStackTraceWithMessages(
-        bool $includeStackTraceWithMessages = true
-    ): static {
-        $this->includeStackTraceWithMessages = $includeStackTraceWithMessages;
 
         return $this;
     }

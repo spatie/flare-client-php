@@ -2,7 +2,7 @@
 
 namespace Spatie\FlareClient\AttributesProviders;
 
-use Spatie\FlareClient\FlareMiddleware\AddGitInformation;
+use Spatie\FlareClient\Resources\Resource;
 use Symfony\Component\Process\Process;
 use Throwable;
 
@@ -15,7 +15,7 @@ class GitAttributesProvider
     ) {
     }
 
-    public function toArray(bool $useProcess = AddGitInformation::DEFAULT_USE_PROCESS): array
+    public function toArray(bool $useProcess = Resource::DEFAULT_GIT_USE_PROCESS): array
     {
         if (isset($this->cached)) {
             return $this->cached;
