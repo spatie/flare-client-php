@@ -475,6 +475,10 @@ class Tracer
                 $this->endSpan($currentSpan);
             }
 
+            if ($currentSpan->parentSpanId === null) {
+                break;
+            }
+
             $currentSpan = $this->spans[$currentSpan->parentSpanId] ?? null;
         }
     }
