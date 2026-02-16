@@ -2,6 +2,16 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 2.10.0 - 2026-01-12
+
+- Add new `FullStacktraceAndExceptionClassAndCode` grouping override
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/2.9.0...2.10.0
+
+## 2.9.0 - 2026-01-08
+
+- Allow censoring cookies and sessions
+
 ## 2.8.0 - 2025-12-19
 
 - Allow configuring the Request and Console attribute providers
