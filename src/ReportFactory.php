@@ -12,13 +12,12 @@ use Spatie\ErrorSolutions\Contracts\Solution;
 use Spatie\FlareClient\Concerns\HasAttributes;
 use Spatie\FlareClient\Contracts\ProvidesFlareContext;
 use Spatie\FlareClient\Contracts\WithAttributes;
+use Spatie\FlareClient\Enums\FlareEntityType;
 use Spatie\FlareClient\Enums\OverriddenGrouping;
-use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Support\Ids;
-use Spatie\FlareClient\Support\StacktraceMapper;
 use Spatie\FlareClient\Time\Time;
 use Throwable;
 
@@ -26,16 +25,7 @@ class ReportFactory implements WithAttributes
 {
     use HasAttributes;
 
-    protected Resource $resource;
-
-    public ?string $applicationPath = null;
-
-    /** @var ArgumentReducers|null */
-    public null|ArgumentReducers $argumentReducers = null;
-
-    public bool $collectStackTraceArguments = true;
-
-    public bool $includeStackTraceWithMessages = false;
+    public ?string $message = null;
 
     /** @var array<Span|SpanEvent> */
     public array $events = [];
@@ -43,37 +33,55 @@ class ReportFactory implements WithAttributes
     /** @var array<Solution> */
     public array $solutions = [];
 
-    public ?string $notifierName = null;
-
     public ?bool $handled = null;
 
     public ?string $trackingUuid = null;
 
-    /** @var array<class-string, OverriddenGrouping> */
-    public array $overriddenGroupings = [];
+    public Throwable $throwable;
 
-    protected ?ContextRecorder $contextRecorder = null;
+    public ?string $level = null;
 
-    protected function __construct(
-        public ?Throwable $throwable,
-        public string $message,
-        public ?string $level,
-        public bool $isLog,
+    /** @var array<string, mixed> */
+    public array $customContext = [];
+
+    /**
+     * @param array<class-string, OverriddenGrouping> $overriddenGroupings
+     *
+     */
+    public function __construct(
+        protected Time $time,
+        protected Ids $ids,
+        public Resource $resource,
+        public null|ArgumentReducers $argumentReducers,
+        public bool $collectStackTraceArguments,
+        public array $overriddenGroupings,
+        public ?string $applicationPath,
     ) {
     }
 
-    public static function createForMessage(string $message, string $logLevel): ReportFactory
+    public function new(): self
     {
-        return new self(throwable: null, message: $message, level: $logLevel, isLog: true);
+        $clone = clone $this;
+
+        $clone->attributes = [];
+        $clone->message = null;
+        $clone->events = [];
+        $clone->solutions = [];
+        $clone->handled = null;
+        $clone->trackingUuid = null;
+        $clone->level = null;
+        unset($clone->throwable);
+
+        return $clone;
     }
 
-    public static function createForThrowable(
+    public function throwable(
         Throwable $throwable,
-    ): ReportFactory {
-        $level = null;
+    ): self {
+        $this->throwable = $throwable;
 
         if ($throwable instanceof ErrorException) {
-            $level = match ($throwable->getSeverity()) {
+            $this->level = match ($throwable->getSeverity()) {
                 E_ERROR => 'error',
                 E_WARNING => 'warning',
                 E_PARSE => 'parse',
@@ -93,26 +101,7 @@ class ReportFactory implements WithAttributes
             };
         }
 
-        return new self(throwable: $throwable, message: $throwable->getMessage(), level: $level, isLog: false);
-    }
-
-    public function resource(Resource $resource): self
-    {
-        $this->resource = $resource;
-
-        return $this;
-    }
-
-    public function applicationPath(?string $applicationPath): self
-    {
-        $this->applicationPath = $applicationPath;
-
-        return $this;
-    }
-
-    public function includeStackTraceWithMessages(bool $includeStackTraceWithMessages = true): self
-    {
-        $this->includeStackTraceWithMessages = $includeStackTraceWithMessages;
+        $this->message = $throwable->getMessage();
 
         return $this;
     }
@@ -138,30 +127,9 @@ class ReportFactory implements WithAttributes
         return $this;
     }
 
-    public function notifier(string $name): self
-    {
-        $this->notifierName = $name;
-
-        return $this;
-    }
-
-    public function addSolutions(Solution ...$solution): self
+    public function solution(Solution ...$solution): self
     {
         array_push($this->solutions, ...$solution);
-
-        return $this;
-    }
-
-    public function argumentReducers(null|ArgumentReducers $argumentReducers): self
-    {
-        $this->argumentReducers = $argumentReducers;
-
-        return $this;
-    }
-
-    public function collectStackTraceArguments(bool $collectStackTraceArguments): self
-    {
-        $this->collectStackTraceArguments = $collectStackTraceArguments;
 
         return $this;
     }
@@ -173,46 +141,28 @@ class ReportFactory implements WithAttributes
         return $this;
     }
 
-    public function overriddenGroupings(array $overriddenGroupings): self
-    {
-        $this->overriddenGroupings = $overriddenGroupings;
-
-        return $this;
-    }
-
     public function context(string|array $key, mixed $value = null): self
     {
-        $this->contextRecorder?->context('context.custom', $key, $value);
+        if (is_array($key)) {
+            $this->customContext = array_merge($this->customContext, $key);
 
-        return $this;
-    }
-
-    public function contextRecorder(ContextRecorder $contextRecorder): self
-    {
-        $this->contextRecorder = $contextRecorder;
-
-        return $this;
-    }
-
-    public function build(
-        StacktraceMapper $stacktraceMapper,
-        Time $time,
-        Ids $ids,
-    ): Report {
-        if ($this->throwable === null && $this->isLog === false) {
-            throw new Exception('No throwable or message provided');
+            return $this;
         }
 
-        $stackTrace = $this->buildStacktrace();
+        $this->customContext[$key] = $value;
 
-        $exceptionClass = $this->throwable
-            ? $this->throwable::class
-            : "Log";
+        return $this;
+    }
+
+    public function toArray(): array
+    {
+        if (! isset($this->throwable)) {
+            throw new Exception('No throwable provided');
+        }
 
         $attributes = array_merge(
-            isset($this->resource) ? $this->resource->attributes : [],
+            isset($this->resource) ? $this->resource->export(FlareEntityType::Errors) : [],
             $this->attributes,
-            $this->contextRecorder?->toArray() ?? [],
         );
 
         if ($this->throwable instanceof ProvidesFlareContext) {
@@ -223,60 +173,79 @@ class ReportFactory implements WithAttributes
         }
 
         if (! empty($this->customContext)) {
-            $attributes['context.custom'] = $this->customContext;
+            $attributes['context.custom'] = array_merge(
+                $attributes['context.custom'] ?? [],
+                $this->customContext
+            );
         }
 
         $attributes['flare.language.name'] = 'PHP';
         $attributes['flare.language.version'] = PHP_VERSION;
 
-        return new Report(
-            stacktrace: $stacktraceMapper->map($stackTrace, $this->throwable),
-            exceptionClass: $exceptionClass,
-            message: $this->message,
-            code: $this->throwable?->getCode(),
-            isLog: $this->isLog,
-            timeUs: $time->getCurrentTime(),
-            level: $this->level,
-            attributes: $attributes,
-            solutions: $this->mapSolutions(),
-            applicationPath: $this->applicationPath,
-            openFrameIndex: null,
-            handled: $this->handled,
-            events: array_values(array_filter(
+        $stackTrace = $this->cleanupStackTraceForError(
+            $this->buildStacktrace(),
+            $this->throwable,
+        );
+
+        $report = [
+            'exceptionClass' => $this->throwable::class,
+            'seenAtUnixNano' => $this->time->getCurrentTime(),
+            'message' => $this->message,
+            'solutions' => $this->mapSolutions(),
+            'stacktrace' => $this->mapStackTrace($stackTrace),
+            'previous' => $this->buildPrevious(),
+            'openFrameIndex' => null,
+            'applicationPath' => $this->applicationPath,
+            'trackingUuid' => $this->trackingUuid ?? $this->ids->uuid(),
+            'handled' => $this->handled,
+            'attributes' => $attributes,
+            'code' => $this->throwable->getCode(),
+            'events' => array_values(array_filter(
                 array_map(fn (Span|SpanEvent $span) => $span->toEvent(), $this->events),
             )),
-            trackingUuid: $this->trackingUuid ?? $ids->uuid(),
-            overriddenGrouping: $this->throwable ? $this->overriddenGroupings[$this->throwable::class] ?? null : null,
-        );
+            'isLog' => false,
+            'overriddenGrouping' => $this->overriddenGroupings[$this->throwable::class] ?? null,
+        ];
+
+        if ($this->level !== null) {
+            $report['level'] = $this->level;
+        }
+
+        return $report;
+    }
+
+    protected function buildPrevious(): array
+    {
+        $previous = [];
+
+        $current = $this->throwable;
+
+        while ($previousThrowable = $current->getPrevious()) {
+            $stackTrace = $this->cleanupStackTraceForError(
+                $this->buildStacktrace(),
+                $this->throwable,
+            );
+
+            $previous[] = [
+                'exceptionClass' => $previousThrowable::class,
+                'message' => $previousThrowable->getMessage(),
+                'stacktrace' => $this->mapStackTrace($stackTrace),
+            ];
+
+            $current = $previousThrowable;
+        }
+
+        return $previous;
     }
 
     /** @return array<Frame> */
     protected function buildStacktrace(): array
     {
-        if ($this->isLog && $this->includeStackTraceWithMessages === false) {
-            return [
-                new Frame(
-                    file: 'Log',
-                    lineNumber: 0,
-                    arguments: null,
-                    method: 'Stacktrace disabled',
-                ),
-            ];
-        }
-
-        $stacktrace = $this->isLog || $this->throwable === null
-            ? Backtrace::create()
-            : Backtrace::createForThrowable($this->throwable);
-
-        $frames = $stacktrace
+        $frames = Backtrace::createForThrowable($this->throwable)
             ->withArguments($this->collectStackTraceArguments)
             ->reduceArguments($this->argumentReducers)
             ->applicationPath($this->applicationPath ?? '')
             ->frames();
-
-        if (! $this->isLog) {
-            return $frames;
-        }
 
         $firstApplicationFrameIndex = null;
 
@@ -293,6 +262,52 @@ class ReportFactory implements WithAttributes
         }
 
         return array_values(array_slice($frames, $firstApplicationFrameIndex));
+    }
+
+    protected function cleanupStackTraceForError(
+        array $frames,
+        Throwable $throwable,
+    ): array {
+        if ($throwable::class !== ErrorException::class) {
+            return $frames;
+        }
+
+        $firstErrorFrameIndex = null;
+
+        $restructuredFrames = array_values(array_slice($frames, 1)); // remove the first frame where error was created
+
+        foreach ($restructuredFrames as $index => $frame) {
+            if ($frame->file === $throwable->getFile()) {
+                $firstErrorFrameIndex = $index;
+
+                break;
+            }
+        }
+
+        if ($firstErrorFrameIndex === null) {
+            return $frames;
+        }
+
+        $restructuredFrames[$firstErrorFrameIndex]->arguments = null; // Remove error arguments
+
+        return array_values(array_slice($restructuredFrames, $firstErrorFrameIndex));
+    }
+
+    /** @param array<Frame> $frames */
+    protected function mapStackTrace(array $frames): array
+    {
+        return array_map(
+            fn (Frame $frame) => [
+                'file' => $frame->file,
+                'lineNumber' => $frame->lineNumber,
+                'method' => $frame->method,
+                'class' => $frame->class,
+                'codeSnippet' => $frame->getSnippet(30),
+                'arguments' => $frame->arguments,
+                'isApplicationFrame' => $frame->applicationFrame,
+            ],
+            $frames
+        );
     }
 
     protected function mapSolutions(): array

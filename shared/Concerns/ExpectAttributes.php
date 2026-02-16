@@ -3,37 +3,86 @@
 namespace Spatie\FlareClient\Tests\Shared\Concerns;
 
 use Closure;
-use Spatie\FlareClient\Contracts\WithAttributes;
 
 trait ExpectAttributes
 {
-    abstract protected function entity(): WithAttributes;
+    use ExpectingEntity;
 
-    public function hasAttributeCount(int $count): self
+    abstract public function attributes(): array;
+
+    public function expectAttributesCount(int $count): self
     {
-        expect($this->entity()->attributes)->toHaveCount($count);
+        expect($this->attributes())->toHaveCount($count);
 
         return $this;
     }
 
-    public function hasAttribute(string $name, mixed $value = null): self
+    public function expectAttribute(string $key, mixed $value): self
     {
-        if (func_num_args() === 1) {
-            expect($this->entity()->attributes)->toHaveKey($name);
-
-            return $this;
-        }
-
         if ($value instanceof Closure) {
-            expect($this->entity()->attributes)->toHaveKey($name);
-
-            $value($this->entity()->attributes[$name]);
+            $value($this->attributes()[$key]);
 
             return $this;
         }
 
-        expect($this->entity()->attributes[$name])->toEqual($value);
+        expect($this->attributes()[$key])->toBe($value);
 
         return $this;
+    }
+
+    public function expectHasAttribute(string $key): self
+    {
+        expect($this->attributes())->toHaveKey($key);
+
+        return $this;
+    }
+
+    public function expectMissingAttribute(string $key): self
+    {
+        expect($this->attributes())->not->toHaveKey($key);
+
+        return $this;
+    }
+
+    public function expectAttributes(array $attributes, bool $exact = false): self
+    {
+        if ($exact) {
+            expect($this->attributes())->toEqualCanonicalizing($attributes);
+
+            return $this;
+        }
+
+        foreach ($attributes as $key => $value) {
+            expect($this->attributes()[$key])->toBe($value);
+        }
+
+        return $this;
+    }
+
+    protected function attributesToStrings(
+        int $indent,
+        string $prefix = '•'
+    ): array {
+        $filteredAttributes = array_filter(
+            $this->attributes(),
+            fn ($key) => ! in_array($key, ['flare.span_type', 'flare.span_event_type']),
+            ARRAY_FILTER_USE_KEY
+        );
+
+        if (empty($filteredAttributes)) {
+            return [];
+        }
+
+        $indentPrefix = $this->getIndentPrefix($indent);
+
+        $output = [];
+
+        foreach ($filteredAttributes as $key => $value) {
+            $valueStr = is_array($value) ? json_encode($value) : (string) $value;
+
+            $output[] = "{$indentPrefix}{$prefix} {$key}: {$valueStr}";
+        }
+
+        return $output;
     }
 }

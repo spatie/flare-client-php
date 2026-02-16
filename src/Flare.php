@@ -3,25 +3,16 @@
 namespace Spatie\FlareClient;
 
 use Closure;
-use Error;
-use ErrorException;
 use Exception;
-use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\ErrorSolutions\Contracts\HasSolutionsForThrowable;
-use Spatie\ErrorSolutions\Contracts\SolutionProviderRepository;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
-use Spatie\FlareClient\Enums\OverriddenGrouping;
 use Spatie\FlareClient\Enums\RecorderType;
-use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
-use Spatie\FlareClient\Recorders\ApplicationRecorder\ApplicationRecorder;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
 use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
-use Spatie\FlareClient\Recorders\ErrorRecorder\ErrorRecorder;
 use Spatie\FlareClient\Recorders\ExternalHttpRecorder\ExternalHttpRecorder;
 use Spatie\FlareClient\Recorders\FilesystemRecorder\FilesystemRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
-use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
 use Spatie\FlareClient\Recorders\RedisCommandRecorder\RedisCommandRecorder;
 use Spatie\FlareClient\Recorders\RequestRecorder\RequestRecorder;
@@ -34,49 +25,35 @@ use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Support\BackTracer;
 use Spatie\FlareClient\Support\Container;
 use Spatie\FlareClient\Support\Ids;
-use Spatie\FlareClient\Support\OpenTelemetryAttributeMapper;
+use Spatie\FlareClient\Support\Lifecycle;
+use Spatie\FlareClient\Support\Recorders;
 use Spatie\FlareClient\Support\SentReports;
-use Spatie\FlareClient\Support\StacktraceMapper;
 use Spatie\FlareClient\Time\Time;
 use Throwable;
 
 class Flare
 {
-    protected mixed $previousExceptionHandler = null;
+    // TODO: agent
 
-    protected mixed $previousErrorHandler = null;
+    // TODO: check current GH PR's and issues if we need to make changes
+    // TODO: quick tests on Vapor
+    // TODO: make sure in the docs that we explain how log levels influence each other, e.g. logger minimal level dictates everything, exception log level should always be equal or higher
+    // TODO (nice to have): add ability to ignore certain commands and requests like we do with jobs
+    // TODO (nice to have): dynamic sampling based upon context would be cool
+    // TODO (less important): write a framework integration guide
 
-    /**
-     * @param array<int, FlareMiddleware> $middleware
-     * @param array<string, Recorder> $recorders
-     * @param null|Closure(Exception): bool $filterExceptionsCallable
-     * @param null|Closure(Report): bool $filterReportsCallable
-     * @param ArgumentReducers|null $argumentReducers
-     * @param array<class-string, OverriddenGrouping> $overriddenGroupings
-     */
     public function __construct(
-        protected readonly Api $api,
+        public readonly Lifecycle $lifecycle,
         public readonly Tracer $tracer,
+        public readonly Logger $logger,
+        public readonly Reporter $reporter,
         public readonly BackTracer $backTracer,
-        protected readonly Ids $ids,
-        protected readonly Time $time,
-        protected readonly SentReports $sentReports,
-        protected readonly array $middleware,
-        protected readonly array $recorders,
-        protected readonly ?ErrorRecorder $throwableRecorder,
-        public readonly ContextRecorder $contextRecorder,
-        protected readonly ?int $reportErrorLevels,
-        protected null|Closure $filterExceptionsCallable,
-        protected null|Closure $filterReportsCallable,
-        protected readonly SolutionProviderRepository $solutionProviderRepository,
-        protected readonly null|ArgumentReducers $argumentReducers,
-        protected readonly bool $collectStackFrameArguments,
+        public readonly Ids $ids,
+        public readonly Time $time,
+        public readonly SentReports $sentReports,
         protected Resource $resource,
         protected Scope $scope,
-        protected StacktraceMapper $stacktraceMapper,
-        protected ?string $applicationPath,
-        protected array $overriddenGroupings,
-        protected bool $includeStackTraceWithMessages,
+        protected Recorders $recorders,
     ) {
     }
 
@@ -97,376 +74,153 @@ class Flare
 
     public function registerFlareHandlers(): self
     {
-        $this->registerExceptionHandler();
-
-        $this->registerErrorHandler();
+        $this->reporter->registerFlareHandlers();
 
         return $this;
     }
 
     public function registerExceptionHandler(): self
     {
-        $this->previousExceptionHandler = set_exception_handler([$this, 'handleException']);
+        $this->reporter->registerExceptionHandler();
 
         return $this;
     }
 
     public function registerErrorHandler(?int $errorLevels = null): self
     {
-        $this->previousErrorHandler = $errorLevels
-            ? set_error_handler([$this, 'handleError'], $errorLevels)
-            : set_error_handler([$this, 'handleError']);
+        $this->reporter->registerErrorHandler($errorLevels);
 
         return $this;
     }
 
-    public function bootRecorders(): self
+    /**
+     * @param Closure(ReportFactory $report):void|null $callback
+     */
+    public function report(
+        Throwable $throwable,
+        ?Closure $callback = null,
+        ?bool $handled = null
+    ): ?ReportFactory {
+        return $this->reporter->report($throwable, $callback, $handled);
+    }
+
+    public function createReport(
+        Throwable $throwable,
+        ?Closure $callback = null,
+        ?bool $handled = null
+    ): ReportFactory {
+        return $this->reporter->createReport($throwable, $callback, $handled);
+    }
+
+    public function reportHandled(Throwable $throwable): ?ReportFactory
     {
-        foreach ($this->recorders as $recorder) {
-            $recorder->boot();
-        }
+        return $this->reporter->reportHandled($throwable);
+    }
+
+    /**
+     * @param class-string<HasSolutionsForThrowable> ...$solutionProviders
+     */
+    public function withSolutionProvider(string ...$solutionProviders): self
+    {
+        $this->reporter->withSolutionProvider(...$solutionProviders);
 
         return $this;
     }
 
-    public function tracer(): Tracer
+    /**
+     * @param Closure(Exception): bool $filterExceptionsCallable
+     */
+    public function filterExceptionsUsing(Closure $filterExceptionsCallable): static
     {
-        return $this->tracer;
+        $this->reporter->filterExceptionsUsing($filterExceptionsCallable);
+
+        return $this;
     }
 
-    public function backTracer(): BackTracer
+    /**
+     * @param Closure(ReportFactory): bool $filterReportsCallable
+     */
+    public function filterReportsUsing(Closure $filterReportsCallable): static
     {
-        return $this->backTracer;
-    }
+        $this->reporter->filterReportsUsing($filterReportsCallable);
 
-    public function application(): ApplicationRecorder
-    {
-        return $this->recorders[RecorderType::Application->value];
+        return $this;
     }
 
     public function cache(): CacheRecorder|null
     {
-        return $this->recorders[RecorderType::Cache->value] ?? null;
+        return $this->recorders->getRecorder(RecorderType::Cache->value);
     }
 
     public function command(): CommandRecorder|null
     {
-        return $this->recorders[RecorderType::Command->value] ?? null;
+        return $this->recorders->getRecorder(RecorderType::Command->value);
     }
 
     public function externalHttp(): ExternalHttpRecorder|null
     {
-        return $this->recorders[RecorderType::ExternalHttp->value] ?? null;
+        return $this->recorders->getRecorder(RecorderType::ExternalHttp->value);
     }
 
     public function filesystem(): FilesystemRecorder|null
     {
-        return $this->recorders[RecorderType::Filesystem->value] ?? null;
+        return $this->recorders->getRecorder(RecorderType::Filesystem->value);
     }
 
     public function glow(): GlowRecorder|null
     {
-        return $this->recorders[RecorderType::Glow->value] ?? null;
+        return $this->recorders->getRecorder(RecorderType::Glow->value);
     }
 
-    public function log(): LogRecorder|null
+    public function sentReports(): SentReports
     {
-        return $this->recorders[RecorderType::Log->value] ?? null;
+        return $this->sentReports;
+    }
+
+    public function log(): Logger
+    {
+        return $this->logger;
     }
 
     public function query(): QueryRecorder|null
     {
-        return $this->recorders[RecorderType::Query->value] ?? null;
+        return $this->recorders->getRecorder(RecorderType::Query->value);
     }
 
     public function redisCommand(): RedisCommandRecorder|null
     {
-        return $this->recorders[RecorderType::RedisCommand->value] ?? null;
+        return $this->recorders->getRecorder(RecorderType::RedisCommand->value);
     }
 
     public function request(): RequestRecorder|null
     {
-        return $this->recorders[RecorderType::Request->value] ?? null;
+        return $this->recorders->getRecorder(RecorderType::Request->value);
     }
 
     public function response(): ResponseRecorder|null
     {
-        return $this->recorders[RecorderType::Response->value] ?? null;
+        return $this->recorders->getRecorder(RecorderType::Response->value);
     }
 
     public function routing(): RoutingRecorder|null
     {
-        return $this->recorders[RecorderType::Routing->value] ?? null;
+        return $this->recorders->getRecorder(RecorderType::Routing->value);
     }
 
     public function transaction(): TransactionRecorder|null
     {
-        return $this->recorders[RecorderType::Transaction->value] ?? null;
+        return $this->recorders->getRecorder(RecorderType::Transaction->value);
     }
 
     public function view(): ViewRecorder|null
     {
-        return $this->recorders[RecorderType::View->value] ?? null;
+        return $this->recorders->getRecorder(RecorderType::View->value);
     }
 
     public function recorder(
         RecorderType|string $type
     ): Recorder|null {
-        return $this->recorders[is_string($type) ? $type : $type->value] ?? null;
-    }
-
-    public function handleException(Throwable $throwable): void
-    {
-        $this->report($throwable);
-
-        if ($this->previousExceptionHandler && is_callable($this->previousExceptionHandler)) {
-            call_user_func($this->previousExceptionHandler, $throwable);
-        }
-    }
-
-    public function handleError(mixed $code, string $message, string $file = '', int $line = 0): void
-    {
-        $exception = new ErrorException($message, 0, $code, $file, $line);
-
-        $this->report($exception);
-
-        if ($this->previousErrorHandler) {
-            call_user_func(
-                $this->previousErrorHandler,
-                $code,
-                $message,
-                $file,
-                $line
-            );
-        }
-    }
-
-    /**
-     * @param callable(ReportFactory $report):void|null $callback
-     */
-    public function report(
-        Throwable $throwable,
-        ?callable $callback = null,
-        ?bool $handled = null
-    ): ?Report {
-        if (! $this->shouldSendReport($throwable)) {
-            $this->tracer->gracefullyHandleError();
-
-            return null;
-        }
-
-        $report = $this->createReport($throwable, $callback, $handled);
-
-        if ($this->throwableRecorder) {
-            $this->throwableRecorder->record($report);
-        }
-
-        $this->tracer->gracefullyHandleError();
-
-        $this->resetRecorders();
-
-        $this->sentReports->add($report);
-
-        $this->sendReportToApi($report);
-
-        return $report;
-    }
-
-    public function createReport(
-        Throwable $throwable,
-        ?callable $callback = null,
-        ?bool $handled = null
-    ): Report {
-        $factory = $this->feedReportFactory(
-            ReportFactory::createForThrowable($throwable),
-            $callback
-        );
-
-        if ($handled) {
-            $factory->handled();
-        }
-
-        return $factory->build(
-            $this->stacktraceMapper,
-            $this->time,
-            $this->ids,
-        );
-    }
-
-    public function reportHandled(Throwable $throwable): ?Report
-    {
-        return $this->report($throwable, handled: true);
-    }
-
-    protected function shouldSendReport(Throwable $throwable): bool
-    {
-        if (isset($this->reportErrorLevels) && $throwable instanceof Error) {
-            return (bool) ($this->reportErrorLevels & $throwable->getCode());
-        }
-
-        if (isset($this->reportErrorLevels) && $throwable instanceof ErrorException) {
-            return (bool) ($this->reportErrorLevels & $throwable->getSeverity());
-        }
-
-        if ($this->filterExceptionsCallable && $throwable instanceof Exception) {
-            return (bool) (call_user_func($this->filterExceptionsCallable, $throwable));
-        }
-
-        return true;
-    }
-
-    /**
-     * @param callable(ReportFactory $report): void|null $callback
-     */
-    public function reportMessage(
-        string $message,
-        string $logLevel,
-        ?callable $callback = null,
-    ): Report {
-        $factory = $this->feedReportFactory(
-            ReportFactory::createForMessage($message, $logLevel),
-            $callback
-        );
-
-        $report = $factory->build(
-            $this->stacktraceMapper,
-            $this->time,
-            $this->ids,
-        );
-
-        $this->sendReportToApi($report);
-
-        return $report;
-    }
-
-    public function sendTestReport(Throwable $throwable): void
-    {
-        $this->api->test(
-            ReportFactory::createForThrowable($throwable)->resource($this->resource)->build(
-                $this->stacktraceMapper,
-                $this->time,
-                $this->ids,
-            ),
-        );
-    }
-
-    public function sendTestTrace(array $trace): void
-    {
-        $trace = $this->replaceTimestamps($trace);
-        $trace = $this->replaceResourceAttributes($trace);
-        $trace = $this->replaceTraceIds($trace);
-        $this->api->testTrace($trace);
-    }
-
-    protected function replaceTimestamps(array $data): array
-    {
-        $oneHundredMs = 100000000;
-
-        foreach ($data as $key => $value) {
-            if ($key === 'startTimeUnixNano') {
-                $data[$key] = $this->time->getCurrentTime();
-
-                continue;
-            }
-
-            if ($key === 'endTimeUnixNano') {
-                $data[$key] = $this->time->getCurrentTime() + $oneHundredMs;
-
-                continue;
-            }
-
-            if (is_array($value)) {
-                $data[$key] = $this->replaceTimestamps($value);
-            }
-        }
-
-        return $data;
-    }
-
-    protected function replaceResourceAttributes(array $trace): array
-    {
-        $mapper = new OpenTelemetryAttributeMapper();
-
-        $resourceAttributes = [
-            'attributes' => $mapper->attributesToOpenTelemetry($this->resource->attributes),
-            'droppedAttributesCount' => $this->resource->droppedAttributesCount,
-        ];
-
-        if (isset($trace['resourceSpans']) && is_array($trace['resourceSpans'])) {
-            foreach ($trace['resourceSpans'] as &$resourceSpan) {
-                if (isset($resourceSpan['resource'])) {
-                    $resourceSpan['resource'] = $resourceAttributes;
-                }
-            }
-        }
-
-        return $trace;
-    }
-
-    protected function replaceTraceIds(array $trace): array
-    {
-        $newTraceId = $this->ids->trace();
-        $rootSpanId = null;
-
-        if (! isset($trace['resourceSpans']) || ! is_array($trace['resourceSpans'])) {
-            return $trace;
-        }
-
-        foreach ($trace['resourceSpans'] as &$resourceSpan) {
-            if (! isset($resourceSpan['scopeSpans']) || ! is_array($resourceSpan['scopeSpans'])) {
-                continue;
-            }
-
-            foreach ($resourceSpan['scopeSpans'] as &$scopeSpan) {
-                if (! isset($scopeSpan['spans']) || ! is_array($scopeSpan['spans'])) {
-                    continue;
-                }
-
-                foreach ($scopeSpan['spans'] as &$span) {
-                    $span['traceId'] = $newTraceId;
-
-                    if ($span['parentSpanId'] === null) {
-                        $rootSpanId = $this->ids->span();
-                        $span['spanId'] = $rootSpanId;
-                    }
-                }
-            }
-        }
-
-        foreach ($trace['resourceSpans'] as &$resourceSpan) {
-            if (! isset($resourceSpan['scopeSpans']) || ! is_array($resourceSpan['scopeSpans'])) {
-                continue;
-            }
-
-            foreach ($resourceSpan['scopeSpans'] as &$scopeSpan) {
-                if (! isset($scopeSpan['spans']) || ! is_array($scopeSpan['spans'])) {
-                    continue;
-                }
-
-                foreach ($scopeSpan['spans'] as &$span) {
-                    if ($span['parentSpanId'] !== null) {
-                        $span['spanId'] = $this->ids->span();
-                        $span['parentSpanId'] = $rootSpanId;
-                    }
-                }
-            }
-        }
-
-        return $trace;
-    }
-
-    protected function sendReportToApi(Report $report): void
-    {
-        if ($this->filterReportsCallable) {
-            if (! call_user_func($this->filterReportsCallable, $report)) {
-                return;
-            }
-        }
-
-        try {
-            $this->api->report($report);
-        } catch (Exception $exception) {
-        }
+        return $this->recorders->getRecorder($type);
     }
 
     public function withApplicationVersion(string|Closure $version): self
@@ -490,105 +244,13 @@ class Flare
         return $this;
     }
 
-    /**
-     * @param class-string<HasSolutionsForThrowable> ...$solutionProviders
-     */
-    public function withSolutionProvider(string ...$solutionProviders): self
-    {
-        $this->solutionProviderRepository->registerSolutionProviders($solutionProviders);
-
-        return $this;
-    }
-
-    /**
-     * @param Closure(Exception): bool $filterExceptionsCallable
-     */
-    public function filterExceptionsUsing(Closure $filterExceptionsCallable): static
-    {
-        $this->filterExceptionsCallable = $filterExceptionsCallable;
-
-        return $this;
-    }
-
-    /**
-     * @param Closure(Report): bool $filterReportsCallable
-     */
-    public function filterReportsUsing(Closure $filterReportsCallable): static
-    {
-        $this->filterReportsCallable = $filterReportsCallable;
-
-        return $this;
-    }
-
-    public function sendReportsImmediately(bool $sendReportsImmediately = true): self
-    {
-        $this->api->sendReportsImmediately($sendReportsImmediately);
-
-        return $this;
-    }
-
     public function context(string|array $key, mixed $value = null): self
     {
-        $this->contextRecorder->context('context.custom', $key, $value);
+        /** @var ?ContextRecorder $contextRecorder */
+        $contextRecorder = $this->recorders->getRecorder(RecorderType::Context);
+
+        $contextRecorder?->record('context.custom', $key, $value);
 
         return $this;
-    }
-
-    public function reset(
-        bool $reports = true,
-        bool $traces = true,
-        bool $clearCustomContext = true
-    ): void {
-        $this->api->sendQueue(reports: $reports, traces: $traces);
-
-        if ($clearCustomContext) {
-            $this->contextRecorder->resetContext();
-        }
-
-        if ($reports) {
-            $this->resetRecorders();
-            $this->sentReports->clear();
-        }
-    }
-
-    public function sentReports(): SentReports
-    {
-        return $this->sentReports;
-    }
-
-    protected function resetRecorders(): void
-    {
-        foreach ($this->recorders as $recorder) {
-            $recorder->reset();
-        }
-    }
-
-    /**
-     * @param callable(ReportFactory $report): void|null $callback
-     */
-    protected function feedReportFactory(
-        ReportFactory $factory,
-        ?callable $callback
-    ): ReportFactory {
-        $factory
-            ->resource($this->resource)
-            ->collectStackTraceArguments($this->collectStackFrameArguments)
-            ->argumentReducers($this->argumentReducers)
-            ->overriddenGroupings($this->overriddenGroupings)
-            ->applicationPath($this->applicationPath)
-            ->includeStackTraceWithMessages($this->includeStackTraceWithMessages)
-            ->contextRecorder($this->contextRecorder);
-
-        foreach ($this->middleware as $middleware) {
-            $factory = $middleware->handle($factory, function ($factory) {
-                return $factory;
-            });
-        }
-
-        if (! is_null($callback)) {
-            call_user_func($callback, $factory);
-        }
-
-        return $factory;
     }
 }

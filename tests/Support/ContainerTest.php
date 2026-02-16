@@ -2,8 +2,11 @@
 
 use Spatie\FlareClient\Support\Container;
 use Spatie\FlareClient\Support\Exceptions\ContainerEntryNotFoundException;
+use Spatie\FlareClient\Tests\stubs\DependencyClass;
 use Spatie\FlareClient\Tests\stubs\SomeClass;
 use Spatie\FlareClient\Tests\stubs\SomeClassExtended;
+use Spatie\FlareClient\Tests\stubs\SomeInterface;
+use Spatie\FlareClient\Tests\stubs\SubDependencyClass;
 
 it('always gets the same container instance', function () {
     $containerA = Container::instance();
@@ -61,4 +64,36 @@ it('is possible to rebind a class', function () {
 
     expect($instanceA)->toBeInstanceOf(SomeClass::class);
     expect($instanceB)->toBeInstanceOf(SomeClassExtended::class);
+});
+
+it('is possible to auto construct simple classes', function () {
+    $container = Container::instance();
+
+    $instance = $container->get(SomeClass::class);
+
+    expect($instance)->toBeInstanceOf(SomeClass::class);
+});
+
+it('is possible to auto construct nested dependency classes', function () {
+    $container = Container::instance();
+
+    $instance = $container->get(SubDependencyClass::class);
+
+    expect($instance)->toBeInstanceOf(SubDependencyClass::class);
+    expect($instance->someClass)->toBeInstanceOf(SomeClass::class);
+});
+
+it('is possible to wire parts of auto construct nested classes', function () {
+    $container = Container::instance();
+
+    $interface = new SomeClass();
+
+    $container->singleton(SomeInterface::class, fn () => $interface);
+
+    $instance = $container->get(DependencyClass::class);
+
+    expect($instance)->toBeInstanceOf(DependencyClass::class);
+    expect($instance->someInterface)->toBe($interface);
+    expect($instance->someClass)->toBeInstanceOf(SomeClass::class);
+    expect($instance->someClass)->not()->toBe($instance);
 });

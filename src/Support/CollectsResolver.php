@@ -10,19 +10,19 @@ use Spatie\FlareClient\AttributesProviders\GitAttributesProvider;
 use Spatie\FlareClient\Contracts\FlareCollectType;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\CollectType;
+use Spatie\FlareClient\Enums\FlareEntityType;
 use Spatie\FlareClient\FlareMiddleware\AddConsoleInformation;
-use Spatie\FlareClient\FlareMiddleware\AddGitInformation;
+use Spatie\FlareClient\FlareMiddleware\AddLogs;
 use Spatie\FlareClient\FlareMiddleware\AddRequestInformation;
 use Spatie\FlareClient\FlareMiddleware\AddSolutions;
 use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
-use Spatie\FlareClient\Recorders\ApplicationRecorder\ApplicationRecorder;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
+use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
 use Spatie\FlareClient\Recorders\DumpRecorder\DumpRecorder;
 use Spatie\FlareClient\Recorders\ExternalHttpRecorder\ExternalHttpRecorder;
 use Spatie\FlareClient\Recorders\FilesystemRecorder\FilesystemRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
-use Spatie\FlareClient\Recorders\LogRecorder\LogRecorder;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
 use Spatie\FlareClient\Recorders\RedisCommandRecorder\RedisCommandRecorder;
 use Spatie\FlareClient\Recorders\RequestRecorder\RequestRecorder;
@@ -35,35 +35,32 @@ use Spatie\FlareClient\Resources\Resource;
 class CollectsResolver
 {
     /** @var array<class-string<FlareMiddleware>, array<string, mixed>> */
-    protected array $middlewares = [];
+    public array $middlewares = [];
 
     /** @var array<class-string<Recorder>, array<string, mixed>> */
-    protected array $recorders = [];
+    public array $recorders = [];
 
     /** @var array<class-string<HasSolutionsForThrowable>> */
-    protected array $solutionProviders = [];
+    public array $solutionProviders = [];
 
     /** @var array<callable(Resource, ContainerInterface):Resource> */
-    protected array $resourceModifiers = [];
+    public array $resourceModifiers = [];
 
     /** @var array<ArgumentReducer|class-string<ArgumentReducer>>|ArgumentReducers */
-    private array|ArgumentReducers $argumentReducers = [];
+    public array|ArgumentReducers $argumentReducers = [];
 
-    private bool $collectStackFrameArguments = false;
+    public bool $collectStackFrameArguments = false;
 
-    private bool $forcePHPStackFrameArgumentsIniSetting = false;
+    public bool $forcePHPStackFrameArgumentsIniSetting = false;
 
-    protected bool $collectErrorsWithTraces = false;
+    public bool $collectErrorsWithTraces = false;
 
-    /** @return array{middlewares: array<class-string<FlareMiddleware>, array>, recorders: array<class-string<Recorder>, array>, solutionProviders: array<class-string<HasSolutionsForThrowable>>, resourceModifiers: array<callable(Resource, ContainerInterface):Resource>, collectStackFrameArguments: bool, argumentReducers: array<class-string<ArgumentReducer>|ArgumentReducer>|ArgumentReducers, forcePHPStackFrameArgumentsIniSetting: bool, collectErrorsWithTraces:bool} */
     public function execute(
         array $collects,
-    ): array {
+    ): self {
         $this->middlewares = [];
         $this->recorders = [];
         $this->resourceModifiers = [];
-
-        $this->application(); // Always enabled
 
         foreach ($collects as $collect) {
             $ignored = $collect['ignored'] ?? false;
@@ -77,10 +74,11 @@ class CollectsResolver
             match ($collect['type'] ?? null) {
                 CollectType::Requests => $this->requests($options),
                 CollectType::Commands => $this->console($options),
+                CollectType::Context => $this->context($collect),
                 CollectType::GitInfo => $this->gitInfo($options),
                 CollectType::Cache => $this->cache($options),
                 CollectType::Glows => $this->glows($options),
-                CollectType::Logs => $this->logs($options),
+                CollectType::LogsWithErrors => $this->logsWithErrors($options),
                 CollectType::Solutions => $this->solutions($options),
                 CollectType::Dumps => $this->dumps($options),
                 CollectType::Queries => $this->queries($options),
@@ -99,16 +97,7 @@ class CollectsResolver
             };
         }
 
-        return [
-            'middlewares' => $this->middlewares,
-            'recorders' => $this->recorders,
-            'solutionProviders' => $this->solutionProviders,
-            'collectStackFrameArguments' => $this->collectStackFrameArguments,
-            'argumentReducers' => $this->argumentReducers,
-            'forcePHPStackFrameArgumentsIniSetting' => $this->forcePHPStackFrameArgumentsIniSetting,
-            'resourceModifiers' => $this->resourceModifiers,
-            'collectErrorsWithTraces' => $this->collectErrorsWithTraces,
-        ];
+        return $this;
     }
 
     protected function handleUnknownCollectType(
@@ -116,11 +105,6 @@ class CollectsResolver
         array $options
     ): void {
 
-    }
-
-    protected function application(): void
-    {
-        $this->addRecorder(ApplicationRecorder::class);
     }
 
     protected function errorsWithTraces(array $options): void
@@ -151,14 +135,22 @@ class CollectsResolver
         );
     }
 
+    protected function context(
+        array $options
+    ): void {
+        $this->addRecorder(
+            ContextRecorder::class,
+            $options,
+        );
+    }
+
     protected function gitInfo(array $options): void
     {
         $this->resourceModifiers[] = fn (Resource $resource, ContainerInterface $container) => $resource->git(
-            $container->get(GitAttributesProvider::class),
-            $options['use_process'] ?? AddGitInformation::DEFAULT_USE_PROCESS,
+            attributesProvider: $container->get(GitAttributesProvider::class),
+            useProcess: $options['use_process'] ?? Resource::DEFAULT_GIT_USE_PROCESS,
+            entityTypes: $this->resolveChosenFlareEntityTypes($options['entity_types'] ?? Resource::DEFAULT_GIT_ENTITY_TYPES),
         );
-
-        $this->addMiddleware(AddGitInformation::class, $options);
     }
 
     protected function cache(array $options): void
@@ -180,11 +172,9 @@ class CollectsResolver
         ]));
     }
 
-    protected function logs(array $options): void
+    protected function logsWithErrors(array $options): void
     {
-        $this->addRecorder($options['recorder'] ?? LogRecorder::class, $this->only($options, [
-            'with_traces',
-            'with_errors',
+        $this->addMiddleware($options['middleware'] ?? AddLogs::class, $this->only($options, [
             'max_items_with_errors',
             'minimal_level',
         ]));
@@ -268,21 +258,21 @@ class CollectsResolver
 
     protected function severInfo(array $options): void
     {
-        if ($options['host'] ?? false) {
-            $this->resourceModifiers[] = fn (Resource $resource) => $resource->host();
-        }
+        $this->resourceModifiers[] = fn (Resource $resource) => $resource->host(
+            entityTypes: $this->resolveChosenFlareEntityTypes($options['host'] ?? Resource::DEFAULT_HOST_ENTITY_TYPES),
+        );
 
-        if ($options['php'] ?? false) {
-            $this->resourceModifiers[] = fn (Resource $resource) => $resource->process()->processRuntime();
-        }
+        $this->resourceModifiers[] = fn (Resource $resource) => $resource
+            ->process(entityTypes: $this->resolveChosenFlareEntityTypes($options['php'] ?? Resource::DEFAULT_PHP_ENTITY_TYPES))
+            ->processRuntime(entityTypes: $this->resolveChosenFlareEntityTypes($options['php'] ?? Resource::DEFAULT_PHP_ENTITY_TYPES));
 
-        if ($options['os'] ?? false) {
-            $this->resourceModifiers[] = fn (Resource $resource) => $resource->operatingSystem();
-        }
+        $this->resourceModifiers[] = fn (Resource $resource) => $resource->operatingSystem(
+            entityTypes: $this->resolveChosenFlareEntityTypes($options['os'] ?? Resource::DEFAULT_OS_ENTITY_TYPES),
+        );
 
-        if ($options['composer'] ?? false) {
-            $this->resourceModifiers[] = fn (Resource $resource) => $resource->composer();
-        }
+        $this->resourceModifiers[] = fn (Resource $resource) => $resource->composerPackages(
+            entityTypes: $this->resolveChosenFlareEntityTypes($options['composer_packages'] ?? Resource::DEFAULT_COMPOSER_PACKAGES_ENTITY_TYPES)
+        );
     }
 
     protected function recorders(array $options): void
@@ -339,5 +329,26 @@ class CollectsResolver
         array|string $keys
     ): array {
         return array_intersect_key($options, array_flip((array) $keys));
+    }
+
+    /**
+     * @param array<int, FlareEntityType>|bool|FlareEntityType $entityTypes
+     */
+    protected function resolveChosenFlareEntityTypes(
+        array|bool|FlareEntityType $entityTypes
+    ): array {
+        if ($entityTypes === true) {
+            return FlareEntityType::cases();
+        }
+
+        if ($entityTypes === false) {
+            return [];
+        }
+
+        if (is_array($entityTypes)) {
+            return $entityTypes;
+        }
+
+        return [$entityTypes];
     }
 }

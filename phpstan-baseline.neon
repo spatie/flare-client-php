@@ -1,11 +1,6 @@
 parameters:
 	ignoreErrors:
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:application\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\ApplicationRecorder\\\\ApplicationRecorder but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\.$#"
-			count: 1
-			path: src/Flare.php
-
-		-
 			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:cache\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\CacheRecorder\\\\CacheRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
 			count: 1
 			path: src/Flare.php
@@ -27,11 +22,6 @@ parameters:
 
 		-
 			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:glow\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\GlowRecorder\\\\GlowRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
-			count: 1
-			path: src/Flare.php
-
-		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:log\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\LogRecorder\\\\LogRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
 			count: 1
 			path: src/Flare.php
 
@@ -71,11 +61,6 @@ parameters:
 			path: src/Flare.php
 
 		-
-			message: "#^Parameter \\#1 \\$callback of function set_error_handler expects \\(callable\\(int, string, string, int\\)\\: bool\\)\\|null, array\\{\\$this\\(Spatie\\\\FlareClient\\\\Flare\\), 'handleError'\\} given\\.$#"
-			count: 2
-			path: src/Flare.php
-
-		-
 			message: "#^Access to an undefined property Spatie\\\\FlareClient\\\\Contracts\\\\FlareCollectType\\:\\:\\$value\\.$#"
 			count: 4
 			path: src/FlareConfig.php
@@ -84,6 +69,11 @@ parameters:
 			message: "#^Unsafe usage of new static\\(\\)\\.$#"
 			count: 1
 			path: src/FlareConfig.php
+
+		-
+			message: "#^Property Spatie\\\\FlareClient\\\\Logger\\:\\:\\$logs \\(array\\<int, array\\{timeUnixNano\\: int, observedTimeUnixNano\\: int, traceId\\?\\: string, spanId\\?\\: string, flags\\?\\: string, severityText\\?\\: string, severityNumber\\?\\: int, body\\: mixed, \\.\\.\\.\\}\\>\\) does not accept non\\-empty\\-array\\<int, array\\{body\\: mixed, timeUnixNano\\?\\: int\\|int\\<1, max\\>, observedTimeUnixNano\\?\\: int\\|int\\<1, max\\>, traceId\\?\\: string, spanId\\?\\: string, flags\\?\\: string, severityText\\?\\: string, severityNumber\\?\\: int\\|int\\<1, max\\>, \\.\\.\\.\\}\\>\\.$#"
+			count: 1
+			path: src/Logger.php
 
 		-
 			message: "#^Class Spatie\\\\FlareClient\\\\Recorders\\\\ExternalHttpRecorder\\\\Guzzle\\\\FlareHandlerStack extends @final class GuzzleHttp\\\\HandlerStack\\.$#"
@@ -116,6 +106,21 @@ parameters:
 			path: src/Recorders/SpansRecorder.php
 
 		-
+			message: "#^Parameter \\#1 \\$callback of function set_error_handler expects \\(callable\\(int, string, string, int\\)\\: bool\\)\\|null, array\\{\\$this\\(Spatie\\\\FlareClient\\\\Reporter\\), 'handleError'\\} given\\.$#"
+			count: 2
+			path: src/Reporter.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Support\\\\Container\\:\\:resolveAutowiringDefinition\\(\\) should return array\\<string, array\\{id\\: class\\-string, default\\?\\: mixed\\}\\>\\|null but returns array\\<non\\-empty\\-string, array\\{id\\: string, default\\: mixed\\}\\>\\.$#"
+			count: 1
+			path: src/Support/Container.php
+
+		-
 			message: "#^Access to an undefined property Spatie\\\\FlareClient\\\\Contracts\\\\FlareSpanType\\:\\:\\$value\\.$#"
 			count: 2
+			path: src/Tracer.php
+
+		-
+			message: "#^Comparison operation \"\\>\" between int\\<1, max\\> and 0 is always true\\.$#"
+			count: 1
 			path: src/Tracer.php

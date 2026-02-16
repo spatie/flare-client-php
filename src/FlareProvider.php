@@ -9,41 +9,61 @@ use Spatie\ErrorSolutions\Contracts\SolutionProviderRepository as SolutionProvid
 use Spatie\FlareClient\AttributesProviders\ConsoleAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\GitAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\RequestAttributesProvider;
+use Spatie\FlareClient\AttributesProviders\ResponseAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
-use Spatie\FlareClient\Enums\SamplingType;
-use Spatie\FlareClient\FlareMiddleware\AddRecordedEntries;
-use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
-use Spatie\FlareClient\Recorders\ErrorRecorder\ErrorRecorder;
+use Spatie\FlareClient\Enums\FlareMode;
+use Spatie\FlareClient\Exporters\Exporter;
+use Spatie\FlareClient\Memory\Memory;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Sampling\NeverSampler;
 use Spatie\FlareClient\Sampling\Sampler;
 use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Senders\Sender;
+use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Support\BackTracer;
+use Spatie\FlareClient\Support\CollectsResolver;
 use Spatie\FlareClient\Support\Container;
-use Spatie\FlareClient\Support\GracefulSpanEnder;
 use Spatie\FlareClient\Support\Ids;
+use Spatie\FlareClient\Support\Lifecycle;
 use Spatie\FlareClient\Support\PhpStackFrameArgumentsFixer;
+use Spatie\FlareClient\Support\Recorders;
 use Spatie\FlareClient\Support\Redactor;
 use Spatie\FlareClient\Support\SentReports;
-use Spatie\FlareClient\Support\StacktraceMapper;
 use Spatie\FlareClient\Support\Telemetry;
-use Spatie\FlareClient\Support\TraceLimits;
+use Spatie\FlareClient\Support\Tester;
 use Spatie\FlareClient\Time\Time;
-use Spatie\FlareClient\TraceExporters\TraceExporter;
 
 class FlareProvider
 {
+    public readonly FlareMode $mode;
+
     /**
      * @param Closure(Container|IlluminateContainer, class-string<Recorder>, array):void|null $registerRecorderAndMiddlewaresCallback
+     * @param class-string<CollectsResolver>|null $collectsResolver
+     * @param Closure():bool|null $isUsingSubtasksClosure
+     * @param Closure():void|null $subtaskEndedClosure
+     * @param Closure(bool):bool|null $shouldMakeSamplingDecisionClosure
+     * @param Closure(Span):bool|null $gracefulSpanEnderClosure
      */
     public function __construct(
         protected FlareConfig $config,
         protected Container|IlluminateContainer $container,
+        protected ?string $collectsResolver = null,
         protected ?Closure $registerRecorderAndMiddlewaresCallback = null,
+        protected ?Closure $isUsingSubtasksClosure = null,
+        protected ?Closure $subtaskEndedClosure = null,
+        protected ?Closure $shouldMakeSamplingDecisionClosure = null,
+        protected ?Closure $gracefulSpanEnderClosure = null,
+        protected bool $disableApiQueue = false
     ) {
         $this->registerRecorderAndMiddlewaresCallback ??= $this->defaultRegisterRecordersAndMiddlewaresCallback();
+        $this->mode = match (true) {
+            // TODO: disabled until we have Ignition support
+            //            empty($this->config->apiToken) && $this->config->applicationStage === 'local' => FlareMode::Ignition,
+            empty($this->config->apiToken) => FlareMode::Disabled,
+            default => FlareMode::Enabled,
+        };
     }
 
     public function register(): void
@@ -54,20 +74,21 @@ class FlareProvider
             $this->config->senderConfig
         ));
 
-        $this->container->singleton(Api::class, fn () => new Api(
+        $this->container->singleton(Api::class, fn () => new ($this->config->api)(
             apiToken: $this->config->apiToken ?? 'No Api Token provided',
             baseUrl: $this->config->baseUrl,
             sender: $this->container->get(Sender::class),
-            sendReportsImmediately: $this->config->sendReportsImmediately
+            exporter: $this->container->get(Exporter::class),
+            resource: $this->container->get(Resource::class),
+            scope: $this->container->get(Scope::class),
+            disableQueue: $this->disableApiQueue,
         ));
 
         $this->container->singleton(Sampler::class, fn () => new $this->config->sampler(
             $this->config->samplerConfig
         ));
 
-        $this->container->singleton(TraceExporter::class, fn () => new $this->config->traceExporter);
-
-        $this->container->singleton(StacktraceMapper::class, fn () => new $this->config->stacktraceMapper);
+        $this->container->singleton(Exporter::class, fn () => new $this->config->exporter);
 
         $this->container->singleton(BackTracer::class, fn () => new BackTracer(
             $this->config->applicationPath
@@ -75,33 +96,9 @@ class FlareProvider
 
         $this->container->singleton(Time::class, fn () => new $this->config->time);
         $this->container->singleton(Ids::class, fn () => new $this->config->ids);
-        $this->container->singleton(GracefulSpanEnder::class, fn () => new GracefulSpanEnder());
-
-        $this->container->singleton(Tracer::class, fn () => new Tracer(
-            api: $this->container->get(Api::class),
-            exporter: $this->container->get(TraceExporter::class),
-            limits: $this->config->traceLimits ?? new TraceLimits(),
-            time: $this->container->get(Time::class),
-            ids: $this->container->get(Ids::class),
-            resource: $this->container->get(Resource::class),
-            scope: $this->container->get(Scope::class),
-            sampler: $this->config->trace
-                ? $this->container->get(Sampler::class)
-                : new NeverSampler(),
-            contextRecorder: $this->container->get(ContextRecorder::class),
-            configureSpansCallable: $this->config->configureSpansCallable,
-            configureSpanEventsCallable: $this->config->configureSpanEventsCallable,
-            samplingType: $this->config->trace ? SamplingType::Waiting : SamplingType::Disabled,
-            gracefulSpanEnder: $this->container->get(GracefulSpanEnder::class),
-        ));
+        $this->container->singleton(Memory::class, fn () => new $this->config->memory);
 
         $this->container->singleton(SentReports::class);
-
-        $this->container->singleton(ErrorRecorder::class, fn () => new ErrorRecorder(
-            $this->container->get(Tracer::class),
-            $this->container->get(BackTracer::class),
-            [],
-        ));
 
         $this->container->singleton(Redactor::class, fn () => new Redactor(
             censorClientIps: $this->config->censorClientIps,
@@ -111,43 +108,31 @@ class FlareProvider
             censorSession: $this->config->censorSession,
         ));
 
-        $this->container->singleton(ContextRecorder::class, fn () => new ContextRecorder());
-
         $this->container->singleton(UserAttributesProvider::class, $this->config->userAttributesProvider);
         $this->container->singleton(GitAttributesProvider::class, fn () => new GitAttributesProvider($this->config->applicationPath));
-        $this->container->singleton(RequestAttributesProvider::class, fn () => new ($this->config->requestAttributesProvider)(
-            $this->container->get(Redactor::class),
-            $this->container->get(UserAttributesProvider::class)
-        ));
-        $this->container->singleton(ConsoleAttributesProvider::class, fn () => new ($this->config->consoleAttributesProvider)());
+        $this->container->singleton(RequestAttributesProvider::class, $this->config->requestAttributesProvider);
+        $this->container->singleton(ResponseAttributesProvider::class, $this->config->responseAttributesProvider);
+        $this->container->singleton(ConsoleAttributesProvider::class, $this->config->consoleAttributesProvider);
 
-        [
-            'middlewares' => $middlewares,
-            'recorders' => $recorders,
-            'solutionProviders' => $solutionProviders,
-            'resourceModifiers' => $resourceModifiers,
-            'collectStackFrameArguments' => $collectStackFrameArguments,
-            'argumentReducers' => $argumentReducers,
-            'forcePHPStackFrameArgumentsIniSetting' => $forcePHPStackFrameArgumentsIniSetting,
-            'collectErrorsWithTraces' => $collectErrorsWithTraces,
-        ] = (new $this->config->collectsResolver())->execute($this->config->collects);
+        /** @var CollectsResolver $collects */
+        $collects = (new ($this->collectsResolver ?? CollectsResolver::class))->execute($this->config->collects);
 
         $this->container->singleton(ArgumentReducers::class, fn () => match (true) {
-            $collectStackFrameArguments === false => ArgumentReducers::create([]),
-            is_array($argumentReducers) => ArgumentReducers::create($argumentReducers),
-            default => $argumentReducers,
+            $collects->collectStackFrameArguments === false => ArgumentReducers::create([]),
+            is_array($collects->argumentReducers) => ArgumentReducers::create($collects->argumentReducers),
+            default => $collects->argumentReducers,
         });
 
-        $this->container->singleton(SolutionProviderRepositoryContract::class, function () use ($solutionProviders) {
+        $this->container->singleton(SolutionProviderRepositoryContract::class, function () use ($collects) {
             /** @var SolutionProviderRepositoryContract $repository */
             $repository = new $this->config->solutionsProviderRepository;
 
-            $repository->registerSolutionProviders($solutionProviders);
+            $repository->registerSolutionProviders($collects->solutionProviders);
 
             return $repository;
         });
 
-        $this->container->singleton(Resource::class, function () use ($resourceModifiers) {
+        $this->container->singleton(Resource::class, function () use ($collects) {
             $resource = new Resource(
                 $this->config->applicationName,
                 $this->config->applicationVersion,
@@ -156,7 +141,7 @@ class FlareProvider
                 Telemetry::getVersion(),
             );
 
-            foreach ($resourceModifiers as $resourceModifier) {
+            foreach ($collects->resourceModifiers as $resourceModifier) {
                 $resource = $resourceModifier($resource, $this->container);
             }
 
@@ -180,77 +165,128 @@ class FlareProvider
             return $scope;
         });
 
-        foreach ($recorders as $recorderClass => $config) {
+        foreach ($collects->recorders as $recorderClass => $config) {
             ($this->registerRecorderAndMiddlewaresCallback)($this->container, $recorderClass, $config);
         }
 
-        foreach ($middlewares as $middlewareClass => $config) {
+        foreach ($collects->middlewares as $middlewareClass => $config) {
             ($this->registerRecorderAndMiddlewaresCallback)($this->container, $middlewareClass, $config);
         }
 
-        $this->container->singleton(Flare::class, function () use ($collectErrorsWithTraces, $collectStackFrameArguments, $middlewares, $recorders) {
-            $recorders = array_combine(
-                array_map(
-                    function ($recorder) {
-                        /** @var class-string<Recorder> $recorder */
-                        $recorderType = $recorder::type();
+        $this->container->singleton(Recorders::class, fn () => new Recorders(
+            recorderDefinitions: $collects->recorders,
+        ));
 
-                        if (is_string($recorderType)) {
-                            return $recorderType;
-                        }
+        $this->container->singleton(Lifecycle::class, fn () => new Lifecycle(
+            api: $this->container->get(Api::class),
+            time: $this->container->get(Time::class),
+            memory: $this->container->get(Memory::class),
+            logger: $this->container->get(Logger::class),
+            tracer: $this->container->get(Tracer::class),
+            recorders: $this->container->get(Recorders::class),
+            sentReports: $this->container->get(SentReports::class),
+            resource: $this->container->get(Resource::class),
+            isUsingSubtasksClosure: $this->isUsingSubtasksClosure,
+            shouldMakeSamplingDecisionClosure: $this->shouldMakeSamplingDecisionClosure,
+            subtaskEndedClosure: $this->subtaskEndedClosure,
+        ));
 
-                        return $recorderType->value;
-                    },
-                    array_keys($recorders)
-                ),
-                array_map(
-                    fn ($recorder) => $this->container->get($recorder),
-                    array_keys($recorders)
-                )
-            );
+        $this->container->singleton(Tracer::class, fn () => new Tracer(
+            api: $this->container->get(Api::class),
+            limits: $this->config->traceLimits,
+            time: $this->container->get(Time::class),
+            ids: $this->container->get(Ids::class),
+            memory: $this->container->get(Memory::class),
+            recorders: $this->container->get(Recorders::class),
+            sampler: $this->config->trace
+                ? $this->container->get(Sampler::class)
+                : new NeverSampler(),
+            configureSpansCallable: $this->config->configureSpansCallable,
+            configureSpanEventsCallable: $this->config->configureSpanEventsCallable,
+            sampling: false,
+            disabled: $this->config->trace === false || $this->mode === FlareMode::Disabled,
+            gracefulSpanEnderClosure: $this->gracefulSpanEnderClosure
+        ));
 
+        $this->container->singleton(Logger::class, fn () => new Logger(
+            api: $this->container->get(Api::class),
+            time: $this->container->get(Time::class),
+            tracer: $this->container->get(Tracer::class),
+            recorders: $this->container->get(Recorders::class),
+            disabled: $this->config->log === false || $this->mode === FlareMode::Disabled,
+            minimalLogLevel: $this->config->minimalLogLevel,
+        ));
+
+        $this->container->singleton(ReportFactory::class, fn () => new ReportFactory(
+            time: $this->container->get(Time::class),
+            ids: $this->container->get(Ids::class),
+            resource: $this->container->get(Resource::class),
+            argumentReducers: $this->container->get(ArgumentReducers::class),
+            collectStackTraceArguments: $collects->collectStackFrameArguments,
+            overriddenGroupings: $this->config->overriddenGroupings,
+            applicationPath: $this->config->applicationPath,
+        ));
+
+        $this->container->singleton(Reporter::class, function () use ($collects) {
             $middleware = array_map(
                 fn ($middleware) => $this->container->get($middleware),
-                array_keys($middlewares)
+                array_keys($collects->middlewares)
             );
 
-            array_unshift($middleware, new AddRecordedEntries($recorders));
+            $recorders = $this->container->get(Recorders::class);
 
-
-            return new Flare(
+            return new Reporter(
                 api: $this->container->get(Api::class),
+                disabled: $this->config->report === false || $this->mode === FlareMode::Disabled,
                 tracer: $this->container->get(Tracer::class),
-                backTracer: $this->container->get(BackTracer::class),
-                ids: $this->container->get(Ids::class),
-                time: $this->container->get(Time::class),
+                lifecycle: $this->container->get(Lifecycle::class),
                 sentReports: $this->container->get(SentReports::class),
-                middleware: $middleware,
-                recorders: $recorders,
-                throwableRecorder: $collectErrorsWithTraces ? $this->container->get(ErrorRecorder::class) : null,
-                contextRecorder: $this->container->get(ContextRecorder::class),
                 reportErrorLevels: $this->config->reportErrorLevels,
                 filterExceptionsCallable: $this->config->filterExceptionsCallable,
                 filterReportsCallable: $this->config->filterReportsCallable,
                 solutionProviderRepository: $this->container->get(SolutionProviderRepositoryContract::class),
-                argumentReducers: $this->container->get(ArgumentReducers::class),
-                collectStackFrameArguments: $collectStackFrameArguments,
-                resource: $this->container->get(Resource::class),
-                scope: $this->container->get(Scope::class),
-                stacktraceMapper: $this->container->get(StacktraceMapper::class),
-                applicationPath: $this->config->applicationPath,
-                overriddenGroupings: $this->config->overriddenGroupings,
-                includeStackTraceWithMessages: $this->config->includeStackTraceWithMessages,
+                reportFactory: $this->container->get(ReportFactory::class),
+                middleware: $middleware,
+                recorders: $recorders,
+                addReportsToTraces: $collects->collectErrorsWithTraces
             );
         });
 
-        if ($collectStackFrameArguments && $forcePHPStackFrameArgumentsIniSetting) {
+        $this->container->singleton(Flare::class, fn () => new Flare(
+            lifecycle: $this->container->get(Lifecycle::class),
+            tracer: $this->container->get(Tracer::class),
+            logger: $this->container->get(Logger::class),
+            reporter: $this->container->get(Reporter::class),
+            backTracer: $this->container->get(BackTracer::class),
+            ids: $this->container->get(Ids::class),
+            time: $this->container->get(Time::class),
+            sentReports: $this->container->get(SentReports::class),
+            resource: $this->container->get(Resource::class),
+            scope: $this->container->get(Scope::class),
+            recorders: $this->container->get(Recorders::class),
+        ));
+
+        $this->container->singleton(Tester::class, fn () => new Tester(
+            api: $this->container->get(Api::class),
+            ids: $this->container->get(Ids::class),
+            time: $this->container->get(Time::class),
+            memory: $this->container->get(Memory::class),
+            resource: $this->container->get(Resource::class),
+            reportFactory: $this->container->get(ReportFactory::class),
+        ));
+
+        if ($collects->collectStackFrameArguments && $collects->forcePHPStackFrameArgumentsIniSetting) {
             (new PhpStackFrameArgumentsFixer())->enable();
         }
     }
 
     public function boot(): void
     {
-        $this->container->get(Flare::class)->bootRecorders();
+        if ($this->mode === FlareMode::Disabled) {
+            return;
+        }
+
+        $this->container->get(Recorders::class)->boot($this->container);
     }
 
     protected function defaultRegisterRecordersAndMiddlewaresCallback(): Closure

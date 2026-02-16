@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./vendor/bin/pest tests/ApiTest.php:*)",
+      "Bash(./vendor/bin/pest:*)",
+      "Bash(git ls-tree:*)",
+      "WebFetch(domain:flareapp.io)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

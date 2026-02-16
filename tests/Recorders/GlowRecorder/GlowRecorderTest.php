@@ -1,6 +1,6 @@
 <?php
 
-use Spatie\FlareClient\Enums\MessageLevels;
+use Monolog\Level;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
 use Spatie\FlareClient\Spans\SpanEvent;
@@ -21,7 +21,7 @@ it('stores glows for reporting and tracing', function () {
 
     $recorder->record(
         name: 'Some name',
-        level: MessageLevels::Info,
+        level: Level::Info,
         context: ['some' => 'metadata'],
     );
 

@@ -1,0 +1,29 @@
+url.full: 'http://example.com/test'
+url.scheme: http
+url.path: /test
+url.query: 'get-key-1=get-value-1&get-key-2=get-value-2'
+flare.entry_point.type: web
+flare.entry_point.value: 'http://example.com/test'
+flare.entry_point.class: null
+server.address: null
+server.port: '80'
+user_agent.original: null
+http.request.method: GET
+http.request.body.size: 10
+http.request.files:
+    file-one:
+        path: /tests/stubs/file.txt
+        size: 4
+        mime_type: text/plain
+    file-two:
+        path: /tests/stubs/file.txt
+        size: 4
+        mime_type: text/plain
+client.address: 1.2.3.4
+http.request.body.contents:
+    get-key-1: get-value-1
+    get-key-2: get-value-2
+http.request.headers:
+    host: example.com
+http.request.cookies:
+    cookie-key-1: cookie-value-1

@@ -5,172 +5,235 @@ namespace Spatie\FlareClient;
 use Closure;
 use Exception;
 use Spatie\FlareClient\Contracts\FlareSpanType;
-use Spatie\FlareClient\Enums\SamplingType;
+use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanStatusCode;
+use Spatie\FlareClient\Memory\Memory;
 use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
-use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Sampling\RateSampler;
 use Spatie\FlareClient\Sampling\Sampler;
-use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
-use Spatie\FlareClient\Support\GracefulSpanEnder;
 use Spatie\FlareClient\Support\Ids;
-use Spatie\FlareClient\Support\TraceLimits;
+use Spatie\FlareClient\Support\Recorders;
 use Spatie\FlareClient\Time\Time;
-use Spatie\FlareClient\TraceExporters\TraceExporter;
 use Throwable;
 
 class Tracer
 {
-    /** @var array<string, Span[]> */
-    protected array $traces = [];
+    public const DEFAULT_MAX_SPANS_LIMIT = 512;
+    public const DEFAULT_MAX_ATTRIBUTES_PER_SPAN_LIMIT = 128;
+    public const DEFAULT_MAX_SPAN_EVENTS_PER_SPAN_LIMIT = 128;
+    public const DEFAULT_MAX_ATTRIBUTES_PER_SPAN_EVENT_LIMIT = 128;
 
-    protected ?string $currentTraceId = null;
+    public const DEFAULT_COLLECT_ERRORS_WITH_TRACES = true;
 
-    protected ?string $currentSpanId = null;
+    /** @var array<Span> */
+    protected array $spans = [];
+
+    /** @var array @param array{max_spans: int, max_attributes_per_span: int, max_span_events_per_span: int, max_attributes_per_span_event: int}|null */
+    public readonly array $limits;
+
+    protected string $currentTraceId;
+
+    protected string $currentSpanId;
+
+    protected bool $currentSpanIdAvailable;
 
     /**
+     * @param array{max_spans: int, max_attributes_per_span: int, max_span_events_per_span: int, max_attributes_per_span_event: int}|null $limits
      * @param Closure(Span):(void|Span)|null $configureSpansCallable
      * @param Closure(SpanEvent):(void|SpanEvent|null)|null $configureSpanEventsCallable
+     * @param Closure(Span):(bool)|null $gracefulSpanEnderClosure ,
      */
     public function __construct(
         protected readonly Api $api,
-        protected readonly TraceExporter $exporter,
-        public readonly TraceLimits $limits,
+        ?array $limits,
         public readonly Time $time,
         public readonly Ids $ids,
-        public readonly Resource $resource,
-        public readonly Scope $scope,
-        protected ContextRecorder $contextRecorder,
+        public readonly Memory $memory,
+        protected Recorders $recorders,
         public readonly Sampler $sampler = new RateSampler([]),
         public ?Closure $configureSpansCallable = null,
         public ?Closure $configureSpanEventsCallable = null,
-        public SamplingType $samplingType = SamplingType::Waiting,
-        public bool $clearTracesAfterExport = true,
-        protected GracefulSpanEnder $gracefulSpanEnder = new GracefulSpanEnder(),
+        public bool $sampling = false,
+        public bool $pausedSampling = false,
+        public readonly bool $disabled = false,
+        protected Closure|null $gracefulSpanEnderClosure = null,
     ) {
+        $this->currentTraceId = $this->ids->trace();
+        $this->currentSpanId = $this->ids->span();
+        $this->currentSpanIdAvailable = true;
+
+        $this->limits = [
+            'max_spans' => $limits['max_spans'] ?? self::DEFAULT_MAX_SPANS_LIMIT,
+            'max_attributes_per_span' => $limits['max_attributes_per_span'] ?? self::DEFAULT_MAX_ATTRIBUTES_PER_SPAN_LIMIT,
+            'max_span_events_per_span' => $limits['max_span_events_per_span'] ?? self::DEFAULT_MAX_SPAN_EVENTS_PER_SPAN_LIMIT,
+            'max_attributes_per_span_event' => $limits['max_attributes_per_span_event'] ?? self::DEFAULT_MAX_ATTRIBUTES_PER_SPAN_EVENT_LIMIT,
+        ];
     }
 
     public function startTrace(
-        ?string $traceparent = null,
-        array $context = [],
-        bool $forceSampling = false,
-    ): SamplingType {
-        if ($forceSampling) {
-            return $this->initiateTrace(sample: true);
+        ?string $traceId = null,
+        ?string $spanId = null,
+        ?bool $sample = null,
+        array $samplerContext = [],
+        ?string $traceParent = null
+    ): bool {
+        if ($this->disabled === true) {
+            return false;
         }
 
-        if ($this->samplingType !== SamplingType::Waiting) {
-            return $this->samplingType;
+        if ($this->sampling) {
+            return $this->sampling;
         }
 
-        $parsedTraceparent = $traceparent !== null
-            ? $this->ids->parseTraceparent($traceparent)
-            : null;
+        if ($traceParent) {
+            return $this->startFromTraceparent($traceParent);
+        }
 
-        if ($parsedTraceparent !== null) {
-            [
-                'traceId' => $traceId,
-                'parentSpanId' => $parentSpanId,
-                'sampling' => $sampling,
-            ] = $parsedTraceparent;
-
-            return $this->initiateTrace(
-                sample: $sampling,
+        if ($traceId && $spanId && $sample !== null) {
+            return $this->startFromDefined(
+                sample: $sample,
                 traceId: $traceId,
-                spanId: $parentSpanId
+                spanId: $spanId,
+                currentSpanIdAvailable: false,
             );
         }
 
-        if (! $this->sampler->shouldSample($context)) {
-            return $this->initiateTrace(sample: false);
+        if ($traceId || $spanId || $sample !== null) {
+            throw new Exception("If one of traceId, spanId or sample is provided, all three must be provided.");
         }
 
-        return $this->initiateTrace(sample: true);
+        return $this->sampling = $this->sampler->shouldSample($samplerContext);
     }
 
-    public function startTraceWithSpan(
-        Span|Closure $span,
-        array $context = [],
-    ): ?Span {
-        if (! $this->sampler->shouldSample($context)) {
-            $this->initiateTrace(sample: false);
+    protected function startFromTraceparent(
+        string $traceParent,
+    ): bool {
+        $parsedTraceparent = $this->ids->parseTraceparent($traceParent);
 
-            return null;
+        if ($parsedTraceparent === null) {
+            return $this->startTrace();
         }
 
-        $span = is_callable($span) ? $span() : $span;
+        [
+            'traceId' => $traceId,
+            'parentSpanId' => $parentSpanId,
+            'sampling' => $sampling,
+        ] = $parsedTraceparent;
 
-        $this->initiateTrace(
-            sample: true,
-            traceId: $span->traceId,
-            spanId: $span->spanId,
+        return $this->startFromDefined(
+            sample: $sampling,
+            traceId: $traceId,
+            spanId: $parentSpanId,
+            currentSpanIdAvailable: false
         );
-
-        return $span;
     }
 
-    protected function initiateTrace(
+    protected function startFromDefined(
         bool $sample,
-        ?string $traceId = null,
-        ?string $spanId = null,
-    ): SamplingType {
-        $this->currentTraceId = $traceId ?? $this->ids->trace();
-        $this->currentSpanId = $spanId ?? $this->ids->span();
+        string $traceId,
+        string $spanId,
+        bool $currentSpanIdAvailable,
+    ): bool {
+        $this->currentTraceId = $traceId;
+        $this->currentSpanId = $spanId;
+        $this->currentSpanIdAvailable = $currentSpanIdAvailable;
 
-        $this->traces[$this->currentTraceId] = [];
+        $this->spans = [];
 
-        return $this->samplingType = $sample
-            ? SamplingType::Sampling
-            : SamplingType::Off;
-    }
-
-    public function isSampling(): bool
-    {
-        return $this->samplingType === SamplingType::Sampling;
+        return $this->sampling = $sample;
     }
 
     public function endTrace(): void
     {
-        $traceId = $this->currentTraceId;
-
-        $this->currentTraceId = null;
-        $this->currentSpanId = null;
-        $this->samplingType = SamplingType::Waiting;
-
-        if (empty($this->traces[$traceId] ?? [])) {
-            unset($this->traces[$traceId]);
-
+        if ($this->sampling === false) {
             return;
         }
 
-        $context = $this->contextRecorder->toArray();
+        $this->currentTraceId = $this->ids->trace();
+        $this->currentSpanId = $this->ids->span();
+        $this->currentSpanIdAvailable = true;
+        $this->sampling = false;
 
-        if (! empty($context)) {
-            foreach ($this->traces as $spans) {
-                $spans[array_key_first($spans)]->addAttributes($context);
-            }
+        if (empty($this->spans)) {
+            return;
         }
 
-        $this->contextRecorder->resetContext();
+        /** @var ?ContextRecorder $recorder */
+        $recorder = $this->recorders->getRecorder(RecorderType::Context);
 
-        $payload = $this->exporter->export(
-            $this->resource,
-            $this->scope,
-            $this->traces,
-        );
-
-        $this->api->trace($payload);
-
-        if ($this->clearTracesAfterExport) {
-            $this->traces = [];
+        if (($context = $recorder?->toArray()) && count($context) > 0) {
+            $this->spans[array_key_first($this->spans)]->addAttributes($context);
         }
+
+        $this->api->trace($this->spans);
+
+        $this->spans = [];
     }
 
-    public function currentTraceId(): ?string
+    public function unsample(): void
+    {
+        if ($this->sampling === false) {
+            return;
+        }
+
+        $this->currentSpanIdAvailable = true;
+        $this->sampling = false;
+        $this->spans = [];
+    }
+
+    public function pauseSampling(): void
+    {
+        if ($this->sampling === false) {
+            return;
+        }
+
+        $this->sampling = false;
+        $this->pausedSampling = true;
+    }
+
+    public function resumeSampling(): void
+    {
+        if ($this->pausedSampling === false) {
+            return;
+        }
+
+        $this->sampling = true;
+        $this->pausedSampling = false;
+    }
+
+    public function isSampling(): bool
+    {
+        return $this->sampling;
+    }
+
+    public function currentTraceId(): string
     {
         return $this->currentTraceId;
+    }
+
+    public function currentSpanId(): string
+    {
+        return $this->currentSpanId;
+    }
+
+    public function currentParentSpanId(): ?string
+    {
+        return $this->currentSpanIdAvailable
+            ? null
+            : $this->currentSpanId;
+    }
+
+    public function nextSpanId(): string
+    {
+        if ($this->sampling && $this->currentSpanIdAvailable === true) {
+            $this->currentSpanIdAvailable = false;
+
+            return $this->currentSpanId;
+        }
+
+        return $this->ids->span();
     }
 
     public function traceParent(): string
@@ -185,17 +248,7 @@ class Tracer
     /** @return array<Span> */
     public function currentTrace(): array
     {
-        return $this->traces[$this->currentTraceId];
-    }
-
-    public function setCurrentSpanId(?string $id): void
-    {
-        $this->currentSpanId = $id;
-    }
-
-    public function currentSpanId(): ?string
-    {
-        return $this->currentSpanId;
+        return $this->spans;
     }
 
     public function hasCurrentSpan(?FlareSpanType $spanType = null): bool
@@ -225,23 +278,22 @@ class Tracer
 
     public function currentSpan(): ?Span
     {
-        return $this->traces[$this->currentTraceId][$this->currentSpanId] ?? null;
+        return $this->spans[$this->currentSpanId] ?? null;
     }
 
-    public function addRawSpan(Span $span): Span
+    public function addSpan(Span $span): Span
     {
-        if (count($this->traces[$span->traceId] ?? []) >= $this->limits->maxSpans) {
+        if (count($this->spans) >= $this->limits['max_spans']) {
             return $span;
         }
 
-        $this->traces[$span->traceId][$span->spanId] = $span;
-
-        $this->setCurrentSpanId($span->spanId);
+        $this->spans[$span->spanId] = $span;
+        $this->currentSpanId = $span->spanId;
 
         if ($span->end !== null) {
             $this->configureSpan($span);
 
-            $this->setCurrentSpanId($span->parentSpanId);
+            $this->currentSpanId = $span->parentSpanId ?? '-';
         }
 
         return $span;
@@ -254,12 +306,15 @@ class Tracer
         string $name,
         ?int $time = null,
         array $attributes = [],
-        bool $canStartTraces = true,
-    ): ?Span {
-        $spanClosure = fn () => new Span(
+    ): Span {
+        // Order of operations is important here, do not inline!
+        $parentSpanId = $this->currentParentSpanId();
+        $spanId = $this->nextSpanId();
+
+        $span = new Span(
             traceId: $this->currentTraceId ?? $this->ids->trace(),
-            spanId: $this->ids->span(),
-            parentSpanId: $this->currentSpanId,
+            spanId: $spanId,
+            parentSpanId: $parentSpanId,
             name: $name,
             start: $time ?? $this->time->getCurrentTime(),
             end: null,
@@ -267,27 +322,22 @@ class Tracer
         );
 
         if ($this->isSampling() === true) {
-            return $this->addRawSpan($spanClosure());
+            return $this->addSpan($span);
         }
 
-        if ($canStartTraces === false) {
-            return null;
-        }
-
-        $span = $this->startTraceWithSpan($spanClosure);
-
-        if ($span === null) {
-            return null; // No sampling was started
-        }
-
-        return $this->addRawSpan($span);
+        return $span;
     }
 
     public function endSpan(
         ?Span $span = null,
         ?int $time = null,
         array|Closure $additionalAttributes = [],
-    ): Span {
+        bool $includeMemoryUsage = false,
+    ): ?Span {
+        if ($this->sampling === false) {
+            return null;
+        }
+
         $span ??= $this->currentSpan();
 
         if ($span === null) {
@@ -306,9 +356,13 @@ class Tracer
             $span->addAttributes($additionalAttributes);
         }
 
+        if ($includeMemoryUsage) {
+            $span->addAttribute('flare.peak_memory_usage', $this->memory->getPeakMemoryUsage());
+        }
+
         $this->configureSpan($span);
 
-        $this->setCurrentSpanId($span->parentSpanId);
+        $this->currentSpanId = $span->parentSpanId ?? '-';
 
         return $span;
     }
@@ -327,13 +381,15 @@ class Tracer
         Closure $callback,
         array $attributes = [],
         ?Closure $endAttributes = null,
-        bool $canStartTraces = true,
+        ?int $startTime = null,
+        ?int $endTime = null,
+        bool $includeMemoryUsage = false,
     ): mixed {
-        $span = $this->startSpan($name, attributes: $attributes, canStartTraces: $canStartTraces);
-
-        if ($span === null) {
+        if ($this->sampling === false) {
             return $callback();
         }
+
+        $span = $this->startSpan($name, time: $startTime, attributes: $attributes);
 
         try {
             $returned = $callback();
@@ -352,7 +408,7 @@ class Tracer
             ? []
             : ($endAttributes)($returned);
 
-        $this->endSpan($span, additionalAttributes: $additionalAttributes);
+        $this->endSpan($span, time: $endTime, additionalAttributes: $additionalAttributes, includeMemoryUsage: $includeMemoryUsage);
 
         return $returned;
     }
@@ -382,20 +438,6 @@ class Tracer
         return $event;
     }
 
-    public function trashCurrentTrace(
-        SamplingType $samplingType = SamplingType::Waiting
-    ): void {
-        if ($this->currentTraceId === null) {
-            return;
-        }
-
-        unset($this->traces[$this->currentTraceId]);
-
-        $this->currentTraceId = null;
-        $this->currentSpanId = null;
-        $this->samplingType = $samplingType;
-    }
-
     /**
      * @param Closure(Span):(void|Span) $callback
      */
@@ -416,16 +458,7 @@ class Tracer
         return $this;
     }
 
-    /**
-     * @return array<string, Span[]>
-     */
-    public function getTraces(): array
-    {
-        return $this->traces;
-
-    }
-
-    public function gracefullyHandleError(): void
+    public function gracefullyEndSpans(bool $force = false): void
     {
         if ($this->isSampling() === false) {
             return;
@@ -438,11 +471,15 @@ class Tracer
                 break;
             }
 
-            if ($this->gracefulSpanEnder->shouldGracefullyEndSpan($currentSpan)) {
+            if ($this->gracefulSpanEnderClosure === null || $force || ($this->gracefulSpanEnderClosure)($currentSpan)) {
                 $this->endSpan($currentSpan);
             }
 
-            $currentSpan = $this->traces[$currentSpan->traceId][$currentSpan->parentSpanId] ?? null;
+            if ($currentSpan->parentSpanId === null) {
+                break;
+            }
+
+            $currentSpan = $this->spans[$currentSpan->parentSpanId] ?? null;
         }
     }
 
