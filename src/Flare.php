@@ -34,12 +34,11 @@ use Throwable;
 class Flare
 {
     // TODO: agent
-
     // TODO: check current GH PR's and issues if we need to make changes
     // TODO: quick tests on Vapor
-    // TODO: make sure in the docs that we explain how log levels influence each other, e.g. logger minimal level dictates everything, exception log level should always be equal or higher
-    // TODO (nice to have): add ability to ignore certain commands and requests like we do with jobs
-    // TODO (nice to have): dynamic sampling based upon context would be cool
+    // TODO: add ability to ignore certain commands and requests like we do with jobs
+    // TODO: dynamic sampling based upon context would be cool
+    // TODO: wp-admin.php calls
     // TODO (less important): write a framework integration guide
 
     public function __construct(
