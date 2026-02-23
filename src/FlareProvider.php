@@ -19,7 +19,9 @@ use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Sampling\NeverSampler;
 use Spatie\FlareClient\Sampling\Sampler;
 use Spatie\FlareClient\Scopes\Scope;
+use Spatie\FlareClient\Senders\PayloadSanitizer;
 use Spatie\FlareClient\Senders\Sender;
+use Spatie\FlareClient\Senders\Support\JsonEncodableSanitizer;
 use Spatie\FlareClient\Support\BackTracer;
 use Spatie\FlareClient\Support\Container;
 use Spatie\FlareClient\Support\GracefulSpanEnder;
@@ -50,9 +52,15 @@ class FlareProvider
     {
         $this->container ??= Container::instance();
 
-        $this->container->singleton(Sender::class, fn () => new $this->config->sender(
-            $this->config->senderConfig
-        ));
+        $this->container->singleton(PayloadSanitizer::class, fn () => new JsonEncodableSanitizer);
+
+        $this->container->singleton(
+            Sender::class,
+            fn () => new $this->config->sender(
+                config:$this->config->senderConfig,
+                sanitizer: $this->container->get(PayloadSanitizer::class)
+            )
+        );
 
         $this->container->singleton(Api::class, fn () => new Api(
             apiToken: $this->config->apiToken ?? 'No Api Token provided',
