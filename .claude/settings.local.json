@@ -4,7 +4,11 @@
       "Bash(./vendor/bin/pest tests/ApiTest.php:*)",
       "Bash(./vendor/bin/pest:*)",
       "Bash(git ls-tree:*)",
-      "WebFetch(domain:flareapp.io)"
+      "WebFetch(domain:flareapp.io)",
+      "Bash(git merge:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

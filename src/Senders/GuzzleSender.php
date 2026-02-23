@@ -5,6 +5,7 @@ namespace Spatie\FlareClient\Senders;
 use Closure;
 use GuzzleHttp\Client;
 use Spatie\FlareClient\Enums\FlareEntityType;
+use Spatie\FlareClient\Senders\Exceptions\ConnectionError;
 use Spatie\FlareClient\Senders\Support\Response;
 
 class GuzzleSender implements Sender
@@ -28,9 +29,17 @@ class GuzzleSender implements Sender
             'json' => $payload,
         ]);
 
+        $rawResponse = $response->getBody()->getContents();
+
+        $body = json_decode($rawResponse, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new ConnectionError('Invalid JSON response received');
+        }
+
         $callback(new Response(
             $response->getStatusCode(),
-            json_decode($response->getBody()->getContents(), true),
+            $body,
         ));
     }
 }
