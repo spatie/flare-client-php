@@ -28,9 +28,17 @@ class GuzzleSender implements Sender
             'json' => $payload,
         ]);
 
+        $rawResponse = $response->getBody()->getContents();
+
+        $body = json_decode($rawResponse, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $body = $rawResponse;
+        }
+
         $callback(new Response(
             $response->getStatusCode(),
-            json_decode($response->getBody()->getContents(), true),
+            $body,
         ));
     }
 }

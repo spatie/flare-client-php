@@ -48,16 +48,16 @@ class CurlSender implements Sender
             curl_setopt($curlHandle, $option, $value);
         }
 
-        $json = curl_exec($curlHandle);
+        $rawResponse = curl_exec($curlHandle);
 
-        if (is_bool($json)) {
+        if (is_bool($rawResponse)) {
             throw new ConnectionError(curl_error($curlHandle));
         }
 
-        $body = json_decode($json, true);
+        $body = json_decode($rawResponse, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new ConnectionError('Invalid JSON response received');
+            $body = $rawResponse;
         }
 
         $headers = curl_getinfo($curlHandle);

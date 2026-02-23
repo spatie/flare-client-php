@@ -16,7 +16,7 @@ class BadResponseCode extends Exception
     {
         parent::__construct(static::getMessageForResponse($response));
 
-        $this->errors = $response->body['errors'] ?? [];
+        $this->errors = is_array($response->body) ? ($response->body['errors'] ?? []) : [];
     }
 
     public static function getMessageForResponse(Response $response): string
