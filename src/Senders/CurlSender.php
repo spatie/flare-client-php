@@ -48,7 +48,7 @@ class CurlSender implements Sender
             curl_setopt($curlHandle, $option, $value);
         }
 
-        $rawResponse = curl_exec($curlHandle);
+        $rawResponse = $this->executeCurl($curlHandle);
 
         if (is_bool($rawResponse)) {
             throw new ConnectionError(curl_error($curlHandle));
@@ -68,6 +68,11 @@ class CurlSender implements Sender
         }
 
         $callback(new Response($headers['http_code'], $body));
+    }
+
+    protected function executeCurl(CurlHandle $curlHandle): string|bool
+    {
+        return curl_exec($curlHandle);
     }
 
     protected function getCurlHandle(string $fullUrl, array $headers = []): CurlHandle
