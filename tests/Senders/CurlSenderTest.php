@@ -84,6 +84,7 @@ it('still throws ConnectionError when curl_exec returns false', function () {
         'fake-api-key',
         ['test' => 'payload'],
         FlarePayloadType::Error,
-        function (Response $r) {}
+        function (Response $r) {
+        }
     );
 })->throws(ConnectionError::class);
