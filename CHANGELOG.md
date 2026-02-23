@@ -2,6 +2,12 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 2.10.2 - 2026-02-23
+
+- Handle non-JSON API responses gracefully in senders
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/2.10.1...2.10.2
+
 ## 2.10.1 - 2026-02-23
 
 - fix deprecation warnings for PHP 8.5
