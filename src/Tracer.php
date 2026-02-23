@@ -225,6 +225,10 @@ class Tracer
 
     public function currentSpan(): ?Span
     {
+        if ($this->currentTraceId === null) {
+            return null;
+        }
+
         return $this->traces[$this->currentTraceId][$this->currentSpanId] ?? null;
     }
 
@@ -442,7 +446,9 @@ class Tracer
                 $this->endSpan($currentSpan);
             }
 
-            $currentSpan = $this->traces[$currentSpan->traceId][$currentSpan->parentSpanId] ?? null;
+            $currentSpan = $currentSpan->parentSpanId !== null
+                ? $this->traces[$currentSpan->traceId][$currentSpan->parentSpanId] ?? null
+                : null;
         }
     }
 

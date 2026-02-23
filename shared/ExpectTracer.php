@@ -87,8 +87,6 @@ class ExpectTracer
     {
         $reflection = new ReflectionProperty(Tracer::class, 'resource');
 
-        $reflection->setAccessible(true);
-
         $closure(new ExpectResource($reflection->getValue($this->tracer)));
 
         return $this;
@@ -102,8 +100,6 @@ class ExpectTracer
     public function scope(Closure $closure): self
     {
         $reflection = new ReflectionProperty(Tracer::class, 'scope');
-
-        $reflection->setAccessible(true);
 
         $closure(new ExpectScope($reflection->getValue($this->tracer)));
 
