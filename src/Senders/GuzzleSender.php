@@ -4,6 +4,7 @@ namespace Spatie\FlareClient\Senders;
 
 use Closure;
 use GuzzleHttp\Client;
+use Psr\Http\Message\ResponseInterface;
 use Spatie\FlareClient\Enums\FlarePayloadType;
 use Spatie\FlareClient\Senders\Support\Response;
 
@@ -19,14 +20,7 @@ class GuzzleSender implements Sender
 
     public function post(string $endpoint, string $apiToken, array $payload, FlarePayloadType $type, Closure $callback): void
     {
-        $response = $this->client->post($endpoint, [
-            'headers' => [
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-                'x-api-token' => $apiToken,
-            ],
-            'json' => $payload,
-        ]);
+        $response = $this->executeRequest($endpoint, $apiToken, $payload);
 
         $rawResponse = $response->getBody()->getContents();
 
@@ -40,5 +34,17 @@ class GuzzleSender implements Sender
             $response->getStatusCode(),
             $body,
         ));
+    }
+
+    protected function executeRequest(string $endpoint, string $apiToken, array $payload): ResponseInterface
+    {
+        return $this->client->post($endpoint, [
+            'headers' => [
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+                'x-api-token' => $apiToken,
+            ],
+            'json' => $payload,
+        ]);
     }
 }
