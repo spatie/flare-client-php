@@ -2,6 +2,7 @@
 
 namespace Spatie\FlareClient\Support;
 
+use Closure;
 use Exception;
 use Monolog\Level;
 use Spatie\FlareClient\Api;
@@ -13,6 +14,10 @@ use Spatie\FlareClient\Memory\Memory;
 use Spatie\FlareClient\ReportFactory;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Sampling\AlwaysSampler;
+use Spatie\FlareClient\Senders\DaemonSender;
+use Spatie\FlareClient\Senders\Exceptions\BadResponseCode;
+use Spatie\FlareClient\Senders\Exceptions\DaemonTimeoutException;
+use Spatie\FlareClient\Senders\Sender;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Time\Time;
 use Spatie\FlareClient\Tracer;
@@ -20,6 +25,20 @@ use Throwable;
 
 class Tester
 {
+    /** @var Closure(string): void */
+    protected Closure $onInfo;
+
+    /** @var Closure(string): void */
+    protected Closure $onWarning;
+
+    /** @var Closure(string): void */
+    protected Closure $onError;
+
+    /**
+     * @param Closure(string): void|null $onInfo
+     * @param Closure(string): void|null $onWarning
+     * @param Closure(string): void|null $onError
+     */
     public function __construct(
         protected Api $api,
         protected Ids $ids,
@@ -27,7 +46,62 @@ class Tester
         protected Memory $memory,
         protected Resource $resource,
         protected ReportFactory $reportFactory,
+        protected Sender $sender,
+        ?Closure $onInfo = null,
+        ?Closure $onWarning = null,
+        ?Closure $onError = null,
     ) {
+        $this->onInfo = $onInfo ?? function (string $message): void {
+        };
+        $this->onWarning = $onWarning ?? function (string $message): void {
+        };
+        $this->onError = $onError ?? function (string $message): void {
+        };
+    }
+
+    /**
+     * @param array<int, FlareEntityType> $types
+     */
+    public function test(array $types, int $daemonTimeout = 30): bool
+    {
+        $allPassed = true;
+
+        foreach (FlareEntityType::cases() as $type) {
+            if (! in_array($type, $types, true)) {
+                ($this->onWarning)("Skipping {$type->singleName()} test (disabled)");
+
+                continue;
+            }
+
+            $passed = $this->sender instanceof DaemonSender
+                ? $this->testViaDaemon($type, $daemonTimeout)
+                : $this->testViaCurl($type);
+
+            if (! $passed) {
+                $allPassed = false;
+            }
+        }
+
+        return $allPassed;
+    }
+
+    public function reportSupportInfo(): void
+    {
+        ($this->onInfo)('Need help? Visit https://flareapp.io/docs or contact support@flareapp.io');
+    }
+
+    /** @return array<string, string> */
+    public function platformInfo(): array
+    {
+        $curlVersion = function_exists('curl_version') ? (curl_version() ?: []) : [];
+
+        return [
+            'Platform' => 'PHP',
+            'PHP' => PHP_VERSION,
+            'SDK' => Telemetry::getVersion(),
+            'Curl' => $curlVersion['version'] ?? 'N/A',
+            'SSL' => $curlVersion['ssl_version'] ?? 'N/A',
+        ];
     }
 
     public function buildThrowable(): Throwable
@@ -161,6 +235,69 @@ class Tester
             $log ?? $this->buildLog(),
             test: true
         );
+    }
+
+    protected function testViaCurl(FlareEntityType $type): bool
+    {
+        $name = $type->singleName();
+
+        ($this->onInfo)("Sending test {$name}...");
+
+        try {
+            $this->sendTestPayload($type);
+            ($this->onInfo)("Successfully sent test {$name}");
+
+            return true;
+        } catch (BadResponseCode $e) {
+            ($this->onError)("Failed to send test {$name}: {$e->getMessage()}");
+
+            return false;
+        } catch (Throwable $e) {
+            ($this->onError)("Failed to send test {$name}: {$e->getMessage()}");
+
+            return false;
+        }
+    }
+
+    protected function testViaDaemon(FlareEntityType $type, int $daemonTimeout): bool
+    {
+        $name = $type->singleName();
+
+        ($this->onInfo)("Sending test {$name} to daemon...");
+
+        if ($this->sender instanceof DaemonSender) {
+            $this->sender->onTestAck(function () use ($name): void {
+                ($this->onInfo)("Daemon acknowledged test {$name}, waiting for Flare response...");
+            });
+        }
+
+        try {
+            $this->sendTestPayload($type);
+            ($this->onInfo)("Successfully sent test {$name} via daemon");
+
+            return true;
+        } catch (DaemonTimeoutException) {
+            ($this->onError)("Timed out waiting for Flare response for test {$name} after {$daemonTimeout} seconds");
+
+            return false;
+        } catch (BadResponseCode $e) {
+            ($this->onError)("Failed to send test {$name}: {$e->getMessage()}");
+
+            return false;
+        } catch (Throwable $e) {
+            ($this->onError)("Failed to send test {$name}: {$e->getMessage()}");
+
+            return false;
+        }
+    }
+
+    protected function sendTestPayload(FlareEntityType $type): void
+    {
+        match ($type) {
+            FlareEntityType::Errors => $this->report(),
+            FlareEntityType::Traces => $this->trace(),
+            FlareEntityType::Logs => $this->log(),
+        };
     }
 
     protected function getTestTracer(): Tracer

@@ -275,6 +275,7 @@ class FlareProvider
             memory: $this->container->get(Memory::class),
             resource: $this->container->get(Resource::class),
             reportFactory: $this->container->get(ReportFactory::class),
+            sender: $this->container->get(Sender::class),
         ));
 
         if ($collects->collectStackFrameArguments && $collects->forcePHPStackFrameArgumentsIniSetting) {
