@@ -30,8 +30,8 @@ This centralizes key management and simplifies client configuration.
 
 | Decision                  | Choice                                                          |
 |---------------------------|-----------------------------------------------------------------|
-| Repository location       | Same repo, `daemon/` directory                                  |
-| Package name              | `spatie/flare-daemon`                                           |
+| Repository location       | Same repo, `daemon/` directory (next to `src/`, at root level)  |
+| Package name              | `spatie/flare-daemon` (completely separate package)             |
 | Auth model                | Daemon owns the API key; clients have no key                    |
 | Client mode               | New `FlareMode::Daemon` - enabled without API key               |
 | Quota endpoint            | `GET /v1/usage` - dedicated endpoint                            |
@@ -43,42 +43,130 @@ This centralizes key management and simplifies client configuration.
 | Default listen address    | `127.0.0.1:8787`                                                |
 | Quota tracking            | Periodic fetch + local counters + response-driven stop          |
 | Health check              | `PING` and `STATUS` via TCP, exposed through `DaemonConnection` |
+| User-Agent version        | `FlareDaemon/{version}` from `composer.json` `version` field    |
 | PHP version               | 8.2+                                                            |
 | Update detection          | Watch `composer.lock` (VPS); not needed for Docker              |
 | Daemon logging            | Stdout/stderr with levels via env var                           |
 
+## Setup & Usage
+
+### Installation
+
+**Docker (recommended):**
+
+```bash
+docker run -d \
+  --name flare-daemon \
+  -e FLARE_API_KEY=your-api-key-here \
+  -p 8787:8787 \
+  spatie/flare-daemon
+```
+
+**PHAR (VPS / bare metal):**
+
+```bash
+# Download the PHAR
+php daemon.phar
+```
+
+When running as a PHAR on a VPS, use a process manager (systemd, supervisord) to keep the daemon running and restart it
+on failure. Set `FLARE_COMPOSER_LOCK` to the path of your project's `composer.lock` so the daemon can detect package
+updates and restart itself when needed.
+
+### Configuration
+
+The daemon is configured via environment variables:
+
+| Variable                 | Default                       | Description                                    |
+|--------------------------|-------------------------------|------------------------------------------------|
+| `FLARE_API_KEY`          | *(required)*                  | Your Flare project API key                     |
+| `FLARE_BASE_URL`         | `https://ingress.flareapp.io` | Flare ingestion base URL                       |
+| `FLARE_DAEMON_LISTEN`    | `127.0.0.1:8787`              | Address and port the daemon listens on         |
+| `FLARE_DAEMON_LOG_LEVEL` | `info`                        | Log verbosity: `critical`, `error`, `info`, `verbose` |
+| `FLARE_COMPOSER_LOCK`    | *(none)*                      | Path to `composer.lock` for update detection   |
+
+### Connecting Your PHP Application
+
+In your PHP application, configure Flare to use the daemon instead of sending directly:
+
+```php
+use Spatie\FlareClient\FlareConfig;
+
+FlareConfig::make()->daemon('127.0.0.1:8787');
+```
+
+The client does **not** need an API key when using the daemon — the daemon holds the key and handles all communication
+with Flare. The client sends payloads over a local TCP connection, which is faster and non-blocking compared to direct
+HTTP requests during a web request.
+
+### Verifying the Connection
+
+Use the built-in test command to verify everything works end-to-end:
+
+```php
+use Spatie\FlareClient\Support\DaemonConnection;
+
+// Quick health check — verifies the daemon is reachable
+DaemonConnection::ping('127.0.0.1:8787'); // true/false
+
+// Full status — returns usage and quota info
+DaemonConnection::status('127.0.0.1:8787');
+// Returns: errors_used, errors_limit, traces_used, traces_limit, logs_used, logs_limit
+```
+
+The `Tester::test()` method also supports daemon mode — it sends a test payload through the daemon to Flare and reports
+whether the full pipeline is working.
+
+### How It Works
+
+1. Your PHP application sends error reports, traces, and logs to the daemon over a persistent TCP connection
+2. The daemon buffers payloads and forwards them to Flare in the background
+3. Quota is managed by the daemon — when a type hits its limit, payloads for that type are dropped locally
+4. The PHP application's request lifecycle is not blocked by HTTP calls to Flare
+
 ## Package Structure
 
+The daemon is a **completely separate package** (`spatie/flare-daemon`) that lives in the `daemon/` directory at the
+repository root, next to the `src/` directory of `flare-client-php`. It has its own `composer.json`, autoloading,
+dependencies, tests, and build pipeline. There is **no dependency** between the daemon package and the client package —
+they share a repository for convenience but are otherwise independent.
+
+The daemon uses the `Spatie\FlareDaemon\` namespace. It does not import or reference any classes from the
+`Spatie\FlareClient\` namespace, and vice versa (the client does not depend on the daemon). The only shared contract is
+the TCP protocol format.
+
 ```
-flare-client-php/
-├── src/
-│   ├── Enums/
-│   │   └── FlareMode.php             # MODIFIED: add Daemon case
-│   ├── Senders/
-│   │   └── DaemonSender.php          # NEW: TCP sender
-│   ├── Support/
-│   │   ├── Tester.php                # MODIFIED: test() orchestrator, CLI closures
-│   │   └── DaemonConnection.php      # NEW: static TCP connection, ping, status
-│   ├── Api.php                       # MODIFIED: emergency logger on send failure
-│   ├── FlareConfig.php               # MODIFIED: add daemon() and emergencyLogger() methods
-│   └── FlareProvider.php             # MODIFIED: FlareMode::Daemon support
+flare-client-php/                        # Repository root
 │
-├── daemon/
+├── src/                                 # flare-client-php package (Spatie\FlareClient\)
+│   ├── Enums/
+│   │   └── FlareMode.php               # MODIFIED: add Daemon case
+│   ├── Senders/
+│   │   └── DaemonSender.php            # NEW: TCP sender
+│   ├── Support/
+│   │   ├── Tester.php                  # MODIFIED: test() orchestrator, CLI closures
+│   │   └── DaemonConnection.php        # NEW: static TCP connection, ping, status
+│   ├── Api.php                         # MODIFIED: emergency logger on send failure
+│   ├── FlareConfig.php                 # MODIFIED: add daemon() and emergencyLogger() methods
+│   └── FlareProvider.php               # MODIFIED: FlareMode::Daemon support
+│
+├── daemon/                              # spatie/flare-daemon package (Spatie\FlareDaemon\)
+│   │                                    # Completely separate package with its own composer.json
 │   ├── src/
-│   │   ├── daemon.php                # Entry point
-│   │   ├── bootstrap.php             # Autoloader setup (PHAR-safe)
-│   │   ├── Server.php                # TCP server accepting connections
-│   │   ├── Payload.php               # TCP payload parser
-│   │   ├── Ingest.php                # Buffering + forwarding per type
-│   │   ├── UsageRepository.php       # Quota management via /v1/usage
-│   │   ├── Usage.php                 # Usage data value object
-│   │   ├── Loop.php                  # ReactPHP event loop wrapper
-│   │   ├── StreamBuffer.php          # Per-type payload buffer
-│   │   ├── NullBuffer.php            # No-op buffer (when over quota)
-│   │   ├── Browser.php               # ReactPHP HTTP client wrapper
-│   │   ├── CheckForUpdates.php       # Watch composer.lock for dependency changes
-│   │   ├── OutputWriter.php          # Async-safe stdout/stderr writer
-│   │   ├── Clock.php                 # Time provider
+│   │   ├── daemon.php                   # Entry point
+│   │   ├── bootstrap.php                # Autoloader setup (PHAR-safe)
+│   │   ├── Server.php                   # TCP server accepting connections
+│   │   ├── Payload.php                  # TCP payload parser
+│   │   ├── Ingest.php                   # Buffering + forwarding per type
+│   │   ├── UsageRepository.php          # Quota management via /v1/usage
+│   │   ├── Usage.php                    # Usage data value object
+│   │   ├── Loop.php                     # ReactPHP event loop wrapper
+│   │   ├── StreamBuffer.php             # Per-type payload buffer
+│   │   ├── NullBuffer.php               # No-op buffer (when over quota)
+│   │   ├── Browser.php                  # ReactPHP HTTP client wrapper
+│   │   ├── CheckForUpdates.php          # Watch composer.lock for dependency changes
+│   │   ├── OutputWriter.php             # Async-safe stdout/stderr writer
+│   │   ├── Clock.php                    # Time provider
 │   │   ├── Contracts/
 │   │   │   ├── Browser.php
 │   │   │   └── Clock.php
@@ -107,15 +195,15 @@ flare-client-php/
 │   │   ├── daemon-wrapper.php
 │   │   └── bootstrap.php
 │   │
-│   ├── composer.json
+│   ├── composer.json                    # Separate package: spatie/flare-daemon
 │   ├── phpstan.neon.dist
 │   ├── phpunit.xml.dist
-│   ├── box.json.dist                 # PHAR build config
-│   ├── build.sh                      # Docker-based PHAR build
-│   ├── scoper.inc.php                # PHP-Scoper namespace isolation
-│   ├── Dockerfile                    # Production Docker image
+│   ├── box.json.dist                    # PHAR build config
+│   ├── build.sh                         # Docker-based PHAR build
+│   ├── scoper.inc.php                   # PHP-Scoper namespace isolation
+│   ├── Dockerfile                       # Production Docker image
 │   ├── docker/
-│   │   ├── Dockerfile.build          # Build environment image
+│   │   ├── Dockerfile.build             # Build environment image
 │   │   ├── entrypoint.sh
 │   │   └── install-composer.sh
 │   ├── build/
@@ -557,6 +645,13 @@ class DaemonConnection
 
     public function close(): void { /* ... */ }
 
+    /** Reset the singleton — for testing only */
+    public static function reset(): void
+    {
+        self::$instance?->close();
+        self::$instance = null;
+    }
+
     public function __destruct()
     {
         $this->close();
@@ -695,7 +790,7 @@ Parses: `{length}:{version}:{type}:{data}`
 - Extracts type (`errors`, `traces`, `logs`, `errors_test`, `traces_test`, `logs_test`) for routing
 - Exposes `isTest()` method (true when type ends in `_test`)
 - Exposes `baseType()` method (strips `_test` suffix to get the `FlareEntityType` value)
-- Rejects payloads with invalid version (triggers daemon shutdown for upgrade)
+- Rejects payloads with invalid protocol version
 - Supports sequential parsing on persistent connections: after a payload is complete, the parser resets and any leftover
   bytes from the current chunk (beyond the current payload's length) are fed into the next payload parse
 
@@ -734,9 +829,26 @@ Payloads are gzip-compressed before sending.
 
 **Response handling:**
 
-- Success (2xx): log, continue
-- Quota exceeded (429 or `{stop: true}` in body): pause that type's buffer, notify `UsageRepository`
-- Error (other): log, continue
+The Flare ingress CF workers return JSON responses with this structure:
+
+```json
+{"message": "string", "errors": {}}
+```
+
+Response handling by status code:
+
+- **201 (Created)**: success, log and continue
+- **403 (Invalid API key)**: permanent error — log as a prominent warning and stop sending for all types (bad API key
+  affects everything, not just one type). The daemon should surface this clearly in logs since it likely indicates a
+  misconfiguration
+- **404 (Path not found)**: should not happen — log as a warning, continue
+- **405 (Method not allowed)**: should not happen — log as a warning, continue
+- **422 (Validation error or missing API key)**: log the response body (contains field-level errors), continue. If the
+  message is `"Missing API key"`, treat it the same as 403 (stop sending, warn prominently)
+- **429 (Rate limit or quota exceeded)**: distinguish by response message:
+    - `"Rate limit exceeded"`: transient — back off with exponential delay, then retry
+    - `"{Type} quota exceeded"` (e.g. `"Error quota exceeded"`): pause that type's buffer, notify `UsageRepository`
+- **Other errors**: log the status code and response body, continue
 - Response body >1005 bytes: truncate in logs
 
 **Force digest:**
@@ -756,12 +868,13 @@ Flow:
 2. The server responds `2:OK` immediately (same as normal payloads)
 3. The payload is written to the **real** `StreamBuffer` for that base type — even if the type is over quota and the
    active buffer is a `NullBuffer`, the test payload bypasses it and writes to the underlying `StreamBuffer` directly
-4. The TCP connection reference is stored as a pending test connection for that type
+4. The TCP connection reference is stored as a pending test connection for that type, along with the test payload itself
 5. An immediate flush of that type's buffer is triggered (no waiting for the 10-second timer or size threshold)
-6. The flush sends the batch to Flare (the test payload may be batched with other buffered payloads of the same type)
-7. When the Flare response arrives, a second message is sent to all pending test connections for that type via
+6. The flush sends each payload as a **separate HTTP request** to Flare (no batching) — the test payload is tracked so
+   its individual response can be identified
+7. When the Flare response for the test payload arrives, a second message is sent to the pending test connection via
    `$connection->write()` (connection stays open)
-8. Test payloads do **not** count toward local usage counters
+8. Test payloads **do** count toward local usage counters (same as normal payloads)
 
 The `Ingest` class maintains a reference to the real `StreamBuffer` for each type even when swapped to `NullBuffer`, so
 test payloads can always reach it.
@@ -815,8 +928,8 @@ class Usage
 3. **Local tracking:** After each successful ingest, increment local counters. The daemon knows how many items are in
    each payload (array count). When a local counter reaches the limit, pause that type.
 
-4. **Response-driven:** If Flare responds with 429 or body contains `{stop: true}`, immediately pause that type and
-   schedule a usage re-fetch.
+4. **Response-driven:** If Flare responds with a 429 quota exceeded response (e.g. `"Error quota exceeded"`),
+   immediately pause that type and schedule a usage re-fetch.
 
 5. **Per-type quota:** Each type (errors, traces, logs) is independent. Hitting the error limit doesn't pause traces or
    logs.
@@ -1055,6 +1168,9 @@ each resulting in a `DaemonSender::post()` call over the same persistent connect
 
 ## Dependencies
 
+The daemon is a standalone package with no dependency on `spatie/flare-client-php`. It has its own `composer.json` and
+manages its own dependencies independently.
+
 **daemon/composer.json:**
 
 ```json
@@ -1106,3 +1222,5 @@ each resulting in a `DaemonSender::post()` call over the same persistent connect
 - Automatic restarts / process management (users should use systemd, supervisor, etc.)
 - Payload persistence to disk (if daemon crashes, buffered data is lost)
 - Client-side fallback (if daemon is down, client doesn't fall back to direct sending)
+- TLS for client-to-daemon TCP connection (localhost only; use a reverse proxy for remote access)
+- HTTP health check endpoint (TCP `PING`/`STATUS` suffices; Docker/K8s can use a small health check script)
