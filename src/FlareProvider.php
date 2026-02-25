@@ -83,6 +83,7 @@ class FlareProvider
             resource: $this->container->get(Resource::class),
             scope: $this->container->get(Scope::class),
             disableQueue: $this->disableApiQueue,
+            emergencyLogger: $this->config->emergencyLogger,
         ));
 
         $this->container->singleton(Sampler::class, fn () => new $this->config->sampler(

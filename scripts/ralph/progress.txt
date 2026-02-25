@@ -1,0 +1,43 @@
+# Ralph Progress Log
+Started: Wed Feb 25 16:00:58 CET 2026
+
+## Codebase Patterns
+- `FlareConfig` uses constructor property promotion with fluent setter methods returning `static`
+- `FlareProvider` resolves `FlareMode` via match expression in constructor — add new mode cases there
+- `FlareMode::Disabled` is explicitly checked in `FlareProvider` for disabling tracer, logger, and reporter — new modes that should be "enabled" just need to not match `FlareMode::Disabled`
+- `Sender` interface requires implementing `post()` with specific signature including `FlareEntityType`, `bool $test`, and `Closure $callback`
+- Senders accept `array $config` in constructor and extract their specific config keys from it
+- Tests use Pest, run with `composer test`; PHPStan at level 8 via `composer analyse`
+- `Api` is constructed in `FlareProvider::register()` — new constructor params must be wired there from `$this->config`
+- No Mockery available — use anonymous classes implementing interfaces for test doubles
+- `psr/log` is available transitively through `monolog/monolog` — `LoggerInterface` can be used
+
+---
+
+## 2026-02-25 - US-001
+- Added `Daemon` case to `FlareMode` enum
+- Added `daemonUrl` property to `FlareConfig` constructor
+- Added `daemon()` fluent method to `FlareConfig` that sets `daemonUrl`, `sender` to `DaemonSender::class`, and `senderConfig`
+- Updated `FlareProvider` mode resolution: `daemonUrl !== null` resolves to `FlareMode::Daemon` (takes precedence over API key check)
+- Created minimal `DaemonSender` stub implementing `Sender` interface (full implementation in US-004)
+- Files changed: `src/Enums/FlareMode.php`, `src/FlareConfig.php`, `src/FlareProvider.php`, `src/Senders/DaemonSender.php`
+- **Learnings for future iterations:**
+  - `FlareMode::Daemon` doesn't need special handling in disabled checks — it naturally behaves like `Enabled` since disabled checks only match `FlareMode::Disabled`
+  - New Senders need to be in `src/Senders/` and implement the `Sender` interface
+  - `FlareConfig` already imports `CurlSender` and `Sender` — new sender imports go alongside those
+---
+
+## 2026-02-25 - US-002
+- Added `public ?LoggerInterface $emergencyLogger = null` property to `FlareConfig` constructor
+- Added `emergencyLogger(LoggerInterface $logger): static` fluent method to `FlareConfig`
+- Added `?LoggerInterface $emergencyLogger = null` parameter to `Api` constructor
+- Updated `Api::sendEntity()` catch block: calls `$this->emergencyLogger?->error(...)` when delivery fails in non-test mode
+- Updated `FlareProvider` to pass `emergencyLogger` from config to `Api`
+- Added 4 tests in `tests/ApiTest.php`: logger called on failure, not called on success, not called in test mode, silent without logger
+- Files changed: `src/FlareConfig.php`, `src/Api.php`, `src/FlareProvider.php`, `tests/ApiTest.php`
+- **Learnings for future iterations:**
+  - `Api` is constructed in `FlareProvider::register()` — any new `Api` constructor parameters must be wired from `$this->config` there
+  - No Mockery in this project — use anonymous classes implementing PSR interfaces for test doubles
+  - `psr/log` `LoggerInterface` is available through `monolog/monolog` transitive dependency
+  - When adding new optional params to `Api` constructor, `FakeApi` (which extends `Api`) doesn't need changes as long as params have defaults
+---

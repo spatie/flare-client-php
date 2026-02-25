@@ -2,6 +2,7 @@
 
 namespace Spatie\FlareClient;
 
+use Psr\Log\LoggerInterface;
 use Spatie\FlareClient\Enums\FlareEntityType;
 use Spatie\FlareClient\Exporters\Exporter;
 use Spatie\FlareClient\Resources\Resource;
@@ -35,7 +36,8 @@ class Api
         protected Resource $resource,
         protected Scope $scope,
         protected Sender $sender,
-        protected bool $disableQueue
+        protected bool $disableQueue,
+        protected ?LoggerInterface $emergencyLogger = null,
     ) {
 
     }
@@ -176,6 +178,8 @@ class Api
             );
         } catch (Throwable $throwable) {
             if ($test === false) {
+                $this->emergencyLogger?->error('Flare delivery failed', ['exception' => $throwable]);
+
                 return;
             }
 

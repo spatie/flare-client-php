@@ -1,5 +1,6 @@
 <?php
 
+use Psr\Log\LoggerInterface;
 use Spatie\FlareClient\Api;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Senders\Exceptions\BadResponseCode;
@@ -269,4 +270,142 @@ it('can disable the api queue', function () {
     $api->log($flare->logger->logs());
 
     FakeSender::assertSent(traces: 1, reports: 1, logs: 1);
+});
+
+it('calls the emergency logger when delivery fails in non-test mode', function () {
+    $logged = [];
+
+    $logger = new class($logged) implements LoggerInterface {
+        public function __construct(private array &$logged) {}
+
+        public function emergency(\Stringable|string $message, array $context = []): void {}
+        public function alert(\Stringable|string $message, array $context = []): void {}
+        public function critical(\Stringable|string $message, array $context = []): void {}
+        public function warning(\Stringable|string $message, array $context = []): void {}
+        public function notice(\Stringable|string $message, array $context = []): void {}
+        public function info(\Stringable|string $message, array $context = []): void {}
+        public function debug(\Stringable|string $message, array $context = []): void {}
+
+        public function error(\Stringable|string $message, array $context = []): void
+        {
+            $this->logged[] = ['message' => $message, 'context' => $context];
+        }
+
+        public function log($level, \Stringable|string $message, array $context = []): void {}
+    };
+
+    $flare = setupFlare(function (FlareConfig $config) use ($logger) {
+        $config->sender = FakeSender::class;
+        $config->emergencyLogger($logger);
+    }, useFakeApi: false);
+
+    $api = Container::instance()->get(Api::class);
+
+    FakeSender::$responseCode = 500;
+
+    $api->report(
+        $flare->createReport(new Exception('Test exception')),
+        immediately: true,
+    );
+
+    FakeSender::assertSent(reports: 1);
+
+    expect($logged)->toHaveCount(1);
+    expect($logged[0]['message'])->toBe('Flare delivery failed');
+    expect($logged[0]['context']['exception'])->toBeInstanceOf(BadResponseCode::class);
+});
+
+it('does not call the emergency logger when delivery succeeds', function () {
+    $logged = [];
+
+    $logger = new class($logged) implements LoggerInterface {
+        public function __construct(private array &$logged) {}
+
+        public function emergency(\Stringable|string $message, array $context = []): void {}
+        public function alert(\Stringable|string $message, array $context = []): void {}
+        public function critical(\Stringable|string $message, array $context = []): void {}
+        public function warning(\Stringable|string $message, array $context = []): void {}
+        public function notice(\Stringable|string $message, array $context = []): void {}
+        public function info(\Stringable|string $message, array $context = []): void {}
+        public function debug(\Stringable|string $message, array $context = []): void {}
+
+        public function error(\Stringable|string $message, array $context = []): void
+        {
+            $this->logged[] = ['message' => $message, 'context' => $context];
+        }
+
+        public function log($level, \Stringable|string $message, array $context = []): void {}
+    };
+
+    $flare = setupFlare(function (FlareConfig $config) use ($logger) {
+        $config->sender = FakeSender::class;
+        $config->emergencyLogger($logger);
+    }, useFakeApi: false);
+
+    $api = Container::instance()->get(Api::class);
+
+    $api->report(
+        $flare->createReport(new Exception('Test exception')),
+        immediately: true,
+    );
+
+    FakeSender::assertSent(reports: 1);
+    expect($logged)->toHaveCount(0);
+});
+
+it('does not call the emergency logger in test mode (exception is re-thrown)', function () {
+    $logged = [];
+
+    $logger = new class($logged) implements LoggerInterface {
+        public function __construct(private array &$logged) {}
+
+        public function emergency(\Stringable|string $message, array $context = []): void {}
+        public function alert(\Stringable|string $message, array $context = []): void {}
+        public function critical(\Stringable|string $message, array $context = []): void {}
+        public function warning(\Stringable|string $message, array $context = []): void {}
+        public function notice(\Stringable|string $message, array $context = []): void {}
+        public function info(\Stringable|string $message, array $context = []): void {}
+        public function debug(\Stringable|string $message, array $context = []): void {}
+
+        public function error(\Stringable|string $message, array $context = []): void
+        {
+            $this->logged[] = ['message' => $message, 'context' => $context];
+        }
+
+        public function log($level, \Stringable|string $message, array $context = []): void {}
+    };
+
+    $flare = setupFlare(function (FlareConfig $config) use ($logger) {
+        $config->sender = FakeSender::class;
+        $config->emergencyLogger($logger);
+    }, useFakeApi: false);
+
+    $api = Container::instance()->get(Api::class);
+
+    FakeSender::$responseCode = 500;
+
+    expect(fn () => $api->report(
+        $flare->createReport(new Exception('Test exception')),
+        test: true,
+    ))->toThrow(BadResponseCode::class);
+
+    expect($logged)->toHaveCount(0);
+});
+
+it('silently returns without emergency logger when delivery fails in non-test mode', function () {
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config->sender = FakeSender::class,
+        useFakeApi: false,
+    );
+
+    $api = Container::instance()->get(Api::class);
+
+    FakeSender::$responseCode = 500;
+
+    $api->report(
+        $flare->createReport(new Exception('Test exception')),
+        immediately: true,
+    );
+
+    FakeSender::assertSent(reports: 1);
 });

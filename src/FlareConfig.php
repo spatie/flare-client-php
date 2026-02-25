@@ -5,6 +5,7 @@ namespace Spatie\FlareClient;
 use Closure;
 use Exception;
 use Monolog\Level;
+use Psr\Log\LoggerInterface;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\Backtrace\Arguments\Reducers\ArgumentReducer;
 use Spatie\Backtrace\Arguments\Reducers\ArrayArgumentReducer;
@@ -120,6 +121,9 @@ class FlareConfig
 
         // Daemon
         public ?string $daemonUrl = null,
+
+        // Emergency Logger
+        public ?LoggerInterface $emergencyLogger = null,
 
         // Client Infrastructure
         public string $sender = CurlSender::class,
@@ -768,6 +772,13 @@ class FlareConfig
     ): static {
         $this->sender = $senderClass;
         $this->senderConfig = $config;
+
+        return $this;
+    }
+
+    public function emergencyLogger(LoggerInterface $logger): static
+    {
+        $this->emergencyLogger = $logger;
 
         return $this;
     }
