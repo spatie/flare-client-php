@@ -7,4 +7,5 @@ enum FlareMode
     case Disabled;
     case Ignition;
     case Enabled;
+    case Daemon;
 }

@@ -50,6 +50,7 @@ use Spatie\FlareClient\Sampling\RateSampler;
 use Spatie\FlareClient\Sampling\Sampler;
 use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Senders\CurlSender;
+use Spatie\FlareClient\Senders\DaemonSender;
 use Spatie\FlareClient\Senders\Sender;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
@@ -116,6 +117,9 @@ class FlareConfig
         // Logging
         public bool $log = false,
         public ?Level $minimalLogLevel = null,
+
+        // Daemon
+        public ?string $daemonUrl = null,
 
         // Client Infrastructure
         public string $sender = CurlSender::class,
@@ -764,6 +768,15 @@ class FlareConfig
     ): static {
         $this->sender = $senderClass;
         $this->senderConfig = $config;
+
+        return $this;
+    }
+
+    public function daemon(string $daemonUrl = '127.0.0.1:8787'): static
+    {
+        $this->daemonUrl = $daemonUrl;
+        $this->sender = DaemonSender::class;
+        $this->senderConfig = ['daemon_url' => $daemonUrl];
 
         return $this;
     }

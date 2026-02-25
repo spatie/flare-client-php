@@ -59,6 +59,7 @@ class FlareProvider
     ) {
         $this->registerRecorderAndMiddlewaresCallback ??= $this->defaultRegisterRecordersAndMiddlewaresCallback();
         $this->mode = match (true) {
+            $this->config->daemonUrl !== null => FlareMode::Daemon,
             // TODO: disabled until we have Ignition support
             //            empty($this->config->apiToken) && $this->config->applicationStage === 'local' => FlareMode::Ignition,
             empty($this->config->apiToken) => FlareMode::Disabled,
