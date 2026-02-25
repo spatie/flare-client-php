@@ -6,6 +6,13 @@
 - FlareConfig uses fluent builder pattern with `static` return types
 - ConnectionError exception wraps all sender connection failures
 - Code style: always use curly braces, happy path last, avoid else
+- Tester class at `src/Support/Tester.php` - test() orchestrates sending test payloads for all FlareEntityType cases
+- FlareProvider at `src/FlareProvider.php` - wires singletons via Container, must update when constructor params change
+- Telemetry at `src/Support/Telemetry.php` - provides SDK name/version via Composer InstalledVersions
+- Daemon package at `daemon/` is a separate Composer package (`spatie/flare-daemon`) with namespace `Spatie\FlareDaemon\`
+- Daemon uses ReactPHP: event-loop, socket, http, promise, stream
+- Root `.gitignore` patterns (`vendor`, `composer.lock`) match at any level, covering `daemon/vendor/` too
+- Daemon PHPStan runs from `daemon/` dir: `vendor/bin/phpstan analyse --configuration=phpstan.neon.dist`
 
 ## 2026-02-25 - US-003
 - Implemented `src/Support/DaemonConnection.php` - persistent TCP client with singleton pattern
@@ -27,4 +34,38 @@
   - Test response format from daemon: `{length}:{type}:{statusCode}:{responseBody}`
   - `onTestAck(Closure)` is a one-time callback cleared after use - fires between daemon ack and blocking for Flare response
   - DaemonConnection::readWithTimeout throws ConnectionError with "Timed out" in message - DaemonSender catches and converts to DaemonTimeoutException
+---
+
+## 2026-02-25 - US-005
+- Updated `src/Support/Tester.php` with `test()` orchestration method, `reportSupportInfo()`, and `platformInfo()`
+- Updated `src/FlareProvider.php` to pass `Sender` to `Tester` constructor
+- Files changed: `src/Support/Tester.php`, `src/FlareProvider.php`
+- **Learnings for future iterations:**
+  - Tester constructor takes optional `$onInfo`, `$onWarning`, `$onError` closures with no-op defaults
+  - `test()` iterates `FlareEntityType::cases()` and dispatches to `testViaCurl()` or `testViaDaemon()` based on sender type
+  - DaemonSender's `onTestAck()` callback is one-time and fires between daemon ack and blocking for Flare response
+  - The `getDisabledApi()` anonymous class trick works because it extends Api and accesses protected properties within the class hierarchy
+  - Existing tests for Tester pass unchanged because `$sender` defaults come from Container and the new closures are optional
+---
+
+## 2026-02-25 - US-006
+- Created daemon package scaffolding and infrastructure wrappers
+- Files created:
+  - `daemon/composer.json` - package definition with ReactPHP deps, PHPUnit, PHPStan
+  - `daemon/bootstrap.php` - PHAR-safe autoloader setup
+  - `daemon/phpstan.neon.dist` - PHPStan level max for src/ and tests/
+  - `daemon/phpunit.xml.dist` - PHPUnit config with Unit and Feature suites
+  - `daemon/src/Contracts/Clock.php` - Clock interface with `now(): float`
+  - `daemon/src/Contracts/Browser.php` - Browser interface with `post()` and `get()` returning PromiseInterface
+  - `daemon/src/Loop.php` - LoopInterface wrapper with `running()` state tracking
+  - `daemon/src/OutputWriter.php` - Async WritableResourceStream when loop running, sync fwrite otherwise
+  - `daemon/src/Clock.php` - Real clock implementation using `microtime(true)`
+  - `daemon/src/Browser.php` - Thin wrapper around `React\Http\Browser`
+  - `daemon/src/Factories/BrowserFactory.php` - Creates Browser with loop injection
+- **Learnings for future iterations:**
+  - Daemon is a fully independent package - own composer.json, own namespace, no dependency on client
+  - `composer install` in daemon/ creates its own vendor/ and composer.lock (both gitignored by root patterns)
+  - Loop wrapper is essential: OutputWriter needs to know if loop is running to choose async vs sync writing
+  - BrowserFactory takes Loop (not LoopInterface) to create ReactBrowser with the inner loop
+  - PHPStan level max passes cleanly on the infrastructure classes
 ---

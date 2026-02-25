@@ -1,0 +1,38 @@
+{
+    "name": "spatie/flare-daemon",
+    "version": "0.0.0",
+    "type": "project",
+    "description": "The official Flare daemon.",
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "ext-zlib": "*",
+        "psr/http-message": "^1.1",
+        "react/event-loop": "^1.5",
+        "react/http": "^1.11",
+        "react/promise": "^3.2",
+        "react/socket": "^1.16",
+        "react/stream": "^1.4"
+    },
+    "require-dev": {
+        "ext-pcntl": "*",
+        "evenement/evenement": "^3.0",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^11.5",
+        "symfony/process": "^7.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "Spatie\\FlareDaemon\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "classmap-authoritative": true,
+        "sort-packages": true
+    }
+}
