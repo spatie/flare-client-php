@@ -276,22 +276,46 @@ it('calls the emergency logger when delivery fails in non-test mode', function (
     $logged = [];
 
     $logger = new class($logged) implements LoggerInterface {
-        public function __construct(private array &$logged) {}
+        public function __construct(private array &$logged)
+        {
+        }
 
-        public function emergency(\Stringable|string $message, array $context = []): void {}
-        public function alert(\Stringable|string $message, array $context = []): void {}
-        public function critical(\Stringable|string $message, array $context = []): void {}
-        public function warning(\Stringable|string $message, array $context = []): void {}
-        public function notice(\Stringable|string $message, array $context = []): void {}
-        public function info(\Stringable|string $message, array $context = []): void {}
-        public function debug(\Stringable|string $message, array $context = []): void {}
+        public function emergency(\Stringable|string $message, array $context = []): void
+        {
+        }
+
+        public function alert(\Stringable|string $message, array $context = []): void
+        {
+        }
+
+        public function critical(\Stringable|string $message, array $context = []): void
+        {
+        }
+
+        public function warning(\Stringable|string $message, array $context = []): void
+        {
+        }
+
+        public function notice(\Stringable|string $message, array $context = []): void
+        {
+        }
+
+        public function info(\Stringable|string $message, array $context = []): void
+        {
+        }
+
+        public function debug(\Stringable|string $message, array $context = []): void
+        {
+        }
 
         public function error(\Stringable|string $message, array $context = []): void
         {
             $this->logged[] = ['message' => $message, 'context' => $context];
         }
 
-        public function log($level, \Stringable|string $message, array $context = []): void {}
+        public function log($level, \Stringable|string $message, array $context = []): void
+        {
+        }
     };
 
     $flare = setupFlare(function (FlareConfig $config) use ($logger) {
@@ -319,22 +343,46 @@ it('does not call the emergency logger when delivery succeeds', function () {
     $logged = [];
 
     $logger = new class($logged) implements LoggerInterface {
-        public function __construct(private array &$logged) {}
+        public function __construct(private array &$logged)
+        {
+        }
 
-        public function emergency(\Stringable|string $message, array $context = []): void {}
-        public function alert(\Stringable|string $message, array $context = []): void {}
-        public function critical(\Stringable|string $message, array $context = []): void {}
-        public function warning(\Stringable|string $message, array $context = []): void {}
-        public function notice(\Stringable|string $message, array $context = []): void {}
-        public function info(\Stringable|string $message, array $context = []): void {}
-        public function debug(\Stringable|string $message, array $context = []): void {}
+        public function emergency(\Stringable|string $message, array $context = []): void
+        {
+        }
+
+        public function alert(\Stringable|string $message, array $context = []): void
+        {
+        }
+
+        public function critical(\Stringable|string $message, array $context = []): void
+        {
+        }
+
+        public function warning(\Stringable|string $message, array $context = []): void
+        {
+        }
+
+        public function notice(\Stringable|string $message, array $context = []): void
+        {
+        }
+
+        public function info(\Stringable|string $message, array $context = []): void
+        {
+        }
+
+        public function debug(\Stringable|string $message, array $context = []): void
+        {
+        }
 
         public function error(\Stringable|string $message, array $context = []): void
         {
             $this->logged[] = ['message' => $message, 'context' => $context];
         }
 
-        public function log($level, \Stringable|string $message, array $context = []): void {}
+        public function log($level, \Stringable|string $message, array $context = []): void
+        {
+        }
     };
 
     $flare = setupFlare(function (FlareConfig $config) use ($logger) {
@@ -357,22 +405,46 @@ it('does not call the emergency logger in test mode (exception is re-thrown)', f
     $logged = [];
 
     $logger = new class($logged) implements LoggerInterface {
-        public function __construct(private array &$logged) {}
+        public function __construct(private array &$logged)
+        {
+        }
 
-        public function emergency(\Stringable|string $message, array $context = []): void {}
-        public function alert(\Stringable|string $message, array $context = []): void {}
-        public function critical(\Stringable|string $message, array $context = []): void {}
-        public function warning(\Stringable|string $message, array $context = []): void {}
-        public function notice(\Stringable|string $message, array $context = []): void {}
-        public function info(\Stringable|string $message, array $context = []): void {}
-        public function debug(\Stringable|string $message, array $context = []): void {}
+        public function emergency(\Stringable|string $message, array $context = []): void
+        {
+        }
+
+        public function alert(\Stringable|string $message, array $context = []): void
+        {
+        }
+
+        public function critical(\Stringable|string $message, array $context = []): void
+        {
+        }
+
+        public function warning(\Stringable|string $message, array $context = []): void
+        {
+        }
+
+        public function notice(\Stringable|string $message, array $context = []): void
+        {
+        }
+
+        public function info(\Stringable|string $message, array $context = []): void
+        {
+        }
+
+        public function debug(\Stringable|string $message, array $context = []): void
+        {
+        }
 
         public function error(\Stringable|string $message, array $context = []): void
         {
             $this->logged[] = ['message' => $message, 'context' => $context];
         }
 
-        public function log($level, \Stringable|string $message, array $context = []): void {}
+        public function log($level, \Stringable|string $message, array $context = []): void
+        {
+        }
     };
 
     $flare = setupFlare(function (FlareConfig $config) use ($logger) {
