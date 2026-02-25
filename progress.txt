@@ -1,5 +1,10 @@
 ## Codebase Patterns
 - PHPStan level 8: use `/** @var resource */` or helper methods to narrow types from nullable properties after guard methods
+- Test fakes at `daemon/tests/`: LoopFake (deterministic timers), BrowserFake (HTTP recording), Connection (TCP mock), SyncedClock (time-synced with LoopFake)
+- LoopFake `advance(seconds)` fires timers deterministically — no real I/O or sleep
+- BrowserFake `queueResponse(urlPattern, response)` matches by str_contains — use URL fragments like `/v1/errors` or `/v1/usage`
+- PHPStan `// @phpstan-ignore argument.type` must be on the exact line of the argument, not the function call opening line
+- PHPStan level max: `write($data)` from ConnectionInterface receives `mixed` — use `is_string()` guard, not `(string)` cast
 - Sender interface requires: `post(string $endpoint, string $apiToken, array $payload, FlareEntityType $type, bool $test, Closure $callback): void`
 - DaemonSender at `src/Senders/DaemonSender.php` - implements TCP payload protocol with format `{total_length}:v1:{type}:{jsonPayload}`
 - DaemonTimeoutException at `src/Senders/Exceptions/DaemonTimeoutException.php` - thrown when test response times out
@@ -182,4 +187,46 @@
   - If initial hash is null (file unreadable on startup), first successful read establishes the baseline without triggering shutdown
   - Uses `@file_get_contents()` with error suppression + `is_file()`/`is_readable()` pre-checks for safe file reading
   - `TimerInterface` type hint needed on periodic timer callback parameter for `cancelTimer()` calls (PHPStan level max)
+---
+
+## 2026-02-25 - US-014
+- Created `daemon/src/daemon.php` — procedural entry point wiring all components together
+- Reads config from environment variables: `FLARE_API_KEY` (required), `FLARE_BASE_URL`, `FLARE_DAEMON_LISTEN`, `FLARE_DAEMON_LOG_LEVEL`, `FLARE_COMPOSER_LOCK`
+- Startup sequence: config → Loop → OutputWriter → Clock → BrowserFactory → Ingest → UsageRepository → Server → start flush timers → start usage repo → listen → optional CheckForUpdates → signal handlers → run loop
+- Graceful shutdown on SIGTERM/SIGINT: close server, force-digest buffers, wait for in-flight, stop loop
+- STATUS command returns both Ingest buffer status and UsageRepository quota info
+- Files created: `daemon/src/daemon.php`
+- **Learnings for future iterations:**
+  - daemon.php is procedural (not a class) — it's the PHAR entry point referenced in `box.json.dist` as `"main": "src/daemon.php"`
+  - `React\EventLoop\Loop::get()` returns the global singleton LoopInterface — wrap it in the custom `Loop` class
+  - Server closures wire Ingest methods: `buffer()` for normal payloads, `bufferTest()` for test payloads, status closure merges Ingest status with UsageRepository usage data
+  - `pcntl_signal` may not be available in all environments — guard with `function_exists()` check
+  - Signal handlers close the Server first (stop accepting new connections), then force-digest, then stop the loop
+  - Log level is validated but not yet used to filter OutputWriter output — could be added in future iterations
+---
+
+## 2026-02-25 - US-015
+- Created daemon test infrastructure with fakes and helpers for deterministic testing
+- Files created:
+  - `daemon/tests/TestCase.php` — base class with LoopFake, BrowserFake, SyncedClock, OutputWriter, Ingest setup
+  - `daemon/tests/LoopFake.php` — deterministic time simulation with `advance()`, timer tracking, future tick processing
+  - `daemon/tests/BrowserFake.php` — HTTP request recording with queued responses, URL pattern matching, assertion helpers
+  - `daemon/tests/TcpServerFake.php` — simulates TCP connections, routes payloads directly to Ingest
+  - `daemon/tests/SyncedClock.php` — Clock implementation synced with LoopFake's time
+  - `daemon/tests/Connection.php` — ConnectionInterface fake with write tracking and assertions
+  - `daemon/tests/PendingConnection.php` — builder for preparing fake connection payloads and commands
+  - `daemon/tests/Request.php` — HTTP request value object with assertions, gzip decompression support
+  - `daemon/tests/Response.php` — factory for creating fake HTTP responses (created, forbidden, quota, usage)
+  - `daemon/tests/Timer.php` — timer value object with fire tracking and assertions
+  - `daemon/tests/bootstrap.php` — test autoloader
+  - `daemon/tests/daemon-wrapper.php` — subprocess wrapper for integration tests
+  - `daemon/tests/Feature/.gitkeep` — empty Feature test directory
+- **Learnings for future iterations:**
+  - PHPStan `// @phpstan-ignore argument.type` inline comments must be on the exact line containing the argument, not the method call's opening line
+  - PHPStan level max: `ConnectionInterface::write()` parameter is `mixed` — use `is_string()` guard instead of `(string)` cast
+  - PHPStan level max: `array_shift()` returns `T|null` — add `/** @var T */` annotation after shift on non-empty-checked arrays
+  - Removing unused constructor properties from fakes avoids "property.onlyWritten" errors at PHPStan level max
+  - LoopFake returns `$this` from `get()` so code calling `$this->loop->get()->cancelTimer()` works transparently
+  - BrowserFake resolves promises synchronously via `\React\Promise\resolve()` — all promise `.then()` callbacks fire immediately
+  - Timer fake implements `TimerInterface`-compatible `cancel()` — LoopFake's `cancelTimer()` delegates to Timer's cancel method
 ---
