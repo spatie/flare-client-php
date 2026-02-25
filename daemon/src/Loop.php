@@ -3,8 +3,9 @@
 namespace Spatie\FlareDaemon;
 
 use React\EventLoop\LoopInterface;
+use Spatie\FlareDaemon\Contracts\LoopContract;
 
-class Loop
+class Loop implements LoopContract
 {
     private bool $running = false;
 

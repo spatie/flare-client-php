@@ -2,9 +2,11 @@
 
 namespace Tests;
 
+use React\EventLoop\LoopInterface;
 use React\EventLoop\TimerInterface;
+use Spatie\FlareDaemon\Contracts\LoopContract;
 
-class LoopFake
+class LoopFake implements LoopContract, LoopInterface
 {
     private float $currentTime = 1000000000.0;
 
@@ -36,7 +38,7 @@ class LoopFake
         $this->running = $running;
     }
 
-    public function get(): self
+    public function get(): LoopInterface
     {
         return $this;
     }
@@ -51,8 +53,14 @@ class LoopFake
         $this->running = false;
     }
 
-    public function addTimer(float $interval, callable $callback): Timer
+    /**
+     * @param float $interval
+     * @param callable $callback
+     */
+    public function addTimer($interval, $callback): Timer
     {
+        /** @var float $interval */
+        /** @var callable $callback */
         $timer = new Timer(
             interval: $interval,
             callback: \Closure::fromCallable($callback),
@@ -65,8 +73,14 @@ class LoopFake
         return $timer;
     }
 
-    public function addPeriodicTimer(float $interval, callable $callback): Timer
+    /**
+     * @param float $interval
+     * @param callable $callback
+     */
+    public function addPeriodicTimer($interval, $callback): Timer
     {
+        /** @var float $interval */
+        /** @var callable $callback */
         $timer = new Timer(
             interval: $interval,
             callback: \Closure::fromCallable($callback),
@@ -79,21 +93,51 @@ class LoopFake
         return $timer;
     }
 
-    public function cancelTimer(TimerInterface|Timer $timer): void
+    public function cancelTimer(TimerInterface $timer): void
     {
         if ($timer instanceof Timer) {
             $timer->cancel();
         }
     }
 
-    public function futureTick(callable $listener): void
+    public function futureTick($listener): void
     {
         $this->futureTicks[] = $listener;
     }
 
-    public function addSignal(int $signal, callable $listener): void
+    public function addSignal($signal, $listener): void
     {
         $this->signals[$signal][] = $listener;
+    }
+
+    /** @param mixed $signal */
+    public function removeSignal($signal, $listener): void
+    {
+        // No-op for tests
+    }
+
+    /** @param mixed $stream */
+    public function addReadStream($stream, $listener): void
+    {
+        // No-op for tests
+    }
+
+    /** @param mixed $stream */
+    public function addWriteStream($stream, $listener): void
+    {
+        // No-op for tests
+    }
+
+    /** @param mixed $stream */
+    public function removeReadStream($stream): void
+    {
+        // No-op for tests
+    }
+
+    /** @param mixed $stream */
+    public function removeWriteStream($stream): void
+    {
+        // No-op for tests
     }
 
     /**

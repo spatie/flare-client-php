@@ -3,13 +3,14 @@
 namespace Spatie\FlareDaemon;
 
 use React\Stream\WritableResourceStream;
+use Spatie\FlareDaemon\Contracts\LoopContract;
 
 class OutputWriter
 {
     private ?WritableResourceStream $stream = null;
 
     public function __construct(
-        private Loop $loop,
+        private LoopContract $loop,
     ) {
     }
 

@@ -4,7 +4,6 @@ namespace Tests;
 
 use PHPUnit\Framework\TestCase as BaseTestCase;
 use Spatie\FlareDaemon\Ingest;
-use Spatie\FlareDaemon\OutputWriter;
 use Spatie\FlareDaemon\UsageRepository;
 
 abstract class TestCase extends BaseTestCase
@@ -15,7 +14,7 @@ abstract class TestCase extends BaseTestCase
 
     protected SyncedClock $clock;
 
-    protected OutputWriter $output;
+    protected OutputWriterFake $output;
 
     protected Ingest $ingest;
 
@@ -31,10 +30,10 @@ abstract class TestCase extends BaseTestCase
         $this->browser = new BrowserFake();
         $this->clock = new SyncedClock($this->loop);
 
-        $this->output = new OutputWriter($this->loop); // @phpstan-ignore argument.type
+        $this->output = new OutputWriterFake();
 
         $this->ingest = new Ingest(
-            $this->loop, // @phpstan-ignore argument.type
+            $this->loop,
             $this->browser,
             $this->output,
             self::API_KEY,
@@ -45,7 +44,7 @@ abstract class TestCase extends BaseTestCase
     protected function createUsageRepository(): UsageRepository
     {
         return new UsageRepository(
-            $this->loop, // @phpstan-ignore argument.type
+            $this->loop,
             $this->browser,
             $this->output,
             $this->ingest,

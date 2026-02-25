@@ -9,6 +9,7 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use React\Socket\ConnectionInterface;
 use Spatie\FlareDaemon\Contracts\Browser;
+use Spatie\FlareDaemon\Contracts\LoopContract;
 
 class Ingest
 {
@@ -48,7 +49,7 @@ class Ingest
     private Closure $onQuotaExceeded;
 
     public function __construct(
-        private Loop $loop,
+        private LoopContract $loop,
         private Browser $browser,
         private OutputWriter $output,
         private string $apiKey,

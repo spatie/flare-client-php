@@ -5,12 +5,12 @@ namespace Spatie\FlareDaemon\Factories;
 use React\Http\Browser as ReactBrowser;
 use Spatie\FlareDaemon\Browser;
 use Spatie\FlareDaemon\Contracts\Browser as BrowserContract;
-use Spatie\FlareDaemon\Loop;
+use Spatie\FlareDaemon\Contracts\LoopContract;
 
 class BrowserFactory
 {
     public function __construct(
-        private Loop $loop,
+        private LoopContract $loop,
     ) {
     }
 

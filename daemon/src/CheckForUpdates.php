@@ -3,6 +3,7 @@
 namespace Spatie\FlareDaemon;
 
 use React\EventLoop\TimerInterface;
+use Spatie\FlareDaemon\Contracts\LoopContract;
 
 class CheckForUpdates
 {
@@ -17,7 +18,7 @@ class CheckForUpdates
     private bool $shutdownScheduled = false;
 
     public function __construct(
-        private Loop $loop,
+        private LoopContract $loop,
         private OutputWriter $output,
         private Ingest $ingest,
         private string $composerLockPath,

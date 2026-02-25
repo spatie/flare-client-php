@@ -6,6 +6,7 @@ use Psr\Http\Message\ResponseInterface;
 use React\EventLoop\TimerInterface;
 use Spatie\FlareDaemon\Contracts\Browser;
 use Spatie\FlareDaemon\Contracts\Clock;
+use Spatie\FlareDaemon\Contracts\LoopContract;
 
 class UsageRepository
 {
@@ -40,7 +41,7 @@ class UsageRepository
     ];
 
     public function __construct(
-        private Loop $loop,
+        private LoopContract $loop,
         private Browser $browser,
         private OutputWriter $output,
         private Ingest $ingest,

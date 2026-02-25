@@ -5,6 +5,7 @@ namespace Spatie\FlareDaemon;
 use Closure;
 use React\Socket\ConnectionInterface;
 use React\Socket\TcpServer;
+use Spatie\FlareDaemon\Contracts\LoopContract;
 
 class Server
 {
@@ -16,7 +17,7 @@ class Server
      * @param Closure(): array<string, mixed> $onStatus
      */
     public function __construct(
-        private Loop $loop,
+        private LoopContract $loop,
         private OutputWriter $output,
         private Closure $onPayload,
         private Closure $onTestPayload,
