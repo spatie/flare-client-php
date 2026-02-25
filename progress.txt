@@ -16,6 +16,11 @@
 - Daemon tests run from `daemon/` dir: `vendor/bin/phpunit`
 - After adding new classes in daemon/, run `composer dump-autoload` (classmap-authoritative mode)
 - Payload class at `daemon/src/Payload.php` - TCP protocol parser with chunked data support and overflow handling
+- StreamBuffer at `daemon/src/StreamBuffer.php` - per-type payload accumulator with ~6MB flush threshold
+- NullBuffer at `daemon/src/NullBuffer.php` - no-op buffer that drops payloads (used for over-quota types)
+- Server at `daemon/src/Server.php` - TCP server accepting persistent connections, routing payloads via closures
+- Server uses closure-based routing: `$onPayload(type, data)`, `$onTestPayload(baseType, data, connection)`, `$onStatus()` — decoupled from Ingest
+- PHPStan level max: assign `new TcpServer()` to a local variable before calling `on()` — assigning to nullable `$this->server` first causes method-on-null errors
 
 ## 2026-02-25 - US-003
 - Implemented `src/Support/DaemonConnection.php` - persistent TCP client with singleton pattern
@@ -85,4 +90,29 @@
   - Invalid version (not `v1`) marks payload as complete but invalid (`isValid()` returns false)
   - Daemon composer.json uses `classmap-authoritative` — run `composer dump-autoload` after adding new classes
   - PHPUnit config references `tests/Feature` dir — must exist even if empty or PHPUnit errors out
+---
+
+## 2026-02-25 - US-008
+- Created `daemon/src/StreamBuffer.php` - per-type payload buffer with ~6MB flush threshold
+- Created `daemon/src/NullBuffer.php` - no-op buffer that drops payloads silently
+- Created `daemon/tests/Unit/StreamBufferTest.php` with 13 tests (44 assertions)
+- Files created: `daemon/src/StreamBuffer.php`, `daemon/src/NullBuffer.php`, `daemon/tests/Unit/StreamBufferTest.php`
+- **Learnings for future iterations:**
+  - StreamBuffer and NullBuffer share the same public API (`add`, `shouldFlush`, `pull`, `size`, `count`, `isEmpty`) — future stories may introduce a shared interface/contract
+  - Flush threshold is 6MB (6 * 1024 * 1024 bytes) — `shouldFlush()` returns true when total size >= threshold
+  - `pull()` returns payloads and resets the buffer atomically — used by Ingest to collect batches for forwarding
+  - NullBuffer is used when a type is over quota — Ingest swaps StreamBuffer for NullBuffer to silently drop payloads
+---
+
+## 2026-02-25 - US-009
+- Created `daemon/src/Server.php` - TCP server accepting persistent connections and routing payloads
+- Files created: `daemon/src/Server.php`
+- **Learnings for future iterations:**
+  - Server takes closure callbacks for payload routing, decoupled from Ingest: `$onPayload(type, data)`, `$onTestPayload(baseType, data, connection)`, `$onStatus()`
+  - Uses `$connection->write()` (not `end()`) to keep persistent connections open for multiple payloads
+  - Per-connection Payload instance handles chunked arrival and sequential parsing via `reset()` + overflow
+  - `processCompletedPayloads()` uses a while loop to handle multiple payloads arriving in a single chunk (via Payload overflow)
+  - PING and STATUS are handled as raw string commands before attempting payload parsing
+  - PHPStan level max: assign TcpServer to local variable first, then to nullable property — avoids method-on-null error
+  - Invalid payloads (wrong version) still get `2:OK` response and payload parser is reset to fresh instance
 ---
