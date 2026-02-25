@@ -13,6 +13,9 @@
 - Daemon uses ReactPHP: event-loop, socket, http, promise, stream
 - Root `.gitignore` patterns (`vendor`, `composer.lock`) match at any level, covering `daemon/vendor/` too
 - Daemon PHPStan runs from `daemon/` dir: `vendor/bin/phpstan analyse --configuration=phpstan.neon.dist`
+- Daemon tests run from `daemon/` dir: `vendor/bin/phpunit`
+- After adding new classes in daemon/, run `composer dump-autoload` (classmap-authoritative mode)
+- Payload class at `daemon/src/Payload.php` - TCP protocol parser with chunked data support and overflow handling
 
 ## 2026-02-25 - US-003
 - Implemented `src/Support/DaemonConnection.php` - persistent TCP client with singleton pattern
@@ -68,4 +71,18 @@
   - Loop wrapper is essential: OutputWriter needs to know if loop is running to choose async vs sync writing
   - BrowserFactory takes Loop (not LoopInterface) to create ReactBrowser with the inner loop
   - PHPStan level max passes cleanly on the infrastructure classes
+---
+
+## 2026-02-25 - US-007
+- Created `daemon/src/Payload.php` - TCP payload parser with length-prefixed protocol support
+- Created `daemon/tests/Unit/PayloadTest.php` with 18 tests (101 assertions)
+- Files created: `daemon/src/Payload.php`, `daemon/tests/Unit/PayloadTest.php`
+- **Learnings for future iterations:**
+  - Payload format: `{total_length}:{version}:{type}:{data}` where total_length = byte length of `{version}:{type}:{data}`
+  - Parser uses `append()` for chunked data, `isComplete()` to check if full payload received
+  - Overflow handling: when multiple payloads arrive in one chunk, `overflow()` captures extra bytes, `reset()` feeds overflow into next parse
+  - `isTest()` checks for `_test` suffix, `baseType()` strips it
+  - Invalid version (not `v1`) marks payload as complete but invalid (`isValid()` returns false)
+  - Daemon composer.json uses `classmap-authoritative` — run `composer dump-autoload` after adding new classes
+  - PHPUnit config references `tests/Feature` dir — must exist even if empty or PHPUnit errors out
 ---
