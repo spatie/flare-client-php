@@ -30,7 +30,7 @@ class Ingest
 
     private bool $stopped = false;
 
-    /** @var array<string, array{connection: ConnectionInterface, payloadId: string}> */
+    /** @var array<string, array{connection: ConnectionInterface, payloadId: string, data: string}> */
     private array $pendingTestConnections = [];
 
     /** @var array<string, string> */
@@ -115,6 +115,7 @@ class Ingest
         $this->pendingTestConnections[$payloadId] = [
             'connection' => $connection,
             'payloadId' => $payloadId,
+            'data' => $data,
         ];
 
         $this->flushForTest($baseType, $payloadId, $data);
@@ -155,6 +156,7 @@ class Ingest
         $this->stopped = true;
 
         $this->flushAll();
+        $this->flushRealBuffersForPendingTests();
 
         return $this->waitForInFlight();
     }
@@ -198,6 +200,42 @@ class Ingest
                 $this->flush($type);
             }
         }
+    }
+
+    private function flushRealBuffersForPendingTests(): void
+    {
+        if ($this->pendingTestConnections === []) {
+            return;
+        }
+
+        $typesWithPendingTests = array_unique(array_values($this->testPayloadIds));
+
+        foreach ($typesWithPendingTests as $type) {
+            if ($this->realBuffers[$type]->isEmpty()) {
+                continue;
+            }
+
+            $payloads = $this->realBuffers[$type]->pull();
+
+            foreach ($payloads as $payload) {
+                $testPayloadId = $this->matchTestPayloadId($type, $payload);
+                $this->sendSingle($type, $payload, $testPayloadId);
+            }
+        }
+    }
+
+    private function matchTestPayloadId(string $type, string $payload): ?string
+    {
+        foreach ($this->pendingTestConnections as $payloadId => $pending) {
+            if (isset($this->testPayloadIds[$payloadId])
+                && $this->testPayloadIds[$payloadId] === $type
+                && $pending['data'] === $payload
+            ) {
+                return $payloadId;
+            }
+        }
+
+        return null;
     }
 
     private function flush(string $type): void

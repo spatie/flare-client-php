@@ -21,6 +21,12 @@
 - Server at `daemon/src/Server.php` - TCP server accepting persistent connections, routing payloads via closures
 - Server uses closure-based routing: `$onPayload(type, data)`, `$onTestPayload(baseType, data, connection)`, `$onStatus()` — decoupled from Ingest
 - PHPStan level max: assign `new TcpServer()` to a local variable before calling `on()` — assigning to nullable `$this->server` first causes method-on-null errors
+- Ingest at `daemon/src/Ingest.php` - manages per-type StreamBuffers, HTTP forwarding with gzip, response handling, test payload routing
+- Ingest uses closure callbacks for cross-concern communication: `onUsageIncrement`, `onInvalidApiKey`, `onQuotaExceeded`
+- Ingest test payloads: always write to realBuffers (bypassing NullBuffer), flush individually (not batched), track pending test connections by payloadId
+- Ingest `forceDigest()` returns a Promise that resolves when all in-flight requests complete (uses periodic timer polling)
+- Ingest `forceDigest()` also calls `flushRealBuffersForPendingTests()` to ensure test payloads in real buffers get sent even when types are paused
+- Ingest stores test payload `data` in `pendingTestConnections` for re-identification during force-digest flushes
 
 ## 2026-02-25 - US-003
 - Implemented `src/Support/DaemonConnection.php` - persistent TCP client with singleton pattern
@@ -115,4 +121,31 @@
   - PING and STATUS are handled as raw string commands before attempting payload parsing
   - PHPStan level max: assign TcpServer to local variable first, then to nullable property — avoids method-on-null error
   - Invalid payloads (wrong version) still get `2:OK` response and payload parser is reset to fresh instance
+---
+
+## 2026-02-25 - US-010
+- Created `daemon/src/Ingest.php` - buffering, forwarding, and response handling for Flare payloads
+- Files created: `daemon/src/Ingest.php`
+- **Learnings for future iterations:**
+  - Ingest manages three StreamBuffer instances plus maintains `realBuffers` references for test payload bypass
+  - Test payloads get unique IDs (`test_1`, `test_2`, etc.) to track which HTTP response maps to which pending TCP connection
+  - gzencode() is used for gzip compression (not gzcompress — gzencode produces proper gzip format with headers)
+  - Response handling: 403 and 422 "Missing API key" both stop all types; 429 distinguishes rate limit vs quota exceeded by message content
+  - PHPStan level max: `json_decode` returns `mixed` — must check `is_array()` AND `isset()` AND `is_string()` before using decoded values
+  - PHPStan level max: periodic timer callbacks receive `mixed` by default — type-hint with `TimerInterface $timer` for `cancelTimer()` calls
+  - `forceDigest()` returns a Promise, allowing callers to wait for all in-flight requests to complete before shutdown
+  - Max 5 concurrent requests shared across all types — when at limit, payloads are re-added to buffers
+---
+
+## 2026-02-25 - US-011
+- Enhanced `daemon/src/Ingest.php` with force-digest support for pending test connections
+- Added `flushRealBuffersForPendingTests()` — on shutdown, flushes real buffers for types with pending test connections even when paused (NullBuffer active)
+- Added `matchTestPayloadId()` — re-identifies test payloads in real buffers by matching stored data for proper response routing
+- Stored test payload `data` alongside pending connection info for re-identification during force-digest
+- Files changed: `daemon/src/Ingest.php`
+- **Learnings for future iterations:**
+  - Most of US-011 test payload flow was already implemented in US-010 (`bufferTest`, `flushForTest`, `resolveTestPayload`, synthetic 503 on error)
+  - The key gap was force-digest: `flushAll()` only flushes `activeBuffers`, which may be NullBuffer for paused types — real buffers with test payloads would be lost
+  - Store test payload data in `pendingTestConnections` so it can be re-identified if re-added to buffers due to concurrent request limits
+  - `matchTestPayloadId` uses exact string comparison of payload data to reconnect buffer contents with their test payload IDs
 ---

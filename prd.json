@@ -186,7 +186,7 @@
         "PHPStan passes at level max"
       ],
       "priority": 10,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
@@ -206,7 +206,7 @@
         "PHPStan passes at level max"
       ],
       "priority": 11,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
