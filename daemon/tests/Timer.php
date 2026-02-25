@@ -3,8 +3,9 @@
 namespace Tests;
 
 use PHPUnit\Framework\Assert;
+use React\EventLoop\TimerInterface;
 
-class Timer
+class Timer implements TimerInterface
 {
     public bool $cancelled = false;
 
@@ -16,6 +17,21 @@ class Timer
         public bool $periodic,
         public float $scheduledAt,
     ) {
+    }
+
+    public function getInterval(): float
+    {
+        return $this->interval;
+    }
+
+    public function getCallback(): \Closure
+    {
+        return $this->callback;
+    }
+
+    public function isPeriodic(): bool
+    {
+        return $this->periodic;
     }
 
     public function nextFireAt(): float
@@ -30,6 +46,8 @@ class Timer
 
         if ($this->periodic && ! $this->cancelled) {
             $this->scheduledAt = $this->scheduledAt + $this->interval;
+        } elseif (! $this->periodic) {
+            $this->cancelled = true;
         }
     }
 
