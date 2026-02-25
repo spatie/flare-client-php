@@ -1,8 +1,12 @@
 ## Codebase Patterns
 - PHPStan level 8: use `/** @var resource */` or helper methods to narrow types from nullable properties after guard methods
-- Test fakes at `daemon/tests/`: LoopFake (deterministic timers), BrowserFake (HTTP recording), Connection (TCP mock), SyncedClock (time-synced with LoopFake)
+- Test fakes at `daemon/tests/`: LoopFake (deterministic timers), BrowserFake (HTTP recording), Connection (TCP mock), SyncedClock (time-synced with LoopFake), OutputWriterFake (captures output)
+- LoopFake implements both `LoopContract` and `LoopInterface` — use `@param` docblocks on untyped LoopInterface methods for PHPStan
 - LoopFake `advance(seconds)` fires timers deterministically — no real I/O or sleep
 - BrowserFake `queueResponse(urlPattern, response)` matches by str_contains — use URL fragments like `/v1/errors` or `/v1/usage`
+- All daemon production classes accept `LoopContract` (not concrete `Loop`) — enables LoopFake injection without runtime type errors
+- OutputWriterFake extends OutputWriter with empty constructor — use for tests instead of real OutputWriter
+- Server feature tests use reflection to call `handleConnection()` on the Server with a fake Connection — bypass real TCP listener
 - PHPStan `// @phpstan-ignore argument.type` must be on the exact line of the argument, not the function call opening line
 - PHPStan level max: `write($data)` from ConnectionInterface receives `mixed` — use `is_string()` guard, not `(string)` cast
 - Sender interface requires: `post(string $endpoint, string $apiToken, array $payload, FlareEntityType $type, bool $test, Closure $callback): void`
@@ -38,6 +42,7 @@
 - PHPStan level max: `json_decode` returns `mixed` — use `/** @var array<string, mixed> */` annotation after `is_array()` guard for `fromArray()` calls
 - PHPStan level max: cannot cast `mixed` to int/string — use explicit type checks (`is_int`, `is_numeric`, `is_string`) in value object factories
 - CheckForUpdates at `daemon/src/CheckForUpdates.php` - monitors composer.lock hash every 60s, initiates 5-min graceful shutdown on change
+- PHPStan level max: `Ingest::status()` returns `array<string, mixed>` — use `/** @var array<string, array<string, mixed>> */` annotations to narrow nested access in tests
 
 ## 2026-02-25 - US-003
 - Implemented `src/Support/DaemonConnection.php` - persistent TCP client with singleton pattern
@@ -229,4 +234,37 @@
   - LoopFake returns `$this` from `get()` so code calling `$this->loop->get()->cancelTimer()` works transparently
   - BrowserFake resolves promises synchronously via `\React\Promise\resolve()` — all promise `.then()` callbacks fire immediately
   - Timer fake implements `TimerInterface`-compatible `cancel()` — LoopFake's `cancelTimer()` delegates to Timer's cancel method
+---
+
+## 2026-02-25 - US-016
+- Created `daemon/tests/Feature/ServerTest.php` with 22 tests covering all acceptance criteria
+- Introduced `daemon/src/Contracts/LoopContract.php` — interface extracted from `Loop` for testability
+- Created `daemon/tests/OutputWriterFake.php` — extends OutputWriter with no-op constructor for tests
+- Updated all daemon production classes to accept `LoopContract` instead of concrete `Loop`
+- Updated `LoopFake` to implement both `LoopContract` and `LoopInterface`
+- Updated `TestCase` to use `OutputWriterFake` and remove `@phpstan-ignore` comments
+- Files created: `daemon/src/Contracts/LoopContract.php`, `daemon/tests/Feature/ServerTest.php`, `daemon/tests/OutputWriterFake.php`
+- Files changed: `daemon/src/Loop.php`, `daemon/src/Server.php`, `daemon/src/Ingest.php`, `daemon/src/OutputWriter.php`, `daemon/src/CheckForUpdates.php`, `daemon/src/UsageRepository.php`, `daemon/src/Factories/BrowserFactory.php`, `daemon/tests/LoopFake.php`, `daemon/tests/TestCase.php`
+- Test coverage: single payload, persistent connections, PING command, STATUS command, invalid version rejection with logging, chunked payload arrival, multiple payloads in single chunk, test payloads for all types, connection close handling, multiple independent connections, mixed commands/payloads, colons in data, large payloads, whitespace handling, server close
+- **Learnings for future iterations:**
+  - The original LoopFake didn't extend Loop — it was standalone with `@phpstan-ignore argument.type` comments. PHP 8.5 enforces strict type hints at runtime, so passing LoopFake where Loop was expected caused TypeError. Solution: extract LoopContract interface from Loop.
+  - LoopFake can't extend Loop because Loop::addTimer() returns void but LoopInterface::addTimer() returns TimerInterface (no actual PHP return type declared). Use interface implementation instead.
+  - LoopContract::addTimer/addPeriodicTimer must NOT have return type to allow both Loop (void) and LoopFake (Timer) to implement it
+  - OutputWriter's constructor takes Loop which LoopFake can't satisfy — OutputWriterFake with empty constructor bypasses this
+  - Server::handleConnection is private — use ReflectionMethod to invoke it in tests with fake Connection objects
+  - Connection::sendPayload(type, data) builds the frame and emits the 'data' event — use this for testing Server's payload routing
+  - Connection::receive(data) emits raw 'data' event — use for PING, STATUS commands and raw frame testing
+---
+
+## 2026-02-25 - US-017
+- Created `daemon/tests/Feature/IngestTest.php` with 36 tests (112 assertions)
+- Tests cover: buffering per type, size threshold flush, 10-second timer flush, empty buffer skip, concurrent request limits, pause/resume with NullBuffer, response handling (201, 403, 422, 422-missing-key, 429-quota, 429-rate-limit, 500), long response truncation, force digest, payload rejection after shutdown, gzip compression, correct headers, URL per type, batch payloads, status reporting, upstream errors
+- Test payload tests: bypass quota to real buffer, immediate flush, individual (not batched) sending, response forwarded to TCP connection, synthetic 503 on upstream error, all three types (errors/traces/logs), multiple test types on same connection, force digest for pending tests, double pause/resume prevention
+- Files created: `daemon/tests/Feature/IngestTest.php`
+- **Learnings for future iterations:**
+  - PHPStan level max: `Ingest::status()` returns `array<string, mixed>` — cannot directly access nested keys. Use helper methods with `/** @var */` annotations to narrow types step-by-step
+  - BrowserFake resolves promises synchronously — `inFlightCount` goes back to 0 immediately after each `send()`, making concurrent request limit testing difficult with synchronous fakes
+  - Test payloads always use `realBuffers` (not `activeBuffers`), so they work even when type is paused with NullBuffer
+  - `flushForTest()` pulls ALL payloads from realBuffer and sends each individually — existing normal payloads in the buffer also get sent individually (not batched)
+  - Connection helper methods (`assertWritten`, `assertLastWritten`, `writtenData`) are the primary way to verify test payload responses
 ---
