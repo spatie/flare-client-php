@@ -27,6 +27,12 @@
 - Ingest `forceDigest()` returns a Promise that resolves when all in-flight requests complete (uses periodic timer polling)
 - Ingest `forceDigest()` also calls `flushRealBuffersForPendingTests()` to ensure test payloads in real buffers get sent even when types are paused
 - Ingest stores test payload `data` in `pendingTestConnections` for re-identification during force-digest flushes
+- UsageRepository at `daemon/src/UsageRepository.php` - fetches quota from Flare, tracks local counters, pauses/resumes types via Ingest
+- UsageRepository hooks into Ingest via `onUsageIncrement` and `onQuotaExceeded` callbacks set in `start()`
+- Usage value object at `daemon/src/Usage.php` - `fromArray()` factory parses API response, helper methods `isOverLimit()`, `allOverLimit()`, `used()`, `limit()`
+- PHPStan level max: `json_decode` returns `mixed` — use `/** @var array<string, mixed> */` annotation after `is_array()` guard for `fromArray()` calls
+- PHPStan level max: cannot cast `mixed` to int/string — use explicit type checks (`is_int`, `is_numeric`, `is_string`) in value object factories
+- CheckForUpdates at `daemon/src/CheckForUpdates.php` - monitors composer.lock hash every 60s, initiates 5-min graceful shutdown on change
 
 ## 2026-02-25 - US-003
 - Implemented `src/Support/DaemonConnection.php` - persistent TCP client with singleton pattern
@@ -148,4 +154,32 @@
   - The key gap was force-digest: `flushAll()` only flushes `activeBuffers`, which may be NullBuffer for paused types — real buffers with test payloads would be lost
   - Store test payload data in `pendingTestConnections` so it can be re-identified if re-added to buffers due to concurrent request limits
   - `matchTestPayloadId` uses exact string comparison of payload data to reconnect buffer contents with their test payload IDs
+---
+
+## 2026-02-25 - US-012
+- Created `daemon/src/Usage.php` value object with quota state, type-specific helpers, and `fromArray()` factory
+- Created `daemon/src/UsageRepository.php` with full quota lifecycle management
+- Files created: `daemon/src/Usage.php`, `daemon/src/UsageRepository.php`
+- **Learnings for future iterations:**
+  - UsageRepository integrates with Ingest via closure callbacks (`onUsageIncrement`, `onQuotaExceeded`) registered in `start()`
+  - Retry strategy has two phases: pre-success (exponential backoff array + 300s x12 + 3600s) and post-success (300s, then 3600s after 13 failures)
+  - `applyQuotaLimits()` both pauses over-limit types AND resumes under-limit types — important for quota reset scenarios
+  - Local counters reset to zero on each successful usage fetch — they track delta since last fetch, not absolute values
+  - `scheduleFetch()` uses 0.1s timer (not immediate) to avoid stack depth issues in async chains
+  - `scheduleResetAtFetch()` calculates delay from `clock->now()` to `strtotime(resetAt)` — uses Clock contract for testability
+  - PHPStan level max: `json_decode` result needs `/** @var array<string, mixed> */` annotation after `is_array()` guard
+  - PHPStan level max: cannot cast `mixed` to primitive — use explicit `is_int()`/`is_numeric()`/`is_string()` type guards in value object factories
+---
+
+## 2026-02-25 - US-013
+- Created `daemon/src/CheckForUpdates.php` — monitors composer.lock for changes and initiates graceful shutdown
+- Files created: `daemon/src/CheckForUpdates.php`
+- **Learnings for future iterations:**
+  - CheckForUpdates follows same pattern as UsageRepository: constructor takes Loop, OutputWriter, Ingest, plus a config string
+  - `start()` hashes the file immediately on startup, then checks every 60 seconds via periodic timer
+  - Graceful shutdown has 5-minute countdown with logs every minute, then calls `ingest->forceDigest()` and `loop->stop()`
+  - If file is temporarily unreadable (Envoyer symlink deploy), `hashFile()` returns null and check is skipped — no false-positive shutdown
+  - If initial hash is null (file unreadable on startup), first successful read establishes the baseline without triggering shutdown
+  - Uses `@file_get_contents()` with error suppression + `is_file()`/`is_readable()` pre-checks for safe file reading
+  - `TimerInterface` type hint needed on periodic timer callback parameter for `cancelTimer()` calls (PHPStan level max)
 ---
