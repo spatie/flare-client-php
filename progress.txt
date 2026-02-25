@@ -1,0 +1,30 @@
+## Codebase Patterns
+- PHPStan level 8: use `/** @var resource */` or helper methods to narrow types from nullable properties after guard methods
+- Sender interface requires: `post(string $endpoint, string $apiToken, array $payload, FlareEntityType $type, bool $test, Closure $callback): void`
+- DaemonSender at `src/Senders/DaemonSender.php` - implements TCP payload protocol with format `{total_length}:v1:{type}:{jsonPayload}`
+- DaemonTimeoutException at `src/Senders/Exceptions/DaemonTimeoutException.php` - thrown when test response times out
+- FlareConfig uses fluent builder pattern with `static` return types
+- ConnectionError exception wraps all sender connection failures
+- Code style: always use curly braces, happy path last, avoid else
+
+## 2026-02-25 - US-003
+- Implemented `src/Support/DaemonConnection.php` - persistent TCP client with singleton pattern
+- Files changed: `src/Support/DaemonConnection.php` (new), `tests/ApiTest.php` (formatter fix)
+- **Learnings for future iterations:**
+  - PHPStan doesn't understand that calling a guard method (like `ensureConnected()`) guarantees a nullable property is non-null. Use a helper method like `getSocket()` that returns the typed value after calling the guard.
+  - The `status()` response format from daemon is `{length}:{jsonPayload}` - parse by finding first colon
+  - `composer format` may touch files from previous commits; include those formatting fixes in the commit
+  - The `Sender` interface and `Api` class are in the client package namespace `Spatie\FlareClient`
+---
+
+## 2026-02-25 - US-004
+- Implemented `src/Senders/DaemonSender.php` - full TCP payload sender with length-prefixed protocol
+- Created `src/Senders/Exceptions/DaemonTimeoutException.php` for test response timeouts
+- Files changed: `src/Senders/DaemonSender.php` (rewritten), `src/Senders/Exceptions/DaemonTimeoutException.php` (new)
+- **Learnings for future iterations:**
+  - Daemon TCP protocol format: `{total_length}:v1:{type}:{jsonPayload}` where total_length is the length of everything after the first colon
+  - Test payloads append `_test` to the type (e.g., `errors_test`)
+  - Test response format from daemon: `{length}:{type}:{statusCode}:{responseBody}`
+  - `onTestAck(Closure)` is a one-time callback cleared after use - fires between daemon ack and blocking for Flare response
+  - DaemonConnection::readWithTimeout throws ConnectionError with "Timed out" in message - DaemonSender catches and converts to DaemonTimeoutException
+---
