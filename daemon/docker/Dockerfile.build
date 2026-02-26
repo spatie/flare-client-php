@@ -1,0 +1,16 @@
+FROM php:8.2-cli-alpine
+
+RUN apk add --no-cache git unzip zlib-dev \
+    && docker-php-ext-install zlib
+
+COPY docker/install-composer.sh /usr/local/bin/install-composer.sh
+RUN chmod +x /usr/local/bin/install-composer.sh \
+    && /usr/local/bin/install-composer.sh
+
+RUN composer global require humbug/box humbug/php-scoper
+
+ENV PATH="/root/.composer/vendor/bin:${PATH}"
+
+WORKDIR /app
+
+ENTRYPOINT ["box", "compile", "--config=box.json.dist"]

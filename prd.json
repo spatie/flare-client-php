@@ -348,7 +348,7 @@
         "Tests pass"
       ],
       "priority": 18,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
@@ -367,7 +367,7 @@
         "Create `daemon/.gitignore` excluding `build/`, `vendor/`, `.env`"
       ],
       "priority": 19,
-      "passes": false,
+      "passes": true,
       "notes": ""
     }
   ]
