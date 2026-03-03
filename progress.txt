@@ -268,3 +268,22 @@
   - `flushForTest()` pulls ALL payloads from realBuffer and sends each individually — existing normal payloads in the buffer also get sent individually (not batched)
   - Connection helper methods (`assertWritten`, `assertLastWritten`, `writtenData`) are the primary way to verify test payload responses
 ---
+
+## 2026-02-26 - US-019
+- Created PHAR build config and Docker image for daemon distribution
+- Files created:
+  - `daemon/box.json.dist` — Box PHAR compiler config with PhpScoper compactor
+  - `daemon/scoper.inc.php` — PHP-Scoper namespace isolation config (prefix `FlareDaemonScoped`, excludes `Spatie\FlareDaemon`)
+  - `daemon/build.sh` — Docker-based build script: installs production deps, compiles PHAR via Box
+  - `daemon/docker/Dockerfile.build` — Build environment image with PHP 8.2, Composer, Box, PHP-Scoper
+  - `daemon/docker/install-composer.sh` — Verified Composer installer script
+  - `daemon/Dockerfile` — Production image based on `php:8.2-cli-alpine` with zlib, copies PHAR, exposes 8787
+  - `daemon/docker/entrypoint.sh` — Runs `php /opt/flare/daemon.phar`
+  - `daemon/.env.example` — Documents all environment variables with defaults
+  - `daemon/.gitignore` — Excludes `build/`, `vendor/`, `.env`
+- **Learnings for future iterations:**
+  - Root `.gitignore` patterns (`build`, `vendor`, `composer.lock`) match at any level, so daemon-specific `.gitignore` is partly redundant but good for clarity
+  - Box PHAR config uses `"alias": "flare-daemon.phar"` matching the phar path in `bootstrap.php`
+  - PHP-Scoper `expose-global-*` settings ensure global PHP functions/classes/constants remain accessible
+  - The build uses a two-stage Docker approach: `Dockerfile.build` for compilation, `Dockerfile` for the lean runtime image
+---
