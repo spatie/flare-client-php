@@ -23,7 +23,9 @@ class ExpectLog
 
     public function expectBody(mixed $body): self
     {
-        expect($this->log['body'])->toBe($body);
+        $expected = (new OpenTelemetryAttributeMapper())->valueToOpenTelemetry($body);
+
+        expect($this->log['body'])->toBe($expected);
 
         return $this;
     }

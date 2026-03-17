@@ -59,6 +59,10 @@ class OpenTelemetryJsonExporter implements Exporter
                                     $log['attributes'] = $this->attributeMapper->attributesToOpenTelemetry($log['attributes']);
                                 }
 
+                                if (array_key_exists('body', $log)) {
+                                    $log['body'] = $this->attributeMapper->valueToOpenTelemetry($log['body']);
+                                }
+
                                 return $log;
                             }, $logs),
                         ],
