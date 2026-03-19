@@ -62,7 +62,7 @@ upstream contract is not fixed yet.
 
 Observed patterns there:
 
-- success returns `201`
+- the errors endpoint is a transparent proxy to the real Flare API, which currently returns `204`; the traces and logs workers return a hardcoded `201`
 - invalid method returns `405` with plain text
 - missing API key returns `401` with plain text
 - invalid API key returns `403` with plain text
@@ -484,7 +484,7 @@ Each upstream request contains a single payload in v1.
 
 The daemon should be able to handle at least:
 
-- `201` or `202` success
+- any `2xx` success (the errors CF worker proxies to the real Flare API which returns `204`; traces/logs workers return `201`)
 - `403` invalid API key
 - `422` validation failure with JSON body
 - `429` rate limit or quota exceeded, with either:
@@ -517,7 +517,7 @@ logic should depend on the status code first, not on fragile body parsing.
 
 ### Success
 
-- `201` or `202`: item is considered delivered
+- any `2xx`: item is considered delivered
 
 ### Permanent failure
 

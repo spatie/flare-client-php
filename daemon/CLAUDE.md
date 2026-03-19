@@ -24,6 +24,19 @@ curl -s http://127.0.0.1:8787/health   # should return {"status":"ok"}
 kill %1
 ```
 
+## Smoke-testing with a real API key
+
+Start the daemon (with `--verbose` for full per-payload logs), then run `test.sh` with your Flare API key:
+
+```bash
+php src/daemon.php --verbose &
+bash test.sh YOUR_API_KEY              # uses http://127.0.0.1:8787 by default
+bash test.sh -u http://localhost:9000 YOUR_API_KEY  # custom daemon URL
+kill %1
+```
+
+The script sends a normal error payload (no `X-Flare-Test` header) to exercise the real buffering/flushing path, then polls `/status` to confirm the buffer drained.
+
 ## Docker
 
 ```bash
@@ -46,6 +59,7 @@ docker run -p 8787:8787 flare-daemon
 - 429 pauses that (key, type); 403 pauses all types for that key permanently. Normal items are dropped on pause, test items are kept.
 - Upstream sends one payload per request (no batch API in v1).
 - All upstream payloads are gzip-compressed.
+- The errors CF worker is a transparent proxy — it passes through whatever status the real Flare API returns (currently 204). Traces/logs workers return a hardcoded 201. The daemon must treat any 2xx as success, not maintain an allowlist.
 
 ## After every code change
 

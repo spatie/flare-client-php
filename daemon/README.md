@@ -94,6 +94,17 @@ All configuration is done through environment variables:
 | `FLARE_DAEMON_UPSTREAM_TIMEOUT` | `10` | Timeout in seconds for upstream requests |
 | `FLARE_COMPOSER_LOCK` | _(none)_ | Path to `composer.lock` — daemon stops when the file changes |
 
+## Smoke-testing with a real API key
+
+Start the daemon, then use `test.sh` to send a real error payload through the full buffering/flushing path:
+
+```bash
+php src/daemon.php --verbose &
+bash test.sh YOUR_API_KEY
+```
+
+The script checks `/health`, sends a normal error to `/v1/errors`, and polls `/status` until the buffer drains. Pass `-u URL` to target a different daemon address.
+
 ## Building
 
 ```bash
