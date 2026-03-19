@@ -12,7 +12,7 @@ The main goal is to reduce request-time latency in PHP applications:
 - the daemon flushes those buffers to Flare in the background
 
 If the daemon is unreachable, the client falls back to sending directly to Flare with `CurlSender` and logs the daemon
-failure to an emergency logger.
+failure to `stderr`.
 
 The API key stays client-side. Clients keep sending `x-api-token` and the daemon forwards requests for multiple keys.
 
@@ -44,12 +44,12 @@ progress, so this PRD defines a reasonable placeholder shape that can be swapped
 | PHP version | 8.2+ |
 | Local protocol | HTTP |
 | Default listen address | `127.0.0.1:8787` |
-| Client integration | `FlareConfig::daemon()` convenience method |
+| Client integration | `FlareConfig::sendUsing(DaemonSender::class, [...])` |
 | Flare mode | No new `FlareMode` in v1; daemon is a transport choice |
 | Fallback | If daemon is unreachable, fall back to direct `CurlSender` |
 | Buffering | Per API key per payload type |
 | Flush policy | Time-based and size-based |
-| Test payloads | Enter the same buffer, then trigger an immediate flush |
+| Test payloads | Use a dedicated synchronous diagnostic path and bypass the local buffer |
 | Upstream contract | Stubbed placeholder contract on `ingress.flareapp.io` |
 | Quota handling | Example implementation based on HTTP `429` |
 | Status endpoint | Exposes raw API keys |
@@ -113,7 +113,9 @@ dependency update.
 use Spatie\FlareClient\FlareConfig;
 
 FlareConfig::make('your-api-key')
-    ->daemon('http://127.0.0.1:8787');
+    ->sendUsing(\Spatie\FlareClient\Senders\DaemonSender::class, [
+        'daemon_url' => 'http://127.0.0.1:8787',
+    ]);
 ```
 
 The client still sends the API key in the `x-api-token` header.
@@ -130,16 +132,12 @@ curl http://127.0.0.1:8787/status
 
 ## 1. FlareConfig
 
-The daemon should be exposed as a convenience method on top of the existing sender configuration seam.
+The daemon should use the existing sender configuration seam directly.
 
 ```php
-public function daemon(string $daemonUrl = 'http://127.0.0.1:8787', array $config = []): static
-{
-    return $this->sendUsing(DaemonSender::class, [
-        ...$config,
-        'daemon_url' => rtrim($daemonUrl, '/'),
-    ]);
-}
+$config->sendUsing(DaemonSender::class, [
+    'daemon_url' => 'http://127.0.0.1:8787',
+]);
 ```
 
 Important: v1 does **not** need a dedicated `FlareMode::Daemon`.
@@ -161,13 +159,7 @@ enum FlareMode
 }
 ```
 
-## 2. Emergency Logger
-
-The emergency logger is sender-owned configuration on `DaemonSender`, passed through `sendUsing()` or `daemon()` using the `emergency_logger` config key.
-
-Default implementation: a very small PSR-3 logger that writes to `php://stderr`.
-
-## 3. DaemonSender
+## 2. DaemonSender
 
 **File:** `src/Senders/DaemonSender.php`
 
@@ -191,7 +183,6 @@ Expected config keys:
 - `timeout`
 - `test_timeout`
 - `fallback_sender_config`
-- `emergency_logger`
 
 ### Normal payload behavior
 
@@ -200,7 +191,7 @@ For normal payloads:
 1. POST to `{daemonUrl}/v1/{errors|traces|logs}`
 2. Expect `202 Accepted`
 3. If the daemon is unreachable, times out, or refuses the connection:
-   - log the daemon failure to the emergency logger
+   - log the daemon failure to `stderr`
    - send the same payload directly with `CurlSender`
 4. If the direct fallback also fails, let that exception bubble up to `Api`
 
@@ -211,9 +202,16 @@ For test payloads:
 1. add `X-Flare-Test: 1`
 2. use a longer timeout
 3. do **not** fall back
-4. return the daemon's final upstream response to the caller
+4. wait for the daemon to perform one immediate upstream request
+5. return a diagnostic response to the caller that includes the upstream status code and response details needed for CLI output
 
 This preserves the purpose of test mode: verify the daemon path itself.
+
+Important client-side compatibility note:
+
+- the daemon may return HTTP `200` for a completed diagnostic request even when the upstream response was `4xx` or `5xx`
+- `DaemonSender` must therefore unwrap the daemon diagnostic envelope and convert `upstream_status` back into the sender-level `Response`
+- `Api`, `Tester`, and framework-specific test commands should continue to see the upstream status code as if it came from the transport directly
 
 ### Headers sent to the daemon
 
@@ -379,50 +377,83 @@ Each buffered item stores:
 
 - the original payload
 - arrival time
-- whether it is a test payload
-- an optional resolver for the waiting HTTP test response
 
 ### Flush triggers
 
 Flush a buffer when any of these is true:
 
-- the buffer reaches the byte threshold
-- the oldest item has been waiting for 10 seconds
-- a test payload arrives
+- a new payload is accepted (primary trigger in v1 — immediate flush)
+- the buffer reaches the byte threshold (maintenance safety net)
+- the oldest item has been waiting for 10 seconds (maintenance safety net)
 - shutdown is in progress
 
 ### Important v1 simplification
 
-The daemon **buffers locally** but forwards **one payload per upstream request** for now.
+The daemon **buffers locally** but forwards **one payload per upstream request** for now. Because there is no batch API yet, payloads are flushed immediately on accept — the size and time thresholds only serve as a maintenance safety net.
 
 Reason:
 
 - there is no finalized upstream batch contract yet
+- without batching, buffering just adds latency
 - this keeps the daemon close to the current client behavior
 - it lets us ship the daemon before the final batch API exists
 
-When the real batch API is ready, only `Upstream` should need to change.
+When the real batch API is ready, the size/time thresholds become the primary flush triggers again and `Upstream` handles batch sending.
 
 ## Test Payload Flow
 
-Test payloads should go through the same buffer as normal payloads, but they trigger an immediate flush.
+Test payloads are a **diagnostic path**, not part of the normal async buffering flow.
 
 Flow:
 
 1. client sends request with `X-Flare-Test: 1`
-2. daemon appends the payload to the normal per-key per-type buffer
-3. daemon triggers an immediate flush for that buffer
-4. daemon keeps the HTTP response open
-5. when the flushed upstream request completes, the daemon resolves the waiting response
+2. daemon validates the request locally using the same rules as normal payloads
+3. daemon sends one immediate upstream request using the same endpoint, headers, compression, and envelope shape as production traffic
+4. daemon keeps the HTTP response open while that upstream request is in flight
+5. when the upstream request completes, the daemon returns a diagnostic response to the caller
 
-This keeps test payloads close to the production path while still giving immediate feedback.
+This keeps test mode close to the real daemon transport path without making the test request wait behind the normal in-memory buffer.
 
-If a buffer is paused due to quota:
+Important details:
 
-- normal payloads are dropped
-- test payloads are still accepted with a force flag and trigger a flush
+- test payloads do **not** enter the normal per-key per-type buffer
+- test payloads do **not** wait for buffered normal traffic to flush first
+- test payloads do **not** fall back to direct client-side sending
+- test payloads should still use the same `Upstream` request-building logic so the path stays representative
 
-That makes the integration check usable even while quota state exists locally.
+If a key or type is currently paused due to local quota state:
+
+- normal payloads may still be dropped according to the normal quota rules
+- test payloads should still be allowed through the dedicated diagnostic path
+
+That keeps the integration check usable even while local quota state exists.
+
+### Test response shape
+
+The daemon should return enough information for `Tester` and framework-level test commands to explain why the test
+passed or failed.
+
+For v1, prefer a small JSON response such as:
+
+```json
+{
+  "upstream_status": 429,
+  "reason": "Trace quota exceeded",
+  "headers": {
+    "Retry-After": "60"
+  },
+  "body": "Trace quota exceeded"
+}
+```
+
+Notes:
+
+- the primary goal is to surface the upstream status code
+- include a best-effort human-readable reason
+- include response headers only when they are useful for diagnostics
+- the daemon's HTTP status for completed diagnostic requests may remain `200`; clients should read `upstream_status`
+- no secondary polling endpoint is required in v1
+- no temporary storage of test results is required in v1
 
 ## Upstream Contract
 
@@ -626,7 +657,7 @@ Prefer tests that prove real outcomes such as:
 - payloads are buffered or flushed when expected
 - fallback happens only when the daemon is unreachable
 - `429` responses pause ingestion and later resume it
-- test payloads enter the normal buffer and force an immediate flush
+- test payloads bypass the normal buffer and return diagnostic upstream details
 - shutdown drains in-flight work
 - `composer.lock` changes trigger graceful self-shutdown
 
@@ -654,7 +685,7 @@ Cover:
 - size-based flush
 - multi-key isolation
 - fallback handling of `403`, `422`, `429`, `5xx`
-- test payloads entering the normal buffer and triggering immediate flush
+- test payloads bypassing the normal buffer and returning diagnostic upstream details
 - `GET /health`
 - `GET /status`
 - graceful shutdown after `composer.lock` changes

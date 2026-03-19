@@ -1,0 +1,44 @@
+{
+    "name": "spatie/flare-daemon",
+    "description": "Local HTTP daemon for asynchronous Flare delivery",
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "ext-zlib": "*",
+        "psr/http-message": "^1.1|^2.0",
+        "react/event-loop": "^1.5",
+        "react/http": "^1.11",
+        "react/promise": "^3.2",
+        "react/socket": "^1.16"
+    },
+    "require-dev": {
+        "pestphp/pest": "^3.8",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^11.5",
+        "react/async": "^4.3",
+        "symfony/process": "^7.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "Spatie\\FlareDaemon\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Spatie\\FlareDaemon\\Tests\\": "tests/"
+        }
+    },
+    "bin": [
+        "src/daemon.php"
+    ],
+    "scripts": {
+        "analyse": "vendor/bin/phpstan analyse",
+        "test": "vendor/bin/pest"
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        },
+        "sort-packages": true
+    }
+}
