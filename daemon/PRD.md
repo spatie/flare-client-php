@@ -16,8 +16,7 @@ failure to `stderr`.
 
 The API key stays client-side. Clients keep sending `x-api-token` and the daemon forwards requests for multiple keys.
 
-This document intentionally keeps the upstream Flare contract lightweight and stubbed. The final ingress API is still in
-progress, so this PRD defines a reasonable placeholder shape that can be swapped later.
+The daemon sends raw payloads to the Cloudflare ingress workers at `ingress.flareapp.io`.
 
 ## Goals
 
@@ -50,7 +49,7 @@ progress, so this PRD defines a reasonable placeholder shape that can be swapped
 | Buffering | Per API key per payload type |
 | Flush policy | Time-based and size-based |
 | Test payloads | Use a dedicated synchronous diagnostic path and bypass the local buffer |
-| Upstream contract | Stubbed placeholder contract on `ingress.flareapp.io` |
+| Upstream contract | Raw payloads to CF ingress workers at `ingress.flareapp.io` |
 | Quota handling | Example implementation based on HTTP `429` |
 | Status endpoint | Exposes raw API keys |
 | Update detection | Watch `composer.lock` and self-shutdown gracefully |
@@ -457,14 +456,12 @@ Notes:
 
 ## Upstream Contract
 
-The final contract is not available yet, so v1 should isolate all upstream request building in `Upstream.php`.
-
-For now, use this placeholder contract:
+The daemon sends payloads to the Cloudflare ingress workers at `ingress.flareapp.io`. All upstream request building is isolated in `Upstream.php`.
 
 ### Endpoint
 
 ```text
-POST https://ingress.flareapp.io/v1/daemon/{errors|traces|logs}
+POST https://ingress.flareapp.io/v1/{errors|traces|logs}
 ```
 
 ### Headers
@@ -479,22 +476,9 @@ Content-Encoding: gzip
 
 ### Request body
 
-```json
-{
-  "payload": {},
-  "sent_at": "2026-03-17T11:45:00Z",
-  "source": {
-    "transport": "daemon",
-    "test": false
-  }
-}
-```
+The raw client payload, JSON-encoded and gzip-compressed. No envelope wrapping.
 
-Notes:
-
-- `payload` is the exact original client payload
-- each upstream request contains a single payload in v1
-- the endpoint and envelope are placeholders and should live in one small class
+Each upstream request contains a single payload in v1.
 
 ### Expected example responses
 

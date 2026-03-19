@@ -46,6 +46,10 @@ docker run -p 8787:8787 flare-daemon
 - Upstream sends one payload per request (no batch API in v1).
 - All upstream payloads are gzip-compressed.
 
+## After every code change
+
+Run `composer test` and `composer analyse` from the `daemon/` directory after every code change. Both must pass before considering the change complete.
+
 ## Code style
 
 Follow Spatie PHP guidelines: @~/.dotfiles/spatie-guidelines-claude.md
