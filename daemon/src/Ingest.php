@@ -283,7 +283,7 @@ class Ingest
                 'type' => $type,
                 'body' => Upstream::summarizeBody($body),
             ]);
-        } elseif (! in_array($status, [201, 202], true)) {
+        } elseif ($status < 200 || $status >= 300) {
             $this->output->error('upstream request failed', [
                 'api_key' => $apiKey,
                 'type' => $type,
