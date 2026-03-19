@@ -133,14 +133,11 @@ curl http://127.0.0.1:8787/status
 The daemon should be exposed as a convenience method on top of the existing sender configuration seam.
 
 ```php
-public ?string $daemonUrl = null;
-
-public function daemon(string $daemonUrl = 'http://127.0.0.1:8787'): static
+public function daemon(string $daemonUrl = 'http://127.0.0.1:8787', array $config = []): static
 {
-    $this->daemonUrl = $daemonUrl;
-
     return $this->sendUsing(DaemonSender::class, [
-        'daemon_url' => $daemonUrl,
+        ...$config,
+        'daemon_url' => rtrim($daemonUrl, '/'),
     ]);
 }
 ```
@@ -166,42 +163,9 @@ enum FlareMode
 
 ## 2. Emergency Logger
 
-Today, `Api::sendEntity()` swallows non-test failures. That behavior can stay, but failures should no longer be silent.
-
-Add a configurable emergency logger:
-
-```php
-public LoggerInterface $emergencyLogger;
-
-public function emergencyLogger(LoggerInterface $logger): static
-{
-    $this->emergencyLogger = $logger;
-
-    if ($this->sender === DaemonSender::class) {
-        $this->senderConfig['emergency_logger'] = $logger;
-    }
-
-    return $this;
-}
-```
+The emergency logger is sender-owned configuration on `DaemonSender`, passed through `sendUsing()` or `daemon()` using the `emergency_logger` config key.
 
 Default implementation: a very small PSR-3 logger that writes to `php://stderr`.
-
-`Api::sendEntity()` should log on non-test failure:
-
-```php
-} catch (Throwable $throwable) {
-    if ($test) {
-        throw $throwable;
-    }
-
-    $this->emergencyLogger->error('Flare delivery failed', [
-        'exception' => $throwable,
-    ]);
-}
-```
-
-The client package should depend directly on `psr/log` instead of relying on it transitively.
 
 ## 3. DaemonSender
 
