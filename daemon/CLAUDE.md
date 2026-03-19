@@ -12,6 +12,7 @@ composer test --filter=ServerTest  # Single test file
 composer analyse                 # PHPStan level 8
 bash build.sh                    # Build daemon.phar
 php src/daemon.php               # Run daemon locally (needs composer install first)
+php src/daemon.php --verbose     # Run with per-request DEBUG logging
 ```
 
 ## Smoke-testing a build

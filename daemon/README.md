@@ -69,6 +69,18 @@ docker run -d --name flare-daemon -p 8787:8787 spatie/flare-daemon
 php daemon.phar
 ```
 
+## Verbose mode
+
+By default the daemon logs lifecycle events (started, stopped) and a periodic summary of forwarded payloads. Pass `--verbose` (or `-v`) to also log every individual payload at `DEBUG` level:
+
+```bash
+php daemon.phar --verbose
+```
+
+```bash
+docker run -d --name flare-daemon -p 8787:8787 spatie/flare-daemon --verbose
+```
+
 ## Configuration
 
 All configuration is done through environment variables:
