@@ -261,6 +261,75 @@ it('flushes payloads immediately without waiting for time or size thresholds', f
         ->and(upstreamBody($upstream['requests'], 0))->toBe(['message' => 'immediate']);
 });
 
+it('treats upstream 204 as success for normal payloads', function () {
+    $captured = makeOutputWithCapture();
+    $upstream = createUpstreamFixture(fn () => new Response(204, [], ''));
+    $address = freeLocalAddress();
+    $browser = (new Browser())->withRejectErrorResponse(false)->withTimeout(1.0);
+    $upstreamClient = new Upstream($browser, $upstream['base_url'], 'FlareDaemon/tests');
+    $ingest = new Ingest(
+        loop: \React\EventLoop\Loop::get(),
+        upstream: $upstreamClient,
+        output: $captured['output'],
+        quotaState: new QuotaState(),
+        flushAfterSeconds: 0.05,
+        maintenanceIntervalSeconds: 0.01,
+    );
+    $server = new Server(
+        loop: \React\EventLoop\Loop::get(),
+        ingest: $ingest,
+        output: $captured['output'],
+        listenAddress: $address,
+    );
+    $server->listen();
+
+    rememberShutdown(fn () => $ingest->shutdown());
+    rememberCloser($server);
+
+    $response = \React\Async\await($browser->post(
+        'http://'.$address.'/v1/errors',
+        [
+            'Content-Type' => 'application/json',
+            'X-API-Token' => 'api-key',
+        ],
+        encodePayload(['message' => 'test-204']),
+    ));
+
+    expect($response->getStatusCode())->toBe(202);
+
+    waitUntil(fn () => count($upstream['requests']) >= 1);
+
+    expect($upstream['requests'])->toHaveCount(1)
+        ->and(upstreamBody($upstream['requests'], 0))->toBe(['message' => 'test-204']);
+
+    $stderr = readStream($captured['stderr']);
+
+    expect($stderr)->not->toContain('upstream request failed');
+});
+
+it('returns 204 upstream status in diagnostic response for test payloads', function () {
+    $upstream = createUpstreamFixture(fn () => new Response(204, [], ''));
+    $daemon = createDaemonFixture($upstream['base_url'], ['flush_after' => 1.0]);
+
+    $testResponse = \React\Async\await($daemon['client']->post(
+        $daemon['daemon_url'].'/v1/errors',
+        [
+            'Content-Type' => 'application/json',
+            'X-API-Token' => 'api-key',
+            'X-Flare-Test' => '1',
+        ],
+        encodePayload(['message' => 'test-diagnostic-204']),
+    ));
+
+    expect($testResponse->getStatusCode())->toBe(200)
+        ->and(json_decode((string) $testResponse->getBody(), true))->toBe([
+            'upstream_status' => 204,
+            'reason' => 'HTTP 204',
+            'body' => null,
+            'headers' => [],
+        ]);
+});
+
 it('logs a clear error when the port is already in use', function () {
     $address = freeLocalAddress();
     $port = explode(':', $address)[1];

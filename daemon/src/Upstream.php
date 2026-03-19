@@ -6,7 +6,6 @@ use Psr\Http\Message\ResponseInterface;
 use React\Http\Browser;
 use React\Promise\PromiseInterface;
 use Spatie\FlareDaemon\Support\Json;
-use RuntimeException;
 
 class Upstream
 {
@@ -26,12 +25,6 @@ class Upstream
     {
         $body = Json::encode($payload);
 
-        $compressed = gzencode($body);
-
-        if ($compressed === false) {
-            throw new RuntimeException('Unable to gzip request body');
-        }
-
         return $this->browser->post(
             "{$this->baseUrl}/v1/{$type}",
             [
@@ -39,9 +32,8 @@ class Upstream
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
                 'User-Agent' => $this->userAgent,
-                'Content-Encoding' => 'gzip',
             ],
-            $compressed,
+            $body,
         )->then(function (ResponseInterface $response): array {
             /** @var array<string, array<int, string>> $headers */
             $headers = $response->getHeaders();
