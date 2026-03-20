@@ -58,7 +58,6 @@ docker run -p 8787:8787 flare-daemon
 - Test payloads (`X-Flare-Test: 1`) force an immediate flush and return the upstream response. Normal payloads return 202 immediately.
 - 429 pauses that (key, type); 403 pauses all types for that key permanently. Normal items are dropped on pause, test items are kept.
 - Upstream sends one payload per request (no batch API in v1).
-- All upstream payloads are gzip-compressed.
 - The errors CF worker is a transparent proxy — it passes through whatever status the real Flare API returns (currently 204). Traces/logs workers return a hardcoded 201. The daemon must treat any 2xx as success, not maintain an allowlist.
 
 ## After every code change

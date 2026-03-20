@@ -49,11 +49,9 @@ class Server
         } catch (RuntimeException $e) {
             $port = $this->parsePort();
 
-            $this->output->error("Port {$port} is already in use", [
-                'address' => $this->listenAddress,
-                'check' => "lsof -i :{$port} -sTCP:LISTEN",
-                'alt_port' => 'FLARE_DAEMON_LISTEN=127.0.0.1:9999',
-            ]);
+            $this->output->error(
+                "Port {$port} is already in use. Run \"lsof -i :{$port} -sTCP:LISTEN\" to find the process, or use a different port with FLARE_DAEMON_LISTEN=127.0.0.1:9999",
+            );
 
             throw $e;
         }

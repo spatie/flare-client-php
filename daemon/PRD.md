@@ -471,12 +471,11 @@ X-API-Token: {projectApiKey}
 Content-Type: application/json
 Accept: application/json
 User-Agent: FlareDaemon/{version}
-Content-Encoding: gzip
 ```
 
 ### Request body
 
-The raw client payload, JSON-encoded and gzip-compressed. No envelope wrapping.
+The raw client payload, JSON-encoded. No envelope wrapping.
 
 Each upstream request contains a single payload in v1.
 

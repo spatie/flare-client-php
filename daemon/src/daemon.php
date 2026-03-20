@@ -37,6 +37,7 @@ $server = new Server($loop, $ingest, $output, $listenAddress);
 try {
     $server->listen();
 } catch (RuntimeException $e) {
+    $ingest->shutdown(fn () => $loop->stop());
     exit(1);
 }
 

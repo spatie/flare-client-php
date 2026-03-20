@@ -18,7 +18,7 @@ The daemon is a single PHP process built on ReactPHP's event loop:
 - **Ingest** — validates incoming payloads, routes them to the right buffer
 - **Buffers** — per API key, per entity type (errors/traces/logs), in-memory only
 - **Flush cycle** — a periodic timer (every 1s) checks buffer age and size thresholds
-- **Upstream** — sends buffered payloads to Flare ingress over HTTP with gzip compression
+- **Upstream** — sends buffered payloads to Flare ingress over HTTP
 - **Quota state** — tracks 429/403 responses and pauses ingestion per key/type
 - **Test payloads** — bypass the buffer entirely, make a synchronous upstream request, and return a diagnostic response to the caller
 - **Composer.lock watcher** — optional periodic timer that triggers graceful shutdown on file changes
