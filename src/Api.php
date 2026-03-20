@@ -35,9 +35,8 @@ class Api
         protected Resource $resource,
         protected Scope $scope,
         protected Sender $sender,
-        protected bool $disableQueue
+        protected bool $disableQueue,
     ) {
-
     }
 
     public function report(

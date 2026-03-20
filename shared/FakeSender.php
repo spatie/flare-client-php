@@ -34,7 +34,7 @@ class FakeSender implements Sender
 
         $response = new Response(
             code: self::$responseCode ?? 200,
-            body: '',
+            body: self::$responseBody ?? '',
         );
 
         $callback($response);
@@ -44,6 +44,7 @@ class FakeSender implements Sender
     {
         self::$sent = [];
         self::$responseCode = 200;
+        self::$responseBody = null;
     }
 
     public static function assertSent(
@@ -69,7 +70,6 @@ class FakeSender implements Sender
             expect($actualCount)->toBe($logs, "Expected {$logs} log requests, but {$actualCount} were sent.");
         }
     }
-
 
     public static function assertNothingSent(): void
     {

@@ -200,7 +200,7 @@ class Tester
                     $base->resource,
                     $base->scope,
                     $base->sender,
-                    $base->disableQueue
+                    $base->disableQueue,
                 );
             }
 

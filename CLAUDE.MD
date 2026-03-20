@@ -17,6 +17,7 @@ PHP package that sends errors, traces, and logs to [Flare](https://flareapp.io).
   - `Logger.php` - Log recording and flushing (OpenTelemetry log format)
   - `Tracer.php` / `Spans/` - Performance tracing and spans
   - `Senders/` - Transport layer (CurlSender, DaemonSender)
+  - `Senders/Exceptions/` - Sender exceptions (ConnectionError, BadResponseCode, etc.)
   - `Recorders/` - Data recorders (queries, logs, dumps, etc.)
   - `FlareMiddleware/` - Middleware pipeline for enriching reports
   - `Sampling/` - Sampling strategies for performance monitoring
@@ -26,16 +27,17 @@ PHP package that sends errors, traces, and logs to [Flare](https://flareapp.io).
   - `Scopes/` - Scope management
   - `Contracts/` - Interfaces
   - `Enums/` - Enumerations
-  - `Support/` - Helper utilities (including `DaemonConnection`, `Tester`)
+  - `Support/` - Helper utilities (including `DaemonConnection`, `StderrLogger`, `Tester`)
 
-### Daemon (`daemon/`)
+### Daemon
 
-A separate package (`spatie/flare-daemon`) lives in the `daemon/` directory. It's a long-running PHP process that acts as a local TCP proxy between client apps and Flare. Completely independent — own `composer.json`, own namespace (`Spatie\FlareDaemon\`), own tests. See `daemon/PRD.md` for full specifications.
+The daemon (`spatie/flare-daemon`) is a separate package in its own repository. It's a long-running local HTTP daemon for asynchronous Flare delivery. Client apps opt in via `FlareConfig::daemon()` and the `DaemonSender` handles communication with it.
 
 ### Tech Stack
 
 - **PHP**: ^8.2
 - **HTTP**: Guzzle 7
+- **Logging**: psr/log ^3.0 (used for emergency logging)
 - **Testing**: Pest with snapshot testing (`spatie/pest-plugin-snapshots`)
 - **Static Analysis**: PHPStan level 8
 - **Code Style**: php-cs-fixer
@@ -58,7 +60,6 @@ composer format        # php-cs-fixer (with --allow-risky=yes)
 
 - Uses Pest (`composer test`)
 - Snapshot tests in `tests/__snapshots__/`
-- Shared test utilities in `shared/`
 - Run minimal tests with `--filter` during development
 
 ### Code Quality
