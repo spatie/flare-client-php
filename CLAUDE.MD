@@ -29,19 +29,9 @@ PHP package that sends errors, traces, and logs to [Flare](https://flareapp.io).
   - `Enums/` - Enumerations
   - `Support/` - Helper utilities (including `DaemonConnection`, `StderrLogger`, `Tester`)
 
-### Daemon (`daemon/`)
+### Daemon
 
-A separate package (`spatie/flare-daemon`) lives in the `daemon/` directory. It's a long-running local HTTP daemon for asynchronous Flare delivery. Completely independent — own `composer.json`, own namespace (`Spatie\FlareDaemon\`), own tests. See `daemon/PRD.md` for full specifications.
-
-Important daemon facts:
-
-- The daemon is a transport choice, not a new `FlareMode`.
-- Client apps opt in via `FlareConfig::daemon()`.
-- Normal payload path is `PHP app -> local daemon -> Flare ingress`.
-- If the daemon fails, the client falls back to direct delivery; direct upstream failures are intentionally silent on normal non-test sends.
-- Test payloads should validate the real daemon path and should not silently fall back.
-- The daemon is in-memory only in v1: no disk persistence, no finalized batch contract yet, and one upstream request per payload.
-- The daemon package is intended to ship as both PHAR and Docker.
+The daemon (`spatie/flare-daemon`) is a separate package in its own repository. It's a long-running local HTTP daemon for asynchronous Flare delivery. Client apps opt in via `FlareConfig::daemon()` and the `DaemonSender` handles communication with it.
 
 ### Tech Stack
 
@@ -58,9 +48,6 @@ Important daemon facts:
 composer test          # Pest tests
 composer analyse       # PHPStan level 8
 composer format        # php-cs-fixer (with --allow-risky=yes)
-cd daemon && composer test
-cd daemon && vendor/bin/phpstan analyse
-cd daemon && bash ./build.sh
 ```
 
 ## Development Guidelines
@@ -68,13 +55,11 @@ cd daemon && bash ./build.sh
 - Follow existing patterns - check sibling files before creating new ones
 - Don't create new base folders or change dependencies without approval
 - This is a framework-agnostic PHP package — no Laravel-specific code
-- The `daemon/` package is fully independent: own autoload, own dependencies, own tests
 
 ### Testing
 
 - Uses Pest (`composer test`)
 - Snapshot tests in `tests/__snapshots__/`
-- Shared test utilities (used by both client and daemon) in `shared/`
 - Run minimal tests with `--filter` during development
 
 ### Code Quality
