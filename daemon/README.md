@@ -20,37 +20,44 @@ The daemon is a single PHP process built on ReactPHP's event loop:
 - **Flush cycle** — a periodic timer (every 1s) checks buffer age and size thresholds
 - **Upstream** — sends buffered payloads to Flare ingress over HTTP
 - **Quota state** — tracks 429/403 responses and pauses ingestion per key/type
-- **Test payloads** — bypass the buffer entirely, make a synchronous upstream request, and return a diagnostic response to the caller
+- **Test payloads** — bypass the buffer entirely, make a synchronous upstream request, and return the upstream response to the caller
 - **Composer.lock watcher** — optional periodic timer that triggers graceful shutdown on file changes
 - **Signal handlers** — SIGINT/SIGTERM trigger graceful shutdown (drain buffers, then stop)
 
 ### Buffering
 
 - Each unique combination of API key + entity type (errors, traces, logs) gets its own in-memory buffer
-- When a payload arrives, the daemon validates it, drops it into the right buffer, and immediately returns `202 Accepted` to the caller
+- When a payload arrives, the daemon validates it, drops it into the right buffer, and immediately returns `202 Accepted` with a JSON body to the caller
 - A buffer is flushed immediately after a payload is accepted — there is no batch API yet, so buffering just adds latency
 - A maintenance timer acts as a safety net, checking size and time thresholds every second (default 256 KB / 10 seconds)
 - The daemon also flushes all buffers on shutdown
 - Each flush sends one payload per upstream request — there is no batch API yet, but all upstream request building is isolated in `Upstream.php` so it can be swapped to batch sending later without changing the rest of the system
 - Empty buffers are cleaned up automatically to avoid leaking memory
-- Test payloads (flagged with `X-Flare-Test: 1`) skip the buffer entirely — they go straight to Flare and the daemon returns a diagnostic JSON response containing the upstream status and body
+- Test payloads (flagged with `X-Flare-Test: 1`) skip the buffer entirely — they go straight to Flare and the daemon returns the upstream status, body, and selected headers directly
 - If a key/type is paused due to a `429` or `403` from Flare, normal payloads for that key/type are silently dropped — test payloads are still allowed through
 
-### Diagnostic test responses
+### Responses
 
-Test payloads do not use direct fallback. They are intended to verify the daemon path itself.
-
-When the daemon reaches Flare for a test payload, it responds with HTTP `200` and a body shaped like:
+Normal payloads return JSON `202 Accepted`:
 
 ```json
 {
-  "upstream_status": 429,
-  "reason": "Trace quota exceeded",
-  "body": "Trace quota exceeded",
-  "headers": {
-    "Retry-After": "60"
-  }
+  "status": "accepted"
 }
+```
+
+This keeps the daemon compatible with older curl-style Flare senders that expect a JSON response body.
+
+Test payloads do not use direct fallback. They are intended to verify the daemon path itself.
+
+When the daemon reaches Flare for a test payload, it returns the upstream response directly. For example, an upstream
+`429` becomes an HTTP `429` response from the daemon with the same body and useful forwarded headers like
+`Retry-After: 60`.
+
+For example:
+
+```json
+"Trace quota exceeded"
 ```
 
 If the daemon cannot reach Flare for the diagnostic request, it returns an error from the daemon itself such as `502`.

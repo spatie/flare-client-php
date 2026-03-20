@@ -55,7 +55,7 @@ docker run -p 8787:8787 flare-daemon
 ## Key design decisions
 
 - Buffers are per API key × entity type (errors/traces/logs). Not a single shared queue.
-- Test payloads (`X-Flare-Test: 1`) force an immediate flush and return the upstream response. Normal payloads return 202 immediately.
+- Test payloads (`X-Flare-Test: 1`) force an immediate flush and return the upstream response directly. Normal payloads return JSON `202 {"status":"accepted"}` immediately.
 - 429 pauses that (key, type); 403 pauses all types for that key permanently. Normal items are dropped on pause, test items are kept.
 - Upstream sends one payload per request (no batch API in v1).
 - The errors CF worker is a transparent proxy — it passes through whatever status the real Flare API returns (currently 204). Traces/logs workers return a hardcoded 201. The daemon must treat any 2xx as success, not maintain an allowlist.

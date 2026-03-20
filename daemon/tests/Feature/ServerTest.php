@@ -60,7 +60,9 @@ it('buffers normal payloads and flushes them asynchronously', function () {
         encodePayload(['message' => 'normal']),
     ));
 
-    expect($response->getStatusCode())->toBe(202);
+    expect($response->getStatusCode())->toBe(202)
+        ->and($response->getHeaderLine('Content-Type'))->toContain('application/json')
+        ->and(json_decode((string) $response->getBody(), true))->toBe(['status' => 'accepted']);
 
     waitFor(0.05);
 
@@ -69,7 +71,7 @@ it('buffers normal payloads and flushes them asynchronously', function () {
         ->and(upstreamBody($upstream['requests'], 0))->toBe(['message' => 'normal']);
 });
 
-it('bypasses the normal buffer for test payloads and returns daemon diagnostics', function () {
+it('bypasses the normal buffer for test payloads and returns the upstream response', function () {
     $upstream = createUpstreamFixture(fn () => new Response(201, ['Content-Type' => 'application/json'], '{"status":"ok"}'));
     $daemon = createDaemonFixture($upstream['base_url'], ['flush_after' => 1.0]);
 
@@ -92,12 +94,10 @@ it('bypasses the normal buffer for test payloads and returns daemon diagnostics'
         encodePayload(['message' => 'test']),
     ));
 
-    expect($testResponse->getStatusCode())->toBe(200)
+    expect($testResponse->getStatusCode())->toBe(201)
+        ->and($testResponse->getHeaderLine('Content-Type'))->toContain('application/json')
         ->and(json_decode((string) $testResponse->getBody(), true))->toBe([
-            'upstream_status' => 201,
-            'reason' => 'HTTP 201',
-            'body' => ['status' => 'ok'],
-            'headers' => [],
+            'status' => 'ok',
         ]);
 
     waitUntil(fn () => count($upstream['requests']) >= 2);
@@ -124,7 +124,7 @@ it('bypasses the normal buffer for test payloads and returns daemon diagnostics'
         ->and(upstreamBody($upstream['requests'], $normalIndex))->toBe(['message' => 'normal']);
 });
 
-it('returns diagnostic upstream errors without mutating daemon quota state', function () {
+it('returns upstream errors for test payloads without mutating daemon quota state', function () {
     $upstream = createUpstreamFixture(fn () => new Response(429, ['Retry-After' => '60', 'Content-Type' => 'text/plain'], 'Trace quota exceeded'));
     $daemon = createDaemonFixture($upstream['base_url'], ['flush_after' => 1.0]);
 
@@ -140,17 +140,14 @@ it('returns diagnostic upstream errors without mutating daemon quota state', fun
 
     $statusResponse = \React\Async\await($daemon['client']->get($daemon['daemon_url'].'/status'));
 
-    expect($testResponse->getStatusCode())->toBe(200)
-        ->and(json_decode((string) $testResponse->getBody(), true))->toBe([
-            'upstream_status' => 429,
-            'reason' => 'Trace quota exceeded',
-            'body' => 'Trace quota exceeded',
-            'headers' => ['Retry-After' => '60'],
-        ])
+    expect($testResponse->getStatusCode())->toBe(429)
+        ->and($testResponse->getHeaderLine('Content-Type'))->toContain('text/plain')
+        ->and($testResponse->getHeaderLine('Retry-After'))->toBe('60')
+        ->and((string) $testResponse->getBody())->toBe('Trace quota exceeded')
         ->and(json_decode((string) $statusResponse->getBody(), true))->toBe(['keys' => []]);
 });
 
-it('returns diagnostic validation and rejection responses', function () {
+it('returns validation and rejection responses for test payloads', function () {
     $responseCount = 0;
 
     $upstream = createUpstreamFixture(function () use (&$responseCount) {
@@ -183,20 +180,15 @@ it('returns diagnostic validation and rejection responses', function () {
         encodePayload(['message' => 'test']),
     ));
 
-    expect(json_decode((string) $forbiddenResponse->getBody(), true))->toBe([
-        'upstream_status' => 403,
-        'reason' => 'Invalid API key',
-        'body' => 'Invalid API key',
-        'headers' => [],
-    ])->and(json_decode((string) $invalidResponse->getBody(), true))->toBe([
-        'upstream_status' => 422,
-        'reason' => 'The given data was invalid.',
-        'body' => [
+    expect($forbiddenResponse->getStatusCode())->toBe(403)
+        ->and($forbiddenResponse->getHeaderLine('Content-Type'))->toContain('text/plain')
+        ->and((string) $forbiddenResponse->getBody())->toBe('Invalid API key')
+        ->and($invalidResponse->getStatusCode())->toBe(422)
+        ->and($invalidResponse->getHeaderLine('Content-Type'))->toContain('application/json')
+        ->and(json_decode((string) $invalidResponse->getBody(), true))->toBe([
             'message' => 'The given data was invalid.',
             'errors' => ['payload' => ['Invalid']],
-        ],
-        'headers' => [],
-    ]);
+        ]);
 });
 
 it('returns a daemon error when the upstream diagnostic request fails', function () {
@@ -253,7 +245,9 @@ it('flushes payloads immediately without waiting for time or size thresholds', f
         encodePayload(['message' => 'immediate']),
     ));
 
-    expect($response->getStatusCode())->toBe(202);
+    expect($response->getStatusCode())->toBe(202)
+        ->and($response->getHeaderLine('Content-Type'))->toContain('application/json')
+        ->and(json_decode((string) $response->getBody(), true))->toBe(['status' => 'accepted']);
 
     waitUntil(fn () => count($upstream['requests']) >= 1, timeout: 0.5);
 
@@ -295,7 +289,9 @@ it('treats upstream 204 as success for normal payloads', function () {
         encodePayload(['message' => 'test-204']),
     ));
 
-    expect($response->getStatusCode())->toBe(202);
+    expect($response->getStatusCode())->toBe(202)
+        ->and($response->getHeaderLine('Content-Type'))->toContain('application/json')
+        ->and(json_decode((string) $response->getBody(), true))->toBe(['status' => 'accepted']);
 
     waitUntil(fn () => count($upstream['requests']) >= 1);
 
@@ -307,7 +303,7 @@ it('treats upstream 204 as success for normal payloads', function () {
     expect($stderr)->not->toContain('upstream request failed');
 });
 
-it('returns 204 upstream status in diagnostic response for test payloads', function () {
+it('returns the 204 upstream response for test payloads', function () {
     $upstream = createUpstreamFixture(fn () => new Response(204, [], ''));
     $daemon = createDaemonFixture($upstream['base_url'], ['flush_after' => 1.0]);
 
@@ -321,13 +317,8 @@ it('returns 204 upstream status in diagnostic response for test payloads', funct
         encodePayload(['message' => 'test-diagnostic-204']),
     ));
 
-    expect($testResponse->getStatusCode())->toBe(200)
-        ->and(json_decode((string) $testResponse->getBody(), true))->toBe([
-            'upstream_status' => 204,
-            'reason' => 'HTTP 204',
-            'body' => null,
-            'headers' => [],
-        ]);
+    expect($testResponse->getStatusCode())->toBe(204)
+        ->and((string) $testResponse->getBody())->toBe('');
 });
 
 it('logs a clear error when the port is already in use', function () {

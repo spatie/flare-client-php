@@ -29,13 +29,13 @@ class DaemonSender implements Sender
     public function post(string $endpoint, string $apiToken, array $payload, FlareEntityType $type, bool $test, Closure $callback): void
     {
         if ($test) {
-            $callback($this->unwrapDiagnosticResponse($this->sendToDaemon(
+            $callback($this->sendToDaemon(
                 type: $type,
                 apiToken: $apiToken,
                 payload: $payload,
                 test: true,
                 timeout: $this->testTimeout,
-            )));
+            ));
 
             return;
         }
@@ -110,22 +110,6 @@ class DaemonSender implements Sender
         return new Response(
             $statusCode,
             json_last_error() === JSON_ERROR_NONE ? $decoded : $rawResponse,
-        );
-    }
-
-    protected function unwrapDiagnosticResponse(Response $response): Response
-    {
-        if ($response->code !== 200) {
-            return $response;
-        }
-
-        if (! is_array($response->body) || ! is_int($response->body['upstream_status'] ?? null)) {
-            throw new RuntimeException('Malformed daemon diagnostic response');
-        }
-
-        return new Response(
-            code: $response->body['upstream_status'],
-            body: $response->body['body'] ?? null,
         );
     }
 

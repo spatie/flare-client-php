@@ -188,7 +188,7 @@ Expected config keys:
 For normal payloads:
 
 1. POST to `{daemonUrl}/v1/{errors|traces|logs}`
-2. Expect `202 Accepted`
+2. Expect `202 Accepted` with a JSON body such as `{"status":"accepted"}`
 3. If the daemon is unreachable, times out, or refuses the connection:
    - log the daemon failure to `stderr`
    - send the same payload directly with `CurlSender`
@@ -202,15 +202,16 @@ For test payloads:
 2. use a longer timeout
 3. do **not** fall back
 4. wait for the daemon to perform one immediate upstream request
-5. return a diagnostic response to the caller that includes the upstream status code and response details needed for CLI output
+5. return the upstream status code, body, and selected useful headers directly to the caller
 
 This preserves the purpose of test mode: verify the daemon path itself.
 
-Important client-side compatibility note:
+Important compatibility note:
 
-- the daemon may return HTTP `200` for a completed diagnostic request even when the upstream response was `4xx` or `5xx`
-- `DaemonSender` must therefore unwrap the daemon diagnostic envelope and convert `upstream_status` back into the sender-level `Response`
-- `Api`, `Tester`, and framework-specific test commands should continue to see the upstream status code as if it came from the transport directly
+- `DaemonSender` does not need to unwrap a diagnostic envelope anymore
+- `Api`, `Tester`, and framework-specific test commands see the upstream status code directly
+- legacy curl-style clients can decode the daemon's normal `202` accept response because it is JSON
+- this is best-effort compatibility for normal delivery only; it does not make old clients fully daemon-aware for test-mode semantics or direct-fallback behavior
 
 ### Headers sent to the daemon
 
@@ -409,7 +410,7 @@ Flow:
 2. daemon validates the request locally using the same rules as normal payloads
 3. daemon sends one immediate upstream request using the same endpoint, headers, compression, and envelope shape as production traffic
 4. daemon keeps the HTTP response open while that upstream request is in flight
-5. when the upstream request completes, the daemon returns a diagnostic response to the caller
+5. when the upstream request completes, the daemon returns that upstream response to the caller
 
 This keeps test mode close to the real daemon transport path without making the test request wait behind the normal in-memory buffer.
 
@@ -429,28 +430,13 @@ That keeps the integration check usable even while local quota state exists.
 
 ### Test response shape
 
-The daemon should return enough information for `Tester` and framework-level test commands to explain why the test
-passed or failed.
-
-For v1, prefer a small JSON response such as:
-
-```json
-{
-  "upstream_status": 429,
-  "reason": "Trace quota exceeded",
-  "headers": {
-    "Retry-After": "60"
-  },
-  "body": "Trace quota exceeded"
-}
-```
+The daemon returns the upstream response directly for completed test requests.
 
 Notes:
 
-- the primary goal is to surface the upstream status code
-- include a best-effort human-readable reason
-- include response headers only when they are useful for diagnostics
-- the daemon's HTTP status for completed diagnostic requests may remain `200`; clients should read `upstream_status`
+- the primary goal is to surface the real upstream status code without client-side unwrapping
+- forward only selected useful headers such as `Retry-After`
+- daemon-originated failures remain daemon responses such as `502` and `503`
 - no secondary polling endpoint is required in v1
 - no temporary storage of test results is required in v1
 

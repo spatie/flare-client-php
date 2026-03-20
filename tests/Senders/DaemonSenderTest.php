@@ -125,19 +125,14 @@ it('does not fall back when test payloads receive an unexpected daemon response'
     FakeSender::assertNothingSent();
 });
 
-it('unwraps successful daemon diagnostics for test payloads', function () {
+it('passes through successful daemon responses for test payloads', function () {
     $capturedTimeout = 0;
 
     $sender = fakeDaemonSender()
         ->onSend(function (FlareEntityType $type, string $apiToken, array $payload, bool $test, int $timeout) use (&$capturedTimeout) {
             $capturedTimeout = $timeout;
 
-            return new Response(200, [
-                'upstream_status' => 202,
-                'reason' => 'accepted',
-                'body' => ['status' => 'accepted'],
-                'headers' => [],
-            ]);
+            return new Response(202, ['status' => 'accepted']);
         });
 
     $response = null;
@@ -158,13 +153,8 @@ it('unwraps successful daemon diagnostics for test payloads', function () {
         ->and($capturedTimeout)->toBe(10);
 });
 
-it('unwraps daemon diagnostics with upstream 403 for test payloads', function () {
-    $sender = fakeDaemonSender()->onSend(fn () => new Response(200, [
-        'upstream_status' => 403,
-        'reason' => 'Invalid API key',
-        'body' => 'Invalid API key',
-        'headers' => [],
-    ]));
+it('passes through daemon 403 responses for test payloads', function () {
+    $sender = fakeDaemonSender()->onSend(fn () => new Response(403, 'Invalid API key'));
 
     $response = null;
 
@@ -183,12 +173,10 @@ it('unwraps daemon diagnostics with upstream 403 for test payloads', function ()
         ->and($response?->body)->toBe('Invalid API key');
 });
 
-it('unwraps daemon diagnostics with upstream 422 for test payloads', function () {
-    $sender = fakeDaemonSender()->onSend(fn () => new Response(200, [
-        'upstream_status' => 422,
-        'reason' => 'The given data was invalid.',
-        'body' => ['message' => 'The given data was invalid.', 'errors' => ['payload' => ['Invalid']]],
-        'headers' => [],
+it('passes through daemon 422 responses for test payloads', function () {
+    $sender = fakeDaemonSender()->onSend(fn () => new Response(422, [
+        'message' => 'The given data was invalid.',
+        'errors' => ['payload' => ['Invalid']],
     ]));
 
     $response = null;
@@ -209,23 +197,6 @@ it('unwraps daemon diagnostics with upstream 422 for test payloads', function ()
             'message' => 'The given data was invalid.',
             'errors' => ['payload' => ['Invalid']],
         ]);
-});
-
-it('throws when the daemon returns a malformed diagnostic envelope for test payloads', function () {
-    $sender = fakeDaemonSender()
-        ->onSend(fn () => new Response(200, ['reason' => 'Missing upstream status']))
-        ->withFallbackSender(new FakeSender());
-
-    expect(fn () => $sender->post(
-        endpoint: 'https://ingress.flareapp.io/v1/errors',
-        apiToken: 'fake-api-key',
-        payload: ['message' => 'hello'],
-        type: FlareEntityType::Errors,
-        test: true,
-        callback: fn () => null,
-    ))->toThrow(RuntimeException::class, 'Malformed daemon diagnostic response');
-
-    FakeSender::assertNothingSent();
 });
 
 it('only logs once when daemon delivery fails before direct fallback also fails', function () {

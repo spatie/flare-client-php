@@ -97,13 +97,8 @@ it('keeps permanent pause state for normal payloads while still allowing diagnos
     $statusResponse = \React\Async\await($daemon['client']->get($daemon['daemon_url'].'/status'));
     $statusBody = json_decode((string) $statusResponse->getBody(), true);
 
-    expect($testResponse->getStatusCode())->toBe(200)
-        ->and(json_decode((string) $testResponse->getBody(), true))->toBe([
-            'upstream_status' => 403,
-            'reason' => 'Invalid API key',
-            'body' => 'Invalid API key',
-            'headers' => [],
-        ])
+    expect($testResponse->getStatusCode())->toBe(403)
+        ->and((string) $testResponse->getBody())->toBe('Invalid API key')
         ->and($statusBody['keys']['api-key']['errors']['paused'])->toBeTrue()
         ->and($statusBody['keys']['api-key']['traces']['paused'])->toBeTrue()
         ->and($statusBody['keys']['api-key']['logs']['paused'])->toBeTrue();

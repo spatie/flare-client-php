@@ -139,7 +139,7 @@ class Server
         if (! $test) {
             $this->ingest->accept($apiKey, $matches[1], $payload);
 
-            return $this->plainResponse(202, '');
+            return $this->jsonResponse(202, ['status' => 'accepted']);
         }
 
         return $this->ingest->diagnose($apiKey, $matches[1], $payload)->then(function (array $result) {

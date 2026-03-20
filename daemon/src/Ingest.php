@@ -93,7 +93,13 @@ class Ingest
         }
 
         return $this->upstream->send($apiKey, $type, $payload)->then(
-            fn (array $response) => $this->diagnosticResult($response),
+            function (array $response): array {
+                return $this->result(
+                    $response['status'],
+                    $response['body'],
+                    $this->forwardedHeaders($response['headers']),
+                );
+            },
             function (Throwable $throwable): array {
                 $this->output->error('upstream diagnostic request failed', [
                     'exception' => $throwable,
@@ -401,28 +407,11 @@ class Ingest
     }
 
     /**
-     * @param array{status: int, body: mixed, headers: array<string, array<int, string>>} $response
-     *
-     * @return array{status: int, body: array{upstream_status: int, reason: string, body: mixed, headers: array<string, string>}, headers: array<string, string>}
-     */
-    protected function diagnosticResult(array $response): array
-    {
-        $status = $response['status'];
-        $body = $response['body'];
-
-        return $this->result(200, [
-            'upstream_status' => $status,
-            'reason' => Upstream::reasonFromResponseBody($body, $status),
-            'body' => $body,
-            'headers' => $this->diagnosticHeaders($response['headers']),
-        ], ['Content-Type' => 'application/json']);
-    }
-
     /**
      * @param array<string, array<int, string>> $headers
      * @return array<string, string>
      */
-    protected function diagnosticHeaders(array $headers): array
+    protected function forwardedHeaders(array $headers): array
     {
         $selectedHeaders = [];
 
