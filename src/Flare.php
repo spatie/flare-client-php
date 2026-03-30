@@ -39,7 +39,8 @@ class Flare
     // TODO: add ability to ignore certain commands and requests like we do with jobs
     // TODO: dynamic sampling based upon context would be cool
     // TODO: wp-admin.php calls
-    // TODO (less important): write a framework integration guide
+    // TODO: check the tester for handling errors + try to move some parts of the laravel command to the main repo
+    // TODO: reduce logging resource payload
 
     public function __construct(
         public readonly Lifecycle $lifecycle,
