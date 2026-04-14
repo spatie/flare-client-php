@@ -41,6 +41,17 @@ class Flare
     // TODO: wp-admin.php calls
     // TODO: check the tester for handling errors + try to move some parts of the laravel command to the main repo
     // TODO: reduce logging resource payload
+    // TODO: update the data collection docs on how to interact with each recorder individually
+
+    // TODO: test this on vapor:
+    // 1) Create a job with error
+    // 2) We do all tracing correctly and store some breadcrumbs
+    // 3) The subtask ends, so the error is sent
+    // 4) We're now in limbo
+    // 5) Error handling happens and a report is stored within the API
+    // 6) The shutdown function probably won't run, lifecycle won't flush the latest data
+    // 7) Our error is lost
+    // Also test tracing and exceptions on regular requests and jobs
 
     public function __construct(
         public readonly Lifecycle $lifecycle,

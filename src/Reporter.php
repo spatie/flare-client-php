@@ -103,9 +103,13 @@ class Reporter
             return null;
         }
 
-        // This is in the case we have errors before or after a lifecycle or subtask
-        // Famous one is Laravel Jobs which end the subtask before the exception is handled
-        $sendImmediately = $this->lifecycle->getStage() === LifecycleStage::Idle;
+        // This is in the case we have errors before or after a lifecycle or subtask or during a termination phase
+        // Famous one is Laravel Jobs which end the subtask before the exception is handled or dispatch after
+        // response which can throw an exception and will completely fail the php process
+        $sendImmediately = match ($this->lifecycle->getStage()) {
+            LifecycleStage::Idle, LifecycleStage::Terminating, LifecycleStage::Terminated => true,
+            default => false,
+        };
 
         $reportPayload = $this->api->report($report, $sendImmediately);
 
