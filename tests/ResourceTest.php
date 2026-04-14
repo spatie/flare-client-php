@@ -38,8 +38,8 @@ test('it can include git data', function () {
     $exported = $resource->export(FlareEntityType::Errors);
 
     expect($exported)->toHaveKeys([
-        'git.branch',
         'git.hash',
+//        'git.branch', CI pull_request checkout uses detached HEAD
 //        'git.message', CI environments may not have access to commit messages
         'git.remote',
     ]);
