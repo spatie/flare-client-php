@@ -2,6 +2,14 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 1.11.0 - 2026-03-17
+
+### What's Changed
+
+* Support Laravel 13 by @erikn69 in https://github.com/spatie/flare-client-php/pull/67
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/1.10.1...1.11.0
+
 ## 2.10.2 - 2026-02-23
 
 - Handle non-JSON API responses gracefully in senders
