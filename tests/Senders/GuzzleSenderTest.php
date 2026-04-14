@@ -34,7 +34,8 @@ it('throws ConnectionError when receiving an empty response body', function () {
         ['test' => 'payload'],
         FlareEntityType::Errors,
         false,
-        function (Response $r) {}
+        function (Response $r) {
+        }
     );
 })->throws(ConnectionError::class);
 
@@ -48,7 +49,8 @@ it('throws ConnectionError when receiving a non-JSON response body', function ()
         ['test' => 'payload'],
         FlareEntityType::Errors,
         false,
-        function (Response $r) {}
+        function (Response $r) {
+        }
     );
 })->throws(ConnectionError::class);
 
