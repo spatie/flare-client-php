@@ -5,6 +5,7 @@ namespace Spatie\FlareClient;
 use Closure;
 use Exception;
 use Spatie\FlareClient\Contracts\FlareSpanType;
+use Spatie\FlareClient\Enums\AddSpanResult;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanStatusCode;
 use Spatie\FlareClient\Memory\Memory;
@@ -20,7 +21,7 @@ use Throwable;
 
 class Tracer
 {
-    public const DEFAULT_MAX_SPANS_LIMIT = 512;
+    public const DEFAULT_MAX_SPANS_LIMIT = 1024;
     public const DEFAULT_MAX_ATTRIBUTES_PER_SPAN_LIMIT = 128;
     public const DEFAULT_MAX_SPAN_EVENTS_PER_SPAN_LIMIT = 128;
     public const DEFAULT_MAX_ATTRIBUTES_PER_SPAN_EVENT_LIMIT = 128;
@@ -281,10 +282,10 @@ class Tracer
         return $this->spans[$this->currentSpanId] ?? null;
     }
 
-    public function addSpan(Span $span): Span
+    public function addSpan(Span $span): Span|AddSpanResult
     {
         if (count($this->spans) >= $this->limits['max_spans']) {
-            return $span;
+            return AddSpanResult::LimitReached;
         }
 
         $this->spans[$span->spanId] = $span;
@@ -306,7 +307,7 @@ class Tracer
         string $name,
         ?int $time = null,
         array $attributes = [],
-    ): Span {
+    ): Span|AddSpanResult {
         // Order of operations is important here, do not inline!
         $parentSpanId = $this->currentParentSpanId();
         $spanId = $this->nextSpanId();
@@ -362,7 +363,9 @@ class Tracer
 
         $this->configureSpan($span);
 
-        $this->currentSpanId = $span->parentSpanId ?? '-';
+        if (isset($this->spans[$span->spanId])) {
+            $this->currentSpanId = $span->parentSpanId ?? '-';
+        }
 
         return $span;
     }
@@ -390,6 +393,10 @@ class Tracer
         }
 
         $span = $this->startSpan($name, time: $startTime, attributes: $attributes);
+
+        if ($span instanceof AddSpanResult) {
+            return $callback();
+        }
 
         try {
             $returned = $callback();

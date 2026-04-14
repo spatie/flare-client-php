@@ -4,11 +4,13 @@ namespace Spatie\FlareClient\Support;
 
 use Closure;
 use Spatie\FlareClient\Api;
+use Spatie\FlareClient\Enums\AddSpanResult;
 use Spatie\FlareClient\Enums\LifecycleStage;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Logger;
 use Spatie\FlareClient\Memory\Memory;
 use Spatie\FlareClient\Resources\Resource;
+use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Time\Time;
 use Spatie\FlareClient\Time\TimeHelper;
 use Spatie\FlareClient\Tracer;
@@ -16,6 +18,14 @@ use Spatie\FlareClient\Tracer;
 class Lifecycle
 {
     public readonly bool $usesSubtasks;
+
+    protected Span|AddSpanResult|null $applicationSpan = null;
+
+    protected Span|AddSpanResult|null $registeringSpan = null;
+
+    protected Span|AddSpanResult|null $bootingSpan = null;
+
+    protected Span|AddSpanResult|null $terminatingSpan = null;
 
     /**
      * @param Closure():bool|null $isUsingSubtasksClosure
@@ -98,7 +108,7 @@ class Lifecycle
             default => $this->time->getCurrentTime(),
         };
 
-        $this->tracer->startSpan(
+        $this->applicationSpan = $this->tracer->startSpan(
             $serviceName ? "App - {$serviceName}" : 'App',
             time: $timeUnixNano,
             attributes: [
@@ -128,7 +138,7 @@ class Lifecycle
             return;
         }
 
-        $this->tracer->startSpan(
+        $this->registeringSpan = $this->tracer->startSpan(
             name: "Registering App",
             time: $timeUnixNano,
             attributes: [
@@ -158,7 +168,12 @@ class Lifecycle
             return;
         }
 
+        if (! $this->registeringSpan instanceof Span) {
+            return;
+        }
+
         $this->tracer->endSpan(
+            span: $this->registeringSpan,
             time: $timeUnixNano ?? $this->time->getCurrentTime(),
             additionalAttributes: $additionalAttributes,
         );
@@ -188,7 +203,7 @@ class Lifecycle
             return;
         }
 
-        $this->tracer->startSpan(
+        $this->bootingSpan = $this->tracer->startSpan(
             name: "Booting App",
             time: $timeUnixNano ?? $this->time->getCurrentTime(),
             attributes: [
@@ -218,7 +233,12 @@ class Lifecycle
             return;
         }
 
+        if (! $this->bootingSpan instanceof Span) {
+            return;
+        }
+
         $this->tracer->endSpan(
+            span: $this->bootingSpan,
             time: $timeUnixNano ?? $this->time->getCurrentTime(),
             additionalAttributes: $additionalAttributes,
         );
@@ -300,7 +320,7 @@ class Lifecycle
             return;
         }
 
-        $this->tracer->startSpan(
+        $this->terminatingSpan = $this->tracer->startSpan(
             name: "Terminating App",
             time: $timeUnixNano ?? $this->time->getCurrentTime(),
             attributes: [
@@ -337,26 +357,21 @@ class Lifecycle
             return;
         }
 
-        if (! $shouldEndTerminatingSpan) {
+        if ($shouldEndTerminatingSpan && $this->terminatingSpan instanceof Span) {
             $this->tracer->endSpan(
+                span: $this->terminatingSpan,
+                time: $timeUnixNano ?? $this->time->getCurrentTime(),
+                additionalAttributes: $additionalTerminationAttributes,
+            );
+        }
+
+        if ($this->applicationSpan instanceof Span) {
+            $this->tracer->endSpan(
+                span: $this->applicationSpan,
                 time: $timeUnixNano ?? $this->time->getCurrentTime(),
                 additionalAttributes: $additionalApplicationAttributes,
             );
-
-            $this->tracer->endTrace();
-
-            return;
         }
-
-        $this->tracer->endSpan(
-            time: $timeUnixNano ?? $this->time->getCurrentTime(),
-            additionalAttributes: $additionalTerminationAttributes,
-        );
-
-        $this->tracer->endSpan(
-            time: $timeUnixNano ?? $this->time->getCurrentTime(),
-            additionalAttributes: $additionalApplicationAttributes,
-        );
 
         $this->tracer->endTrace();
 
@@ -405,6 +420,11 @@ class Lifecycle
 
         $this->sentReports->clear();
         $this->recorders->reset();
+
+        $this->applicationSpan = null;
+        $this->registeringSpan = null;
+        $this->bootingSpan = null;
+        $this->terminatingSpan = null;
     }
 
     public function getStage(): LifecycleStage

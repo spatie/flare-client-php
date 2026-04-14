@@ -314,3 +314,61 @@ it('will not finish a trace when shutting down if spans are not closed yet', fun
 
     FakeApi::assertTracesSent(0);
 });
+
+it('completes the lifecycle correctly when span limit is reached mid-request', function () {
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config
+        ->alwaysSampleTraces()
+        ->traceLimits(maxSpans: 3)
+    );
+
+    $flare->lifecycle->start(timeUnixNano: 0);
+    $flare->lifecycle->register(timeUnixNano: 10);
+    $flare->lifecycle->registered(timeUnixNano: 20);
+    $flare->lifecycle->boot(timeUnixNano: 30);
+    $flare->lifecycle->booted(timeUnixNano: 40);
+
+    // Won't be recorded
+    $flare->lifecycle->terminating(timeUnixNano: 50);
+    $flare->lifecycle->terminated(timeUnixNano: 60, additionalApplicationAttributes: ['stage_additional' => 'application']);
+
+    $trace = FakeApi::lastTrace()
+        ->expectSpanCount(3)
+        ->expectAllSpansClosed();
+
+    $trace->expectSpan(0)
+        ->expectType(SpanType::Application)
+        ->expectStart(0)
+        ->expectEnd(60)
+        ->expectAttributes([
+            'stage_additional' => 'application',
+        ]);
+});
+
+it('completes the lifecycle correctly when span limit is reached before lifecycle spans', function () {
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config
+        ->alwaysSampleTraces()
+        ->traceLimits(maxSpans: 1)
+    );
+
+    $flare->lifecycle->start(timeUnixNano: 0);
+
+    // Won't be recorded
+    $flare->lifecycle->register(timeUnixNano: 10);
+    $flare->lifecycle->registered(timeUnixNano: 20);
+    $flare->lifecycle->boot(timeUnixNano: 30);
+    $flare->lifecycle->booted(timeUnixNano: 40);
+    $flare->lifecycle->terminating(timeUnixNano: 50);
+    $flare->lifecycle->terminated(timeUnixNano: 60, additionalApplicationAttributes: ['done' => true]);
+
+    $trace = FakeApi::lastTrace()->expectSpanCount(1)->expectAllSpansClosed();
+
+    $trace->expectSpan(0)
+        ->expectType(SpanType::Application)
+        ->expectStart(0)
+        ->expectEnd(60)
+        ->expectAttributes([
+            'done' => true,
+        ]);
+});

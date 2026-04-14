@@ -3,10 +3,12 @@
 namespace Spatie\FlareClient\Tests;
 
 use Exception;
+use Spatie\FlareClient\Enums\AddSpanResult;
 use Spatie\FlareClient\Enums\SpanStatusCode;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Sampling\NeverSampler;
+use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Tests\Shared\FakeApi;
 use Spatie\FlareClient\Tests\Shared\FakeIds;
@@ -455,4 +457,78 @@ it('can temporarily pause a trace sampling', function () {
     $sampledNestedSpan = $trace->expectSpan(2)
         ->expectName('Some other span - sampled')
         ->expectParentId($nestedSpan);
+});
+
+it('returns AddSpanResult::LimitReached from addSpan when span limit is reached', function () {
+    $tracer = setupFlare(
+        fn (FlareConfig $config) => $config
+        ->alwaysSampleTraces()
+        ->traceLimits(maxSpans: 2)
+    )->tracer;
+
+    $tracer->startTrace();
+
+    $span1 = $tracer->startSpan('Span 1');
+    $span2 = $tracer->startSpan('Span 2');
+
+    expect($span1)->toBeInstanceOf(Span::class);
+    expect($span2)->toBeInstanceOf(Span::class);
+    expect($tracer->currentTrace())->toHaveCount(2);
+
+    $span3 = $tracer->startSpan('Span 3');
+
+    expect($span3)->toBe(AddSpanResult::LimitReached);
+    expect($tracer->currentTrace())->toHaveCount(2);
+});
+
+it('does not corrupt the span tree when the limit is reached', function () {
+    $tracer = setupFlare(
+        fn (FlareConfig $config) => $config
+        ->alwaysSampleTraces()
+        ->traceLimits(maxSpans: 2)
+    )->tracer;
+
+    $tracer->startTrace();
+
+    $span1 = $tracer->startSpan('Parent');
+    $span2 = $tracer->startSpan('Child');
+    $span3 = $tracer->startSpan('Over limit');
+
+    expect($span3)->toBe(AddSpanResult::LimitReached);
+
+    expect($tracer->currentSpan())->toBe($span2);
+
+    $tracer->endSpan($span2);
+
+    expect($tracer->currentSpan())->toBe($span1);
+
+    $tracer->endSpan($span1);
+    $tracer->endTrace();
+
+    FakeApi::lastTrace()
+        ->expectSpanCount(2)
+        ->expectAllSpansClosed();
+});
+
+it('still executes the callback in span() when limit is reached', function () {
+    $tracer = setupFlare(
+        fn (FlareConfig $config) => $config
+        ->alwaysSampleTraces()
+        ->traceLimits(maxSpans: 1)
+    )->tracer;
+
+    $tracer->startTrace();
+    $tracer->startSpan('Fill the limit');
+
+    $executed = false;
+
+    $result = $tracer->span('Over limit', function () use (&$executed) {
+        $executed = true;
+
+        return 'result';
+    });
+
+    expect($executed)->toBeTrue();
+    expect($result)->toBe('result');
+    expect($tracer->currentTrace())->toHaveCount(1);
 });
