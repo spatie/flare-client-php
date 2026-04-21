@@ -30,6 +30,7 @@ use Spatie\FlareClient\Support\PhpStackFrameArgumentsFixer;
 use Spatie\FlareClient\Support\Recorders;
 use Spatie\FlareClient\Support\Redactor;
 use Spatie\FlareClient\Support\SentReports;
+use Spatie\FlareClient\Support\StacktraceMapper;
 use Spatie\FlareClient\Support\Telemetry;
 use Spatie\FlareClient\Support\Tester;
 use Spatie\FlareClient\Time\Time;
@@ -93,6 +94,8 @@ class FlareProvider
         $this->container->singleton(BackTracer::class, fn () => new BackTracer(
             $this->config->applicationPath
         ));
+
+        $this->container->singleton(StacktraceMapper::class);
 
         $this->container->singleton(Time::class, fn () => new $this->config->time);
         $this->container->singleton(Ids::class, fn () => new $this->config->ids);
@@ -218,6 +221,7 @@ class FlareProvider
         ));
 
         $this->container->singleton(ReportFactory::class, fn () => new ReportFactory(
+            stacktraceMapper: $this->container->get(StacktraceMapper::class),
             time: $this->container->get(Time::class),
             ids: $this->container->get(Ids::class),
             resource: $this->container->get(Resource::class),
