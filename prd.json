@@ -1,0 +1,374 @@
+{
+  "project": "flare-client-php",
+  "branchName": "ralph/flare-daemon",
+  "description": "Flare Daemon - a long-running PHP proxy that buffers, batches, and forwards payloads to Flare over TCP, plus client-side daemon mode support",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add FlareMode::Daemon enum case and FlareConfig::daemon() method",
+      "description": "As a developer, I want to configure my PHP application to use the Flare daemon, so that requests are not blocked by HTTP calls to Flare.",
+      "acceptanceCriteria": [
+        "Add `Daemon` case to the `FlareMode` enum in `src/Enums/FlareMode.php`",
+        "Add `public ?string $daemonUrl = null` property to `FlareConfig`",
+        "Add `daemon(string $daemonUrl = '127.0.0.1:8787'): static` method to `FlareConfig` that sets `daemonUrl`, `sender` to `DaemonSender::class`, and `senderConfig` to `['daemon_url' => $daemonUrl]`",
+        "Update `FlareProvider` mode resolution: `$config->daemonUrl !== null` resolves to `FlareMode::Daemon` (takes precedence over API key check)",
+        "`FlareMode::Daemon` behaves identically to `Enabled` for tracing, logging, and error reporting — no API key required",
+        "PHPStan passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Add emergency logger for delivery failures",
+      "description": "As a developer, I want failed payload deliveries logged to a configurable PSR logger, so I can diagnose delivery problems instead of them being silently swallowed.",
+      "acceptanceCriteria": [
+        "Add `public ?LoggerInterface $emergencyLogger = null` property to `FlareConfig`",
+        "Add `emergencyLogger(LoggerInterface $logger): static` method to `FlareConfig`",
+        "In `Api::sendEntity()` catch block, call `$this->emergencyLogger?->error('Flare delivery failed', ['exception' => $throwable])` when delivery fails in non-test mode",
+        "Existing behavior preserved: test mode still re-throws, non-test mode without logger still silently returns",
+        "PHPStan passes"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Create DaemonConnection persistent TCP client",
+      "description": "As a developer, I want a persistent TCP connection to the daemon that stays open for the PHP process lifetime, so multiple payloads are sent efficiently.",
+      "acceptanceCriteria": [
+        "Create `src/Support/DaemonConnection.php` with singleton pattern via `static create(string $daemonUrl): self`",
+        "Socket is lazy-opened on first `write()`, `ping()`, or `status()` call",
+        "All subsequent calls reuse the same socket",
+        "If a write/read fails, socket is closed and re-established on the next call (automatic reconnect)",
+        "`ping()` sends `PING`, returns `true` if daemon responds `2:OK`, `false` if unreachable",
+        "`status()` sends `STATUS`, returns parsed JSON array or `null` if unreachable",
+        "`readWithTimeout(int $seconds): string` supports blocking reads with timeout for test responses",
+        "`static reset(): void` nulls the singleton and closes the socket (for test isolation)",
+        "`__destruct` closes the socket",
+        "PHPStan passes"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Create DaemonSender TCP payload sender",
+      "description": "As a developer, I want the Flare client to send payloads to the daemon over TCP using a length-prefixed protocol, so the daemon can reliably parse and forward them.",
+      "acceptanceCriteria": [
+        "Create `src/Senders/DaemonSender.php` implementing the existing `Sender` interface",
+        "Payloads formatted as `{total_length}:{version}:{type}:{jsonPayload}` where version is `v1`",
+        "Normal payloads: writes via `DaemonConnection::write()`, reads `2:OK` ack via `DaemonConnection::read()`",
+        "Test payloads (`test: true`): appends `_test` to type, reads `2:OK` ack, then blocks to read Flare response via `readWithTimeout()`, parses `{length}:{type}:{statusCode}:{responseBody}`, verifies type matches, calls response callback",
+        "`onTestAck(Closure $callback)` registers a one-time callback that fires after daemon ack and before blocking for Flare response",
+        "Throws `DaemonTimeoutException` when test response read times out",
+        "On failure (daemon unreachable): throws exception caught by `Api::sendEntity`",
+        "PHPStan passes"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Update Tester with test() orchestration and daemon flow",
+      "description": "As a developer, I want the Tester class to orchestrate sending test payloads for all three types and report progress through callbacks, so CLI commands and framework integrations can provide rich feedback.",
+      "acceptanceCriteria": [
+        "Add `$sender`, `$onInfo`, `$onWarning`, `$onError` closure parameters to `Tester` constructor",
+        "`test(array $types, int $daemonTimeout = 30): bool` iterates `FlareEntityType::cases()`, skips disabled types with warning, sends enabled types",
+        "For CurlSender: reports 'Sending test {name}...' then success/failure",
+        "For DaemonSender: reports sending to daemon, daemon ack, waiting for Flare response, then success/failure",
+        "Catches `DaemonTimeoutException`, `BadResponseCode`, and general `Throwable` with appropriate messages",
+        "`reportSupportInfo()` outputs support URLs and contact info via `onInfo`",
+        "`platformInfo()` returns framework-agnostic info array (Platform, PHP, SDK, Curl, SSL)",
+        "Returns `true` only if all enabled types passed",
+        "PHPStan passes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Create daemon package scaffolding and infrastructure wrappers",
+      "description": "As a developer, I need the daemon package structure and infrastructure classes set up, so that daemon core classes can be built on top.",
+      "acceptanceCriteria": [
+        "Create `daemon/composer.json` for `spatie/flare-daemon` with PHP 8.2+, ReactPHP deps, PHPUnit, PHPStan, autoload `Spatie\\FlareDaemon\\` from `src/`",
+        "Create `daemon/bootstrap.php` for PHAR-safe autoloader setup",
+        "Create `daemon/phpstan.neon.dist` at level max for `src/` and `tests/`",
+        "Create `daemon/phpunit.xml.dist`",
+        "Create `daemon/src/Loop.php` wrapping `LoopInterface` with `running()` state tracking",
+        "Create `daemon/src/OutputWriter.php` using async `WritableResourceStream` when loop running, sync `fwrite` otherwise",
+        "Create `daemon/src/Clock.php` implementing `Contracts\\Clock`",
+        "Create `daemon/src/Browser.php` wrapping `React\\Http\\Browser` implementing `Contracts\\Browser`",
+        "Create `daemon/src/Contracts/Clock.php` and `daemon/src/Contracts/Browser.php` interfaces",
+        "Create `daemon/src/Factories/BrowserFactory.php`",
+        "Run `composer install` in `daemon/` successfully",
+        "PHPStan passes at level max"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Create Payload parser with unit tests",
+      "description": "As a daemon developer, I need a TCP payload parser that handles length-prefixed messages with chunked data support, so the server can reliably receive payloads from clients.",
+      "acceptanceCriteria": [
+        "Create `daemon/src/Payload.php` parsing `{length}:{version}:{type}:{data}` format",
+        "Accumulates chunks until complete (length matches)",
+        "Validates protocol version is `v1`, rejects invalid versions",
+        "Extracts type: `errors`, `traces`, `logs`, `errors_test`, `traces_test`, `logs_test`",
+        "`isTest()` returns true when type ends in `_test`",
+        "`baseType()` strips `_test` suffix to get the FlareEntityType value",
+        "After payload is complete, parser resets — leftover bytes from current chunk feed into next payload parse",
+        "Create `daemon/tests/Unit/PayloadTest.php` with tests for: parsing, chunked data, validation, type extraction, `isTest()`, `baseType()`, sequential parsing on persistent connections",
+        "PHPStan passes at level max",
+        "Tests pass"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Create StreamBuffer and NullBuffer with unit tests",
+      "description": "As a daemon developer, I need per-type payload buffers with size thresholds and a no-op buffer for over-quota types.",
+      "acceptanceCriteria": [
+        "Create `daemon/src/StreamBuffer.php` that accumulates payloads and tracks total size",
+        "StreamBuffer flushes (returns accumulated payloads) when size exceeds ~6MB threshold",
+        "`pull()` returns all buffered payloads and resets the buffer",
+        "Create `daemon/src/NullBuffer.php` that accepts payloads but drops them (no-op)",
+        "Create `daemon/tests/Unit/StreamBufferTest.php` with tests for: threshold detection, pull, flush, per-type isolation, NullBuffer dropping payloads",
+        "PHPStan passes at level max",
+        "Tests pass"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Create TCP Server class",
+      "description": "As a daemon operator, I want the daemon to accept persistent TCP connections and route payloads, so PHP applications can send data reliably.",
+      "acceptanceCriteria": [
+        "Create `daemon/src/Server.php` listening on configured address (default `127.0.0.1:8787`) using ReactPHP socket",
+        "Accepts persistent TCP connections — connections stay open for multiple payloads",
+        "Uses `Payload` class to parse incoming data (supports chunked arrival)",
+        "Routes normal payloads (`errors`, `traces`, `logs`) to `Ingest` buffer, responds `2:OK` via `$connection->write()` (not `end()`)",
+        "Routes test payloads (`errors_test`, etc.) to `Ingest` with test flag, responds `2:OK` immediately",
+        "Supports `PING` command — responds `2:OK`, connection stays open",
+        "Supports `STATUS` command — responds `{length}:{jsonStatusPayload}`, connection stays open",
+        "Handles `close` event gracefully, logs connection errors",
+        "PHPStan passes at level max"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-010",
+      "title": "Create Ingest class with buffering, forwarding, and response handling",
+      "description": "As a daemon operator, I want payloads buffered per type and forwarded to Flare in batches with gzip compression and proper response handling.",
+      "acceptanceCriteria": [
+        "Create `daemon/src/Ingest.php` managing three `StreamBuffer` instances, one per FlareEntityType",
+        "Buffer flushes when exceeding ~6MB size threshold or after 10-second timer",
+        "Maximum 5 concurrent outbound HTTP requests shared across all types",
+        "Forwards to `POST {baseUrl}/v1/{type}?key={apiKey}` with headers: `x-api-token`, `Content-Type: application/json`, `Content-Encoding: gzip`, `Accept: application/json`, `User-Agent: FlareDaemon/{version}`",
+        "Payloads are gzip-compressed before sending",
+        "Response handling: 201 success, 403 stop all types + warn prominently, 422 log body (stop if 'Missing API key'), 429 distinguish rate limit (backoff) vs quota exceeded (pause type), other errors logged",
+        "Response body >1005 bytes truncated in logs",
+        "Force digest on shutdown: flush all buffers, wait for in-flight requests",
+        "Pause/resume: over-quota type's StreamBuffer swapped to NullBuffer, restored on resume via `resumeIngestion($type)`",
+        "PHPStan passes at level max"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-011",
+      "title": "Add test payload flow to Ingest",
+      "description": "As a developer running flare:test, I want test payloads to flow through the daemon and return the actual Flare response for end-to-end verification.",
+      "acceptanceCriteria": [
+        "Test payloads (`_test` suffix) bypass quota checks — write to real StreamBuffer even when NullBuffer is active",
+        "Test payloads trigger an immediate buffer flush (no waiting for timer or size threshold)",
+        "Flush sends each payload as a separate HTTP request (no batching) so the test payload's response can be identified",
+        "TCP connection reference stored as pending test connection for that type",
+        "When Flare responds, sends second message to pending test connections: `{length}:{type}:{statusCode}:{responseBody}`",
+        "If Flare request fails (network error), pending test connections receive synthetic `{length}:{type}:503:{\"message\":\"Upstream error\"}`",
+        "If daemon shuts down while test connection pending, force-digest flushes buffer and delivers response before closing",
+        "Test payloads count toward local usage counters",
+        "Multiple test types work sequentially on the same persistent connection",
+        "PHPStan passes at level max"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-012",
+      "title": "Create UsageRepository and Usage value object for quota management",
+      "description": "As a daemon operator, I want per-type quota tracking so payloads are dropped locally when limits are reached instead of being rejected by Flare.",
+      "acceptanceCriteria": [
+        "Create `daemon/src/Usage.php` value object with `errorsUsed`, `errorsLimit`, `tracesUsed`, `tracesLimit`, `logsUsed`, `logsLimit`, `resetAt`",
+        "Create `daemon/src/UsageRepository.php` that fetches `GET {baseUrl}/v1/usage?key={apiKey}` on startup",
+        "If any type is over limit on startup, immediately pauses that type via Ingest",
+        "Re-fetches usage every 24 hours via periodic timer",
+        "After each successful ingest, increments local counters by payload array count; pauses type when counter reaches limit",
+        "On 429 'quota exceeded' from Flare, immediately pauses that type and schedules usage re-fetch",
+        "Per-type independence: hitting error limit does not pause traces or logs",
+        "Resume logic: when re-fetch shows type under quota, calls `Ingest::resumeIngestion($type)`",
+        "If all types over quota, schedules re-fetch at `reset_at` time",
+        "Retry before first successful fetch: exponential backoff (2.5s, 5s, 10s, 15s, 30s, 60s, 120s, 240s, then 300s x12, then 3600s)",
+        "Retry after first successful fetch: every 300s, then 3600s after 13 consecutive failures",
+        "PHPStan passes at level max"
+      ],
+      "priority": 12,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-013",
+      "title": "Create CheckForUpdates for composer.lock monitoring",
+      "description": "As a VPS operator, I want the daemon to detect composer.lock changes so it restarts with the updated binary.",
+      "acceptanceCriteria": [
+        "Create `daemon/src/CheckForUpdates.php` that reads and hashes `composer.lock` on startup",
+        "Re-reads and hashes every 60 seconds",
+        "If hash changes: initiates graceful shutdown with 5-minute countdown, logging every minute",
+        "After countdown: force-digest all buffers, wait for in-flight requests, stop loop",
+        "If file temporarily unreadable (e.g., Envoyer symlink deploy): skips that check, does not trigger shutdown",
+        "If no `FLARE_COMPOSER_LOCK` configured: update checking is disabled",
+        "PHPStan passes at level max"
+      ],
+      "priority": 13,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-014",
+      "title": "Create daemon.php entry point and bootstrap",
+      "description": "As a daemon operator, I want the daemon to start up, wire all components together, and run the event loop.",
+      "acceptanceCriteria": [
+        "Create `daemon/src/daemon.php` entry point that reads config from environment variables (`FLARE_API_KEY` required, others have defaults)",
+        "Startup sequence: read config, setup loop, create logger, init usage repo, init ingest, start TCP server, fetch initial usage, start composer.lock monitoring (if configured), run loop",
+        "Log levels configurable via `FLARE_DAEMON_LOG_LEVEL`: `critical`, `error`, `info`, `verbose`",
+        "Graceful shutdown on SIGTERM/SIGINT: force-digest all buffers, wait for in-flight, stop loop",
+        "PHPStan passes at level max"
+      ],
+      "priority": 14,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-015",
+      "title": "Create daemon test infrastructure with fakes and helpers",
+      "description": "As a daemon developer, I need test fakes with deterministic time simulation so daemon behavior can be tested reliably and instantly.",
+      "acceptanceCriteria": [
+        "Create `daemon/tests/TestCase.php` base class",
+        "Create `daemon/tests/LoopFake.php` simulating time progression, tracking timers, running scheduled callbacks deterministically",
+        "Create `daemon/tests/BrowserFake.php` recording HTTP requests, returning pre-configured responses",
+        "Create `daemon/tests/TcpServerFake.php` simulating TCP connections with pending payloads",
+        "Create `daemon/tests/SyncedClock.php` providing deterministic clock synced with LoopFake's time",
+        "Create `daemon/tests/Connection.php` for asserting TCP connection responses",
+        "Create `daemon/tests/PendingConnection.php` for preparing fake connection data",
+        "Create `daemon/tests/Request.php` for asserting outbound HTTP requests",
+        "Create `daemon/tests/Response.php` for creating fake HTTP responses",
+        "Create `daemon/tests/Timer.php` for asserting timer scheduling",
+        "Create `daemon/tests/daemon-wrapper.php` and `daemon/tests/bootstrap.php` for subprocess-based test runs",
+        "Tests run deterministically (no real I/O or sleep) via LoopFake time simulation",
+        "PHPStan passes at level max"
+      ],
+      "priority": 15,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-016",
+      "title": "Write Server feature tests",
+      "description": "As a daemon developer, I want comprehensive feature tests for the TCP server to ensure reliable payload handling.",
+      "acceptanceCriteria": [
+        "Create `daemon/tests/Feature/ServerTest.php`",
+        "Test TCP connection handling and persistent connections (multiple payloads on same connection)",
+        "Test PING command responds `2:OK` and keeps connection open",
+        "Test STATUS command responds with JSON status payload",
+        "Test invalid payload rejection (bad version, malformed data)",
+        "Test incomplete/chunked payload handling",
+        "Test version mismatch rejection",
+        "Test connection close event handling",
+        "Tests pass"
+      ],
+      "priority": 16,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-017",
+      "title": "Write Ingest and test payload feature tests",
+      "description": "As a daemon developer, I want comprehensive feature tests for buffering, forwarding, and test payload flow.",
+      "acceptanceCriteria": [
+        "Create `daemon/tests/Feature/IngestTest.php`",
+        "Test buffering per type and size threshold flush",
+        "Test 10-second timer flush",
+        "Test concurrent request limiting (max 5)",
+        "Test quota stop/resume with NullBuffer swap",
+        "Test response handling for 201, 403, 422, 429 (rate limit vs quota), other errors",
+        "Test force digest on shutdown",
+        "Test test payload buffering bypasses quota (writes to real buffer when NullBuffer active)",
+        "Test test payload triggers immediate flush",
+        "Test test payload response forwarded to TCP connection with correct format",
+        "Test upstream error produces synthetic 503 response",
+        "Test multiple test types on same persistent connection",
+        "Tests pass"
+      ],
+      "priority": 17,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-018",
+      "title": "Write UsageRepository and daemon lifecycle feature tests",
+      "description": "As a daemon developer, I want feature tests for quota management, retry strategies, and daemon lifecycle.",
+      "acceptanceCriteria": [
+        "Create `daemon/tests/Feature/UsageRepositoryTest.php`",
+        "Test quota fetch on startup and per-type pause when over limit",
+        "Test daily refresh via 24-hour timer",
+        "Test local counter tracking and pause when counter reaches limit",
+        "Test response-driven stop on 429 quota exceeded",
+        "Test per-type independence (error limit does not pause traces)",
+        "Test resume when re-fetch shows type under quota",
+        "Test retry strategy: exponential backoff before first fetch, 300s after, 3600s after 13 failures",
+        "Create `daemon/tests/Feature/DaemonTest.php` for lifecycle tests",
+        "Test daemon startup sequence",
+        "Test graceful shutdown (force-digest, wait for in-flight, stop loop)",
+        "Test composer.lock change detection triggers shutdown countdown",
+        "Tests pass"
+      ],
+      "priority": 18,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-019",
+      "title": "Add PHAR build config and Docker image",
+      "description": "As a release engineer, I want to build the daemon as a PHAR binary and Docker image for distribution.",
+      "acceptanceCriteria": [
+        "Create `daemon/box.json.dist`: main `src/daemon.php`, output `build/daemon.phar`, PhpScoper compactor",
+        "Create `daemon/scoper.inc.php` for PHP-Scoper namespace isolation",
+        "Create `daemon/build.sh`: builds Docker build environment, installs production deps, compiles PHAR",
+        "Create `daemon/docker/Dockerfile.build` with box and PHP-Scoper",
+        "Create `daemon/docker/install-composer.sh`",
+        "Create `daemon/Dockerfile` based on `php:8.2-cli-alpine` with zlib, copies PHAR, exposes port 8787",
+        "Create `daemon/docker/entrypoint.sh` that starts the daemon",
+        "Create `daemon/.env.example` with all env vars documented",
+        "Create `daemon/.gitignore` excluding `build/`, `vendor/`, `.env`"
+      ],
+      "priority": 19,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

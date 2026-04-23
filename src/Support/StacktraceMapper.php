@@ -11,7 +11,15 @@ class StacktraceMapper
     /**
      * @param array<Frame> $frames
      *
-     * @return array<array{file: string, lineNumber: int, method: string|null, class: string|null, codeSnippet: array<string>, arguments: array|null, isApplicationFrame: bool}>
+     * @return array<array{
+     *     file: string,
+     *     lineNumber: int,
+     *     method: string|null,
+     *     class: string|null,
+     *     codeSnippet: array<string>,
+     *     arguments: array|null,
+     *     isApplicationFrame: bool
+     * }>
      */
     public function map(array $frames, ?Throwable $throwable): array
     {
@@ -25,6 +33,11 @@ class StacktraceMapper
         );
     }
 
+    /**
+     * @param array<Frame> $frames
+     *
+     * @return array<Frame>
+     */
     protected function cleanupStackTraceForError(
         array $frames,
         Throwable $throwable,
@@ -55,7 +68,15 @@ class StacktraceMapper
     }
 
     /**
-     * @return array{file: string, lineNumber: int, method: string|null, class: string|null, codeSnippet: array<string>, arguments: array|null, isApplicationFrame: bool}
+     * @return array{
+     *     file: string,
+     *     lineNumber: int,
+     *     method: string|null,
+     *     class: string|null,
+     *     codeSnippet: array<string>,
+     *     arguments: array|null,
+     *     isApplicationFrame: bool
+     * }
      */
     protected function mapFrame(Frame $frame): array
     {

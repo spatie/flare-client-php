@@ -70,7 +70,7 @@ abstract class SpanEventsRecorder extends Recorder implements SpanEventsRecorder
             return;
         }
 
-        if (count($span->events) >= $this->tracer->limits->maxSpanEventsPerSpan) {
+        if (count($span->events) >= $this->tracer->limits['max_span_events_per_span']) {
             $span->droppedEventsCount++;
 
             return;

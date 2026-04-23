@@ -19,7 +19,8 @@
         "symfony/http-foundation": "^5.2|^6.0|^7.0|^8.0",
         "symfony/mime": "^5.2|^6.0|^7.0|^8.0",
         "symfony/process": "^5.2|^6.0|^7.0|^8.0",
-        "symfony/var-dumper": "^5.2|^6.0|^7.0|^8.0"
+        "symfony/var-dumper": "^5.2|^6.0|^7.0|^8.0",
+        "monolog/monolog": "^3.0"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.89",
@@ -27,6 +28,7 @@
         "phpstan/extension-installer": "^1.4",
         "phpstan/phpstan-deprecation-rules": "^1.2",
         "phpstan/phpstan-phpunit": "^1.4",
+        "spatie/invade": "^2.1",
         "spatie/pest-plugin-snapshots": "^2.2"
     },
     "autoload": {

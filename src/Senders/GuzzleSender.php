@@ -5,7 +5,8 @@ namespace Spatie\FlareClient\Senders;
 use Closure;
 use GuzzleHttp\Client;
 use Psr\Http\Message\ResponseInterface;
-use Spatie\FlareClient\Enums\FlarePayloadType;
+use Spatie\FlareClient\Enums\FlareEntityType;
+use Spatie\FlareClient\Senders\Exceptions\ConnectionError;
 use Spatie\FlareClient\Senders\Support\Response;
 
 class GuzzleSender implements Sender
@@ -18,7 +19,7 @@ class GuzzleSender implements Sender
         $this->client = new Client($config);
     }
 
-    public function post(string $endpoint, string $apiToken, array $payload, FlarePayloadType $type, Closure $callback): void
+    public function post(string $endpoint, string $apiToken, array $payload, FlareEntityType $type, bool $test, Closure $callback): void
     {
         $response = $this->executeRequest($endpoint, $apiToken, $payload);
 
@@ -27,7 +28,7 @@ class GuzzleSender implements Sender
         $body = json_decode($rawResponse, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            $body = $rawResponse;
+            throw new ConnectionError('Invalid JSON response received');
         }
 
         $callback(new Response(

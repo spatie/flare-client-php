@@ -9,7 +9,6 @@ use Spatie\FlareClient\Concerns\Recorders\BacktracingRecorder;
 use Spatie\FlareClient\Concerns\Recorders\ErrorsRecorder;
 use Spatie\FlareClient\Concerns\Recorders\TracingRecorder;
 use Spatie\FlareClient\Contracts\Recorders\SpansRecorder as SpansRecorderContract;
-use Spatie\FlareClient\Enums\SamplingType;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Support\BackTracer;
 use Spatie\FlareClient\Support\TimeInterval;
@@ -24,12 +23,8 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
     use ErrorsRecorder;
     use TracingRecorder;
 
-    private int $nestingCounter = 0;
-
     /** @var array<Span> */
     private array $stack = [];
-
-    private bool $startedTrace = false;
 
     public static function register(ContainerInterface $container, array $config): Closure
     {
@@ -71,7 +66,6 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
      * @param Closure():array<string, mixed>|array $attributes
      * @param Closure():array{name: string, attributes: array<string, mixed>}|null $nameAndAttributes
      * @param int|null $time
-     * @param string|null $parentId
      *
      * @return Span|null
      */
@@ -80,20 +74,13 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
         Closure|array $attributes = [],
         ?Closure $nameAndAttributes = null,
         ?int $time = null,
-        ?string $parentId = null,
-        bool $canStartTrace = false,
     ): ?Span {
         if ($nameAndAttributes === null && $name === null) {
             throw new InvalidArgumentException('Either $nameAndAttributes must be set, or both $name and $attributes must be set.');
         }
 
-        $startedTraceForSpan = $this->potentiallyStartTrace($canStartTrace);
-
-        $shouldTrace = $this->withTraces && $this->tracer->samplingType === SamplingType::Sampling;
+        $shouldTrace = $this->withTraces && $this->tracer->sampling;
         $shouldReport = $this->shouldReport();
-
-        // In the case of an unsampled trace we still want to end the trace after the outermost span, so raise already here
-        $this->nestingCounter++;
 
         if ($shouldTrace === false && $shouldReport === false) {
             return null;
@@ -106,16 +93,12 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
             ['name' => $name, 'attributes' => $attributes] = $nameAndAttributes();
         }
 
-        $spanId = $startedTraceForSpan && $this->tracer->currentSpanId()
-            ? $this->tracer->currentSpanId()
-            : $this->tracer->ids->span();
-
-        $parentSpanId = $startedTraceForSpan
-            ? null
-            : ($parentId ?? $this->tracer->currentSpanId());
+        // Order of operations is important here, do not inline!
+        $parentSpanId = $this->tracer->currentParentSpanId();
+        $spanId = $this->tracer->nextSpanId();
 
         $span = new Span(
-            traceId: $this->tracer->currentTraceId() ?? $this->tracer->ids->trace(),
+            traceId: $this->tracer->currentTraceId(),
             spanId: $spanId,
             parentSpanId: $parentSpanId,
             name: $name,
@@ -124,52 +107,17 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
             attributes: $attributes,
         );
 
+        $this->stack[] = $span;
+
         if ($shouldReport) {
             $this->addEntryToReport($span);
         }
 
-        $this->stack[] = $span;
-
         if ($shouldTrace) {
-            $this->tracer->addRawSpan($span);
+            $this->tracer->addSpan($span);
         }
 
         return $span;
-    }
-
-    private function potentiallyStartTrace(bool $canStartTrace): bool
-    {
-        $shouldStartTrace = $canStartTrace
-            && $this->withTraces === true
-            && $this->tracer->samplingType === SamplingType::Waiting
-            && $this->nestingCounter === 0;
-
-        if (! $shouldStartTrace) {
-            return false;
-        }
-
-        $this->tracer->startTrace();
-        $this->startedTrace = true;
-
-        return true;
-    }
-
-    final protected function potentiallyResumeTrace(
-        ?string $traceParent,
-    ): bool {
-        $shouldStartTrace = $traceParent !== null
-            && $this->withTraces === true
-            && $this->tracer->samplingType === SamplingType::Waiting
-            && $this->nestingCounter === 0;
-
-        if (! $shouldStartTrace) {
-            return false;
-        }
-
-        $this->tracer->startTrace($traceParent);
-        $this->startedTrace = true;
-
-        return true;
     }
 
     /**
@@ -180,66 +128,14 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
         ?int $time = null,
         Closure|array $additionalAttributes = [],
         ?Closure $spanCallback = null,
+        bool $includeMemoryUsage = false,
     ): ?Span {
-        $this->nestingCounter--;
-
         $span = array_pop($this->stack);
 
-        $alreadyModifiedSpan = false;
-
-        if ($this->withErrors && $span !== null) {
-            $this->modifySpanToEnd($span, $time, $additionalAttributes, $spanCallback);
-
-            $alreadyModifiedSpan = true;
-        }
-
-        if ($this->withTraces === false
-            || $this->tracer->samplingType === SamplingType::Disabled
-            || $this->tracer->samplingType === SamplingType::Waiting
-        ) {
-            return null;
-        }
-
-        if ($this->startedTrace
-            && $this->tracer->samplingType === SamplingType::Off
-            && $this->nestingCounter === 0
-        ) {
-            $this->startedTrace = false;
-            $this->tracer->endTrace();
-
-            return $span;
-        }
-
-        if ($this->tracer->samplingType === SamplingType::Off) {
-            return $span;
-        }
-
         if ($span === null) {
-            // We should not end up here
-
             return null;
         }
 
-        if ($alreadyModifiedSpan === false) {
-            $this->modifySpanToEnd($span, $time, $additionalAttributes, $spanCallback);
-        }
-
-        $this->tracer->endSpan($span);
-
-        if ($this->startedTrace && $this->nestingCounter === 0) {
-            $this->startedTrace = false;
-            $this->tracer->endTrace();
-        }
-
-        return $span;
-    }
-
-    private function modifySpanToEnd(
-        Span $span,
-        ?int $time,
-        Closure|array $additionalAttributes,
-        ?Closure $spanCallback,
-    ): Span {
         $span->end = $time ?? $this->tracer->time->getCurrentTime();
 
         if ($spanCallback) {
@@ -253,6 +149,14 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
         if (count($additionalAttributes) > 0) {
             $span->addAttributes($additionalAttributes);
         }
+
+        if ($this->withTraces === false
+            || $this->tracer->sampling === false
+            || $this->tracer->disabled === true) {
+            return $span;
+        }
+
+        $this->tracer->endSpan($span, includeMemoryUsage: $includeMemoryUsage);
 
         return $span;
     }
@@ -271,10 +175,9 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
         ?int $start = null,
         ?int $end = null,
         ?int $duration = null,
-        ?string $parentId = null,
         ?Closure $additionalAttributes = null,
         ?Closure $spanCallback = null,
-        bool $canStartTrace = false,
+        bool $includeMemoryUsage = false,
     ): ?Span {
         [$start, $end] = TimeInterval::resolve(
             time: $this->tracer->time,
@@ -288,8 +191,6 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
             attributes: $attributes,
             nameAndAttributes: $nameAndAttributes,
             time: $start,
-            parentId: $parentId,
-            canStartTrace: $canStartTrace
         );
 
         if ($span === null) {
@@ -300,9 +201,10 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
             time: $end,
             additionalAttributes: $additionalAttributes === null ? [] : $additionalAttributes,
             spanCallback: $spanCallback,
+            includeMemoryUsage: $includeMemoryUsage,
         );
 
-        if ($this->withTraces && $this->tracer->samplingType === SamplingType::Sampling) {
+        if ($this->withTraces && $this->tracer->sampling === true) {
             $this->backtraceEntry($span);
         }
 

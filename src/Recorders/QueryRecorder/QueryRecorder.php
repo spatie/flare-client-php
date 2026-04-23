@@ -16,7 +16,7 @@ class QueryRecorder extends SpansRecorder
 
     public const DEFAULT_FIND_ORIGIN = true;
 
-    public const DEFAULT_FIND_ORIGIN_THRESHOLD = 300_000;
+    public const DEFAULT_FIND_ORIGIN_THRESHOLD = 100_000_000; // in nanoseconds (100 seconds)
 
     public static function type(): string|RecorderType
     {

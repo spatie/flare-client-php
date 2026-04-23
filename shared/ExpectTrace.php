@@ -4,10 +4,14 @@ namespace Spatie\FlareClient\Tests\Shared;
 
 use Closure;
 use Exception;
+use Spatie\FlareClient\Contracts\FlareSpanType;
+use Spatie\FlareClient\Enums\SpanType;
+use Stringable;
 
 class ExpectTrace
 {
-    protected int $spanAssertCounter = 0;
+    /** @var array<int, ExpectSpan> */
+    protected array $expectSpans;
 
     public static function create(array $trace): self
     {
@@ -17,32 +21,295 @@ class ExpectTrace
     public function __construct(
         public array $trace
     ) {
+        $spans = $this->trace['resourceSpans'][0]['scopeSpans'][0]['spans'];
+
+        $this->expectSpans = array_map(
+            fn (array $span) => new ExpectSpan($span, $this->getIndentLevel($spans, $span['parentSpanId'] ?? null)),
+            $spans,
+        );
     }
 
-    public function hasSpanCount(int $count): self
+    public function expectSpan(int|FlareSpanType $index): ExpectSpan
     {
-        expect($this->trace)->toHaveCount($count);
+        if (is_int($index)) {
+            return $this->expectSpans[$index];
+        }
+
+        $expectedSpan = null;
+
+        $this->expectSpans(
+            $index,
+            function (ExpectSpan $span) use (&$expectedSpan) {
+                $expectedSpan = $span;
+            }
+        );
+
+        return $expectedSpan;
+    }
+
+    /**
+     * @param Closure(ExpectSpan):void ...$closures
+     */
+    public function expectSpans(
+        FlareSpanType $type,
+        Closure ...$closures
+    ): self
+    {
+        $spansWithType = array_values(array_filter(
+            $this->expectSpans,
+            fn (ExpectSpan $span) => $span->type === $type->value
+        ));
+
+        $expectedCount = count($closures);
+        $realCount = count($spansWithType);
+
+        expect($spansWithType)->toHaveCount($expectedCount, "Expected to find {$expectedCount} spans of type {$type->value} but found {$realCount}.");
+
+        foreach ($closures as $i => $closure) {
+            $closure($spansWithType[$i]);
+        }
+
+        return $this;
+    }
+
+    public function expectSpanCount(int $count, ?FlareSpanType $type = null): self
+    {
+        $spans = $this->expectSpans;
+
+        if ($type !== null) {
+            $spans = array_filter($spans, fn (ExpectSpan $span) => $span->type === $type->value);
+        }
+
+        expect($spans)->toHaveCount($count);
+
+        return $this;
+    }
+
+    public function expectNoSpans(): self
+    {
+        expect($this->expectSpans)->toBeEmpty();
+
+        return $this;
+    }
+
+    public function expectResource(): ExpectResource
+    {
+        return new ExpectResource($this->trace['resourceSpans'][0]['resource']);
+    }
+
+    public function expectScope(): ExpectScope
+    {
+        return ExpectScope::create($this->trace['resourceSpans'][0]['scopeSpans'][0]['scope']);
+    }
+
+    public function expectAllSpansClosed(): self
+    {
+        foreach ($this->expectSpans as $expectSpan) {
+            expect($expectSpan->span['endTimeUnixNano'] ?? null)->not->toBeNull("Span with ID {$expectSpan->span['spanId']} is not closed.");
+            expect($expectSpan->span['startTimeUnixNano'] ?? null)->not->toBeNull("Span with ID {$expectSpan->span['spanId']} is not closed.");
+        }
 
         return $this;
     }
 
     /**
-     * @param Closure(ExpectSpan): void $closure
+     * @param (Closure(&$spanIndex int, $currentSpan ExpectSpan):void)|null $applicationSpans
+     * @param (Closure(&$spanIndex int, $currentSpan ExpectSpan):void)|null $terminatingSpans
      */
-    public function span(
-        Closure $closure,
-        ?Span &$span = null,
+    public function expectLifecycle(
+        bool $registration = true,
+        bool $boot = true,
+        Closure|null $applicationSpans = null,
+        bool $terminating = true,
+        Closure|null $terminatingSpans = null,
     ): self {
-        $span = array_values($this->trace)[$this->spanAssertCounter] ?? null;
+        $spanIndex = 0;
 
-        if ($span === null) {
-            throw new Exception('Span is not recorded');
+        $applicationSpan = $this->expectSpan($spanIndex++)
+            ->expectMissingParentId()
+            ->expectType(SpanType::Application);
+
+        if ($registration) {
+            $registrationSpan = $this->expectSpan($spanIndex++)
+                ->expectParentId($applicationSpan)
+                ->expectType(SpanType::ApplicationRegistration);
         }
 
-        $closure(new ExpectSpan($span));
+        if ($boot) {
+            $bootSpan = $this->expectSpan($spanIndex++)
+                ->expectParentId($applicationSpan)
+                ->expectType(SpanType::ApplicationBoot);
+        }
 
-        $this->spanAssertCounter++;
+        if ($applicationSpans) {
+            $applicationSpans($spanIndex, $applicationSpan);
+        }
+
+        if ($terminating) {
+            while (true) {
+                if ($spanIndex === count($this->expectSpans)) {
+                    throw new Exception('could not find terminating span');
+                }
+
+                $currentSpan = $this->expectSpan($spanIndex);
+
+                if ($currentSpan->type === SpanType::ApplicationTerminating->value) {
+                    break;
+                }
+
+                $spanIndex++;
+            }
+
+            $terminatingSpan = $this->expectSpan($spanIndex)
+                ->expectParentId($applicationSpan)
+                ->expectType(SpanType::ApplicationTerminating);
+
+            if($terminatingSpans){
+                $spanIndex++;
+
+                $terminatingSpans($spanIndex, $terminatingSpan);
+            }
+        }
+
+        $this->expectAllSpansClosed();
 
         return $this;
+    }
+
+    /**
+     * @param (Closure(&$spanIndex int, $currentSpan ExpectSpan):void)|null $requestSpans
+     * @param (Closure(&$spanIndex int, $currentSpan ExpectSpan):void)|null $terminatingSpans
+     */
+    public function expectRequestLifecycle(
+        bool $registration = true,
+        bool $boot = true,
+        bool $globalBeforeMiddleware = true,
+        bool $routing = true,
+        bool $beforeMiddleware = true,
+        Closure|null $requestSpans = null,
+        bool $afterMiddleware = true,
+        bool $globalAfterMiddleware = true,
+        bool $terminating = true,
+        Closure|null $terminatingSpans = null,
+    ): self {
+        return $this->expectLifecycle(
+            registration: $registration,
+            boot: $boot,
+            applicationSpans: function (&$spanIndex, $applicationSpan) use (
+                $requestSpans,
+                $globalBeforeMiddleware,
+                $routing,
+                $beforeMiddleware,
+                $afterMiddleware,
+                $globalAfterMiddleware
+            ) {
+                $requestSpan = $this->expectSpan($spanIndex++)
+                    ->expectParentId($applicationSpan)
+                    ->expectType(SpanType::Request);
+
+                if ($globalBeforeMiddleware) {
+                    $globalBeforeMiddlewareSpan = $this->expectSpan($spanIndex++)
+                        ->expectParentId($requestSpan)
+                        ->expectType(SpanType::GlobalBeforeMiddleware);
+                }
+
+                if ($routing) {
+                    $routingSpan = $this->expectSpan($spanIndex++)
+                        ->expectParentId($requestSpan)
+                        ->expectType(SpanType::Routing);
+                }
+
+                if ($beforeMiddleware) {
+                    $beforeMiddlewareSpan = $this->expectSpan($spanIndex++)
+                        ->expectParentId($requestSpan)
+                        ->expectType(SpanType::BeforeMiddleware);
+                }
+
+                if ($requestSpans) {
+                    $requestSpans($spanIndex, $requestSpan);
+                }
+
+                if ($afterMiddleware) {
+                    $afterMiddlewareSpan = $this->expectSpan($spanIndex++)
+                        ->expectParentId($requestSpan)
+                        ->expectType(SpanType::AfterMiddleware);
+                }
+
+                if ($globalAfterMiddleware) {
+                    $globalAfterMiddlewareSpan = $this->expectSpan($spanIndex++)
+                        ->expectParentId($requestSpan)
+                        ->expectType(SpanType::GlobalAfterMiddleware);
+                }
+            },
+            terminating: $terminating,
+            terminatingSpans: $terminatingSpans,
+        );
+    }
+
+    /**
+     * @param (Closure(&$spanIndex int, $currentSpan ExpectSpan):void)|null $requestSpans
+     * @param (Closure(&$spanIndex int, $currentSpan ExpectSpan):void)|null $terminatingSpans
+     */
+    public function expectLaravelRequestLifecycle(
+        Closure|null $requestSpans = null,
+        Closure|null $terminatingSpans = null,
+    ): self {
+        return $this->expectRequestLifecycle(
+            requestSpans: $requestSpans,
+            afterMiddleware: false,
+            globalAfterMiddleware: false,
+            terminatingSpans: $terminatingSpans,
+        );
+    }
+
+    protected function getIndentLevel(array $spans, ?string $parentId): int
+    {
+        if ($parentId === null) {
+            return 0;
+        }
+
+        $level = 1;
+
+        $currentParentId = $parentId;
+
+        while ($currentParentId !== null) {
+            $parentSpan = null;
+
+            foreach ($spans as $span) {
+                if ($span['spanId'] === $currentParentId) {
+                    $parentSpan = $span;
+
+                    break;
+                }
+            }
+
+            if ($parentSpan === null) {
+                break;
+            }
+
+            $currentParentId = $parentSpan['parentSpanId'] ?? null;
+
+            if ($currentParentId !== null) {
+                $level++;
+            }
+        }
+
+        return $level;
+    }
+
+    public function toArray(): array
+    {
+        return $this->trace;
+    }
+
+    public function toString(): string
+    {
+        $output = [];
+
+        foreach ($this->expectSpans as $expectSpan) {
+            $output[] = $expectSpan->toString();
+        }
+
+        return implode(PHP_EOL, $output);
     }
 }

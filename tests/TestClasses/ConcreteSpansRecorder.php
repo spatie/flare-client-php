@@ -13,9 +13,9 @@ class ConcreteSpansRecorder extends SpansRecorder
         return 'spans';
     }
 
-    public function pushSpan(string $name, bool $canStartTrace = false): ?Span
+    public function pushSpan(string $name): ?Span
     {
-        return $this->startSpan(name: $name, canStartTrace: $canStartTrace);
+        return $this->startSpan(name: $name);
     }
 
     public function popSpan(): ?Span
@@ -26,17 +26,10 @@ class ConcreteSpansRecorder extends SpansRecorder
     public function record(
         string $name,
         int $duration,
-        bool $canStartTrace = false
     ): ?Span {
         return $this->span(
             $name,
             duration: $duration,
-            canStartTrace: $canStartTrace,
         );
-    }
-
-    public function resumeTrace(?string $traceParent): void
-    {
-        $this->potentiallyResumeTrace($traceParent);
     }
 }
