@@ -2,11 +2,16 @@
 
 namespace Spatie\FlareClient\Recorders\RoutingRecorder;
 
+use Closure;
+use Psr\Container\ContainerInterface;
+use Spatie\FlareClient\EntryPoint\EntryPointResolver;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Recorders\SpansRecorder;
 use Spatie\FlareClient\Spans\Span;
+use Spatie\FlareClient\Support\BackTracer;
 use Spatie\FlareClient\Support\TimeInterval;
+use Spatie\FlareClient\Tracer;
 
 class RoutingRecorder extends SpansRecorder
 {
@@ -20,9 +25,30 @@ class RoutingRecorder extends SpansRecorder
 
     protected bool $globalAfterMiddleware = false;
 
+    public static function register(ContainerInterface $container, array $config): Closure
+    {
+        return fn () => new static(
+            $container->get(Tracer::class),
+            $container->get(BackTracer::class),
+            $container->get(EntryPointResolver::class),
+            $config,
+        );
+    }
+
+    public function __construct(
+        Tracer $tracer,
+        BackTracer $backTracer,
+        protected EntryPointResolver $entryPointResolver,
+        array $config,
+    ) {
+        parent::__construct($tracer, $backTracer, $config);
+    }
+
     protected function configure(array $config): void
     {
-        $this->withTraces = true;
+        if (! array_key_exists('with_traces', $config)) {
+            $this->withTraces = true;
+        }
     }
 
     public static function type(): string|RecorderType
@@ -107,7 +133,10 @@ class RoutingRecorder extends SpansRecorder
 
     public function recordRoutingEnd(
         array $attributes = [],
-        ?int $time = null
+        ?int $time = null,
+        ?string $route = null,
+        ?string $entryPointHandlerName = null,
+        string $entryPointHandlerType = 'php_request',
     ): ?Span {
         if ($this->routing === false) {
             return null;
@@ -115,11 +144,35 @@ class RoutingRecorder extends SpansRecorder
 
         $this->routing = false;
 
+        $route ??= $attributes['http.route'] ?? null;
+
+        $entryPoint = $this->entryPointResolver->get();
+
+        if (! $entryPoint->handlerResolved) {
+            $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
+
+            $entryPoint->setHandler(
+                handlerIdentifier: $route ? "{$method} {$route}" : $method,
+                handlerName: $entryPointHandlerName,
+                handlerType: $entryPointHandlerType,
+            );
+        }
+
+        if ($route !== null && in_array($route, $this->defaultIgnoredRoutes())) {
+            $this->tracer->unsample();
+        }
+
+        if ($route && ! array_key_exists('http.route', $attributes)) {
+            $attributes['http.route'] = $route;
+        }
+
         return $this->endSpan(
             time: $time,
             additionalAttributes: $attributes,
         );
     }
+
+
 
     public function recordRouting(
         array $attributes = [],
@@ -315,5 +368,11 @@ class RoutingRecorder extends SpansRecorder
         }
 
         return null;
+    }
+
+    /** @return array<int, string> */
+    protected function defaultIgnoredRoutes(): array
+    {
+        return [];
     }
 }

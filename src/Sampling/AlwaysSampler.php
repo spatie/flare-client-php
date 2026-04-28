@@ -2,9 +2,11 @@
 
 namespace Spatie\FlareClient\Sampling;
 
+use Spatie\FlareClient\EntryPoint\EntryPoint;
+
 class AlwaysSampler implements Sampler
 {
-    public function shouldSample(array $context): bool
+    public function shouldSample(EntryPoint $entryPoint): bool
     {
         return true;
     }

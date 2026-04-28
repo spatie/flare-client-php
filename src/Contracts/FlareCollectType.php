@@ -7,5 +7,5 @@ namespace Spatie\FlareClient\Contracts;
  */
 interface FlareCollectType
 {
-
+    public function resolvesEntryPoint(): bool;
 }

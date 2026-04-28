@@ -35,6 +35,7 @@ use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 use Spatie\FlareClient\Memory\SystemMemory;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
+use Spatie\FlareClient\Recorders\JobRecorder\JobRecorder;
 use Spatie\FlareClient\Recorders\DumpRecorder\DumpRecorder;
 use Spatie\FlareClient\Recorders\ExternalHttpRecorder\ExternalHttpRecorder;
 use Spatie\FlareClient\Recorders\FilesystemRecorder\FilesystemRecorder;
@@ -261,6 +262,25 @@ class FlareConfig
     public function ignoreCommands(): static
     {
         return $this->ignoreCollect(CollectType::Commands);
+    }
+
+    public function collectJobs(
+        bool $withTraces = JobRecorder::DEFAULT_WITH_TRACES,
+        bool $withErrors = JobRecorder::DEFAULT_WITH_ERRORS,
+        ?int $maxItemsWithErrors = JobRecorder::DEFAULT_MAX_ITEMS_WITH_ERRORS,
+        array $extra = [],
+    ): static {
+        return $this->addCollect(CollectType::Jobs, [
+            'with_traces' => $withTraces,
+            'with_errors' => $withErrors,
+            'max_items_with_errors' => $maxItemsWithErrors,
+            ...$extra,
+        ]);
+    }
+
+    public function ignoreJobs(): static
+    {
+        return $this->ignoreCollect(CollectType::Jobs);
     }
 
     public function collectGitInfo(

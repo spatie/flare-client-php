@@ -12,6 +12,7 @@ use Spatie\FlareClient\AttributesProviders\RequestAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\ResponseAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
+use Spatie\FlareClient\EntryPoint\EntryPointResolver;
 use Spatie\FlareClient\Enums\FlareMode;
 use Spatie\FlareClient\Exporters\Exporter;
 use Spatie\FlareClient\Memory\Memory;
@@ -44,7 +45,6 @@ class FlareProvider
      * @param class-string<CollectsResolver>|null $collectsResolver
      * @param Closure():bool|null $isUsingSubtasksClosure
      * @param Closure():void|null $subtaskEndedClosure
-     * @param Closure(bool):bool|null $shouldMakeSamplingDecisionClosure
      * @param Closure(Span):bool|null $gracefulSpanEnderClosure
      */
     public function __construct(
@@ -54,7 +54,6 @@ class FlareProvider
         protected ?Closure $registerRecorderAndMiddlewaresCallback = null,
         protected ?Closure $isUsingSubtasksClosure = null,
         protected ?Closure $subtaskEndedClosure = null,
-        protected ?Closure $shouldMakeSamplingDecisionClosure = null,
         protected ?Closure $gracefulSpanEnderClosure = null,
         protected bool $disableApiQueue = false
     ) {
@@ -84,6 +83,8 @@ class FlareProvider
             scope: $this->container->get(Scope::class),
             disableQueue: $this->disableApiQueue,
         ));
+
+        $this->container->singleton(EntryPointResolver::class, fn () => new EntryPointResolver());
 
         $this->container->singleton(Sampler::class, fn () => new $this->config->sampler(
             $this->config->samplerConfig
@@ -189,8 +190,8 @@ class FlareProvider
             recorders: $this->container->get(Recorders::class),
             sentReports: $this->container->get(SentReports::class),
             resource: $this->container->get(Resource::class),
+            entryPointResolver: $this->container->get(EntryPointResolver::class),
             isUsingSubtasksClosure: $this->isUsingSubtasksClosure,
-            shouldMakeSamplingDecisionClosure: $this->shouldMakeSamplingDecisionClosure,
             subtaskEndedClosure: $this->subtaskEndedClosure,
         ));
 
@@ -201,6 +202,7 @@ class FlareProvider
             ids: $this->container->get(Ids::class),
             memory: $this->container->get(Memory::class),
             recorders: $this->container->get(Recorders::class),
+            entryPointResolver: $this->container->get(EntryPointResolver::class),
             sampler: $this->config->trace
                 ? $this->container->get(Sampler::class)
                 : new NeverSampler(),
@@ -216,6 +218,7 @@ class FlareProvider
             time: $this->container->get(Time::class),
             tracer: $this->container->get(Tracer::class),
             recorders: $this->container->get(Recorders::class),
+            entryPointResolver: $this->container->get(EntryPointResolver::class),
             disabled: $this->config->log === false || $this->mode === FlareMode::Disabled,
             minimalLogLevel: $this->config->minimalLogLevel,
         ));

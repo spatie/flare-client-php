@@ -88,6 +88,21 @@ parameters:
 		-
 			message: "#^Unsafe usage of new static\\(\\)\\.$#"
 			count: 1
+			path: src/Recorders/CommandRecorder/CommandRecorder.php
+
+		-
+			message: "#^Unsafe usage of new static\\(\\)\\.$#"
+			count: 1
+			path: src/Recorders/JobRecorder/JobRecorder.php
+
+		-
+			message: "#^Unsafe usage of new static\\(\\)\\.$#"
+			count: 1
+			path: src/Recorders/RoutingRecorder/RoutingRecorder.php
+
+		-
+			message: "#^Unsafe usage of new static\\(\\)\\.$#"
+			count: 1
 			path: src/Recorders/SpanEventsRecorder.php
 
 		-

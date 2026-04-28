@@ -4,6 +4,7 @@ namespace Spatie\FlareClient;
 
 use DateTimeInterface;
 use Monolog\Level;
+use Spatie\FlareClient\EntryPoint\EntryPointResolver;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
 use Spatie\FlareClient\Support\Recorders;
@@ -26,6 +27,7 @@ class Logger
         protected readonly Time $time,
         protected readonly Tracer $tracer,
         protected readonly Recorders $recorders,
+        protected readonly EntryPointResolver $entryPointResolver,
         protected readonly bool $disabled,
         ?Level $minimalLogLevel
     ) {
@@ -89,9 +91,11 @@ class Logger
         /** @var ?ContextRecorder $recorder */
         $recorder = $this->recorders->getRecorder(RecorderType::Context);
 
-        if ($context = $recorder?->toArray()) {
-            $attributes = [...$attributes ?? [], ...$context];
-        }
+        $attributes = [
+            ...($attributes ?? []),
+            ...($recorder?->toArray() ?? []),
+            ...$this->entryPointResolver->get()->toAttributes()
+        ];
 
         $record = array_filter([
                 'timeUnixNano' => $timestampUnixNano,

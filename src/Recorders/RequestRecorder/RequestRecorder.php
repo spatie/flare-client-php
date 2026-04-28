@@ -6,6 +6,7 @@ use Closure;
 use Psr\Container\ContainerInterface;
 use Spatie\FlareClient\AttributesProviders\RequestAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\ResponseAttributesProvider;
+use Spatie\FlareClient\EntryPoint\EntryPointResolver;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Recorders\SpansRecorder;
@@ -30,6 +31,7 @@ class RequestRecorder extends SpansRecorder
             $config,
             $container->get(RequestAttributesProvider::class),
             $container->get(ResponseAttributesProvider::class),
+            $container->get(EntryPointResolver::class),
         );
     }
 
@@ -39,6 +41,7 @@ class RequestRecorder extends SpansRecorder
         array $config,
         protected RequestAttributesProvider $requestAttributesProvider,
         protected ResponseAttributesProvider $responseAttributesProvider,
+        protected EntryPointResolver $entryPointResolver,
     ) {
         parent::__construct($tracer, $backTracer, $config);
     }
@@ -52,10 +55,9 @@ class RequestRecorder extends SpansRecorder
     public function recordStart(
         ?Request $request = null,
         ?string $route = null,
-        ?string $entryPointClass = null,
         array $attributes = [],
     ): ?Span {
-        return $this->startSpan(nameAndAttributes: function () use ($entryPointClass, $route, $request, $attributes) {
+        return $this->startSpan(nameAndAttributes: function () use ($route, $request, $attributes) {
             $requestAttributes = $this->requestAttributesProvider->toArray(
                 $request ?? Request::createFromGlobals(),
                 includeContents: false,
@@ -65,14 +67,11 @@ class RequestRecorder extends SpansRecorder
                 $requestAttributes['http.route'] = $route;
             }
 
-            if ($entryPointClass) {
-                $requestAttributes['flare.entry_point.class'] = $entryPointClass;
-            }
-
             return [
                 'name' => "Request - {$requestAttributes['url.full']}",
                 'attributes' => [
                     'flare.span_type' => SpanType::Request,
+                    ...$this->entryPointResolver->get()->toAttributes(),
                     ...$requestAttributes,
                     ...$attributes,
                 ],
@@ -84,12 +83,12 @@ class RequestRecorder extends SpansRecorder
         ?Response $response = null,
         array $attributes = [],
     ): ?Span {
-        if ($response) {
-            $responseAttributes = $this->responseAttributesProvider->toArray($response);
+        $responseAttributes = $response ? $this->responseAttributesProvider->toArray($response) : [];
 
-            $attributes = [...$attributes, ...$responseAttributes];
-        }
-
-        return $this->endSpan(additionalAttributes: $attributes, includeMemoryUsage: true);
+        return $this->endSpan(additionalAttributes: [
+            ...$this->entryPointResolver->get()->toAttributes(),
+            ...$responseAttributes,
+            ...$attributes,
+        ], includeMemoryUsage: true);
     }
 }

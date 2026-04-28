@@ -5,6 +5,7 @@ namespace Spatie\FlareClient;
 use Closure;
 use Exception;
 use Spatie\FlareClient\Contracts\FlareSpanType;
+use Spatie\FlareClient\EntryPoint\EntryPointResolver;
 use Spatie\FlareClient\Enums\AddSpanResult;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanStatusCode;
@@ -53,6 +54,7 @@ class Tracer
         public readonly Ids $ids,
         public readonly Memory $memory,
         protected Recorders $recorders,
+        protected readonly EntryPointResolver $entryPointResolver,
         public readonly Sampler $sampler = new RateSampler([]),
         public ?Closure $configureSpansCallable = null,
         public ?Closure $configureSpanEventsCallable = null,
@@ -77,7 +79,6 @@ class Tracer
         ?string $traceId = null,
         ?string $spanId = null,
         ?bool $sample = null,
-        array $samplerContext = [],
         ?string $traceParent = null
     ): bool {
         if ($this->disabled === true) {
@@ -105,7 +106,7 @@ class Tracer
             throw new Exception("If one of traceId, spanId or sample is provided, all three must be provided.");
         }
 
-        return $this->sampling = $this->sampler->shouldSample($samplerContext);
+        return $this->sampling = $this->sampler->shouldSample($this->entryPointResolver->get());
     }
 
     protected function startFromTraceparent(

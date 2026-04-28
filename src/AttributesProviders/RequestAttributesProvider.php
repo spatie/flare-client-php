@@ -3,7 +3,6 @@
 namespace Spatie\FlareClient\AttributesProviders;
 
 use RuntimeException;
-use Spatie\FlareClient\Enums\EntryPointType;
 use Spatie\FlareClient\Support\Redactor;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\InputBag;
@@ -45,10 +44,6 @@ class RequestAttributesProvider
             'url.scheme' => $request->getScheme(),
             'url.path' => $request->getPathInfo(),
             'url.query' => http_build_query($request->query->all()),
-
-            'flare.entry_point.type' => EntryPointType::Web->value,
-            'flare.entry_point.value' => $request->getUri(),
-            'flare.entry_point.class' => null,
 
             'server.address' => empty($request->server->get('SERVER_NAME'))
                 ? $request->server->get('SERVER_ADDR')

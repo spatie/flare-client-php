@@ -33,15 +33,12 @@ use Throwable;
 
 class Flare
 {
-    // TODO: agent
-    // TODO: check current GH PR's and issues if we need to make changes
     // TODO: quick tests on Vapor
     // TODO: add ability to ignore certain commands and requests like we do with jobs
-    // TODO: dynamic sampling based upon context would be cool
-    // TODO: wp-admin.php calls
+    // TODO: dynamic sampling based upon context would be cool/
     // TODO: check the tester for handling errors + try to move some parts of the laravel command to the main repo
-    // TODO: reduce logging resource payload
-    // TODO: update the data collection docs on how to interact with each recorder individually
+    // https://app.bugsnag.com/spatie/flareapp-dot-io/errors/69ddf4881ff884595fecd67e?filters[error.status]=open&filters[event.since]=1d
+
 
     // TODO: test this on vapor:
     // 1) Create a job with error

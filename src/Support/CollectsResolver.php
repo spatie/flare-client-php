@@ -12,6 +12,7 @@ use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\CollectType;
 use Spatie\FlareClient\Enums\FlareEntityType;
 use Spatie\FlareClient\FlareMiddleware\AddConsoleInformation;
+use Spatie\FlareClient\FlareMiddleware\AddEntryPoint;
 use Spatie\FlareClient\FlareMiddleware\AddLogs;
 use Spatie\FlareClient\FlareMiddleware\AddRequestInformation;
 use Spatie\FlareClient\FlareMiddleware\AddSolutions;
@@ -23,7 +24,9 @@ use Spatie\FlareClient\Recorders\DumpRecorder\DumpRecorder;
 use Spatie\FlareClient\Recorders\ExternalHttpRecorder\ExternalHttpRecorder;
 use Spatie\FlareClient\Recorders\FilesystemRecorder\FilesystemRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
+use Spatie\FlareClient\Recorders\JobRecorder\JobRecorder;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
+use Spatie\FlareClient\Recorders\QueueRecorder\QueueRecorder;
 use Spatie\FlareClient\Recorders\RedisCommandRecorder\RedisCommandRecorder;
 use Spatie\FlareClient\Recorders\RequestRecorder\RequestRecorder;
 use Spatie\FlareClient\Recorders\ResponseRecorder\ResponseRecorder;
@@ -62,19 +65,33 @@ class CollectsResolver
         $this->recorders = [];
         $this->resourceModifiers = [];
 
+        $this->addMiddleware(AddEntryPoint::class);
+
         foreach ($collects as $collect) {
+            $type = $collect['type'] ?? null;
+
+            if (! $type instanceof FlareCollectType) {
+                continue;
+            }
+
             $ignored = $collect['ignored'] ?? false;
 
-            if ($ignored) {
+            if ($ignored && ! $type->resolvesEntryPoint()) {
                 continue;
             }
 
             $options = $collect['options'] ?? [];
 
-            match ($collect['type'] ?? null) {
+            if ($ignored) {
+                $options['with_traces'] = false;
+                $options['with_errors'] = false;
+            }
+
+            match ($type) {
                 CollectType::Requests => $this->requests($options),
                 CollectType::Commands => $this->console($options),
-                CollectType::Context => $this->context($collect),
+                CollectType::Jobs => $this->jobs($options),
+                CollectType::Context => $this->context($options),
                 CollectType::GitInfo => $this->gitInfo($options),
                 CollectType::Cache => $this->cache($options),
                 CollectType::Glows => $this->glows($options),
@@ -93,7 +110,7 @@ class CollectsResolver
                 CollectType::FlareMiddleware => $this->flareMiddleware($options),
                 CollectType::ErrorsWithTraces => $this->errorsWithTraces($options),
                 CollectType::Application, null => null,
-                default => $this->handleUnknownCollectType($collect['type'], $options),
+                default => $this->handleUnknownCollectType($type, $options),
             };
         }
 
@@ -127,6 +144,28 @@ class CollectsResolver
         $this->addMiddleware($options['middleware'] ?? AddConsoleInformation::class);
         $this->addRecorder(
             $options['recorder'] ?? CommandRecorder::class,
+            $this->only($options, [
+                'with_traces',
+                'with_errors',
+                'max_items_with_errors',
+            ])
+        );
+    }
+
+    protected function jobs(
+        array $options
+    ): void {
+        $this->addRecorder(
+            $options['job_recorder'] ?? JobRecorder::class,
+            $this->only($options, [
+                'with_traces',
+                'with_errors',
+                'max_items_with_errors',
+            ])
+        );
+
+        $this->addRecorder(
+            $options['queue_recorder'] ?? QueueRecorder::class,
             $this->only($options, [
                 'with_traces',
                 'with_errors',
