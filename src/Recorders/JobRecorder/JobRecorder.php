@@ -127,7 +127,7 @@ class JobRecorder extends SpansRecorder
             includeMemoryUsage: true,
         );
 
-        if($this->lifecycle->usesSubtasks) {
+        if ($this->lifecycle->usesSubtasks) {
             $this->lifecycle->endSubtask();
         }
 
@@ -172,7 +172,7 @@ class JobRecorder extends SpansRecorder
             AddJobInformation::setLatestJob($span);
         }
 
-        if($this->lifecycle->usesSubtasks) {
+        if ($this->lifecycle->usesSubtasks) {
             $this->lifecycle->endSubtask();
         }
 
