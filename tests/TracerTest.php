@@ -462,7 +462,7 @@ it('can temporarily pause a trace sampling', function () {
         ->expectParentId($nestedSpan);
 });
 
-it('keeps sampling paused until every nested pause is resumed', function () {
+it('treats pauseSampling and resumeSampling as idempotent toggles on a single bool', function () {
     $tracer = setupFlare(alwaysSampleTraces: true)->tracer;
 
     $tracer->startTrace();
@@ -482,12 +482,31 @@ it('keeps sampling paused until every nested pause is resumed', function () {
 
     $tracer->resumeSampling();
 
-    expect($tracer->isSampling())->toBeFalse();
-    expect($tracer->isSamplingPaused())->toBeTrue();
+    expect($tracer->isSampling())->toBeTrue();
+    expect($tracer->isSamplingPaused())->toBeFalse();
 
     $tracer->resumeSampling();
 
     expect($tracer->isSampling())->toBeTrue();
+    expect($tracer->isSamplingPaused())->toBeFalse();
+});
+
+it('clears paused state on unsample so a stray resume cannot revive an unsampled trace', function () {
+    $tracer = setupFlare(alwaysSampleTraces: true)->tracer;
+
+    $tracer->startTrace();
+    $tracer->pauseSampling();
+
+    expect($tracer->isSamplingPaused())->toBeTrue();
+
+    $tracer->unsample();
+
+    expect($tracer->isSampling())->toBeFalse();
+    expect($tracer->isSamplingPaused())->toBeFalse();
+
+    $tracer->resumeSampling();
+
+    expect($tracer->isSampling())->toBeFalse();
     expect($tracer->isSamplingPaused())->toBeFalse();
 });
 

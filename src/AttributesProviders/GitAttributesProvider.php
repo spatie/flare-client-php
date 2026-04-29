@@ -62,7 +62,7 @@ class GitAttributesProvider
     {
         $data = [];
 
-        if ($content && strlen($content) === 40) {
+        if ($content && strlen($content) === 40 && ctype_xdigit($content)) {
             // Detached HEAD state
             $data['git.hash'] = $content;
 

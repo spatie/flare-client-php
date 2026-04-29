@@ -4,7 +4,6 @@ use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\FlareMiddleware\AddJobInformation;
-use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Tests\Shared\FakeApi;
 use Spatie\FlareClient\Tests\Shared\FakeIds;
 
@@ -18,12 +17,11 @@ it('switches the entry point, attaches the failed job span, and propagates the t
     $flare = setupFlare(
         fn (FlareConfig $config) => $config->collectJobs(withErrors: false),
         alwaysSampleTraces: true,
+        isUsingSubtasks: true,
     );
 
-    $flare->tracer->startTrace();
     $flare->job()->recordStart('App\\Jobs\\Send', 'App\\Jobs\\SendJob');
     $flare->job()->recordFailed(new Exception('Job failed'));
-    $flare->tracer->endTrace();
 
     $flare->report(new Exception('Boom'));
 

@@ -4,6 +4,7 @@ namespace Spatie\FlareClient\Recorders\JobRecorder;
 
 use Closure;
 use Psr\Container\ContainerInterface;
+use Spatie\FlareClient\Concerns\Recorders\PausableRecorder;
 use Spatie\FlareClient\EntryPoint\EntryPoint;
 use Spatie\FlareClient\EntryPoint\EntryPointResolver;
 use Spatie\FlareClient\Enums\EntryPointType;
@@ -16,12 +17,15 @@ use Spatie\FlareClient\Recorders\SpansRecorder;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Support\BackTracer;
+use Spatie\FlareClient\Support\Lifecycle;
 use Spatie\FlareClient\Support\PatternMatcher;
 use Spatie\FlareClient\Tracer;
 use Throwable;
 
 class JobRecorder extends SpansRecorder
 {
+    use PausableRecorder;
+
     /** @var array<int, string> */
     protected array $ignoredClasses = [];
 
@@ -36,6 +40,7 @@ class JobRecorder extends SpansRecorder
             $container->get(Tracer::class),
             $container->get(BackTracer::class),
             $container->get(EntryPointResolver::class),
+            $container->get(Lifecycle::class),
             $config,
         );
     }
@@ -44,6 +49,7 @@ class JobRecorder extends SpansRecorder
         Tracer $tracer,
         BackTracer $backTracer,
         protected EntryPointResolver $entryPointResolver,
+        protected Lifecycle $lifecycle,
         array $config,
     ) {
         parent::__construct($tracer, $backTracer, $config);
@@ -57,10 +63,31 @@ class JobRecorder extends SpansRecorder
     public function recordStart(
         string $jobName,
         ?string $jobClass = null,
+        ?string $traceparent = null,
         ?string $entryPointHandlerType = 'php_job',
         array $attributes = [],
     ): ?Span {
         AddJobInformation::clearLatestJobInfo();
+
+        $shouldIgnore = $this->shouldIgnoreJob($jobName, $jobClass);
+
+        if ($shouldIgnore && $traceparent !== null) {
+            $traceparent = $this->tracer->ids->setTraceparentSampling($traceparent, false);
+        }
+
+        $this->lifecycle->startSubtask(traceparent: $traceparent);
+
+        if ($shouldIgnore && $this->lifecycle->usesSubtasks) {
+            $this->tracer->unsample();
+        }
+
+        if ($shouldIgnore && ! $this->lifecycle->usesSubtasks) {
+            $this->pauseTrace();
+        }
+
+        if ($shouldIgnore) {
+            return null;
+        }
 
         $entryPoint = new EntryPoint(
             type: EntryPointType::Queue,
@@ -77,17 +104,11 @@ class JobRecorder extends SpansRecorder
 
         $this->tracer->reevaluateSampling();
 
-        if ($this->shouldIgnoreJob($jobName, $jobClass)) {
-            $this->tracer->unsample();
-
-            return null;
-        }
-
         return $this->startSpan(
             name: "Job - {$jobName}",
             attributes: [
                 'flare.span_type' => SpanType::Job,
-                ...$this->entryPointResolver->get()->toAttributes(),
+                ...$entryPoint->toAttributes(),
                 ...$attributes,
             ],
         );
@@ -95,16 +116,34 @@ class JobRecorder extends SpansRecorder
 
     public function recordEnd(array $attributes = []): ?Span
     {
-        return $this->endSpan(
+        if ($this->pausedTrace()) {
+            $this->resumeTrace();
+
+            return null;
+        }
+
+        $span = $this->endSpan(
             additionalAttributes: $attributes,
             includeMemoryUsage: true,
         );
+
+        if($this->lifecycle->usesSubtasks) {
+            $this->lifecycle->endSubtask();
+        }
+
+        return $span;
     }
 
     public function recordFailed(
         Throwable $exception,
         array $attributes = [],
     ): ?Span {
+        if ($this->pausedTrace()) {
+            $this->resumeTrace();
+
+            return null;
+        }
+
         $throwableClass = $exception::class;
 
         $trackingUuid = $this->tracer->ids->uuid();
@@ -127,9 +166,14 @@ class JobRecorder extends SpansRecorder
             includeMemoryUsage: true,
         );
 
-        if ($span !== null) {
+        if ($span !== null && $this->lifecycle->usesSubtasks) {
+            AddJobInformation::setEntryPoint($this->entryPointResolver->get());
             AddJobInformation::setUsedTrackingUuid($trackingUuid);
             AddJobInformation::setLatestJob($span);
+        }
+
+        if($this->lifecycle->usesSubtasks) {
+            $this->lifecycle->endSubtask();
         }
 
         return $span;

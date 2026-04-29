@@ -4,6 +4,7 @@ namespace Spatie\FlareClient\Recorders\CommandRecorder;
 
 use Closure;
 use Psr\Container\ContainerInterface;
+use Spatie\FlareClient\Concerns\Recorders\PausableRecorder;
 use Spatie\FlareClient\EntryPoint\EntryPointResolver;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
@@ -16,6 +17,8 @@ use Symfony\Component\Console\Input\InputInterface;
 
 class CommandRecorder extends SpansRecorder
 {
+    use PausableRecorder;
+
     /** @var array<int, string> */
     protected array $ignoredCommands = [];
 
@@ -73,14 +76,14 @@ class CommandRecorder extends SpansRecorder
 
         $shouldIgnore = $this->shouldIgnoreCommand($command, $commandClass);
 
-        if ($shouldIgnore && empty($this->stack) && ! $this->tracer->isSamplingPaused()) {
+        if ($shouldIgnore && empty($this->stack)) {
             $this->tracer->unsample();
 
             return null;
         }
 
         if ($shouldIgnore) {
-            $this->tracer->pauseSampling();
+            $this->pauseTrace();
 
             return null;
         }
@@ -123,8 +126,8 @@ class CommandRecorder extends SpansRecorder
         int $exitCode = 0,
         array $attributes = []
     ): ?Span {
-        if ($this->tracer->isSamplingPaused()) {
-            $this->tracer->resumeSampling();
+        if ($this->pausedTrace()) {
+            $this->resumeTrace();
 
             return null;
         }

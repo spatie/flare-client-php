@@ -60,7 +60,7 @@ class Tracer
         public ?Closure $configureSpansCallable = null,
         public ?Closure $configureSpanEventsCallable = null,
         public bool $sampling = false,
-        protected int $samplingPauseDepth = 0,
+        protected bool $paused = false,
         public readonly bool $disabled = false,
         protected Closure|null $gracefulSpanEnderClosure = null,
     ) {
@@ -202,6 +202,8 @@ class Tracer
             $this->sampler->reset();
         }
 
+        $this->paused = false;
+
         if ($this->sampling === false) {
             return;
         }
@@ -213,25 +215,22 @@ class Tracer
 
     public function pauseSampling(): void
     {
-        if ($this->samplingPauseDepth === 0 && $this->sampling === false) {
+        if ($this->sampling === false) {
             return;
         }
 
-        $this->samplingPauseDepth++;
         $this->sampling = false;
+        $this->paused = true;
     }
 
     public function resumeSampling(): void
     {
-        if ($this->samplingPauseDepth === 0) {
+        if ($this->paused === false) {
             return;
         }
 
-        $this->samplingPauseDepth--;
-
-        if ($this->samplingPauseDepth === 0) {
-            $this->sampling = true;
-        }
+        $this->paused = false;
+        $this->sampling = true;
     }
 
     public function isSampling(): bool
@@ -241,7 +240,7 @@ class Tracer
 
     public function isSamplingPaused(): bool
     {
-        return $this->samplingPauseDepth > 0;
+        return $this->paused;
     }
 
     public function currentTraceId(): string

@@ -1,13 +1,11 @@
 <?php
 
-use Spatie\FlareClient\EntryPoint\EntryPointResolver;
 use Spatie\FlareClient\Enums\EntryPointType;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Enums\SpanStatusCode;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\FlareMiddleware\AddJobInformation;
-use Spatie\FlareClient\Support\Container;
 use Spatie\FlareClient\Tests\Shared\FakeApi;
 use Spatie\FlareClient\Tests\Shared\FakeIds;
 use Spatie\FlareClient\Tests\Shared\FakeMemory;
@@ -75,7 +73,6 @@ it('uses a custom entry point handler type when provided', function () {
     expect($span->attributes)->toHaveKey('flare.entry_point.handler.type', 'custom_handler');
 });
 
-
 it('records the end of a job and includes peak memory usage', function () {
     FakeMemory::setup()->nextMemoryUsage(8 * 1024 * 1024);
 
@@ -92,7 +89,7 @@ it('records the end of a job and includes peak memory usage', function () {
         ->toHaveKey('custom.key', 'value');
 });
 
-it('ignores jobs by name from ignored_classes config', function () {
+it('pauses sampling for an ignored job by name and resumes after recordEnd in non-subtask mode', function () {
     $flare = setupFlare(
         fn (FlareConfig $config) => $config->collectJobs(ignoredClasses: ['ignore-me']),
         alwaysSampleTraces: true,
@@ -104,9 +101,15 @@ it('ignores jobs by name from ignored_classes config', function () {
 
     expect($span)->toBeNull();
     expect($flare->tracer->isSampling())->toBeFalse();
+    expect($flare->tracer->isSamplingPaused())->toBeTrue();
+
+    $flare->job()->recordEnd();
+
+    expect($flare->tracer->isSampling())->toBeTrue();
+    expect($flare->tracer->isSamplingPaused())->toBeFalse();
 });
 
-it('ignores jobs by class from ignored_classes config', function () {
+it('pauses sampling for an ignored job by class and resumes after recordFailed in non-subtask mode', function () {
     $flare = setupFlare(
         fn (FlareConfig $config) => $config->collectJobs(ignoredClasses: ['App\\Jobs\\IgnoreMe']),
         alwaysSampleTraces: true,
@@ -118,9 +121,15 @@ it('ignores jobs by class from ignored_classes config', function () {
 
     expect($span)->toBeNull();
     expect($flare->tracer->isSampling())->toBeFalse();
+    expect($flare->tracer->isSamplingPaused())->toBeTrue();
+
+    $flare->job()->recordFailed(new Exception('Failed'));
+
+    expect($flare->tracer->isSampling())->toBeTrue();
+    expect($flare->tracer->isSamplingPaused())->toBeFalse();
 });
 
-it('ignores jobs using a wildcard pattern', function () {
+it('pauses sampling for an ignored job matched by wildcard in non-subtask mode', function () {
     $flare = setupFlare(
         fn (FlareConfig $config) => $config->collectJobs(ignoredClasses: ['App\\Jobs\\Internal\\*']),
         alwaysSampleTraces: true,
@@ -131,7 +140,33 @@ it('ignores jobs using a wildcard pattern', function () {
     $span = $flare->job()->recordStart('App\\Jobs\\Internal\\Cleanup', 'App\\Jobs\\Internal\\Cleanup');
 
     expect($span)->toBeNull();
-    expect($flare->tracer->isSampling())->toBeFalse();
+    expect($flare->tracer->isSamplingPaused())->toBeTrue();
+
+    $flare->job()->recordEnd();
+
+    expect($flare->tracer->isSamplingPaused())->toBeFalse();
+});
+
+it('drops nested spans created while sampling is paused for an ignored job', function () {
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config->collectJobs(ignoredClasses: ['App\\Jobs\\Ignored']),
+        alwaysSampleTraces: true,
+    );
+
+    $flare->tracer->startTrace();
+    $flare->tracer->startSpan('Parent');
+
+    $countBefore = count($flare->tracer->currentTrace());
+
+    $flare->job()->recordStart('App\\Jobs\\Ignored', 'App\\Jobs\\Ignored');
+
+    $flare->tracer->startSpan('Inside paused');
+
+    $flare->job()->recordEnd();
+
+    $countAfter = count($flare->tracer->currentTrace());
+
+    expect($countAfter)->toBe($countBefore);
 });
 
 it('clears stale AddJobInformation state when starting a new job', function () {
@@ -144,9 +179,10 @@ it('clears stale AddJobInformation state when starting a new job', function () {
 
     expect(AddJobInformation::$usedTrackingUuid)->toBeNull();
     expect(AddJobInformation::$latestJob)->toBeNull();
+    expect(AddJobInformation::$entryPoint)->toBeNull();
 });
 
-it('writes the failed span and tracking uuid onto AddJobInformation when a job fails', function () {
+it('records a failed job span with status, exception event, and exception id in non-subtask mode', function () {
     FakeIds::setup()->nextUuid('fake-uuid');
 
     $flare = setupFlare(fn (FlareConfig $config) => $config->collectJobs(), alwaysSampleTraces: true);
@@ -154,9 +190,6 @@ it('writes the failed span and tracking uuid onto AddJobInformation when a job f
     $flare->tracer->startTrace();
     $flare->job()->recordStart('App\\Jobs\\Send', 'App\\Jobs\\Send');
     $span = $flare->job()->recordFailed(new Exception('Failed'));
-
-    expect(AddJobInformation::$usedTrackingUuid)->toBe('fake-uuid');
-    expect(AddJobInformation::$latestJob)->toBe($span);
 
     expect($span->end)->not()->toBeNull();
     expect($span->status?->code)->toBe(SpanStatusCode::Error);
@@ -171,6 +204,18 @@ it('writes the failed span and tracking uuid onto AddJobInformation when a job f
         ->toHaveKey('exception.type', Exception::class);
 });
 
+it('does not write to AddJobInformation when recordFailed runs in non-subtask mode', function () {
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectJobs(), alwaysSampleTraces: true);
+
+    $flare->tracer->startTrace();
+    $flare->job()->recordStart('App\\Jobs\\Send', 'App\\Jobs\\Send');
+    $flare->job()->recordFailed(new Exception('Failed'));
+
+    expect(AddJobInformation::$usedTrackingUuid)->toBeNull();
+    expect(AddJobInformation::$latestJob)->toBeNull();
+    expect(AddJobInformation::$entryPoint)->toBeNull();
+});
+
 it('merges additional attributes when recording a failed job', function () {
     $flare = setupFlare(fn (FlareConfig $config) => $config->collectJobs(), alwaysSampleTraces: true);
 
@@ -179,4 +224,80 @@ it('merges additional attributes when recording a failed job', function () {
     $span = $flare->job()->recordFailed(new Exception('Failed'), ['custom.key' => 'value']);
 
     expect($span->attributes)->toHaveKey('custom.key', 'value');
+});
+
+it('starts a subtask trace from a traceparent in subtask mode', function () {
+    $traceparent = '00-1234567890abcdef1234567890abcdef-fedcba9876543210-01';
+
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config->collectJobs(),
+        alwaysSampleTraces: true,
+        isUsingSubtasks: true,
+    );
+
+    $span = $flare->job()->recordStart('App\\Jobs\\Send', 'App\\Jobs\\Send', traceparent: $traceparent);
+
+    expect($span)->not()->toBeNull();
+    expect($span->traceId)->toBe('1234567890abcdef1234567890abcdef');
+});
+
+it('unsamples the subtask trace when an ignored job is started in subtask mode', function () {
+    $traceparent = '00-1234567890abcdef1234567890abcdef-fedcba9876543210-01';
+
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config->collectJobs(ignoredClasses: ['App\\Jobs\\Ignored']),
+        alwaysSampleTraces: true,
+        isUsingSubtasks: true,
+    );
+
+    $span = $flare->job()->recordStart('App\\Jobs\\Ignored', 'App\\Jobs\\Ignored', traceparent: $traceparent);
+
+    expect($span)->toBeNull();
+    expect($flare->tracer->isSampling())->toBeFalse();
+});
+
+it('writes the failed span, tracking uuid, and entry point onto AddJobInformation in subtask mode', function () {
+    FakeIds::setup()->nextUuid('fake-uuid');
+
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config->collectJobs(),
+        alwaysSampleTraces: true,
+        isUsingSubtasks: true,
+    );
+
+    $flare->job()->recordStart('App\\Jobs\\Send', 'App\\Jobs\\Send');
+    $span = $flare->job()->recordFailed(new Exception('Failed'));
+
+    expect(AddJobInformation::$usedTrackingUuid)->toBe('fake-uuid');
+    expect(AddJobInformation::$latestJob)->toBe($span);
+    expect(AddJobInformation::$entryPoint)->not()->toBeNull();
+    expect(AddJobInformation::$entryPoint->handlerIdentifier)->toBe('App\\Jobs\\Send');
+});
+
+
+it('handles a retry loop cleanly in subtask mode', function () {
+    FakeIds::setup()->nextUuid('uuid-1')->nextUuid('uuid-2');
+
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config->collectJobs(),
+        alwaysSampleTraces: true,
+        isUsingSubtasks: true,
+    );
+
+    $flare->job()->recordStart('App\\Jobs\\Send', 'App\\Jobs\\Send');
+    $span1 = $flare->job()->recordFailed(new Exception('first attempt'));
+
+    expect(AddJobInformation::$usedTrackingUuid)->toBe('uuid-1');
+    expect(AddJobInformation::$latestJob)->toBe($span1);
+
+    $flare->job()->recordStart('App\\Jobs\\Send', 'App\\Jobs\\Send');
+
+    expect(AddJobInformation::$usedTrackingUuid)->toBeNull();
+    expect(AddJobInformation::$latestJob)->toBeNull();
+    expect(AddJobInformation::$entryPoint)->toBeNull();
+
+    $span2 = $flare->job()->recordFailed(new Exception('second attempt'));
+
+    expect(AddJobInformation::$usedTrackingUuid)->toBe('uuid-2');
+    expect(AddJobInformation::$latestJob)->toBe($span2);
 });

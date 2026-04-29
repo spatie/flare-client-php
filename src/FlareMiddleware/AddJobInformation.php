@@ -3,6 +3,7 @@
 namespace Spatie\FlareClient\FlareMiddleware;
 
 use Closure;
+use Spatie\FlareClient\EntryPoint\EntryPoint;
 use Spatie\FlareClient\ReportFactory;
 use Spatie\FlareClient\Spans\Span;
 
@@ -12,8 +13,16 @@ class AddJobInformation implements FlareMiddleware
 
     public static ?Span $latestJob = null;
 
+    public static ?EntryPoint $entryPoint = null;
+
     public function handle(ReportFactory $report, Closure $next): ReportFactory
     {
+        if ($entryPoint = static::$entryPoint) {
+            $report->addAttributes($entryPoint->toAttributes());
+
+            static::$entryPoint = null;
+        }
+
         if ($latestJob = static::$latestJob) {
             $report->span($latestJob);
 
@@ -33,6 +42,7 @@ class AddJobInformation implements FlareMiddleware
     {
         self::$latestJob = null;
         self::$usedTrackingUuid = null;
+        self::$entryPoint = null;
     }
 
     public static function setLatestJob(
@@ -45,5 +55,11 @@ class AddJobInformation implements FlareMiddleware
         string $uuid,
     ): void {
         self::$usedTrackingUuid = $uuid;
+    }
+
+    public static function setEntryPoint(
+        EntryPoint $entryPoint,
+    ): void {
+        self::$entryPoint = $entryPoint;
     }
 }

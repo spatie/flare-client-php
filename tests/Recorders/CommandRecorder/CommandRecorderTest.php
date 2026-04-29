@@ -259,4 +259,3 @@ it('pauses sampling for a nested ignored command and resumes after that command 
         ->expectMissingParentId()
         ->expectEnded();
 });
-
