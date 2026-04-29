@@ -11,6 +11,7 @@ use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanStatusCode;
 use Spatie\FlareClient\Memory\Memory;
 use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
+use Spatie\FlareClient\Sampling\DeferrableSampler;
 use Spatie\FlareClient\Sampling\RateSampler;
 use Spatie\FlareClient\Sampling\Sampler;
 use Spatie\FlareClient\Spans\Span;
@@ -59,7 +60,7 @@ class Tracer
         public ?Closure $configureSpansCallable = null,
         public ?Closure $configureSpanEventsCallable = null,
         public bool $sampling = false,
-        public bool $pausedSampling = false,
+        protected int $samplingPauseDepth = 0,
         public readonly bool $disabled = false,
         protected Closure|null $gracefulSpanEnderClosure = null,
     ) {
@@ -149,6 +150,10 @@ class Tracer
 
     public function endTrace(): void
     {
+        if ($this->sampler instanceof DeferrableSampler) {
+            $this->sampler->reset();
+        }
+
         if ($this->sampling === false) {
             return;
         }
@@ -174,8 +179,29 @@ class Tracer
         $this->spans = [];
     }
 
+    public function reevaluateSampling(): void
+    {
+        if (! $this->sampler instanceof DeferrableSampler || ! $this->sampler->isPending()) {
+            return;
+        }
+
+        $decision = $this->sampler->reevaluate($this->entryPointResolver->get());
+
+        if ($decision === false) {
+            $this->unsample();
+
+            return;
+        }
+
+        $this->sampling = true;
+    }
+
     public function unsample(): void
     {
+        if ($this->sampler instanceof DeferrableSampler) {
+            $this->sampler->reset();
+        }
+
         if ($this->sampling === false) {
             return;
         }
@@ -187,27 +213,35 @@ class Tracer
 
     public function pauseSampling(): void
     {
-        if ($this->sampling === false) {
+        if ($this->samplingPauseDepth === 0 && $this->sampling === false) {
             return;
         }
 
+        $this->samplingPauseDepth++;
         $this->sampling = false;
-        $this->pausedSampling = true;
     }
 
     public function resumeSampling(): void
     {
-        if ($this->pausedSampling === false) {
+        if ($this->samplingPauseDepth === 0) {
             return;
         }
 
-        $this->sampling = true;
-        $this->pausedSampling = false;
+        $this->samplingPauseDepth--;
+
+        if ($this->samplingPauseDepth === 0) {
+            $this->sampling = true;
+        }
     }
 
     public function isSampling(): bool
     {
         return $this->sampling;
+    }
+
+    public function isSamplingPaused(): bool
+    {
+        return $this->samplingPauseDepth > 0;
     }
 
     public function currentTraceId(): string

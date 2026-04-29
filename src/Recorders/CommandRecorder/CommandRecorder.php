@@ -10,11 +10,18 @@ use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Recorders\SpansRecorder;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Support\BackTracer;
+use Spatie\FlareClient\Support\PatternMatcher;
 use Spatie\FlareClient\Tracer;
 use Symfony\Component\Console\Input\InputInterface;
 
 class CommandRecorder extends SpansRecorder
 {
+    /** @var array<int, string> */
+    protected array $ignoredCommands = [];
+
+    /** @var array<int, string> */
+    protected array $ignoredClasses = [];
+
     public static function type(): string|RecorderType
     {
         return RecorderType::Command;
@@ -39,6 +46,12 @@ class CommandRecorder extends SpansRecorder
         parent::__construct($tracer, $backTracer, $config);
     }
 
+    protected function configure(array $config): void
+    {
+        $this->ignoredCommands = $config['ignored_commands'] ?? [];
+        $this->ignoredClasses = $config['ignored_classes'] ?? [];
+    }
+
     public function recordStart(
         string $command,
         array|InputInterface $arguments,
@@ -56,8 +69,18 @@ class CommandRecorder extends SpansRecorder
             );
         }
 
-        if ($this->shouldIgnoreCommand($command, $commandClass)) {
+        $this->tracer->reevaluateSampling();
+
+        $shouldIgnore = $this->shouldIgnoreCommand($command, $commandClass);
+
+        if ($shouldIgnore && empty($this->stack) && ! $this->tracer->isSamplingPaused()) {
             $this->tracer->unsample();
+
+            return null;
+        }
+
+        if ($shouldIgnore) {
+            $this->tracer->pauseSampling();
 
             return null;
         }
@@ -80,13 +103,16 @@ class CommandRecorder extends SpansRecorder
         );
     }
 
-    public function shouldIgnoreCommand(?string $command, ?string $commandClass = null): bool
+    protected function shouldIgnoreCommand(?string $command, ?string $commandClass = null): bool
     {
-        if ($command !== null && in_array($command, $this->defaultIgnoredCommands())) {
+        $ignoredCommands = [...$this->ignoredCommands, ...$this->defaultIgnoredCommands()];
+        $ignoredClasses = [...$this->ignoredClasses, ...$this->defaultIgnoredCommandClasses()];
+
+        if ($command !== null && PatternMatcher::matchesAny($command, $ignoredCommands)) {
             return true;
         }
 
-        if ($commandClass !== null && in_array($commandClass, $this->defaultIgnoredCommandClasses())) {
+        if ($commandClass !== null && PatternMatcher::matchesAny($commandClass, $ignoredClasses)) {
             return true;
         }
 
@@ -97,6 +123,12 @@ class CommandRecorder extends SpansRecorder
         int $exitCode = 0,
         array $attributes = []
     ): ?Span {
+        if ($this->tracer->isSamplingPaused()) {
+            $this->tracer->resumeSampling();
+
+            return null;
+        }
+
         return $this->endSpan(additionalAttributes: [
             'process.exit_code' => $exitCode,
             ...$attributes,

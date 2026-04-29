@@ -15,8 +15,8 @@ enum SpanType: string implements FlareSpanType
     case View = 'php_view';
     case HttpRequest = 'php_http_request';
     case Filesystem = 'php_filesystem';
-    case Job = 'php_job';
-    case QueueingJob = 'php_queueing_job';
+    case Job = 'laravel_job';
+    case QueueingJob = 'laravel_queueing';
 
     case Application = 'php_application';
     case ApplicationRegistration = 'php_application_registration';

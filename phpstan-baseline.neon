@@ -26,7 +26,17 @@ parameters:
 			path: src/Flare.php
 
 		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:job\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\JobRecorder\\\\JobRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
+			count: 1
+			path: src/Flare.php
+
+		-
 			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:query\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\QueryRecorder\\\\QueryRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
+			count: 1
+			path: src/Flare.php
+
+		-
+			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:queue\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\QueueRecorder\\\\QueueRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
 			count: 1
 			path: src/Flare.php
 
@@ -98,7 +108,17 @@ parameters:
 		-
 			message: "#^Unsafe usage of new static\\(\\)\\.$#"
 			count: 1
+			path: src/Recorders/QueueRecorder/QueueRecorder.php
+
+		-
+			message: "#^Unsafe usage of new static\\(\\)\\.$#"
+			count: 1
 			path: src/Recorders/RoutingRecorder/RoutingRecorder.php
+
+		-
+			message: "#^Unsafe usage of new static\\(\\)\\.$#"
+			count: 7
+			path: src/Sampling/SamplingRule.php
 
 		-
 			message: "#^Unsafe usage of new static\\(\\)\\.$#"

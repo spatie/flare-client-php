@@ -22,14 +22,19 @@ class RateSampler implements Sampler
 
     public function shouldSample(EntryPoint $entryPoint): bool
     {
-        if ($this->rate === 0.0) {
+        return $this->decide($this->rate);
+    }
+
+    protected function decide(float $rate): bool
+    {
+        if ($rate <= 0.0) {
             return false;
         }
 
-        if ($this->rate === 1.0) {
+        if ($rate >= 1.0) {
             return true;
         }
 
-        return (mt_rand() / mt_getrandmax()) < $this->rate;
+        return (mt_rand() / mt_getrandmax()) < $rate;
     }
 }

@@ -13,6 +13,7 @@ use Spatie\FlareClient\Enums\CollectType;
 use Spatie\FlareClient\Enums\FlareEntityType;
 use Spatie\FlareClient\FlareMiddleware\AddConsoleInformation;
 use Spatie\FlareClient\FlareMiddleware\AddEntryPoint;
+use Spatie\FlareClient\FlareMiddleware\AddJobInformation;
 use Spatie\FlareClient\FlareMiddleware\AddLogs;
 use Spatie\FlareClient\FlareMiddleware\AddRequestInformation;
 use Spatie\FlareClient\FlareMiddleware\AddSolutions;
@@ -109,7 +110,7 @@ class CollectsResolver
                 CollectType::Recorders => $this->recorders($options),
                 CollectType::FlareMiddleware => $this->flareMiddleware($options),
                 CollectType::ErrorsWithTraces => $this->errorsWithTraces($options),
-                CollectType::Application, null => null,
+                CollectType::Application => null,
                 default => $this->handleUnknownCollectType($type, $options),
             };
         }
@@ -133,8 +134,14 @@ class CollectsResolver
         array $options
     ): void {
         $this->addMiddleware($options['middleware'] ?? AddRequestInformation::class);
-        $this->addRecorder(RequestRecorder::class);
-        $this->addRecorder(RoutingRecorder::class);
+        $this->addRecorder(
+            RequestRecorder::class,
+            $this->only($options, ['ignored_urls']),
+        );
+        $this->addRecorder(
+            RoutingRecorder::class,
+            $this->only($options, ['ignored_routes']),
+        );
         $this->addRecorder(ResponseRecorder::class);
     }
 
@@ -148,6 +155,8 @@ class CollectsResolver
                 'with_traces',
                 'with_errors',
                 'max_items_with_errors',
+                'ignored_commands',
+                'ignored_classes',
             ])
         );
     }
@@ -161,6 +170,7 @@ class CollectsResolver
                 'with_traces',
                 'with_errors',
                 'max_items_with_errors',
+                'ignored_classes',
             ])
         );
 
@@ -170,8 +180,11 @@ class CollectsResolver
                 'with_traces',
                 'with_errors',
                 'max_items_with_errors',
+                'ignored_classes',
             ])
         );
+
+        $this->addMiddleware($options['middleware'] ?? AddJobInformation::class);
     }
 
     protected function context(

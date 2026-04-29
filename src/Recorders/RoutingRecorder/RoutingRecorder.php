@@ -10,6 +10,7 @@ use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Recorders\SpansRecorder;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Support\BackTracer;
+use Spatie\FlareClient\Support\PatternMatcher;
 use Spatie\FlareClient\Support\TimeInterval;
 use Spatie\FlareClient\Tracer;
 
@@ -24,6 +25,9 @@ class RoutingRecorder extends SpansRecorder
     protected bool $afterMiddleware = false;
 
     protected bool $globalAfterMiddleware = false;
+
+    /** @var array<int, string> */
+    protected array $ignoredRoutes = [];
 
     public static function register(ContainerInterface $container, array $config): Closure
     {
@@ -49,6 +53,8 @@ class RoutingRecorder extends SpansRecorder
         if (! array_key_exists('with_traces', $config)) {
             $this->withTraces = true;
         }
+
+        $this->ignoredRoutes = $config['ignored_routes'] ?? [];
     }
 
     public static function type(): string|RecorderType
@@ -158,7 +164,9 @@ class RoutingRecorder extends SpansRecorder
             );
         }
 
-        if ($route !== null && in_array($route, $this->defaultIgnoredRoutes())) {
+        $this->tracer->reevaluateSampling();
+
+        if ($route !== null && $this->shouldIgnoreRoute($route)) {
             $this->tracer->unsample();
         }
 
@@ -171,8 +179,6 @@ class RoutingRecorder extends SpansRecorder
             additionalAttributes: $attributes,
         );
     }
-
-
 
     public function recordRouting(
         array $attributes = [],
@@ -368,6 +374,11 @@ class RoutingRecorder extends SpansRecorder
         }
 
         return null;
+    }
+
+    protected function shouldIgnoreRoute(string $route): bool
+    {
+        return PatternMatcher::matchesAny($route, [...$this->ignoredRoutes, ...$this->defaultIgnoredRoutes()]);
     }
 
     /** @return array<int, string> */

@@ -24,7 +24,7 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
     use TracingRecorder;
 
     /** @var array<Span> */
-    private array $stack = [];
+    protected array $stack = [];
 
     public static function register(ContainerInterface $container, array $config): Closure
     {

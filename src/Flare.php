@@ -13,7 +13,9 @@ use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
 use Spatie\FlareClient\Recorders\ExternalHttpRecorder\ExternalHttpRecorder;
 use Spatie\FlareClient\Recorders\FilesystemRecorder\FilesystemRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
+use Spatie\FlareClient\Recorders\JobRecorder\JobRecorder;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
+use Spatie\FlareClient\Recorders\QueueRecorder\QueueRecorder;
 use Spatie\FlareClient\Recorders\RedisCommandRecorder\RedisCommandRecorder;
 use Spatie\FlareClient\Recorders\RequestRecorder\RequestRecorder;
 use Spatie\FlareClient\Recorders\ResponseRecorder\ResponseRecorder;
@@ -203,6 +205,16 @@ class Flare
     public function request(): RequestRecorder|null
     {
         return $this->recorders->getRecorder(RecorderType::Request->value);
+    }
+
+    public function job(): JobRecorder|null
+    {
+        return $this->recorders->getRecorder(RecorderType::Job->value);
+    }
+
+    public function queue(): QueueRecorder|null
+    {
+        return $this->recorders->getRecorder(RecorderType::Queue->value);
     }
 
     public function response(): ResponseRecorder|null

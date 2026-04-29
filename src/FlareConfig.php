@@ -35,20 +35,22 @@ use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 use Spatie\FlareClient\Memory\SystemMemory;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
-use Spatie\FlareClient\Recorders\JobRecorder\JobRecorder;
 use Spatie\FlareClient\Recorders\DumpRecorder\DumpRecorder;
 use Spatie\FlareClient\Recorders\ExternalHttpRecorder\ExternalHttpRecorder;
 use Spatie\FlareClient\Recorders\FilesystemRecorder\FilesystemRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
+use Spatie\FlareClient\Recorders\JobRecorder\JobRecorder;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
 use Spatie\FlareClient\Recorders\RedisCommandRecorder\RedisCommandRecorder;
 use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
 use Spatie\FlareClient\Recorders\ViewRecorder\ViewRecorder;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Sampling\AlwaysSampler;
+use Spatie\FlareClient\Sampling\DynamicSampler;
 use Spatie\FlareClient\Sampling\NeverSampler;
 use Spatie\FlareClient\Sampling\RateSampler;
 use Spatie\FlareClient\Sampling\Sampler;
+use Spatie\FlareClient\Sampling\SamplingRule;
 use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Senders\CurlSender;
 use Spatie\FlareClient\Senders\Sender;
@@ -235,9 +237,20 @@ class FlareConfig
         ];
     }
 
-    public function collectRequests(array $extra = []): static
-    {
-        return $this->addCollect(CollectType::Requests, $extra);
+    /**
+     * @param array<int, string> $ignoredRoutes
+     * @param array<int, string> $ignoredUrls
+     */
+    public function collectRequests(
+        array $ignoredRoutes = [],
+        array $ignoredUrls = [],
+        array $extra = [],
+    ): static {
+        return $this->addCollect(CollectType::Requests, [
+            'ignored_routes' => $ignoredRoutes,
+            'ignored_urls' => $ignoredUrls,
+            ...$extra,
+        ]);
     }
 
     public function ignoreRequests(): static
@@ -245,16 +258,24 @@ class FlareConfig
         return $this->ignoreCollect(CollectType::Requests);
     }
 
+    /**
+     * @param array<int, string> $ignoredCommands
+     * @param array<int, class-string> $ignoredClasses
+     */
     public function collectCommands(
         bool $withTraces = CommandRecorder::DEFAULT_WITH_TRACES,
         bool $withErrors = CommandRecorder::DEFAULT_WITH_ERRORS,
         ?int $maxItemsWithErrors = CommandRecorder::DEFAULT_MAX_ITEMS_WITH_ERRORS,
+        array $ignoredCommands = [],
+        array $ignoredClasses = [],
         array $extra = [],
     ): static {
         return $this->addCollect(CollectType::Commands, [
             'with_traces' => $withTraces,
             'with_errors' => $withErrors,
             'max_items_with_errors' => $maxItemsWithErrors,
+            'ignored_commands' => $ignoredCommands,
+            'ignored_classes' => $ignoredClasses,
             ...$extra,
         ]);
     }
@@ -264,16 +285,21 @@ class FlareConfig
         return $this->ignoreCollect(CollectType::Commands);
     }
 
+    /**
+     * @param array<int, class-string> $ignoredClasses
+     */
     public function collectJobs(
         bool $withTraces = JobRecorder::DEFAULT_WITH_TRACES,
         bool $withErrors = JobRecorder::DEFAULT_WITH_ERRORS,
         ?int $maxItemsWithErrors = JobRecorder::DEFAULT_MAX_ITEMS_WITH_ERRORS,
+        array $ignoredClasses = [],
         array $extra = [],
     ): static {
         return $this->addCollect(CollectType::Jobs, [
             'with_traces' => $withTraces,
             'with_errors' => $withErrors,
             'max_items_with_errors' => $maxItemsWithErrors,
+            'ignored_classes' => $ignoredClasses,
             ...$extra,
         ]);
     }
@@ -771,6 +797,15 @@ class FlareConfig
     {
         $this->sampler = $sampler;
         $this->samplerConfig = $config;
+
+        return $this;
+    }
+
+    /** @param array<SamplingRule> $rules */
+    public function sampleTracesDynamic(float $baseRate, array $rules = []): static
+    {
+        $this->sampler = DynamicSampler::class;
+        $this->samplerConfig = ['base_rate' => $baseRate, 'rules' => $rules];
 
         return $this;
     }

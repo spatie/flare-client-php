@@ -94,7 +94,7 @@ class Logger
         $attributes = [
             ...($attributes ?? []),
             ...($recorder?->toArray() ?? []),
-            ...$this->entryPointResolver->get()->toAttributes()
+            ...$this->entryPointResolver->get()->toAttributes(),
         ];
 
         $record = array_filter([

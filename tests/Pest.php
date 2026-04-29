@@ -1,5 +1,7 @@
 <?php
 
+use Spatie\FlareClient\EntryPoint\EntryPoint;
+use Spatie\FlareClient\EntryPoint\EntryPointResolver;
 use Spatie\FlareClient\Flare;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\FlareProvider;
@@ -34,6 +36,7 @@ function setupFlare(
     bool $isUsingSubtasks = false,
     bool $useFakeApi = true,
     bool $disableApiQueue = false,
+    ?EntryPoint $entryPoint = null,
 ): Flare {
     $config = new FlareConfig(
         apiToken: $withoutApiKey ? null : 'fake-api-key',
@@ -76,6 +79,10 @@ function setupFlare(
 
     $provider->register();
     $provider->boot();
+
+    if ($entryPoint !== null) {
+        $container->get(EntryPointResolver::class)->set($entryPoint);
+    }
 
     return test()->flare = $container->get(Flare::class);
 }

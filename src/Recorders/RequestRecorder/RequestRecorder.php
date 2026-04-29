@@ -12,12 +12,16 @@ use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Recorders\SpansRecorder;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Support\BackTracer;
+use Spatie\FlareClient\Support\PatternMatcher;
 use Spatie\FlareClient\Tracer;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class RequestRecorder extends SpansRecorder
 {
+    /** @var array<int, string> */
+    protected array $ignoredUrls = [];
+
     public static function type(): string|RecorderType
     {
         return RecorderType::Request;
@@ -50,6 +54,8 @@ class RequestRecorder extends SpansRecorder
     {
         $this->withTraces = true;
         $this->withErrors = false;
+
+        $this->ignoredUrls = $config['ignored_urls'] ?? [];
     }
 
     public function recordStart(
@@ -57,9 +63,17 @@ class RequestRecorder extends SpansRecorder
         ?string $route = null,
         array $attributes = [],
     ): ?Span {
+        $request ??= Request::createFromGlobals();
+
+        if ($this->shouldIgnoreUrl($request->getPathInfo())) {
+            $this->tracer->unsample();
+
+            return null;
+        }
+
         return $this->startSpan(nameAndAttributes: function () use ($route, $request, $attributes) {
             $requestAttributes = $this->requestAttributesProvider->toArray(
-                $request ?? Request::createFromGlobals(),
+                $request,
                 includeContents: false,
             );
 
@@ -77,6 +91,17 @@ class RequestRecorder extends SpansRecorder
                 ],
             ];
         });
+    }
+
+    protected function shouldIgnoreUrl(string $path): bool
+    {
+        return PatternMatcher::matchesAny($path, [...$this->ignoredUrls, ...$this->defaultIgnoredUrls()]);
+    }
+
+    /** @return array<int, string> */
+    protected function defaultIgnoredUrls(): array
+    {
+        return [];
     }
 
     public function recordEnd(
