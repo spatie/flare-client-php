@@ -3,19 +3,11 @@
 namespace Spatie\FlareClient\FlareMiddleware;
 
 use Closure;
-use Psr\Container\ContainerInterface;
 use Spatie\FlareClient\EntryPoint\EntryPointResolver;
 use Spatie\FlareClient\ReportFactory;
 
 class AddEntryPoint implements FlareMiddleware
 {
-    public static function register(ContainerInterface $container, array $config): Closure
-    {
-        return fn () => new self(
-            $container->get(EntryPointResolver::class),
-        );
-    }
-
     public function __construct(
         protected EntryPointResolver $entryPointResolver,
     ) {

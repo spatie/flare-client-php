@@ -2,8 +2,9 @@
 
 namespace Spatie\FlareClient\Recorders\RoutingRecorder;
 
-use Closure;
-use Psr\Container\ContainerInterface;
+use Spatie\FlareClient\AttributesProviders\RouteAttributesProvider;
+use Spatie\FlareClient\Contracts\AttributesProvider;
+use Spatie\FlareClient\Contracts\EntryPointHandlerProvider;
 use Spatie\FlareClient\EntryPoint\EntryPointResolver;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
@@ -29,15 +30,8 @@ class RoutingRecorder extends SpansRecorder
     /** @var array<int, string> */
     protected array $ignoredRoutes = [];
 
-    public static function register(ContainerInterface $container, array $config): Closure
-    {
-        return fn () => new static(
-            $container->get(Tracer::class),
-            $container->get(BackTracer::class),
-            $container->get(EntryPointResolver::class),
-            $config,
-        );
-    }
+    /** @var class-string<RouteAttributesProvider> */
+    protected string $routeAttributesProvider;
 
     public function __construct(
         Tracer $tracer,
@@ -55,6 +49,7 @@ class RoutingRecorder extends SpansRecorder
         }
 
         $this->ignoredRoutes = $config['ignored_routes'] ?? [];
+        $this->routeAttributesProvider = $config['route_attributes_provider'] ?? RouteAttributesProvider::class;
     }
 
     public static function type(): string|RecorderType
@@ -141,8 +136,8 @@ class RoutingRecorder extends SpansRecorder
         array $attributes = [],
         ?int $time = null,
         ?string $route = null,
-        ?string $entryPointHandlerName = null,
-        string $entryPointHandlerType = 'php_request',
+        ?string $method = null,
+        ?AttributesProvider $provider = null,
     ): ?Span {
         if ($this->routing === false) {
             return null;
@@ -151,16 +146,24 @@ class RoutingRecorder extends SpansRecorder
         $this->routing = false;
 
         $route ??= $attributes['http.route'] ?? null;
+        $method ??= strtoupper($attributes['http.request.method'] ?? $_SERVER['REQUEST_METHOD'] ?? 'GET');
+
+        $provider ??= new $this->routeAttributesProvider($route);
+
+        $attributes = [
+            ...$provider->toArray(),
+            ...$attributes,
+        ];
 
         $entryPoint = $this->entryPointResolver->get();
 
         if (! $entryPoint->handlerResolved) {
-            $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
+            $entryPointProvider = $provider instanceof EntryPointHandlerProvider ? $provider : null;
 
             $entryPoint->setHandler(
-                handlerIdentifier: $route ? "{$method} {$route}" : $method,
-                handlerName: $entryPointHandlerName,
-                handlerType: $entryPointHandlerType,
+                handlerIdentifier: $entryPointProvider?->entryPointHandlerIdentifier() ?? ($route ? "{$method} {$route}" : $method),
+                handlerName: $entryPointProvider?->entryPointHandlerName(),
+                handlerType: $entryPointProvider?->entryPointHandlerType() ?? 'php_request',
             );
         }
 

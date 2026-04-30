@@ -106,6 +106,20 @@ class Container implements ContainerInterface
         return $this->tryAutowiringDefinition($id, $parameters) ?? null;
     }
 
+    /**
+     * @template T
+     *
+     * @param class-string<T> $id
+     * @param array<string, mixed> $parameters
+     *
+     * @return T
+     */
+    public function make(string $id, array $parameters = []): mixed
+    {
+        return $this->tryAutowiringDefinition($id, $parameters)
+            ?? throw ContainerEntryNotFoundException::make($id);
+    }
+
     public function reset(): void
     {
         $this->definitions = [];

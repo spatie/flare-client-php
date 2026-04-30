@@ -2,8 +2,6 @@
 
 namespace Spatie\FlareClient\Recorders\CommandRecorder;
 
-use Closure;
-use Psr\Container\ContainerInterface;
 use Spatie\FlareClient\AttributesProviders\PhpConsoleAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\SymfonyInputCommandAttributesProvider;
 use Spatie\FlareClient\Concerns\Recorders\PausableRecorder;
@@ -32,16 +30,6 @@ class CommandRecorder extends SpansRecorder
     public static function type(): string|RecorderType
     {
         return RecorderType::Command;
-    }
-
-    public static function register(ContainerInterface $container, array $config): Closure
-    {
-        return fn () => new static(
-            $container->get(Tracer::class),
-            $container->get(BackTracer::class),
-            $container->get(EntryPointResolver::class),
-            $config,
-        );
     }
 
     public function __construct(

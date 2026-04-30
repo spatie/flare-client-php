@@ -97,33 +97,8 @@ parameters:
 
 		-
 			message: "#^Unsafe usage of new static\\(\\)\\.$#"
-			count: 1
-			path: src/Recorders/CommandRecorder/CommandRecorder.php
-
-		-
-			message: "#^Unsafe usage of new static\\(\\)\\.$#"
-			count: 1
-			path: src/Recorders/JobRecorder/JobRecorder.php
-
-		-
-			message: "#^Unsafe usage of new static\\(\\)\\.$#"
-			count: 1
-			path: src/Recorders/QueueRecorder/QueueRecorder.php
-
-		-
-			message: "#^Unsafe usage of new static\\(\\)\\.$#"
-			count: 1
-			path: src/Recorders/RoutingRecorder/RoutingRecorder.php
-
-		-
-			message: "#^Unsafe usage of new static\\(\\)\\.$#"
 			count: 7
 			path: src/Sampling/SamplingRule.php
-
-		-
-			message: "#^Unsafe usage of new static\\(\\)\\.$#"
-			count: 1
-			path: src/Recorders/SpanEventsRecorder.php
 
 		-
 			message: "#^Instanceof between \\*NEVER\\* and Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent will always evaluate to false\\.$#"
@@ -132,11 +107,6 @@ parameters:
 
 		-
 			message: "#^Match arm is unreachable because previous comparison is always true\\.$#"
-			count: 1
-			path: src/Recorders/SpansRecorder.php
-
-		-
-			message: "#^Unsafe usage of new static\\(\\)\\.$#"
 			count: 1
 			path: src/Recorders/SpansRecorder.php
 

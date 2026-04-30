@@ -3,24 +3,28 @@
 namespace Spatie\FlareClient\FlareMiddleware;
 
 use Closure;
-use Psr\Container\ContainerInterface;
+use Spatie\FlareClient\AttributesProviders\EmptyUserAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\RequestAttributesProvider;
+use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\ReportFactory;
+use Spatie\FlareClient\Support\Redactor;
 use Spatie\FlareClient\Support\Runtime;
 use Symfony\Component\HttpFoundation\Request;
 
 class AddRequestInformation implements FlareMiddleware
 {
-    public static function register(ContainerInterface $container, array $config): Closure
-    {
-        return fn () => new self(
-            $container->get(RequestAttributesProvider::class),
-        );
-    }
+    /** @var class-string<RequestAttributesProvider> */
+    protected string $requestAttributesProvider;
+
+    /** @var class-string<UserAttributesProvider> */
+    protected string $userAttributesProvider;
 
     public function __construct(
-        protected RequestAttributesProvider $attributesProvider,
+        protected Redactor $redactor,
+        array $config = [],
     ) {
+        $this->requestAttributesProvider = $config['request_attributes_provider'] ?? RequestAttributesProvider::class;
+        $this->userAttributesProvider = $config['user_attributes_provider'] ?? EmptyUserAttributesProvider::class;
     }
 
     public function handle(ReportFactory $report, Closure $next): ReportFactory
@@ -45,6 +49,12 @@ class AddRequestInformation implements FlareMiddleware
     {
         $request = Request::createFromGlobals();
 
-        return $this->attributesProvider->toArray($request);
+        $provider = new $this->requestAttributesProvider(
+            $this->redactor,
+            $this->userAttributesProvider,
+            $request,
+        );
+
+        return $provider->toArray();
     }
 }

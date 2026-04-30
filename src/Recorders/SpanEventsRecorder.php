@@ -4,7 +4,6 @@ namespace Spatie\FlareClient\Recorders;
 
 use Closure;
 use InvalidArgumentException;
-use Psr\Container\ContainerInterface;
 use Spatie\FlareClient\Concerns\Recorders\BacktracingRecorder;
 use Spatie\FlareClient\Concerns\Recorders\ErrorsRecorder;
 use Spatie\FlareClient\Concerns\Recorders\TracingRecorder;
@@ -22,15 +21,6 @@ abstract class SpanEventsRecorder extends Recorder implements SpanEventsRecorder
     use ErrorsRecorder;
 
     use TracingRecorder;
-
-    public static function register(ContainerInterface $container, array $config): Closure
-    {
-        return fn () => new static(
-            $container->get(Tracer::class),
-            $container->get(BackTracer::class),
-            $config
-        );
-    }
 
     public function __construct(
         protected Tracer $tracer,

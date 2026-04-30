@@ -4,7 +4,6 @@ namespace Spatie\FlareClient\FlareMiddleware;
 
 use Closure;
 use Monolog\Level;
-use Psr\Container\ContainerInterface;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Logger;
 use Spatie\FlareClient\ReportFactory;
@@ -16,14 +15,6 @@ class AddLogs implements FlareMiddleware
     const DEFAULT_MAX_LOGS_WITH_ERRORS = 100;
 
     const DEFAULT_MINIMAL_LOG_LEVEL_WITH_ERRORS = Level::Info;
-
-    public static function register(ContainerInterface $container, array $config): Closure
-    {
-        return fn () => new self(
-            $container->get(Logger::class),
-            $config,
-        );
-    }
 
     public function __construct(
         protected Logger $logger,

@@ -6,11 +6,6 @@ use Closure;
 use Illuminate\Contracts\Container\Container as IlluminateContainer;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\ErrorSolutions\Contracts\SolutionProviderRepository as SolutionProviderRepositoryContract;
-use Spatie\FlareClient\AttributesProviders\ConsoleAttributesProvider;
-use Spatie\FlareClient\AttributesProviders\GitAttributesProvider;
-use Spatie\FlareClient\AttributesProviders\RequestAttributesProvider;
-use Spatie\FlareClient\AttributesProviders\ResponseAttributesProvider;
-use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\EntryPoint\EntryPointResolver;
 use Spatie\FlareClient\Enums\FlareMode;
@@ -112,14 +107,8 @@ class FlareProvider
             censorSession: $this->config->censorSession,
         ));
 
-        $this->container->singleton(UserAttributesProvider::class, $this->config->userAttributesProvider);
-        $this->container->singleton(GitAttributesProvider::class, fn () => new GitAttributesProvider($this->config->applicationPath));
-        $this->container->singleton(RequestAttributesProvider::class, $this->config->requestAttributesProvider);
-        $this->container->singleton(ResponseAttributesProvider::class, $this->config->responseAttributesProvider);
-        $this->container->singleton(ConsoleAttributesProvider::class, $this->config->consoleAttributesProvider);
-
         /** @var CollectsResolver $collects */
-        $collects = (new ($this->collectsResolver ?? CollectsResolver::class))->execute($this->config->collects);
+        $collects = (new ($this->collectsResolver ?? CollectsResolver::class)())->execute($this->config);
 
         $this->container->singleton(ArgumentReducers::class, fn () => match (true) {
             $collects->collectStackFrameArguments === false => ArgumentReducers::create([]),
@@ -300,11 +289,7 @@ class FlareProvider
     {
         return fn (Container|IlluminateContainer $container, string $class, array $config) => $container->singleton(
             $class,
-            function () use ($container, $config, $class) {
-                return method_exists($class, 'register')
-                    ? $class::register($container, $config)()
-                    : new $class;
-            }
+            fn () => $container->make($class, ['config' => $config]),
         );
     }
 }

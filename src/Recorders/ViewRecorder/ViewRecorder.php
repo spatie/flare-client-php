@@ -2,8 +2,6 @@
 
 namespace Spatie\FlareClient\Recorders\ViewRecorder;
 
-use Closure;
-use Psr\Container\ContainerInterface;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
@@ -14,16 +12,6 @@ use Spatie\FlareClient\Tracer;
 
 class ViewRecorder extends SpansRecorder
 {
-    public static function register(ContainerInterface $container, array $config): Closure
-    {
-        return fn () => new self(
-            $container->get(Tracer::class),
-            $container->get(BackTracer::class),
-            $container->get(ArgumentReducers::class),
-            $config,
-        );
-    }
-
     public function __construct(
         Tracer $tracer,
         BackTracer $backTracer,
