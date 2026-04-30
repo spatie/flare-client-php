@@ -2,9 +2,9 @@
 
 namespace Spatie\FlareClient\Recorders\RoutingRecorder;
 
-use Spatie\FlareClient\AttributesProviders\RouteAttributesProvider;
-use Spatie\FlareClient\Contracts\AttributesProvider;
+use Spatie\FlareClient\AttributesProviders\PhpRouteAttributesProvider;
 use Spatie\FlareClient\Contracts\EntryPointHandlerProvider;
+use Spatie\FlareClient\Contracts\RouteAttributesProvider;
 use Spatie\FlareClient\EntryPoint\EntryPointResolver;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
@@ -30,9 +30,6 @@ class RoutingRecorder extends SpansRecorder
     /** @var array<int, string> */
     protected array $ignoredRoutes = [];
 
-    /** @var class-string<RouteAttributesProvider> */
-    protected string $routeAttributesProvider;
-
     public function __construct(
         Tracer $tracer,
         BackTracer $backTracer,
@@ -49,7 +46,6 @@ class RoutingRecorder extends SpansRecorder
         }
 
         $this->ignoredRoutes = $config['ignored_routes'] ?? [];
-        $this->routeAttributesProvider = $config['route_attributes_provider'] ?? RouteAttributesProvider::class;
     }
 
     public static function type(): string|RecorderType
@@ -133,11 +129,9 @@ class RoutingRecorder extends SpansRecorder
     }
 
     public function recordRoutingEnd(
+        RouteAttributesProvider $routeAttributesProvider,
         array $attributes = [],
         ?int $time = null,
-        ?string $route = null,
-        ?string $method = null,
-        ?AttributesProvider $provider = null,
     ): ?Span {
         if ($this->routing === false) {
             return null;
@@ -145,36 +139,33 @@ class RoutingRecorder extends SpansRecorder
 
         $this->routing = false;
 
-        $route ??= $attributes['http.route'] ?? null;
-        $method ??= strtoupper($attributes['http.request.method'] ?? $_SERVER['REQUEST_METHOD'] ?? 'GET');
+        $routeName = $routeAttributesProvider->route();
 
-        $provider ??= new $this->routeAttributesProvider($route);
-
-        $attributes = [
-            ...$provider->toArray(),
-            ...$attributes,
-        ];
+        $method = $routeAttributesProvider->method();
+        $method = strtoupper($method);
 
         $entryPoint = $this->entryPointResolver->get();
 
         if (! $entryPoint->handlerResolved) {
-            $entryPointProvider = $provider instanceof EntryPointHandlerProvider ? $provider : null;
+            $entryPointProvider = $routeAttributesProvider instanceof EntryPointHandlerProvider
+                ? $routeAttributesProvider
+                : null;
 
             $entryPoint->setHandler(
-                handlerIdentifier: $entryPointProvider?->entryPointHandlerIdentifier() ?? ($route ? "{$method} {$route}" : $method),
-                handlerName: $entryPointProvider?->entryPointHandlerName(),
+                handlerIdentifier: $routeName ? "{$method} {$routeName}" : null,
+                handlerName: $entryPointProvider?->entryPointHandlerName() ?? null,
                 handlerType: $entryPointProvider?->entryPointHandlerType() ?? 'php_request',
             );
         }
 
         $this->tracer->reevaluateSampling();
 
-        if ($route !== null && $this->shouldIgnoreRoute($route)) {
+        if ($routeName !== null && $this->shouldIgnoreRoute($routeName)) {
             $this->tracer->unsample();
         }
 
-        if ($route && ! array_key_exists('http.route', $attributes)) {
-            $attributes['http.route'] = $route;
+        if ($routeName !== null && ! array_key_exists('http.route', $attributes)) {
+            $attributes['http.route'] = $routeName;
         }
 
         return $this->endSpan(
@@ -183,7 +174,38 @@ class RoutingRecorder extends SpansRecorder
         );
     }
 
+    public function recordRoutingEndFromDefined(
+        string $route,
+        ?string $method = null,
+        ?string $handlerName = null,
+        array $attributes = [],
+        ?int $time = null,
+    ): ?Span {
+        return $this->recordRoutingEnd(
+            new PhpRouteAttributesProvider($route, $method, $handlerName),
+            $attributes,
+            $time,
+        );
+    }
+
+    protected function recordForcedRoutingEnd(
+        array $attributes = [],
+        ?int $time = null,
+    ): ?Span {
+        if ($this->routing === false) {
+            return null;
+        }
+
+        $this->routing = false;
+
+        return $this->endSpan(
+            time: $time,
+            additionalAttributes: $attributes,
+        );
+    }
+
     public function recordRouting(
+        RouteAttributesProvider $routeAttributesProvider,
         array $attributes = [],
         ?int $start = null,
         ?int $end = null,
@@ -191,11 +213,11 @@ class RoutingRecorder extends SpansRecorder
     ): ?Span {
         [$start, $end] = TimeInterval::resolve($this->tracer->time, $start, $end, $duration);
 
-        if ($this->recordRoutingStart($attributes, time: $start)) {
-            return $this->recordRoutingEnd(time: $end);
+        if (! $this->recordRoutingStart($attributes, time: $start)) {
+            return null;
         }
 
-        return null;
+        return $this->recordRoutingEnd($routeAttributesProvider, time: $end);
     }
 
     public function recordBeforeMiddlewareStart(
@@ -211,7 +233,7 @@ class RoutingRecorder extends SpansRecorder
         }
 
         if ($this->routing) {
-            $this->recordRoutingEnd(time: $time);
+            $this->recordForcedRoutingEnd(time: $time);
         }
 
         $this->beforeMiddleware = true;

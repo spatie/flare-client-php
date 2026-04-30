@@ -13,7 +13,7 @@ it('can trace requests', function () {
 
     $flare->tracer->startTrace();
 
-    $flare->request()->recordStart();
+    $flare->request()->recordStartFromGlobals();
 
     $flare->request()->recordEnd();
 
@@ -35,7 +35,7 @@ it('can trace requests', function () {
 
 it('does not unsample when url does not match ignored list', function () {
     $flare = setupFlare(
-        fn (FlareConfig $config) => $config->collectRequests(ignoredUrls: ['/api/health']),
+        fn (FlareConfig $config) => $config->collectRequests(ignoredUrls: ['*/api/health']),
         alwaysSampleTraces: true,
     );
 
@@ -43,7 +43,7 @@ it('does not unsample when url does not match ignored list', function () {
 
     $request = Request::create('https://example.com/api/users', 'GET');
 
-    $span = $flare->request()->recordStart($request);
+    $span = $flare->request()->recordStartFromSymfonyRequest($request);
 
     expect($span)->not()->toBeNull();
     expect($flare->tracer->isSampling())->toBeTrue();
@@ -51,7 +51,7 @@ it('does not unsample when url does not match ignored list', function () {
 
 it('unsamples for an exact url match', function () {
     $flare = setupFlare(
-        fn (FlareConfig $config) => $config->collectRequests(ignoredUrls: ['/api/health']),
+        fn (FlareConfig $config) => $config->collectRequests(ignoredUrls: ['https://example.com/api/health']),
         alwaysSampleTraces: true,
     );
 
@@ -59,7 +59,7 @@ it('unsamples for an exact url match', function () {
 
     $request = Request::create('https://example.com/api/health', 'GET');
 
-    $span = $flare->request()->recordStart($request);
+    $span = $flare->request()->recordStartFromSymfonyRequest($request);
 
     expect($span)->toBeNull();
     expect($flare->tracer->isSampling())->toBeFalse();
@@ -67,7 +67,7 @@ it('unsamples for an exact url match', function () {
 
 it('unsamples for a glob url match', function () {
     $flare = setupFlare(
-        fn (FlareConfig $config) => $config->collectRequests(ignoredUrls: ['/horizon/*']),
+        fn (FlareConfig $config) => $config->collectRequests(ignoredUrls: ['*/horizon/*']),
         alwaysSampleTraces: true,
     );
 
@@ -75,7 +75,7 @@ it('unsamples for a glob url match', function () {
 
     $request = Request::create('https://example.com/horizon/jobs/123', 'GET');
 
-    $span = $flare->request()->recordStart($request);
+    $span = $flare->request()->recordStartFromSymfonyRequest($request);
 
     expect($span)->toBeNull();
     expect($flare->tracer->isSampling())->toBeFalse();

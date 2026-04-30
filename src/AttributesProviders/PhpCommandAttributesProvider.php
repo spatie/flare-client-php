@@ -4,7 +4,7 @@ namespace Spatie\FlareClient\AttributesProviders;
 
 use Spatie\FlareClient\Contracts\CommandAttributesProvider;
 
-class PhpConsoleAttributesProvider implements CommandAttributesProvider
+class PhpCommandAttributesProvider implements CommandAttributesProvider
 {
     /** @param array<int, string>|null $arguments */
     public function __construct(

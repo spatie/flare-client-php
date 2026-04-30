@@ -1,6 +1,6 @@
 <?php
 
-use Spatie\FlareClient\AttributesProviders\PhpConsoleAttributesProvider;
+use Spatie\FlareClient\AttributesProviders\PhpCommandAttributesProvider;
 
 it('returns the explicitly provided arguments', function () {
     $arguments = [
@@ -9,7 +9,7 @@ it('returns the explicitly provided arguments', function () {
         'argument 3',
     ];
 
-    $context = new PhpConsoleAttributesProvider('migrate', arguments: $arguments);
+    $context = new PhpCommandAttributesProvider('migrate', arguments: $arguments);
 
     expect($context->toArray())->toEqual([
         'process.command_args' => $arguments,
@@ -21,7 +21,7 @@ it('falls back to $_SERVER[argv] when no arguments are passed', function () {
     $_SERVER['argv'] = ['artisan', 'migrate', '--force'];
 
     try {
-        $context = new PhpConsoleAttributesProvider('migrate');
+        $context = new PhpCommandAttributesProvider('migrate');
 
         expect($context->toArray())->toEqual([
             'process.command_args' => ['artisan', 'migrate', '--force'],
@@ -36,7 +36,7 @@ it('falls back to $_SERVER[argv] when no arguments are passed', function () {
 });
 
 it('exposes the command and command class', function () {
-    $context = new PhpConsoleAttributesProvider('migrate', 'App\\Commands\\Migrate');
+    $context = new PhpCommandAttributesProvider('migrate', 'App\\Commands\\Migrate');
 
     expect($context->command())->toBe('migrate');
     expect($context->commandClass())->toBe('App\\Commands\\Migrate');

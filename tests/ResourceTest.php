@@ -25,6 +25,8 @@ test('it always includes base attributes and custom attributes', function () {
 });
 
 test('it can include git data', function () {
+    GitAttributesProvider::clearCache();
+
     $gitProvider = new GitAttributesProvider(__DIR__.'/../');
 
     $resource = new Resource(

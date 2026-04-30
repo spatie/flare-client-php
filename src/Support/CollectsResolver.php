@@ -133,25 +133,14 @@ class CollectsResolver
     protected function requests(
         array $options
     ): void {
-        $this->addMiddleware($options['middleware'] ?? AddRequestInformation::class, [
-            'request_attributes_provider' => $this->config->requestAttributesProvider,
-            'user_attributes_provider' => $this->config->userAttributesProvider,
-        ]);
+        $this->addMiddleware($options['middleware'] ?? AddRequestInformation::class);
         $this->addRecorder(
             RequestRecorder::class,
-            [
-                ...$this->only($options, ['ignored_urls']),
-                'request_attributes_provider' => $this->config->requestAttributesProvider,
-                'response_attributes_provider' => $this->config->responseAttributesProvider,
-                'user_attributes_provider' => $this->config->userAttributesProvider,
-            ],
+            $this->only($options, ['ignored_urls']),
         );
         $this->addRecorder(
             RoutingRecorder::class,
-            [
-                ...$this->only($options, ['ignored_routes']),
-                'route_attributes_provider' => $this->config->routeAttributesProvider,
-            ],
+            $this->only($options, ['ignored_routes']),
         );
         $this->addRecorder(ResponseRecorder::class);
     }

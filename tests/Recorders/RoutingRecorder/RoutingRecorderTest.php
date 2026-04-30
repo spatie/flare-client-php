@@ -21,7 +21,7 @@ test('it can run through a routing lifecycle', function () {
     $flare->routing()->recordGlobalBeforeMiddlewareStart(time: 10);
     $flare->routing()->recordGlobalBeforeMiddlewareEnd(time: 20);
     $flare->routing()->recordRoutingStart(time: 30);
-    $flare->routing()->recordRoutingEnd(time: 40);
+    $flare->routing()->recordRoutingEndFromDefined('/test', time: 40);
     $flare->routing()->recordBeforeMiddlewareStart(time: 50);
     $flare->routing()->recordBeforeMiddlewareEnd(time: 60);
     $flare->routing()->recordAfterMiddlewareStart(time: 70);
@@ -195,7 +195,7 @@ it('does not unsample when no ignored route matches', function () {
     $flare->tracer->startTrace();
 
     $flare->routing()->recordRoutingStart();
-    $flare->routing()->recordRoutingEnd(route: '/api/users');
+    $flare->routing()->recordRoutingEndFromDefined('/api/users');
 
     expect($flare->tracer->isSampling())->toBeTrue();
 });
@@ -213,7 +213,7 @@ it('unsamples a trace when an ignored route is matched', function () {
     expect($flare->tracer->isSampling())->toBeTrue();
 
     $flare->routing()->recordRoutingStart();
-    $flare->routing()->recordRoutingEnd(route: '/api/health');
+    $flare->routing()->recordRoutingEndFromDefined('/api/health');
 
     expect($flare->tracer->isSampling())->toBeFalse();
     expect($flare->tracer->currentTrace())->toBeEmpty();

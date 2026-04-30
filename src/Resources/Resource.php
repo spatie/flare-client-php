@@ -132,13 +132,12 @@ class Resource implements WithAttributes
 
     public function git(
         GitAttributesProvider $attributesProvider = new GitAttributesProvider(),
-        bool $useProcess = self::DEFAULT_GIT_USE_PROCESS,
         array $entityTypes = self::DEFAULT_GIT_ENTITY_TYPES
     ): self {
         return $this->addInclude(
             ResourceIncludeType::Git,
             $entityTypes,
-            compact('useProcess', 'attributesProvider')
+            compact('attributesProvider')
         );
     }
 
@@ -283,9 +282,8 @@ class Resource implements WithAttributes
 
     public function resolveGit(
         GitAttributesProvider $attributesProvider = new GitAttributesProvider(),
-        bool $useProcess = self::DEFAULT_GIT_USE_PROCESS,
     ): array {
-        $attributes = $attributesProvider->toArray($useProcess);
+        $attributes = $attributesProvider->toArray();
 
         if (empty($attributes)) {
             return $attributes;

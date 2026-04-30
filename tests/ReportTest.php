@@ -83,7 +83,7 @@ it('can add a report to a trace', function () {
     );
 
     $flare->tracer->startTrace();
-    $flare->command()->recordStartFromArguments('command', []);
+    $flare->command()->recordStartFromDefined('command', []);
 
     $flare->report(new ExceptionWithContext('We failed'));
 

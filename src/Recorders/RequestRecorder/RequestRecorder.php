@@ -2,10 +2,14 @@
 
 namespace Spatie\FlareClient\Recorders\RequestRecorder;
 
-use Spatie\FlareClient\AttributesProviders\RequestAttributesProvider;
-use Spatie\FlareClient\AttributesProviders\ResponseAttributesProvider;
-use Spatie\FlareClient\Contracts\AttributesProvider;
-use Spatie\FlareClient\Contracts\EntryPointHandlerProvider;
+use Spatie\FlareClient\AttributesProviders\PhpRequestAttributesProvider;
+use Spatie\FlareClient\AttributesProviders\PhpResponseAttributesProvider;
+use Spatie\FlareClient\AttributesProviders\SymfonyRequestAttributesProvider;
+use Spatie\FlareClient\AttributesProviders\SymfonyResponseAttributesProvider;
+use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
+use Spatie\FlareClient\Contracts\RequestAttributesProvider;
+use Spatie\FlareClient\Contracts\ResponseAttributesProvider;
+use Spatie\FlareClient\Contracts\RouteAttributesProvider;
 use Spatie\FlareClient\EntryPoint\EntryPointResolver;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
@@ -22,15 +26,6 @@ class RequestRecorder extends SpansRecorder
 {
     /** @var array<int, string> */
     protected array $ignoredUrls = [];
-
-    /** @var class-string<RequestAttributesProvider> */
-    protected string $requestAttributesProvider;
-
-    /** @var class-string<ResponseAttributesProvider> */
-    protected string $responseAttributesProvider;
-
-    /** @var class-string<\Spatie\FlareClient\AttributesProviders\UserAttributesProvider> */
-    protected string $userAttributesProvider;
 
     public static function type(): string|RecorderType
     {
@@ -53,51 +48,98 @@ class RequestRecorder extends SpansRecorder
         $this->withErrors = false;
 
         $this->ignoredUrls = $config['ignored_urls'] ?? [];
-        $this->requestAttributesProvider = $config['request_attributes_provider'] ?? RequestAttributesProvider::class;
-        $this->responseAttributesProvider = $config['response_attributes_provider'] ?? ResponseAttributesProvider::class;
-        $this->userAttributesProvider = $config['user_attributes_provider'] ?? \Spatie\FlareClient\AttributesProviders\EmptyUserAttributesProvider::class;
     }
 
     public function recordStart(
-        ?Request $request = null,
-        ?string $route = null,
-        ?AttributesProvider $provider = null,
+        RequestAttributesProvider $requestAttributesProvider,
+        ?RouteAttributesProvider $routeAttributesProvider = null,
+        ?UserAttributesProvider $userAttributesProvider = null,
         array $attributes = [],
     ): ?Span {
-        $request ??= Request::createFromGlobals();
+        $url = $requestAttributesProvider->url();
 
-        if ($this->shouldIgnoreUrl($request->getPathInfo())) {
+        if ($this->shouldIgnoreUrl($url)) {
             $this->tracer->unsample();
 
             return null;
         }
 
-        $provider ??= new $this->requestAttributesProvider(
-            $this->redactor,
-            $this->userAttributesProvider,
-            $request,
-            includeContents: false,
-        );
-
-        return $this->startSpan(nameAndAttributes: function () use ($route, $provider, $attributes) {
-            $requestAttributes = $provider->toArray();
-
-            if ($route) {
-                $requestAttributes['http.route'] = $route;
-            }
-
-            $this->resolveEntryPointHandler($provider);
+        return $this->startSpan(nameAndAttributes: function () use ($requestAttributesProvider, $routeAttributesProvider, $userAttributesProvider, $attributes) {
+            $name = $routeAttributesProvider?->route() ?? $requestAttributesProvider->path() ?? $requestAttributesProvider->url();
 
             return [
-                'name' => "Request - {$requestAttributes['url.full']}",
+                'name' => "Request - {$name}",
                 'attributes' => [
                     'flare.span_type' => SpanType::Request,
                     ...$this->entryPointResolver->get()->toAttributes(),
-                    ...$requestAttributes,
+                    ...$requestAttributesProvider->toArray(),
+                    ...($routeAttributesProvider?->toArray() ?? []),
+                    ...($userAttributesProvider?->toArray() ?? []),
                     ...$attributes,
                 ],
             ];
         });
+    }
+
+    public function recordStartFromSymfonyRequest(
+        Request $request,
+        ?RouteAttributesProvider $route = null,
+        ?UserAttributesProvider $user = null,
+        array $attributes = [],
+    ): ?Span {
+        return $this->recordStart(
+            new SymfonyRequestAttributesProvider($this->redactor, $request, includeContents: false),
+            $route,
+            $user,
+            $attributes,
+        );
+    }
+
+    public function recordStartFromGlobals(
+        ?RouteAttributesProvider $route = null,
+        ?UserAttributesProvider $user = null,
+        array $attributes = [],
+    ): ?Span {
+        return $this->recordStart(
+            new PhpRequestAttributesProvider($this->redactor),
+            $route,
+            $user,
+            $attributes,
+        );
+    }
+
+    public function recordEnd(
+        ?ResponseAttributesProvider $responseAttributesProvider = null,
+        array $attributes = [],
+    ): ?Span {
+        return $this->endSpan(additionalAttributes: [
+            ...$this->entryPointResolver->get()->toAttributes(),
+            ...($responseAttributesProvider?->toArray() ?? []),
+            ...$attributes,
+        ], includeMemoryUsage: true);
+    }
+
+    public function recordEndFromSymfonyResponse(
+        Response $response,
+        array $attributes = [],
+    ): ?Span {
+        return $this->recordEnd(
+            new SymfonyResponseAttributesProvider($this->redactor, $response),
+            $attributes,
+        );
+    }
+
+    /** @param array<string, string> $headers */
+    public function recordEndFromDefined(
+        ?int $statusCode = null,
+        ?int $bodySize = null,
+        array $headers = [],
+        array $attributes = [],
+    ): ?Span {
+        return $this->recordEnd(
+            new PhpResponseAttributesProvider($this->redactor, $statusCode, $bodySize, $headers),
+            $attributes,
+        );
     }
 
     protected function shouldIgnoreUrl(string $path): bool
@@ -109,42 +151,5 @@ class RequestRecorder extends SpansRecorder
     protected function defaultIgnoredUrls(): array
     {
         return [];
-    }
-
-    public function recordEnd(
-        ?Response $response = null,
-        ?AttributesProvider $provider = null,
-        array $attributes = [],
-    ): ?Span {
-        if ($provider === null && $response !== null) {
-            $provider = new $this->responseAttributesProvider($this->redactor, $response);
-        }
-
-        $responseAttributes = $provider?->toArray() ?? [];
-
-        return $this->endSpan(additionalAttributes: [
-            ...$this->entryPointResolver->get()->toAttributes(),
-            ...$responseAttributes,
-            ...$attributes,
-        ], includeMemoryUsage: true);
-    }
-
-    protected function resolveEntryPointHandler(AttributesProvider $provider): void
-    {
-        if (! $provider instanceof EntryPointHandlerProvider) {
-            return;
-        }
-
-        $entryPoint = $this->entryPointResolver->get();
-
-        if ($entryPoint->handlerResolved) {
-            return;
-        }
-
-        $entryPoint->setHandler(
-            handlerIdentifier: $provider->entryPointHandlerIdentifier() ?? '',
-            handlerName: $provider->entryPointHandlerName(),
-            handlerType: $provider->entryPointHandlerType(),
-        );
     }
 }

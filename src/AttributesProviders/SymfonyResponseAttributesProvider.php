@@ -2,19 +2,21 @@
 
 namespace Spatie\FlareClient\AttributesProviders;
 
+use Spatie\FlareClient\Contracts\ResponseAttributesProvider;
 use Spatie\FlareClient\Support\Redactor;
 use Symfony\Component\HttpFoundation\Response;
 
-class ResponseAttributesProvider
+class SymfonyResponseAttributesProvider implements ResponseAttributesProvider
 {
     public function __construct(
         protected Redactor $redactor,
+        protected Response $response,
     ) {
     }
 
-    public function toArray(Response $response): array
+    public function toArray(): array
     {
-        $headers = $response->headers->all();
+        $headers = $this->response->headers->all();
 
         foreach ($headers as $name => $value) {
             $headers[$name] = implode($value);
@@ -25,9 +27,14 @@ class ResponseAttributesProvider
         }
 
         return [
-            'http.response.status_code' => $response->getStatusCode(),
-            'http.response.body.size' => strlen($response->getContent() ?: ''),
+            'http.response.status_code' => $this->statusCode(),
+            'http.response.body.size' => strlen($this->response->getContent() ?: ''),
             'http.response.headers' => $this->redactor->censorHeaders($headers),
         ];
+    }
+
+    public function statusCode(): ?int
+    {
+        return $this->response->getStatusCode();
     }
 }

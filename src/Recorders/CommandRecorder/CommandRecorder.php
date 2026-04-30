@@ -2,7 +2,7 @@
 
 namespace Spatie\FlareClient\Recorders\CommandRecorder;
 
-use Spatie\FlareClient\AttributesProviders\PhpConsoleAttributesProvider;
+use Spatie\FlareClient\AttributesProviders\PhpCommandAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\SymfonyInputCommandAttributesProvider;
 use Spatie\FlareClient\Concerns\Recorders\PausableRecorder;
 use Spatie\FlareClient\Contracts\CommandAttributesProvider;
@@ -97,25 +97,25 @@ class CommandRecorder extends SpansRecorder
     }
 
     /** @param array<int, string> $arguments */
-    public function recordStartFromArguments(
+    public function recordStartFromDefined(
         string $command,
         array $arguments,
         ?string $commandClass = null,
         array $attributes = []
     ): ?Span {
         return $this->recordStart(
-            new PhpConsoleAttributesProvider($command, $commandClass, $arguments),
+            new PhpCommandAttributesProvider($command, $commandClass, $arguments),
             $attributes,
         );
     }
 
-    public function recordStartFromCliArguments(
+    public function recordStartFromCli(
         string $command,
         ?string $commandClass = null,
         array $attributes = []
     ): ?Span {
         return $this->recordStart(
-            new PhpConsoleAttributesProvider($command, $commandClass),
+            new PhpCommandAttributesProvider($command, $commandClass),
             $attributes,
         );
     }
