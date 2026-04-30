@@ -9,7 +9,7 @@ it('records a queueing span when the job is not ignored', function () {
 
     $flare->tracer->startTrace();
 
-    $span = $flare->queue()->recordStart('App\\Jobs\\Send', 'App\\Jobs\\Send');
+    $span = $flare->queue()->recordStartFromQueuedJob('App\\Jobs\\Send', 'App\\Jobs\\Send');
 
     expect($span)->not()->toBeNull();
     expect($span->name)->toBe('Queueing - App\\Jobs\\Send');
@@ -22,10 +22,10 @@ it('merges additional attributes into the started span', function () {
 
     $flare->tracer->startTrace();
 
-    $span = $flare->queue()->recordStart(
+    $span = $flare->queue()->recordStartFromQueuedJob(
         'App\\Jobs\\Send',
         'App\\Jobs\\Send',
-        attributes: ['custom.key' => 'custom-value'],
+        ['custom.key' => 'custom-value'],
     );
 
     expect($span->attributes)->toHaveKey('custom.key', 'custom-value');
@@ -35,7 +35,7 @@ it('records the end of a queueing span and merges additional attributes', functi
     $flare = setupFlare(fn (FlareConfig $config) => $config->collectJobs(), alwaysSampleTraces: true);
 
     $flare->tracer->startTrace();
-    $flare->queue()->recordStart('App\\Jobs\\Send', 'App\\Jobs\\Send');
+    $flare->queue()->recordStartFromQueuedJob('App\\Jobs\\Send', 'App\\Jobs\\Send');
     $span = $flare->queue()->recordEnd(['custom.key' => 'value']);
 
     expect($span)->not()->toBeNull();
@@ -51,7 +51,7 @@ it('ignores queueing jobs by name from ignored_classes config', function () {
 
     $flare->tracer->startTrace();
 
-    $span = $flare->queue()->recordStart('ignore-me', null);
+    $span = $flare->queue()->recordStartFromQueuedJob('ignore-me');
 
     expect($span)->toBeNull();
     expect($flare->tracer->isSamplingPaused())->toBeTrue();
@@ -65,7 +65,7 @@ it('ignores queueing jobs by class from ignored_classes config', function () {
 
     $flare->tracer->startTrace();
 
-    $span = $flare->queue()->recordStart('something', 'App\\Jobs\\IgnoreMe');
+    $span = $flare->queue()->recordStartFromQueuedJob('something', 'App\\Jobs\\IgnoreMe');
 
     expect($span)->toBeNull();
     expect($flare->tracer->isSamplingPaused())->toBeTrue();
@@ -79,7 +79,7 @@ it('ignores queueing jobs using a wildcard pattern', function () {
 
     $flare->tracer->startTrace();
 
-    $span = $flare->queue()->recordStart('App\\Jobs\\Internal\\Cleanup', 'App\\Jobs\\Internal\\Cleanup');
+    $span = $flare->queue()->recordStartFromQueuedJob('App\\Jobs\\Internal\\Cleanup', 'App\\Jobs\\Internal\\Cleanup');
 
     expect($span)->toBeNull();
     expect($flare->tracer->isSamplingPaused())->toBeTrue();
@@ -95,7 +95,7 @@ it('pauses sampling for an ignored job and resumes after the job ends', function
 
     expect($flare->tracer->isSampling())->toBeTrue();
 
-    $span = $flare->queue()->recordStart('App\\Jobs\\Ignored', 'App\\Jobs\\Ignored');
+    $span = $flare->queue()->recordStartFromQueuedJob('App\\Jobs\\Ignored', 'App\\Jobs\\Ignored');
 
     expect($span)->toBeNull();
     expect($flare->tracer->isSampling())->toBeFalse();
@@ -120,7 +120,7 @@ it('drops nested spans created while sampling is paused for ignored queueing', f
     $flare->tracer->startTrace();
     $parent = $flare->tracer->startSpan('Parent');
 
-    $flare->queue()->recordStart('App\\Jobs\\Ignored', 'App\\Jobs\\Ignored');
+    $flare->queue()->recordStartFromQueuedJob('App\\Jobs\\Ignored', 'App\\Jobs\\Ignored');
 
     $flare->tracer->startSpan('Inside paused');
 

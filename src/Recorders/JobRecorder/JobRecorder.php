@@ -2,9 +2,10 @@
 
 namespace Spatie\FlareClient\Recorders\JobRecorder;
 
-use Closure;
-use Psr\Container\ContainerInterface;
+use Spatie\FlareClient\AttributesProviders\PhpJobAttributesProvider;
 use Spatie\FlareClient\Concerns\Recorders\PausableRecorder;
+use Spatie\FlareClient\Contracts\EntryPointHandlerProvider;
+use Spatie\FlareClient\Contracts\JobAttributesProvider;
 use Spatie\FlareClient\EntryPoint\EntryPoint;
 use Spatie\FlareClient\EntryPoint\EntryPointResolver;
 use Spatie\FlareClient\Enums\EntryPointType;
@@ -34,17 +35,6 @@ class JobRecorder extends SpansRecorder
         return RecorderType::Job;
     }
 
-    public static function register(ContainerInterface $container, array $config): Closure
-    {
-        return fn () => new static(
-            $container->get(Tracer::class),
-            $container->get(BackTracer::class),
-            $container->get(EntryPointResolver::class),
-            $container->get(Lifecycle::class),
-            $config,
-        );
-    }
-
     public function __construct(
         Tracer $tracer,
         BackTracer $backTracer,
@@ -61,12 +51,13 @@ class JobRecorder extends SpansRecorder
     }
 
     public function recordStart(
-        string $jobName,
-        ?string $jobClass = null,
+        JobAttributesProvider $jobAttributesProvider,
         ?string $traceparent = null,
-        ?string $entryPointHandlerType = 'php_job',
         array $attributes = [],
     ): ?Span {
+        $jobName = $jobAttributesProvider->jobName();
+        $jobClass = $jobAttributesProvider->jobClass();
+
         AddJobInformation::clearLatestJobInfo();
 
         $shouldIgnore = $this->shouldIgnoreJob($jobName, $jobClass);
@@ -94,10 +85,12 @@ class JobRecorder extends SpansRecorder
             value: $jobClass ?? $jobName,
         );
 
+        $entryPointProvider = $jobAttributesProvider instanceof EntryPointHandlerProvider ? $jobAttributesProvider : null;
+
         $entryPoint->setHandler(
-            handlerIdentifier: $jobName,
-            handlerName: $jobClass,
-            handlerType: $entryPointHandlerType,
+            handlerIdentifier: $entryPointProvider?->entryPointHandlerIdentifier() ?? $jobName,
+            handlerName: $entryPointProvider?->entryPointHandlerName() ?? $jobClass,
+            handlerType: $entryPointProvider?->entryPointHandlerType() ?? 'php_job',
         );
 
         $this->entryPointResolver->set($entryPoint);
@@ -106,11 +99,25 @@ class JobRecorder extends SpansRecorder
 
         return $this->startSpan(
             name: "Job - {$jobName}",
-            attributes: [
+            attributes: fn () => [
                 'flare.span_type' => SpanType::Job,
                 ...$entryPoint->toAttributes(),
+                ...$jobAttributesProvider->toArray(),
                 ...$attributes,
             ],
+        );
+    }
+
+    public function recordStartFromJob(
+        string $jobName,
+        ?string $jobClass = null,
+        ?string $traceparent = null,
+        array $attributes = [],
+    ): ?Span {
+        return $this->recordStart(
+            new PhpJobAttributesProvider($jobName, $jobClass),
+            $traceparent,
+            $attributes,
         );
     }
 
@@ -179,12 +186,12 @@ class JobRecorder extends SpansRecorder
         return $span;
     }
 
-    protected function shouldIgnoreJob(?string $jobName, ?string $jobClass = null): bool
+    protected function shouldIgnoreJob(string $jobName, ?string $jobClass = null): bool
     {
         $ignoredNames = [...$this->ignoredClasses, ...$this->defaultIgnoredJobNames()];
         $ignoredClasses = [...$this->ignoredClasses, ...$this->defaultIgnoredJobClasses()];
 
-        if ($jobName !== null && PatternMatcher::matchesAny($jobName, $ignoredNames)) {
+        if (PatternMatcher::matchesAny($jobName, $ignoredNames)) {
             return true;
         }
 

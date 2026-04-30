@@ -2,8 +2,8 @@
 
 namespace Spatie\FlareClient\Recorders\QueueRecorder;
 
-use Closure;
-use Psr\Container\ContainerInterface;
+use Spatie\FlareClient\AttributesProviders\PhpJobAttributesProvider;
+use Spatie\FlareClient\Contracts\JobAttributesProvider;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Recorders\SpansRecorder;
@@ -22,15 +22,6 @@ class QueueRecorder extends SpansRecorder
         return RecorderType::Queue;
     }
 
-    public static function register(ContainerInterface $container, array $config): Closure
-    {
-        return fn () => new static(
-            $container->get(Tracer::class),
-            $container->get(BackTracer::class),
-            $config,
-        );
-    }
-
     public function __construct(
         Tracer $tracer,
         BackTracer $backTracer,
@@ -45,10 +36,12 @@ class QueueRecorder extends SpansRecorder
     }
 
     public function recordStart(
-        string $jobName,
-        ?string $jobClass = null,
+        JobAttributesProvider $provider,
         array $attributes = [],
     ): ?Span {
+        $jobName = $provider->jobName();
+        $jobClass = $provider->jobClass();
+
         if ($this->shouldIgnoreJob($jobName, $jobClass)) {
             $this->tracer->pauseSampling();
 
@@ -59,8 +52,20 @@ class QueueRecorder extends SpansRecorder
             name: "Queueing - {$jobName}",
             attributes: [
                 'flare.span_type' => SpanType::QueueingJob,
+                ...$provider->toArray(),
                 ...$attributes,
             ],
+        );
+    }
+
+    public function recordStartFromQueuedJob(
+        string $jobName,
+        ?string $jobClass = null,
+        array $attributes = [],
+    ): ?Span {
+        return $this->recordStart(
+            new PhpJobAttributesProvider($jobName, $jobClass),
+            $attributes,
         );
     }
 
@@ -75,12 +80,12 @@ class QueueRecorder extends SpansRecorder
         return $this->endSpan(additionalAttributes: $attributes);
     }
 
-    protected function shouldIgnoreJob(?string $jobName, ?string $jobClass = null): bool
+    protected function shouldIgnoreJob(string $jobName, ?string $jobClass = null): bool
     {
         $ignoredNames = [...$this->ignoredClasses, ...$this->defaultIgnoredJobNames()];
         $ignoredClasses = [...$this->ignoredClasses, ...$this->defaultIgnoredJobClasses()];
 
-        if ($jobName !== null && PatternMatcher::matchesAny($jobName, $ignoredNames)) {
+        if (PatternMatcher::matchesAny($jobName, $ignoredNames)) {
             return true;
         }
 

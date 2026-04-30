@@ -20,7 +20,7 @@ it('switches the entry point, attaches the failed job span, and propagates the t
         isUsingSubtasks: true,
     );
 
-    $flare->job()->recordStart('App\\Jobs\\Send', 'App\\Jobs\\SendJob');
+    $flare->job()->recordStartFromJob('App\\Jobs\\Send', 'App\\Jobs\\SendJob');
     $flare->job()->recordFailed(new Exception('Job failed'));
 
     $flare->report(new Exception('Boom'));

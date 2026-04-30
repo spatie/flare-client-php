@@ -18,7 +18,7 @@ it('records a job span with the expected attributes', function () {
 
     $flare->tracer->startTrace();
 
-    $span = $flare->job()->recordStart('App\\Jobs\\Send', 'App\\Jobs\\Send');
+    $span = $flare->job()->recordStartFromJob('App\\Jobs\\Send', 'App\\Jobs\\Send');
 
     expect($span)->not()->toBeNull();
     expect($span->name)->toBe('Job - App\\Jobs\\Send');
@@ -36,7 +36,7 @@ it('falls back to the job name for the entry point value when no class is provid
 
     $flare->tracer->startTrace();
 
-    $span = $flare->job()->recordStart('legacy-handler');
+    $span = $flare->job()->recordStartFromJob('legacy-handler');
 
     expect($span->attributes)
         ->toHaveKey('flare.entry_point.value', 'legacy-handler')
@@ -49,7 +49,7 @@ it('merges additional attributes into the started span', function () {
 
     $flare->tracer->startTrace();
 
-    $span = $flare->job()->recordStart(
+    $span = $flare->job()->recordStartFromJob(
         'App\\Jobs\\Send',
         'App\\Jobs\\Send',
         attributes: ['custom.key' => 'custom-value'],
@@ -63,11 +63,24 @@ it('uses a custom entry point handler type when provided', function () {
 
     $flare->tracer->startTrace();
 
-    $span = $flare->job()->recordStart(
-        'App\\Jobs\\Send',
-        'App\\Jobs\\Send',
-        entryPointHandlerType: 'custom_handler',
-    );
+    $provider = new class('App\\Jobs\\Send', 'App\\Jobs\\Send') extends \Spatie\FlareClient\AttributesProviders\PhpJobAttributesProvider implements \Spatie\FlareClient\Contracts\EntryPointHandlerProvider {
+        public function entryPointHandlerName(): ?string
+        {
+            return null;
+        }
+
+        public function entryPointHandlerType(): ?string
+        {
+            return 'custom_handler';
+        }
+
+        public function entryPointHandlerIdentifier(): ?string
+        {
+            return null;
+        }
+    };
+
+    $span = $flare->job()->recordStart($provider);
 
     expect($span->attributes)->toHaveKey('flare.entry_point.handler.type', 'custom_handler');
 });
@@ -78,7 +91,7 @@ it('records the end of a job and includes peak memory usage', function () {
     $flare = setupFlare(fn (FlareConfig $config) => $config->collectJobs(), alwaysSampleTraces: true);
 
     $flare->tracer->startTrace();
-    $flare->job()->recordStart('App\\Jobs\\Send', 'App\\Jobs\\Send');
+    $flare->job()->recordStartFromJob('App\\Jobs\\Send', 'App\\Jobs\\Send');
     $span = $flare->job()->recordEnd(['custom.key' => 'value']);
 
     expect($span)->not()->toBeNull();
@@ -96,7 +109,7 @@ it('pauses sampling for an ignored job by name and resumes after recordEnd in no
 
     $flare->tracer->startTrace();
 
-    $span = $flare->job()->recordStart('ignore-me', null);
+    $span = $flare->job()->recordStartFromJob('ignore-me');
 
     expect($span)->toBeNull();
     expect($flare->tracer->isSampling())->toBeFalse();
@@ -116,7 +129,7 @@ it('pauses sampling for an ignored job by class and resumes after recordFailed i
 
     $flare->tracer->startTrace();
 
-    $span = $flare->job()->recordStart('something', 'App\\Jobs\\IgnoreMe');
+    $span = $flare->job()->recordStartFromJob('something', 'App\\Jobs\\IgnoreMe');
 
     expect($span)->toBeNull();
     expect($flare->tracer->isSampling())->toBeFalse();
@@ -136,7 +149,7 @@ it('pauses sampling for an ignored job matched by wildcard in non-subtask mode',
 
     $flare->tracer->startTrace();
 
-    $span = $flare->job()->recordStart('App\\Jobs\\Internal\\Cleanup', 'App\\Jobs\\Internal\\Cleanup');
+    $span = $flare->job()->recordStartFromJob('App\\Jobs\\Internal\\Cleanup', 'App\\Jobs\\Internal\\Cleanup');
 
     expect($span)->toBeNull();
     expect($flare->tracer->isSamplingPaused())->toBeTrue();
@@ -157,7 +170,7 @@ it('drops nested spans created while sampling is paused for an ignored job', fun
 
     $countBefore = count($flare->tracer->currentTrace());
 
-    $flare->job()->recordStart('App\\Jobs\\Ignored', 'App\\Jobs\\Ignored');
+    $flare->job()->recordStartFromJob('App\\Jobs\\Ignored', 'App\\Jobs\\Ignored');
 
     $flare->tracer->startSpan('Inside paused');
 
@@ -174,7 +187,7 @@ it('clears stale AddJobInformation state when starting a new job', function () {
     AddJobInformation::setUsedTrackingUuid('previous-uuid');
 
     $flare->tracer->startTrace();
-    $flare->job()->recordStart('App\\Jobs\\Send', 'App\\Jobs\\Send');
+    $flare->job()->recordStartFromJob('App\\Jobs\\Send', 'App\\Jobs\\Send');
 
     expect(AddJobInformation::$usedTrackingUuid)->toBeNull();
     expect(AddJobInformation::$latestJob)->toBeNull();
@@ -187,7 +200,7 @@ it('records a failed job span with status, exception event, and exception id in 
     $flare = setupFlare(fn (FlareConfig $config) => $config->collectJobs(), alwaysSampleTraces: true);
 
     $flare->tracer->startTrace();
-    $flare->job()->recordStart('App\\Jobs\\Send', 'App\\Jobs\\Send');
+    $flare->job()->recordStartFromJob('App\\Jobs\\Send', 'App\\Jobs\\Send');
     $span = $flare->job()->recordFailed(new Exception('Failed'));
 
     expect($span->end)->not()->toBeNull();
@@ -207,7 +220,7 @@ it('does not write to AddJobInformation when recordFailed runs in non-subtask mo
     $flare = setupFlare(fn (FlareConfig $config) => $config->collectJobs(), alwaysSampleTraces: true);
 
     $flare->tracer->startTrace();
-    $flare->job()->recordStart('App\\Jobs\\Send', 'App\\Jobs\\Send');
+    $flare->job()->recordStartFromJob('App\\Jobs\\Send', 'App\\Jobs\\Send');
     $flare->job()->recordFailed(new Exception('Failed'));
 
     expect(AddJobInformation::$usedTrackingUuid)->toBeNull();
@@ -219,7 +232,7 @@ it('merges additional attributes when recording a failed job', function () {
     $flare = setupFlare(fn (FlareConfig $config) => $config->collectJobs(), alwaysSampleTraces: true);
 
     $flare->tracer->startTrace();
-    $flare->job()->recordStart('App\\Jobs\\Send', 'App\\Jobs\\Send');
+    $flare->job()->recordStartFromJob('App\\Jobs\\Send', 'App\\Jobs\\Send');
     $span = $flare->job()->recordFailed(new Exception('Failed'), ['custom.key' => 'value']);
 
     expect($span->attributes)->toHaveKey('custom.key', 'value');
@@ -234,7 +247,7 @@ it('starts a subtask trace from a traceparent in subtask mode', function () {
         isUsingSubtasks: true,
     );
 
-    $span = $flare->job()->recordStart('App\\Jobs\\Send', 'App\\Jobs\\Send', traceparent: $traceparent);
+    $span = $flare->job()->recordStartFromJob('App\\Jobs\\Send', 'App\\Jobs\\Send', traceparent: $traceparent);
 
     expect($span)->not()->toBeNull();
     expect($span->traceId)->toBe('1234567890abcdef1234567890abcdef');
@@ -249,7 +262,7 @@ it('unsamples the subtask trace when an ignored job is started in subtask mode',
         isUsingSubtasks: true,
     );
 
-    $span = $flare->job()->recordStart('App\\Jobs\\Ignored', 'App\\Jobs\\Ignored', traceparent: $traceparent);
+    $span = $flare->job()->recordStartFromJob('App\\Jobs\\Ignored', 'App\\Jobs\\Ignored', traceparent: $traceparent);
 
     expect($span)->toBeNull();
     expect($flare->tracer->isSampling())->toBeFalse();
@@ -264,7 +277,7 @@ it('writes the failed span, tracking uuid, and entry point onto AddJobInformatio
         isUsingSubtasks: true,
     );
 
-    $flare->job()->recordStart('App\\Jobs\\Send', 'App\\Jobs\\Send');
+    $flare->job()->recordStartFromJob('App\\Jobs\\Send', 'App\\Jobs\\Send');
     $span = $flare->job()->recordFailed(new Exception('Failed'));
 
     expect(AddJobInformation::$usedTrackingUuid)->toBe('fake-uuid');
@@ -283,13 +296,13 @@ it('handles a retry loop cleanly in subtask mode', function () {
         isUsingSubtasks: true,
     );
 
-    $flare->job()->recordStart('App\\Jobs\\Send', 'App\\Jobs\\Send');
+    $flare->job()->recordStartFromJob('App\\Jobs\\Send', 'App\\Jobs\\Send');
     $span1 = $flare->job()->recordFailed(new Exception('first attempt'));
 
     expect(AddJobInformation::$usedTrackingUuid)->toBe('uuid-1');
     expect(AddJobInformation::$latestJob)->toBe($span1);
 
-    $flare->job()->recordStart('App\\Jobs\\Send', 'App\\Jobs\\Send');
+    $flare->job()->recordStartFromJob('App\\Jobs\\Send', 'App\\Jobs\\Send');
 
     expect(AddJobInformation::$usedTrackingUuid)->toBeNull();
     expect(AddJobInformation::$latestJob)->toBeNull();
