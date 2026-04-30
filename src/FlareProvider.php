@@ -289,7 +289,7 @@ class FlareProvider
     {
         return fn (Container|IlluminateContainer $container, string $class, array $config) => $container->singleton(
             $class,
-            fn () => $container->make($class, ['config' => $config]),
+            ['config' => $config],
         );
     }
 }
