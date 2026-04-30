@@ -18,7 +18,7 @@ it('records a command span with the expected attributes', function () {
 
     $flare->tracer->startTrace();
 
-    $span = $flare->command()->recordStart('migrate', ['--force'], 'App\\Commands\\Migrate');
+    $span = $flare->command()->recordStartFromArguments('migrate', ['--force'], 'App\\Commands\\Migrate');
 
     expect($span)->not()->toBeNull();
     expect($span->name)->toBe('Command - migrate');
@@ -36,7 +36,7 @@ it('merges additional attributes into the started span', function () {
 
     $flare->tracer->startTrace();
 
-    $span = $flare->command()->recordStart(
+    $span = $flare->command()->recordStartFromArguments(
         'migrate',
         [],
         'App\\Commands\\Migrate',
@@ -53,7 +53,7 @@ it('records the exit code and peak memory usage on recordEnd', function () {
 
     $flare->tracer->startTrace();
 
-    $flare->command()->recordStart('migrate', []);
+    $flare->command()->recordStartFromArguments('migrate', []);
     $span = $flare->command()->recordEnd(exitCode: 2, attributes: ['custom.key' => 'value']);
 
     expect($span)->not()->toBeNull();
@@ -64,7 +64,7 @@ it('records the exit code and peak memory usage on recordEnd', function () {
         ->toHaveKey('custom.key', 'value');
 });
 
-it('converts a Symfony InputInterface to a flat list of arguments and options', function () {
+it('records a span from a Symfony InputInterface', function () {
     $flare = setupFlare(fn (FlareConfig $config) => $config->collectCommands(), alwaysSampleTraces: true);
 
     $flare->tracer->startTrace();
@@ -87,7 +87,10 @@ it('converts a Symfony InputInterface to a flat list of arguments and options', 
         new InputOption('empty', null, InputOption::VALUE_OPTIONAL),
     ]));
 
-    $span = $flare->command()->recordStart('migrate users --force --connection=pgsql --tags=one,two', $input);
+    $span = $flare->command()->recordStartFromSymfonyInput(
+        'migrate users --force --connection=pgsql --tags=one,two',
+        $input,
+    );
 
     expect($span->attributes['process.command_args'])->toBe([
         'migrate',
@@ -107,7 +110,7 @@ it('sets the entry point handler when no handler has been resolved yet', functio
 
     $flare->tracer->startTrace();
 
-    $flare->command()->recordStart('migrate', [], 'App\\Commands\\Migrate');
+    $flare->command()->recordStartFromArguments('migrate', [], 'App\\Commands\\Migrate');
 
     $entryPoint = Container::instance()->get(EntryPointResolver::class)->get();
 
@@ -130,7 +133,7 @@ it('does not override the entry point handler when one is already resolved', fun
 
     $flare->tracer->startTrace();
 
-    $flare->command()->recordStart('inner', [], 'App\\Commands\\Inner');
+    $flare->command()->recordStartFromArguments('inner', [], 'App\\Commands\\Inner');
 
     expect($entryPoint->handlerIdentifier)->toBe('outer');
     expect($entryPoint->handlerName)->toBe('App\\Commands\\Outer');
@@ -144,7 +147,7 @@ it('ignores commands by name from config', function () {
 
     $flare->tracer->startTrace();
 
-    $span = $flare->command()->recordStart('schedule:run', []);
+    $span = $flare->command()->recordStartFromArguments('schedule:run', []);
 
     expect($span)->toBeNull();
     expect($flare->tracer->isSampling())->toBeFalse();
@@ -158,7 +161,7 @@ it('ignores commands by name using a wildcard pattern', function () {
 
     $flare->tracer->startTrace();
 
-    $span = $flare->command()->recordStart('make:migration', []);
+    $span = $flare->command()->recordStartFromArguments('make:migration', []);
 
     expect($span)->toBeNull();
     expect($flare->tracer->isSampling())->toBeFalse();
@@ -172,7 +175,7 @@ it('does not ignore commands when wildcard pattern does not match', function () 
 
     $flare->tracer->startTrace();
 
-    $span = $flare->command()->recordStart('migrate', []);
+    $span = $flare->command()->recordStartFromArguments('migrate', []);
 
     expect($span)->not()->toBeNull();
     expect($flare->tracer->isSampling())->toBeTrue();
@@ -186,7 +189,7 @@ it('ignores command classes using a wildcard pattern', function () {
 
     $flare->tracer->startTrace();
 
-    $span = $flare->command()->recordStart('internal', [], 'App\\Commands\\Internal\\Cleanup');
+    $span = $flare->command()->recordStartFromArguments('internal', [], 'App\\Commands\\Internal\\Cleanup');
 
     expect($span)->toBeNull();
     expect($flare->tracer->isSampling())->toBeFalse();
@@ -200,7 +203,7 @@ it('ignores commands by class from ignored_classes config', function () {
 
     $flare->tracer->startTrace();
 
-    $span = $flare->command()->recordStart('internal', [], 'App\\Commands\\Internal');
+    $span = $flare->command()->recordStartFromArguments('internal', [], 'App\\Commands\\Internal');
 
     expect($span)->toBeNull();
     expect($flare->tracer->isSampling())->toBeFalse();
@@ -214,7 +217,7 @@ it('unsamples a root ignored command', function () {
 
     $flare->tracer->startTrace();
 
-    $span = $flare->command()->recordStart('ignored:cmd', []);
+    $span = $flare->command()->recordStartFromArguments('ignored:cmd', []);
 
     expect($span)->toBeNull();
     expect($flare->tracer->isSampling())->toBeFalse();
@@ -229,12 +232,12 @@ it('pauses sampling for a nested ignored command and resumes after that command 
 
     $flare->tracer->startTrace();
 
-    $outerSpan = $flare->command()->recordStart('outer', []);
+    $outerSpan = $flare->command()->recordStartFromArguments('outer', []);
 
     expect($outerSpan)->not()->toBeNull();
     expect($flare->tracer->isSampling())->toBeTrue();
 
-    $innerSpan = $flare->command()->recordStart('ignored:cmd', []);
+    $innerSpan = $flare->command()->recordStartFromArguments('ignored:cmd', []);
 
     expect($innerSpan)->toBeNull();
     expect($flare->tracer->isSampling())->toBeFalse();

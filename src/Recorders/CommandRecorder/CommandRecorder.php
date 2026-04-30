@@ -4,7 +4,11 @@ namespace Spatie\FlareClient\Recorders\CommandRecorder;
 
 use Closure;
 use Psr\Container\ContainerInterface;
+use Spatie\FlareClient\AttributesProviders\PhpConsoleAttributesProvider;
+use Spatie\FlareClient\AttributesProviders\SymfonyInputCommandAttributesProvider;
 use Spatie\FlareClient\Concerns\Recorders\PausableRecorder;
+use Spatie\FlareClient\Contracts\CommandAttributesProvider;
+use Spatie\FlareClient\Contracts\EntryPointHandlerProvider;
 use Spatie\FlareClient\EntryPoint\EntryPointResolver;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
@@ -56,19 +60,23 @@ class CommandRecorder extends SpansRecorder
     }
 
     public function recordStart(
-        string $command,
-        array|InputInterface $arguments,
-        ?string $commandClass = null,
-        ?string $entryPointHandlerType = 'php_command',
+        CommandAttributesProvider $commandAttributesProvider,
         array $attributes = []
     ): ?Span {
+        $command = $commandAttributesProvider->command();
+        $commandClass = $commandAttributesProvider->commandClass();
+
         $entryPoint = $this->entryPointResolver->get();
 
         if (! $entryPoint->handlerResolved) {
+            $entryPointProvider = $commandAttributesProvider instanceof EntryPointHandlerProvider
+                ? $commandAttributesProvider
+                : null;
+
             $entryPoint->setHandler(
-                handlerIdentifier: $command,
-                handlerName: $commandClass,
-                handlerType: $entryPointHandlerType,
+                handlerIdentifier: $entryPointProvider?->entryPointHandlerIdentifier() ?? $command,
+                handlerName: $entryPointProvider?->entryPointHandlerName() ?? $commandClass,
+                handlerType: $entryPointProvider?->entryPointHandlerType() ?? 'php_command',
             );
         }
 
@@ -90,28 +98,58 @@ class CommandRecorder extends SpansRecorder
 
         return $this->startSpan(
             name: "Command - {$command}",
-            attributes: function () use ($attributes, $arguments, $command) {
-                if ($arguments instanceof InputInterface) {
-                    $arguments = $this->getArguments($arguments);
-                }
-
-                return [
-                    'flare.span_type' => SpanType::Command,
-                    'process.command' => $command,
-                    'process.command_args' => $arguments,
-                    ...$this->entryPointResolver->get()->toAttributes(),
-                    ...$attributes,
-                ];
-            },
+            attributes: fn () => [
+                'flare.span_type' => SpanType::Command,
+                'process.command' => $command,
+                ...$this->entryPointResolver->get()->toAttributes(),
+                ...$commandAttributesProvider->toArray(),
+                ...$attributes,
+            ],
         );
     }
 
-    protected function shouldIgnoreCommand(?string $command, ?string $commandClass = null): bool
+    /** @param array<int, string> $arguments */
+    public function recordStartFromArguments(
+        string $command,
+        array $arguments,
+        ?string $commandClass = null,
+        array $attributes = []
+    ): ?Span {
+        return $this->recordStart(
+            new PhpConsoleAttributesProvider($command, $commandClass, $arguments),
+            $attributes,
+        );
+    }
+
+    public function recordStartFromCliArguments(
+        string $command,
+        ?string $commandClass = null,
+        array $attributes = []
+    ): ?Span {
+        return $this->recordStart(
+            new PhpConsoleAttributesProvider($command, $commandClass),
+            $attributes,
+        );
+    }
+
+    public function recordStartFromSymfonyInput(
+        string $command,
+        InputInterface $input,
+        ?string $commandClass = null,
+        array $attributes = []
+    ): ?Span {
+        return $this->recordStart(
+            new SymfonyInputCommandAttributesProvider($input, $command, $commandClass),
+            $attributes,
+        );
+    }
+
+    protected function shouldIgnoreCommand(string $command, ?string $commandClass = null): bool
     {
         $ignoredCommands = [...$this->ignoredCommands, ...$this->defaultIgnoredCommands()];
         $ignoredClasses = [...$this->ignoredClasses, ...$this->defaultIgnoredCommandClasses()];
 
-        if ($command !== null && PatternMatcher::matchesAny($command, $ignoredCommands)) {
+        if (PatternMatcher::matchesAny($command, $ignoredCommands)) {
             return true;
         }
 
@@ -136,38 +174,6 @@ class CommandRecorder extends SpansRecorder
             'process.exit_code' => $exitCode,
             ...$attributes,
         ], includeMemoryUsage: true);
-    }
-
-    protected function getArguments(?InputInterface $input): array
-    {
-        if ($input === null) {
-            return [];
-        }
-
-        $arguments = array_values(array_filter($input->getArguments()));
-
-        $options = [];
-
-        foreach ($input->getOptions() as $key => $option) {
-            if ($option === null || $option === false) {
-                continue;
-            }
-
-            if (is_bool($option) && $option === true) {
-                $options[] = "--{$key}";
-
-                continue;
-            }
-
-            if (is_array($option)) {
-                $option = implode(',', $option);
-            }
-
-            $options[] = "--{$key}={$option}";
-        }
-
-
-        return array_merge($arguments, $options);
     }
 
     /** @return array<int, string> */

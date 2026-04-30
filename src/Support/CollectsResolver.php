@@ -11,6 +11,7 @@ use Spatie\FlareClient\Contracts\FlareCollectType;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\CollectType;
 use Spatie\FlareClient\Enums\FlareEntityType;
+use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\FlareMiddleware\AddConsoleInformation;
 use Spatie\FlareClient\FlareMiddleware\AddEntryPoint;
 use Spatie\FlareClient\FlareMiddleware\AddJobInformation;
@@ -59,21 +60,20 @@ class CollectsResolver
 
     public bool $collectErrorsWithTraces = false;
 
+    protected FlareConfig $config;
+
     public function execute(
-        array $collects,
+        FlareConfig $config,
     ): self {
+        $this->config = $config;
         $this->middlewares = [];
         $this->recorders = [];
         $this->resourceModifiers = [];
 
         $this->addMiddleware(AddEntryPoint::class);
 
-        foreach ($collects as $collect) {
-            $type = $collect['type'] ?? null;
-
-            if (! $type instanceof FlareCollectType) {
-                continue;
-            }
+        foreach ($config->collects as $collect) {
+            $type = $collect['type'];
 
             $ignored = $collect['ignored'] ?? false;
 
@@ -81,7 +81,7 @@ class CollectsResolver
                 continue;
             }
 
-            $options = $collect['options'] ?? [];
+            $options = $collect['options'];
 
             if ($ignored) {
                 $options['with_traces'] = false;
@@ -133,14 +133,25 @@ class CollectsResolver
     protected function requests(
         array $options
     ): void {
-        $this->addMiddleware($options['middleware'] ?? AddRequestInformation::class);
+        $this->addMiddleware($options['middleware'] ?? AddRequestInformation::class, [
+            'request_attributes_provider' => $this->config->requestAttributesProvider,
+            'user_attributes_provider' => $this->config->userAttributesProvider,
+        ]);
         $this->addRecorder(
             RequestRecorder::class,
-            $this->only($options, ['ignored_urls']),
+            [
+                ...$this->only($options, ['ignored_urls']),
+                'request_attributes_provider' => $this->config->requestAttributesProvider,
+                'response_attributes_provider' => $this->config->responseAttributesProvider,
+                'user_attributes_provider' => $this->config->userAttributesProvider,
+            ],
         );
         $this->addRecorder(
             RoutingRecorder::class,
-            $this->only($options, ['ignored_routes']),
+            [
+                ...$this->only($options, ['ignored_routes']),
+                'route_attributes_provider' => $this->config->routeAttributesProvider,
+            ],
         );
         $this->addRecorder(ResponseRecorder::class);
     }
@@ -198,9 +209,11 @@ class CollectsResolver
 
     protected function gitInfo(array $options): void
     {
-        $this->resourceModifiers[] = fn (Resource $resource, ContainerInterface $container) => $resource->git(
-            attributesProvider: $container->get(GitAttributesProvider::class),
-            useProcess: $options['use_process'] ?? Resource::DEFAULT_GIT_USE_PROCESS,
+        $this->resourceModifiers[] = fn (Resource $resource) => $resource->git(
+            attributesProvider: new GitAttributesProvider(
+                applicationPath: $this->config->applicationPath,
+                useProcess: $options['use_process'] ?? Resource::DEFAULT_GIT_USE_PROCESS,
+            ),
             entityTypes: $this->resolveChosenFlareEntityTypes($options['entity_types'] ?? Resource::DEFAULT_GIT_ENTITY_TYPES),
         );
     }
