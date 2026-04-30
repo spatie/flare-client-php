@@ -2,9 +2,11 @@
 
 use Spatie\FlareClient\AttributesProviders\GitAttributesProvider;
 
+beforeEach(fn () => GitAttributesProvider::clearCache());
+
 it('can collect git info from files', function () {
-    $provider = new GitAttributesProvider();
-    $result = $provider->toArray(useProcess: false);
+    $provider = new GitAttributesProvider(useProcess: false);
+    $result = $provider->toArray();
 
     expect($result)->toBeArray()
         ->and($result)->toHaveKey('git.hash')
@@ -24,10 +26,9 @@ it('can collect git info from files', function () {
     }
 });
 
-
 it('can collect git info using process', function () {
-    $provider = new GitAttributesProvider();
-    $result = $provider->toArray(useProcess: true);
+    $provider = new GitAttributesProvider(useProcess: true);
+    $result = $provider->toArray();
 
     expect($result)->toBeArray()
         ->and($result)->toHaveKey('git.hash')
@@ -44,11 +45,11 @@ it('can collect git info using process', function () {
 });
 
 it('file-based and process-based modes return same hash and branch', function () {
-    $provider = new GitAttributesProvider();
-    $fileResult = $provider->toArray(useProcess: false);
+    $fileResult = (new GitAttributesProvider(useProcess: false))->toArray();
 
-    $provider2 = new GitAttributesProvider(); // Create new instance to avoid cache
-    $processResult = $provider2->toArray(useProcess: true);
+    GitAttributesProvider::clearCache();
+
+    $processResult = (new GitAttributesProvider(useProcess: true))->toArray();
 
     expect($fileResult['git.hash'])->toBe($processResult['git.hash']);
 
@@ -58,11 +59,11 @@ it('file-based and process-based modes return same hash and branch', function ()
 });
 
 it('file-based and process-based modes return same commit message when available', function () {
-    $provider = new GitAttributesProvider();
-    $fileResult = $provider->toArray(useProcess: false);
+    $fileResult = (new GitAttributesProvider(useProcess: false))->toArray();
 
-    $provider2 = new GitAttributesProvider(); // Create new instance to avoid cache
-    $processResult = $provider2->toArray(useProcess: true);
+    GitAttributesProvider::clearCache();
+
+    $processResult = (new GitAttributesProvider(useProcess: true))->toArray();
 
     expect($processResult)->toHaveKey('git.message');
 
@@ -73,8 +74,8 @@ it('file-based and process-based modes return same commit message when available
 });
 
 it('returns empty array when path does not have git directory', function () {
-    $provider = new GitAttributesProvider(applicationPath: sys_get_temp_dir());
-    $result = $provider->toArray(useProcess: false);
+    $provider = new GitAttributesProvider(applicationPath: sys_get_temp_dir(), useProcess: false);
+    $result = $provider->toArray();
 
     expect($result)->toBeEmpty();
 });
