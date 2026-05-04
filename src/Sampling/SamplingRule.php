@@ -15,6 +15,9 @@ class SamplingRule
         protected ?float $rate,
         protected ?Closure $closure = null,
     ) {
+        if ($rate !== null && ($rate < 0 || $rate > 1)) {
+            throw new InvalidArgumentException('Sampling rate must be between 0 and 1.');
+        }
     }
 
     public static function forUrl(string $pattern, float $rate): static

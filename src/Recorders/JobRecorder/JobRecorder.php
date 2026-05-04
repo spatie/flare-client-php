@@ -70,13 +70,13 @@ class JobRecorder extends SpansRecorder
 
         if ($shouldIgnore && $this->lifecycle->usesSubtasks) {
             $this->tracer->unsample();
-        }
 
-        if ($shouldIgnore && ! $this->lifecycle->usesSubtasks) {
-            $this->pauseTrace();
+            return null;
         }
 
         if ($shouldIgnore) {
+            $this->pauseTrace();
+
             return null;
         }
 
@@ -93,9 +93,11 @@ class JobRecorder extends SpansRecorder
             handlerType: $entryPointProvider?->entryPointHandlerType() ?? 'php_job',
         );
 
-        $this->entryPointResolver->set($entryPoint);
+        if ($this->lifecycle->usesSubtasks) {
+            $this->entryPointResolver->set($entryPoint);
 
-        $this->tracer->reevaluateSampling();
+            $this->tracer->reevaluateSampling();
+        }
 
         return $this->startSpan(
             name: "Job - {$jobName}",

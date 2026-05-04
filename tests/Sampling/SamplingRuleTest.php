@@ -21,6 +21,23 @@ it('throws when creating a rule from an invalid array', function (array $data, s
         ['rate' => 1.0],
         'Sampling rule array must contain "type", "pattern" and "rate" keys.',
     ],
+    'rate above 1' => [
+        ['type' => SamplingRuleType::Url, 'pattern' => '/api/*', 'rate' => 1.5],
+        'Sampling rate must be between 0 and 1.',
+    ],
+    'rate below 0' => [
+        ['type' => SamplingRuleType::Url, 'pattern' => '/api/*', 'rate' => -0.1],
+        'Sampling rate must be between 0 and 1.',
+    ],
+]);
+
+it('throws when constructing a static rule with an out-of-range rate', function (Closure $factory) {
+    expect(fn () => $factory())->toThrow(InvalidArgumentException::class, 'Sampling rate must be between 0 and 1.');
+})->with([
+    'forUrl above 1' => [fn () => SamplingRule::forUrl('/api/*', 1.5)],
+    'forRoute below 0' => [fn () => SamplingRule::forRoute('api.show', -0.5)],
+    'forCommand above 1' => [fn () => SamplingRule::forCommand('migrate', 2.0)],
+    'forJob below 0' => [fn () => SamplingRule::forJob('App\\Jobs\\*', -0.01)],
 ]);
 
 it('always allows url, job, and early closure rules to run', function (SamplingRule $rule) {
