@@ -227,15 +227,18 @@ class FlareConfig
     /**
      * @param array<int, string> $ignoredRoutes
      * @param array<int, string> $ignoredUrls
+     * @param array<int, string> $ignoredPaths
      */
     public function collectRequests(
         array $ignoredRoutes = [],
         array $ignoredUrls = [],
+        array $ignoredPaths = [],
         array $extra = [],
     ): static {
         return $this->addCollect(CollectType::Requests, [
             'ignored_routes' => $ignoredRoutes,
             'ignored_urls' => $ignoredUrls,
+            'ignored_paths' => $ignoredPaths,
             ...$extra,
         ]);
     }

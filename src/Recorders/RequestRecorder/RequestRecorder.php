@@ -27,6 +27,9 @@ class RequestRecorder extends SpansRecorder
     /** @var array<int, string> */
     protected array $ignoredUrls = [];
 
+    /** @var array<int, string> */
+    protected array $ignoredPaths = [];
+
     public static function type(): string|RecorderType
     {
         return RecorderType::Request;
@@ -48,6 +51,7 @@ class RequestRecorder extends SpansRecorder
         $this->withErrors = false;
 
         $this->ignoredUrls = $config['ignored_urls'] ?? [];
+        $this->ignoredPaths = $config['ignored_paths'] ?? [];
     }
 
     public function recordStart(
@@ -57,8 +61,9 @@ class RequestRecorder extends SpansRecorder
         array $attributes = [],
     ): ?Span {
         $url = $requestAttributesProvider->url();
+        $path = $requestAttributesProvider->path();
 
-        if ($this->shouldIgnoreUrl($url)) {
+        if ($this->shouldIgnoreUrl($url) || $this->shouldIgnorePath($path)) {
             $this->tracer->unsample();
 
             return null;
@@ -147,8 +152,23 @@ class RequestRecorder extends SpansRecorder
         return PatternMatcher::matchesAny($url, [...$this->ignoredUrls, ...$this->defaultIgnoredUrls()]);
     }
 
+    protected function shouldIgnorePath(?string $path): bool
+    {
+        if ($path === null) {
+            return false;
+        }
+
+        return PatternMatcher::matchesAny($path, [...$this->ignoredPaths, ...$this->defaultIgnoredPaths()]);
+    }
+
     /** @return array<int, string> */
     protected function defaultIgnoredUrls(): array
+    {
+        return [];
+    }
+
+    /** @return array<int, string> */
+    protected function defaultIgnoredPaths(): array
     {
         return [];
     }

@@ -136,7 +136,7 @@ class CollectsResolver
         $this->addMiddleware($options['middleware'] ?? AddRequestInformation::class);
         $this->addRecorder(
             RequestRecorder::class,
-            $this->only($options, ['ignored_urls']),
+            $this->only($options, ['ignored_urls', 'ignored_paths']),
         );
         $this->addRecorder(
             RoutingRecorder::class,

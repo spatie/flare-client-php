@@ -80,3 +80,51 @@ it('unsamples for a glob url match', function () {
     expect($span)->toBeNull();
     expect($flare->tracer->isSampling())->toBeFalse();
 });
+
+it('does not unsample when path does not match ignored list', function () {
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config->collectRequests(ignoredPaths: ['/api/health']),
+        alwaysSampleTraces: true,
+    );
+
+    $flare->tracer->startTrace();
+
+    $request = Request::create('https://example.com/api/users', 'GET');
+
+    $span = $flare->request()->recordStartFromSymfonyRequest($request);
+
+    expect($span)->not()->toBeNull();
+    expect($flare->tracer->isSampling())->toBeTrue();
+});
+
+it('unsamples for an exact path match', function () {
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config->collectRequests(ignoredPaths: ['/api/health']),
+        alwaysSampleTraces: true,
+    );
+
+    $flare->tracer->startTrace();
+
+    $request = Request::create('https://example.com/api/health', 'GET');
+
+    $span = $flare->request()->recordStartFromSymfonyRequest($request);
+
+    expect($span)->toBeNull();
+    expect($flare->tracer->isSampling())->toBeFalse();
+});
+
+it('unsamples for a glob path match', function () {
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config->collectRequests(ignoredPaths: ['/horizon/*']),
+        alwaysSampleTraces: true,
+    );
+
+    $flare->tracer->startTrace();
+
+    $request = Request::create('https://example.com/horizon/jobs/123', 'GET');
+
+    $span = $flare->request()->recordStartFromSymfonyRequest($request);
+
+    expect($span)->toBeNull();
+    expect($flare->tracer->isSampling())->toBeFalse();
+});
