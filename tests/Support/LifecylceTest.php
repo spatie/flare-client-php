@@ -5,17 +5,21 @@ use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Tests\Shared\FakeApi;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
+use Spatie\FlareClient\Tests\Shared\Samplers\FakeSampler;
 
 it('will make a sampling decision at start', function () {
-    $flare = setupFlare(fn (FlareConfig $config) => $config->sampleRate(0.5));
+    // Six real start() calls fire across 11 iterations (the alternates trash);
+    // three of the predetermined randoms fall under the 0.5 rate, so three sample.
+    FakeSampler::setRandoms(0.1, 0.9, 0.1, 0.9, 0.1, 0.9);
+
+    $flare = setupFlare(fn (FlareConfig $config) => $config->sampler(FakeSampler::class, ['rate' => 0.5]));
 
     foreach (range(0, 10) as $i) {
         $flare->lifecycle->start(timeUnixNano: 0, attributes: ['stage' => 'start']);
         $flare->lifecycle->terminated(timeUnixNano: 10, additionalApplicationAttributes: ['stage_additional' => 'application']);
     }
 
-    expect(count(FakeApi::$traces))->toBeGreaterThan(0);
-    expect(count(FakeApi::$traces))->toBeLessThan(10);
+    expect(count(FakeApi::$traces))->toBe(3);
 });
 
 it('will start an unsampled trace when the sampling decision is negative', function () {

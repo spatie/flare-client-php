@@ -142,9 +142,9 @@ class RequestRecorder extends SpansRecorder
         );
     }
 
-    protected function shouldIgnoreUrl(string $path): bool
+    protected function shouldIgnoreUrl(string $url): bool
     {
-        return PatternMatcher::matchesAny($path, [...$this->ignoredUrls, ...$this->defaultIgnoredUrls()]);
+        return PatternMatcher::matchesAny($url, [...$this->ignoredUrls, ...$this->defaultIgnoredUrls()]);
     }
 
     /** @return array<int, string> */

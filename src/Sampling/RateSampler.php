@@ -35,6 +35,11 @@ class RateSampler implements Sampler
             return true;
         }
 
-        return (mt_rand() / mt_getrandmax()) < $rate;
+        return $this->random() < $rate;
+    }
+
+    protected function random(): float
+    {
+        return mt_rand() / mt_getrandmax();
     }
 }

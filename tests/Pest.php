@@ -11,6 +11,7 @@ use Spatie\FlareClient\Tests\Shared\FakeIds;
 use Spatie\FlareClient\Tests\Shared\FakeMemory;
 use Spatie\FlareClient\Tests\Shared\FakeSender;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
+use Spatie\FlareClient\Tests\Shared\Samplers\FakeSampler;
 
 uses()->beforeEach(function () {
     Container::instance()->reset();
@@ -19,6 +20,7 @@ uses()->beforeEach(function () {
     FakeTime::reset();
     FakeIds::reset();
     FakeMemory::reset();
+    FakeSampler::reset();
 })->in(__DIR__);
 
 function makePathsRelative(string $text): string
