@@ -36,12 +36,13 @@ use Throwable;
 class Flare
 {
     // TODO: quick tests on Vapor
-    // TODO: add ability to ignore certain commands and requests like we do with jobs
-    // TODO: dynamic sampling based upon context would be cool/
     // TODO: check the tester for handling errors + try to move some parts of the laravel command to the main repo
     // TODO: solidify trace pausing
     // https://app.bugsnag.com/spatie/flareapp-dot-io/errors/69ddf4881ff884595fecd67e?filters[error.status]=open&filters[event.since]=1d
 
+    // TODO next week:
+    // - Finalize Laravel package changes: check all recorders and attribute providers + middleware, especially request then TESTINg TESTIN TESTING
+    // In de middleware doen we rare dingen, idealiter doen we ook de gehele resolve van attributes op het einde van't request zodat onze dynamic sampling snel kan draaien
 
     // TODO: test this on vapor:
     // 1) Create a job with error

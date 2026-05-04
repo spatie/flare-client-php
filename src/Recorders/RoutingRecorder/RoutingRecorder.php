@@ -141,9 +141,6 @@ class RoutingRecorder extends SpansRecorder
 
         $routeName = $routeAttributesProvider->route();
 
-        $method = $routeAttributesProvider->method();
-        $method = strtoupper($method);
-
         $entryPoint = $this->entryPointResolver->get();
 
         if (! $entryPoint->handlerResolved) {
@@ -152,8 +149,8 @@ class RoutingRecorder extends SpansRecorder
                 : null;
 
             $entryPoint->setHandler(
-                handlerIdentifier: $routeName ? "{$method} {$routeName}" : null,
-                handlerName: $entryPointProvider?->entryPointHandlerName() ?? null,
+                handlerIdentifier: $entryPointProvider?->entryPointHandlerIdentifier() ?? 'unknown',
+                handlerName: $entryPointProvider?->entryPointHandlerName(),
                 handlerType: $entryPointProvider?->entryPointHandlerType() ?? 'php_request',
             );
         }
@@ -205,7 +202,6 @@ class RoutingRecorder extends SpansRecorder
     }
 
     public function recordRouting(
-        RouteAttributesProvider $routeAttributesProvider,
         array $attributes = [],
         ?int $start = null,
         ?int $end = null,
@@ -217,7 +213,7 @@ class RoutingRecorder extends SpansRecorder
             return null;
         }
 
-        return $this->recordRoutingEnd($routeAttributesProvider, time: $end);
+        return $this->recordForcedRoutingEnd(time: $end);
     }
 
     public function recordBeforeMiddlewareStart(
