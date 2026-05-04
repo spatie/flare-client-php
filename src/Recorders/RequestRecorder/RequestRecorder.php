@@ -56,8 +56,6 @@ class RequestRecorder extends SpansRecorder
 
     public function recordStart(
         RequestAttributesProvider $requestAttributesProvider,
-        ?RouteAttributesProvider $routeAttributesProvider = null,
-        ?UserAttributesProvider $userAttributesProvider = null,
         array $attributes = [],
     ): ?Span {
         $url = $requestAttributesProvider->url();
@@ -69,17 +67,14 @@ class RequestRecorder extends SpansRecorder
             return null;
         }
 
-        return $this->startSpan(nameAndAttributes: function () use ($requestAttributesProvider, $routeAttributesProvider, $userAttributesProvider, $attributes) {
-            $name = $routeAttributesProvider?->route() ?? $requestAttributesProvider->path() ?? $requestAttributesProvider->url();
+        return $this->startSpan(nameAndAttributes: function () use ($requestAttributesProvider, $attributes) {
+            $name = $requestAttributesProvider->path() ?? $requestAttributesProvider->url();
 
             return [
                 'name' => "Request - {$name}",
                 'attributes' => [
                     'flare.span_type' => SpanType::Request,
                     ...$this->entryPointResolver->get()->toAttributes(),
-                    ...$requestAttributesProvider->toArray(),
-                    ...($routeAttributesProvider?->toArray() ?? []),
-                    ...($userAttributesProvider?->toArray() ?? []),
                     ...$attributes,
                 ],
             ];
@@ -88,49 +83,63 @@ class RequestRecorder extends SpansRecorder
 
     public function recordStartFromSymfonyRequest(
         Request $request,
-        ?RouteAttributesProvider $route = null,
-        ?UserAttributesProvider $user = null,
         array $attributes = [],
     ): ?Span {
         return $this->recordStart(
             new SymfonyRequestAttributesProvider($this->redactor, $request, includeContents: false),
-            $route,
-            $user,
             $attributes,
         );
     }
 
     public function recordStartFromGlobals(
-        ?RouteAttributesProvider $route = null,
-        ?UserAttributesProvider $user = null,
         array $attributes = [],
     ): ?Span {
         return $this->recordStart(
             new PhpRequestAttributesProvider($this->redactor),
-            $route,
-            $user,
             $attributes,
         );
     }
 
     public function recordEnd(
+        ?RequestAttributesProvider $requestAttributesProvider = null,
         ?ResponseAttributesProvider $responseAttributesProvider = null,
+        ?RouteAttributesProvider $routeAttributesProvider = null,
+        ?UserAttributesProvider $userAttributesProvider = null,
         array $attributes = [],
     ): ?Span {
-        return $this->endSpan(additionalAttributes: [
-            ...$this->entryPointResolver->get()->toAttributes(),
-            ...($responseAttributesProvider?->toArray() ?? []),
-            ...$attributes,
-        ], includeMemoryUsage: true);
+        $route = $routeAttributesProvider?->route();
+
+        return $this->endSpan(
+            additionalAttributes: [
+                ...$this->entryPointResolver->get()->toAttributes(),
+                ...($requestAttributesProvider?->toArray() ?? []),
+                ...($routeAttributesProvider?->toArray() ?? []),
+                ...($userAttributesProvider?->toArray() ?? []),
+                ...($responseAttributesProvider?->toArray() ?? []),
+                ...$attributes,
+            ],
+            spanCallback: $route !== null
+                ? fn (Span $span) => $span->updateName("Request - {$route}")
+                : null,
+            includeMemoryUsage: true,
+        );
     }
 
     public function recordEndFromSymfonyResponse(
         Response $response,
+        ?Request $request = null,
+        ?RouteAttributesProvider $routeAttributesProvider = null,
+        ?UserAttributesProvider $userAttributesProvider = null,
         array $attributes = [],
     ): ?Span {
         return $this->recordEnd(
-            new SymfonyResponseAttributesProvider($this->redactor, $response),
-            $attributes,
+            requestAttributesProvider: $request !== null
+                ? new SymfonyRequestAttributesProvider($this->redactor, $request, includeContents: false)
+                : null,
+            responseAttributesProvider: new SymfonyResponseAttributesProvider($this->redactor, $response),
+            routeAttributesProvider: $routeAttributesProvider,
+            userAttributesProvider: $userAttributesProvider,
+            attributes: $attributes,
         );
     }
 
@@ -142,8 +151,8 @@ class RequestRecorder extends SpansRecorder
         array $attributes = [],
     ): ?Span {
         return $this->recordEnd(
-            new PhpResponseAttributesProvider($this->redactor, $statusCode, $bodySize, $headers),
-            $attributes,
+            responseAttributesProvider: new PhpResponseAttributesProvider($this->redactor, $statusCode, $bodySize, $headers),
+            attributes: $attributes,
         );
     }
 
