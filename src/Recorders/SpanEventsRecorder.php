@@ -87,10 +87,6 @@ abstract class SpanEventsRecorder extends Recorder implements SpanEventsRecorder
         ?int $time = null,
         ?Closure $spanEventCallback = null,
     ): ?SpanEvent {
-        if ($nameAndAttributes === null && $name === null) {
-            throw new InvalidArgumentException('Either $nameAndAttributes must be set, or both $name and $attributes must be set.');
-        }
-
         $shouldReport = $this->shouldReport();
         $shouldTrace = $this->withTraces && $this->tracer->isSampling() && $this->tracer->currentSpanId();
 
@@ -98,11 +94,15 @@ abstract class SpanEventsRecorder extends Recorder implements SpanEventsRecorder
             return null;
         }
 
-        $name = $name instanceof Closure ? $name() : $name;
-        $attributes = $attributes instanceof Closure ? $attributes() : $attributes;
-
-        if ($nameAndAttributes) {
+        if ($nameAndAttributes !== null) {
             ['name' => $name, 'attributes' => $attributes] = $nameAndAttributes();
+        } else {
+            $name = $name instanceof Closure ? $name() : $name;
+            $attributes = $attributes instanceof Closure ? $attributes() : $attributes;
+        }
+
+        if ($name === null) {
+            throw new InvalidArgumentException('Either $nameAndAttributes must be set, or both $name and $attributes must be set.');
         }
 
         $spanEvent = new SpanEvent(

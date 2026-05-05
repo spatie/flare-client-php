@@ -51,7 +51,7 @@ parameters:
 			path: src/Flare.php
 
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:response\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\ResponseRecorder\\\\ResponseRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
+			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:controller\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\ControllerRecorder\\\\ControllerRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
 			count: 1
 			path: src/Flare.php
 

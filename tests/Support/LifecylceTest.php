@@ -301,7 +301,7 @@ it('will in the end call a shutdown function which tries to close the current tr
         ->expectEnd(20);
 });
 
-it('will not finish a trace when shutting down if spans are not closed yet', function () {
+it('force-closes orphaned spans during shutdown and finishes the trace', function () {
     FakeTime::setup(20);
 
     $flare = setupFlare(alwaysSampleTraces: true);
@@ -311,12 +311,14 @@ it('will not finish a trace when shutting down if spans are not closed yet', fun
     $flare->tracer->endSpan(time: 10);
     $flare->lifecycle->terminating(timeUnixNano: 10);
 
-    // Force a span to be left open
+    // Simulate an orphaned (unclosed) span — for example a View span left open
+    // because an exception aborted the recorder before its matching close call.
     $span->end = null;
 
     invade($flare->lifecycle)->shutdown();
 
-    FakeApi::assertTracesSent(0);
+    FakeApi::assertTracesSent(1);
+    expect($span->end)->not->toBeNull();
 });
 
 it('completes the lifecycle correctly when span limit is reached mid-request', function () {

@@ -21,7 +21,7 @@ enum RecorderType: string
     case Request = 'request';
     case RedisCommand = 'redis_command';
     case Routing = 'routing';
-    case Response = 'response';
+    case Controller = 'controller';
     case Transaction = 'transaction';
     case View = 'view';
 }

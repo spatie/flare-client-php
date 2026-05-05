@@ -9,6 +9,7 @@ use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
 use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
+use Spatie\FlareClient\Recorders\ControllerRecorder\ControllerRecorder;
 use Spatie\FlareClient\Recorders\ExternalHttpRecorder\ExternalHttpRecorder;
 use Spatie\FlareClient\Recorders\FilesystemRecorder\FilesystemRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
@@ -17,7 +18,6 @@ use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
 use Spatie\FlareClient\Recorders\QueueRecorder\QueueRecorder;
 use Spatie\FlareClient\Recorders\RedisCommandRecorder\RedisCommandRecorder;
 use Spatie\FlareClient\Recorders\RequestRecorder\RequestRecorder;
-use Spatie\FlareClient\Recorders\ResponseRecorder\ResponseRecorder;
 use Spatie\FlareClient\Recorders\RoutingRecorder\RoutingRecorder;
 use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
 use Spatie\FlareClient\Recorders\ViewRecorder\ViewRecorder;
@@ -208,9 +208,9 @@ class Flare
         return $this->recorders->getRecorder(RecorderType::Queue->value);
     }
 
-    public function response(): ResponseRecorder|null
+    public function controller(): ControllerRecorder|null
     {
-        return $this->recorders->getRecorder(RecorderType::Response->value);
+        return $this->recorders->getRecorder(RecorderType::Controller->value);
     }
 
     public function routing(): RoutingRecorder|null

@@ -117,6 +117,16 @@ $flare->withSolutionProvider(new MySolutionProvider());
 
 `$config->ignoreSolutions()`, the `AddSolutions` middleware, `defaultSolutionProviders()`, and the `solutionsProviderRepository` config option have all been removed as well.
 
+#### `ResponseRecorder` renamed to `ControllerRecorder`
+
+The recorder that previously tracked the response phase now wraps the controller execution itself. Naming and identifiers were updated to match.
+
+* `Spatie\FlareClient\Recorders\ResponseRecorder\ResponseRecorder` → `Spatie\FlareClient\Recorders\ControllerRecorder\ControllerRecorder`
+* `Flare::response()` → `Flare::controller()`
+* `RecorderType::Response` → `RecorderType::Controller` (wire value `response` → `controller`)
+* `SpanType::Response` → `SpanType::Controller` (wire value `php_response` → `php_controller`)
+* The single-call `recordResponse()` helper is removed. Use `recordStart()` / `recordEnd()` around the controller invocation instead.
+
 ### Framework integrator changes
 
 These changes only affect code that integrates `flare-client-php` directly with a framework or runtime. If you use a maintained framework package such as `spatie/laravel-flare`, you can skip this section.

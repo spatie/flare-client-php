@@ -20,6 +20,7 @@ use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
 use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
+use Spatie\FlareClient\Recorders\ControllerRecorder\ControllerRecorder;
 use Spatie\FlareClient\Recorders\DumpRecorder\DumpRecorder;
 use Spatie\FlareClient\Recorders\ExternalHttpRecorder\ExternalHttpRecorder;
 use Spatie\FlareClient\Recorders\FilesystemRecorder\FilesystemRecorder;
@@ -29,7 +30,6 @@ use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
 use Spatie\FlareClient\Recorders\QueueRecorder\QueueRecorder;
 use Spatie\FlareClient\Recorders\RedisCommandRecorder\RedisCommandRecorder;
 use Spatie\FlareClient\Recorders\RequestRecorder\RequestRecorder;
-use Spatie\FlareClient\Recorders\ResponseRecorder\ResponseRecorder;
 use Spatie\FlareClient\Recorders\RoutingRecorder\RoutingRecorder;
 use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
 use Spatie\FlareClient\Recorders\ViewRecorder\ViewRecorder;
@@ -136,7 +136,7 @@ class CollectsResolver
             RoutingRecorder::class,
             $this->only($options, ['ignored_routes']),
         );
-        $this->addRecorder(ResponseRecorder::class);
+        $this->addRecorder(ControllerRecorder::class);
     }
 
     protected function console(

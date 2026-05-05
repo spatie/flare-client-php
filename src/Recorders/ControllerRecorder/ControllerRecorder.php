@@ -1,16 +1,15 @@
 <?php
 
-namespace Spatie\FlareClient\Recorders\ResponseRecorder;
+namespace Spatie\FlareClient\Recorders\ControllerRecorder;
 
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Recorders\SpansRecorder;
 use Spatie\FlareClient\Spans\Span;
-use Spatie\FlareClient\Support\TimeInterval;
 
-class ResponseRecorder extends SpansRecorder
+class ControllerRecorder extends SpansRecorder
 {
-    protected bool $recordingResponse = false;
+    protected bool $recordingController = false;
 
     protected function configure(array $config): void
     {
@@ -20,23 +19,23 @@ class ResponseRecorder extends SpansRecorder
 
     public static function type(): string|RecorderType
     {
-        return RecorderType::Response;
+        return RecorderType::Controller;
     }
 
     public function recordStart(
         array $attributes = [],
         ?int $time = null
     ): ?Span {
-        if ($this->recordingResponse === true) {
+        if ($this->recordingController === true) {
             return null;
         }
 
-        $this->recordingResponse = true;
+        $this->recordingController = true;
 
         return $this->startSpan(
-            'Response',
+            'Controller',
             attributes: [
-                'flare.span_type' => SpanType::Response,
+                'flare.span_type' => SpanType::Controller,
                 ...$attributes,
             ],
             time: $time
@@ -47,30 +46,15 @@ class ResponseRecorder extends SpansRecorder
         array $attributes = [],
         ?int $time = null
     ): ?Span {
-        if ($this->recordingResponse === false) {
+        if ($this->recordingController === false) {
             return null;
         }
 
-        $this->recordingResponse = false;
+        $this->recordingController = false;
 
         return $this->endSpan(
             time: $time,
             additionalAttributes: $attributes,
         );
-    }
-
-    public function recordResponse(
-        array $attributes = [],
-        ?int $start = null,
-        ?int $end = null,
-        ?int $duration = null,
-    ): ?Span {
-        [$start, $end] = TimeInterval::resolve($this->tracer->time, $start, $end, $duration);
-
-        if ($this->recordStart($attributes, time: $start)) {
-            return $this->recordEnd(time: $end);
-        }
-
-        return null;
     }
 }

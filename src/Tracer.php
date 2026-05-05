@@ -505,22 +505,14 @@ class Tracer
             return;
         }
 
-        $currentSpan = $this->currentSpan();
-
-        while ($currentSpan !== null) {
-            if ($currentSpan->end !== null) {
-                break;
+        foreach ($this->spans as $span) {
+            if ($span->end !== null) {
+                continue;
             }
 
-            if ($this->gracefulSpanEnderClosure === null || $force || ($this->gracefulSpanEnderClosure)($currentSpan)) {
-                $this->endSpan($currentSpan);
+            if ($this->gracefulSpanEnderClosure === null || $force || ($this->gracefulSpanEnderClosure)($span)) {
+                $this->endSpan($span);
             }
-
-            if ($currentSpan->parentSpanId === null) {
-                break;
-            }
-
-            $currentSpan = $this->spans[$currentSpan->parentSpanId] ?? null;
         }
     }
 

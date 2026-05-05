@@ -65,10 +65,6 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
         ?Closure $nameAndAttributes = null,
         ?int $time = null,
     ): ?Span {
-        if ($nameAndAttributes === null && $name === null) {
-            throw new InvalidArgumentException('Either $nameAndAttributes must be set, or both $name and $attributes must be set.');
-        }
-
         $shouldTrace = $this->withTraces && $this->tracer->sampling;
         $shouldReport = $this->shouldReport();
 
@@ -76,11 +72,15 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
             return null;
         }
 
-        $name = $name instanceof Closure ? $name() : $name;
-        $attributes = $attributes instanceof Closure ? $attributes() : $attributes;
-
-        if ($nameAndAttributes) {
+        if ($nameAndAttributes !== null) {
             ['name' => $name, 'attributes' => $attributes] = $nameAndAttributes();
+        } else {
+            $name = $name instanceof Closure ? $name() : $name;
+            $attributes = $attributes instanceof Closure ? $attributes() : $attributes;
+        }
+
+        if ($name === null) {
+            throw new InvalidArgumentException('Either $nameAndAttributes must be set, or both $name and $attributes must be set.');
         }
 
         // Order of operations is important here, do not inline!

@@ -186,6 +186,7 @@ class ExpectTrace
         bool $globalBeforeMiddleware = true,
         bool $routing = true,
         bool $beforeMiddleware = true,
+        bool $controller = false,
         Closure|null $requestSpans = null,
         bool $afterMiddleware = true,
         bool $globalAfterMiddleware = true,
@@ -200,6 +201,7 @@ class ExpectTrace
                 $globalBeforeMiddleware,
                 $routing,
                 $beforeMiddleware,
+                $controller,
                 $afterMiddleware,
                 $globalAfterMiddleware
             ) {
@@ -225,11 +227,19 @@ class ExpectTrace
                         ->expectType(SpanType::BeforeMiddleware);
                 }
 
-                if ($requestSpans) {
-                    $requestSpans($spanIndex, $requestSpan);
+                $controllerSpan = null;
+
+                if ($controller && ($this->expectSpans[$spanIndex] ?? null)?->type === SpanType::Controller->value) {
+                    $controllerSpan = $this->expectSpan($spanIndex++)
+                        ->expectParentId($requestSpan)
+                        ->expectType(SpanType::Controller);
                 }
 
-                if ($afterMiddleware) {
+                if ($requestSpans) {
+                    $requestSpans($spanIndex, $controllerSpan ?? $requestSpan);
+                }
+
+                if ($afterMiddleware && ($this->expectSpans[$spanIndex] ?? null)?->type === SpanType::AfterMiddleware->value) {
                     $afterMiddlewareSpan = $this->expectSpan($spanIndex++)
                         ->expectParentId($requestSpan)
                         ->expectType(SpanType::AfterMiddleware);
@@ -256,7 +266,8 @@ class ExpectTrace
     ): self {
         return $this->expectRequestLifecycle(
             requestSpans: $requestSpans,
-            afterMiddleware: false,
+            controller: true,
+            afterMiddleware: true,
             globalAfterMiddleware: false,
             terminatingSpans: $terminatingSpans,
         );
