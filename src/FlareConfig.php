@@ -580,7 +580,7 @@ class FlareConfig
      */
     public function applicationName(string|Closure $name): static
     {
-        $this->applicationName = is_callable($name) ? $name() : $name;
+        $this->applicationName = $name instanceof Closure ? $name() : $name;
 
         return $this;
     }

@@ -243,7 +243,7 @@ class Flare
 
     public function withApplicationName(string|Closure $name): self
     {
-        $this->resource->serviceName(is_callable($name) ? $name() : $name);
+        $this->resource->serviceName($name instanceof Closure ? $name() : $name);
 
         return $this;
     }

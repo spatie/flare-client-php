@@ -76,8 +76,8 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
             return null;
         }
 
-        $name = is_callable($name) ? $name() : $name;
-        $attributes = is_callable($attributes) ? $attributes() : $attributes;
+        $name = $name instanceof Closure ? $name() : $name;
+        $attributes = $attributes instanceof Closure ? $attributes() : $attributes;
 
         if ($nameAndAttributes) {
             ['name' => $name, 'attributes' => $attributes] = $nameAndAttributes();
