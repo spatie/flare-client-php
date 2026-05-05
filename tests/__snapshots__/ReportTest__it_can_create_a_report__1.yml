@@ -1,7 +1,6 @@
 exceptionClass: Exception
 seenAtUnixNano: 1546305825000000000
 message: 'this is an exception'
-solutions: {  }
 stacktrace: {  }
 previous: {  }
 openFrameIndex: null

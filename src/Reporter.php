@@ -6,8 +6,6 @@ use Closure;
 use Error;
 use ErrorException;
 use Exception;
-use Spatie\ErrorSolutions\Contracts\HasSolutionsForThrowable;
-use Spatie\ErrorSolutions\Contracts\SolutionProviderRepository;
 use Spatie\FlareClient\Contracts\Recorders\SpanEventsRecorder;
 use Spatie\FlareClient\Contracts\Recorders\SpansRecorder;
 use Spatie\FlareClient\Enums\LifecycleStage;
@@ -41,7 +39,6 @@ class Reporter
         protected readonly ?int $reportErrorLevels,
         protected null|Closure $filterExceptionsCallable,
         protected null|Closure $filterReportsCallable,
-        protected readonly SolutionProviderRepository $solutionProviderRepository,
         protected readonly ReportFactory $reportFactory,
         protected readonly array $middleware,
         protected readonly Recorders $recorders,
@@ -161,16 +158,6 @@ class Reporter
     public function reportHandled(Throwable $throwable): ?ReportFactory
     {
         return $this->report($throwable, handled: true);
-    }
-
-    /**
-     * @param class-string<HasSolutionsForThrowable> ...$solutionProviders
-     */
-    public function withSolutionProvider(string ...$solutionProviders): self
-    {
-        $this->solutionProviderRepository->registerSolutionProviders($solutionProviders);
-
-        return $this;
     }
 
     /**

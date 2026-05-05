@@ -14,7 +14,6 @@ enum CollectType: string implements FlareCollectType
     case GitInfo = 'git_info';
     case Cache = 'cache';
     case Glows = 'glows';
-    case Solutions = 'solutions';
     case Throwables = 'throwables';
     case Queries = 'queries';
     case Transactions = 'database_transactions';

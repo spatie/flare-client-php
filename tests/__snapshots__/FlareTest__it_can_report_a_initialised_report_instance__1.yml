@@ -6,7 +6,6 @@ exception_class: PHPUnit\Framework\Exception
 seen_at: 1546346096
 message: 'This is a test'
 glows: {  }
-solutions: {  }
 documentation_links: {  }
 stacktrace: {  }
 context:
