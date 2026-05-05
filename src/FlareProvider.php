@@ -5,7 +5,6 @@ namespace Spatie\FlareClient;
 use Closure;
 use Illuminate\Contracts\Container\Container as IlluminateContainer;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
-use Spatie\ErrorSolutions\Contracts\SolutionProviderRepository as SolutionProviderRepositoryContract;
 use Spatie\FlareClient\AttributesProviders\ConsoleAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\GitAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\RequestAttributesProvider;
@@ -126,15 +125,6 @@ class FlareProvider
             default => $collects->argumentReducers,
         });
 
-        $this->container->singleton(SolutionProviderRepositoryContract::class, function () use ($collects) {
-            /** @var SolutionProviderRepositoryContract $repository */
-            $repository = new $this->config->solutionsProviderRepository;
-
-            $repository->registerSolutionProviders($collects->solutionProviders);
-
-            return $repository;
-        });
-
         $this->container->singleton(Resource::class, function () use ($collects) {
             $resource = new Resource(
                 $this->config->applicationName,
@@ -248,7 +238,6 @@ class FlareProvider
                 reportErrorLevels: $this->config->reportErrorLevels,
                 filterExceptionsCallable: $this->config->filterExceptionsCallable,
                 filterReportsCallable: $this->config->filterReportsCallable,
-                solutionProviderRepository: $this->container->get(SolutionProviderRepositoryContract::class),
                 reportFactory: $this->container->get(ReportFactory::class),
                 middleware: $middleware,
                 recorders: $recorders,

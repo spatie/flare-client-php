@@ -4,7 +4,6 @@ namespace Spatie\FlareClient;
 
 use Closure;
 use Exception;
-use Spatie\ErrorSolutions\Contracts\HasSolutionsForThrowable;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
@@ -126,16 +125,6 @@ class Flare
     public function reportHandled(Throwable $throwable): ?ReportFactory
     {
         return $this->reporter->reportHandled($throwable);
-    }
-
-    /**
-     * @param class-string<HasSolutionsForThrowable> ...$solutionProviders
-     */
-    public function withSolutionProvider(string ...$solutionProviders): self
-    {
-        $this->reporter->withSolutionProvider(...$solutionProviders);
-
-        return $this;
     }
 
     /**

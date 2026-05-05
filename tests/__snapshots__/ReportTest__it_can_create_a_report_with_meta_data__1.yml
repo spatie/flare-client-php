@@ -6,7 +6,6 @@ exceptionClass: Exception
 seenAt: 1546305825
 message: 'this is an exception'
 glows: {  }
-solutions: {  }
 stacktrace:
     -
         lineNumber: 46

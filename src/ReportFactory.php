@@ -7,8 +7,6 @@ use Exception;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\Backtrace\Backtrace;
 use Spatie\Backtrace\Frame;
-use Spatie\ErrorSolutions\Contracts\RunnableSolution;
-use Spatie\ErrorSolutions\Contracts\Solution;
 use Spatie\FlareClient\Concerns\HasAttributes;
 use Spatie\FlareClient\Contracts\ProvidesFlareContext;
 use Spatie\FlareClient\Contracts\WithAttributes;
@@ -30,9 +28,6 @@ class ReportFactory implements WithAttributes
 
     /** @var array<Span|SpanEvent> */
     public array $events = [];
-
-    /** @var array<Solution> */
-    public array $solutions = [];
 
     public ?bool $handled = null;
 
@@ -68,7 +63,6 @@ class ReportFactory implements WithAttributes
         $clone->attributes = [];
         $clone->message = null;
         $clone->events = [];
-        $clone->solutions = [];
         $clone->handled = null;
         $clone->trackingUuid = null;
         $clone->level = null;
@@ -129,13 +123,6 @@ class ReportFactory implements WithAttributes
         return $this;
     }
 
-    public function solution(Solution ...$solution): self
-    {
-        array_push($this->solutions, ...$solution);
-
-        return $this;
-    }
-
     public function trackingUuid(string $uuid): self
     {
         $this->trackingUuid = $uuid;
@@ -188,7 +175,6 @@ class ReportFactory implements WithAttributes
             'exceptionClass' => $this->throwable::class,
             'seenAtUnixNano' => $this->time->getCurrentTime(),
             'message' => $this->message,
-            'solutions' => $this->mapSolutions(),
             'stacktrace' => $this->stacktraceMapper->map($this->buildStacktrace(), $this->throwable),
             'previous' => $this->buildPrevious(),
             'openFrameIndex' => null,
@@ -254,25 +240,5 @@ class ReportFactory implements WithAttributes
         }
 
         return array_values(array_slice($frames, $firstApplicationFrameIndex));
-    }
-
-    protected function mapSolutions(): array
-    {
-        return array_map(
-            function (Solution $solution) {
-                $isRunnable = $solution instanceof RunnableSolution;
-
-                return [
-                    'class' => get_class($solution),
-                    'title' => $solution->getSolutionTitle(),
-                    'description' => $solution->getSolutionDescription(),
-                    'links' => $solution->getDocumentationLinks(),
-                    'actionDescription' => $isRunnable ? $solution->getSolutionActionDescription() : null,
-                    'isRunnable' => $isRunnable,
-                    'aiGenerated' => $solution->aiGenerated ?? false,
-                ];
-            },
-            $this->solutions
-        );
     }
 }
