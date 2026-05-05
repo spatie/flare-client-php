@@ -25,6 +25,11 @@ class SamplingRule
         return new static(SamplingRuleType::Url, $pattern, $rate);
     }
 
+    public static function forPath(string $pattern, float $rate): static
+    {
+        return new static(SamplingRuleType::Path, $pattern, $rate);
+    }
+
     public static function forRoute(string $pattern, float $rate): static
     {
         return new static(SamplingRuleType::Route, $pattern, $rate);
@@ -77,7 +82,7 @@ class SamplingRule
     public function canRun(EntryPoint $entryPoint): bool
     {
         return match ($this->type) {
-            SamplingRuleType::Url, SamplingRuleType::Job, SamplingRuleType::EarlyClosure => true,
+            SamplingRuleType::Url, SamplingRuleType::Path, SamplingRuleType::Job, SamplingRuleType::EarlyClosure => true,
             SamplingRuleType::Route, SamplingRuleType::Command, SamplingRuleType::Closure => $entryPoint->handlerResolved,
         };
     }
@@ -95,7 +100,8 @@ class SamplingRule
         $pattern = $this->pattern;
 
         $value = match ($this->type) {
-            SamplingRuleType::Url => parse_url($entryPoint->value, PHP_URL_PATH) ?: '/',
+            SamplingRuleType::Url => $entryPoint->value,
+            SamplingRuleType::Path => parse_url($entryPoint->value, PHP_URL_PATH) ?: '/',
             SamplingRuleType::Route => str_contains($entryPoint->handlerIdentifier, ' ')
                 ? explode(' ', $entryPoint->handlerIdentifier, 2)[1]
                 : $entryPoint->handlerIdentifier,

@@ -39,7 +39,6 @@ class FlareProvider
      * @param Closure(Container|IlluminateContainer, class-string<Recorder>, array):void|null $registerRecorderAndMiddlewaresCallback
      * @param class-string<CollectsResolver>|null $collectsResolver
      * @param Closure():bool|null $isUsingSubtasksClosure
-     * @param Closure():void|null $subtaskEndedClosure
      * @param Closure(Span):bool|null $gracefulSpanEnderClosure
      */
     public function __construct(
@@ -48,7 +47,6 @@ class FlareProvider
         protected ?string $collectsResolver = null,
         protected ?Closure $registerRecorderAndMiddlewaresCallback = null,
         protected ?Closure $isUsingSubtasksClosure = null,
-        protected ?Closure $subtaskEndedClosure = null,
         protected ?Closure $gracefulSpanEnderClosure = null,
         protected bool $disableApiQueue = false
     ) {
@@ -181,7 +179,6 @@ class FlareProvider
             resource: $this->container->get(Resource::class),
             entryPointResolver: $this->container->get(EntryPointResolver::class),
             isUsingSubtasksClosure: $this->isUsingSubtasksClosure,
-            subtaskEndedClosure: $this->subtaskEndedClosure,
         ));
 
         $this->container->singleton(Tracer::class, fn () => new Tracer(

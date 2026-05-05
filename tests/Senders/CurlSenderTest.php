@@ -80,3 +80,23 @@ it('still throws ConnectionError when curl_exec returns false', function () {
         }
     );
 })->throws(ConnectionError::class);
+
+it('throws ConnectionError when the payload cannot be JSON encoded', function () {
+    $sender = new TestCurlSender();
+    $sender->fakeResponse = '{}';
+
+    $resource = fopen('php://memory', 'r');
+
+    try {
+        $sender->post(
+            'https://example.com/api',
+            'fake-api-key',
+            ['unencodable' => $resource],
+            FlareEntityType::Errors,
+            false,
+            fn (Response $r) => null,
+        );
+    } finally {
+        fclose($resource);
+    }
+})->throws(ConnectionError::class, 'Invalid JSON payload provided');

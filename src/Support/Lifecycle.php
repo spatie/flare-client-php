@@ -30,7 +30,6 @@ class Lifecycle
 
     /**
      * @param Closure():bool|null $isUsingSubtasksClosure
-     * @param Closure():void|null $subtaskEndedClosure
      */
     public function __construct(
         protected Api $api,
@@ -44,7 +43,6 @@ class Lifecycle
         protected EntryPointResolver $entryPointResolver,
         protected LifecycleStage $stage = LifecycleStage::Idle,
         protected ?Closure $isUsingSubtasksClosure = null,
-        protected ?Closure $subtaskEndedClosure = null,
     ) {
         $this->usesSubtasks = $this->isUsingSubtasks();
 
@@ -266,10 +264,6 @@ class Lifecycle
 
         $this->flush();
         $this->memory->resetPeakMemoryUsage();
-
-        if ($this->subtaskEndedClosure) {
-            ($this->subtaskEndedClosure)();
-        }
     }
 
     public function terminating(

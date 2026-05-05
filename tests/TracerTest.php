@@ -683,6 +683,36 @@ it('clears pending sampling state when the trace ends', function () {
     expect($flare->tracer->sampler->isPending())->toBeFalse();
 });
 
+it('force-closes all open spans up the parent chain via gracefullyEndSpans', function () {
+    $tracer = setupFlare(alwaysSampleTraces: true)->tracer;
+
+    $tracer->startTrace();
+    $parent = $tracer->startSpan('Parent');
+    $child = $tracer->startSpan('Child');
+
+    expect($parent->end)->toBeNull();
+    expect($child->end)->toBeNull();
+
+    $tracer->gracefullyEndSpans(force: true);
+
+    expect($child->end)->not->toBeNull();
+    expect($parent->end)->not->toBeNull();
+});
+
+it('respects the gracefulSpanEnderClosure when force is false', function () {
+    $tracer = setupFlare(alwaysSampleTraces: true)->tracer;
+
+    invade($tracer)->gracefulSpanEnderClosure = fn (Span $span) => $span->name !== 'Should stay open';
+
+    $tracer->startTrace();
+    $closable = $tracer->startSpan('Closable');
+    $stayOpen = $tracer->startSpan('Should stay open');
+
+    $tracer->gracefullyEndSpans();
+
+    expect($stayOpen->end)->toBeNull();
+});
+
 it('clears pending sampling state when unsampled', function () {
     $flare = setupFlare(
         fn (FlareConfig $config) => $config->sampleTracesDynamic(

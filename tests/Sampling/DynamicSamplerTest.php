@@ -26,7 +26,7 @@ it('skips all rules when entry point type does not match any rule', function () 
     $sampler = new DynamicSampler([
         'base_rate' => 0,
         'rules' => [
-            SamplingRule::forUrl('/admin/*', 1.0),
+            SamplingRule::forPath('/admin/*', 1.0),
             SamplingRule::forRoute('/api/*', 1.0),
         ],
     ]);
@@ -41,7 +41,7 @@ it('evaluates url rule immediately with no pending state', function () {
     $sampler = new DynamicSampler([
         'base_rate' => 0,
         'rules' => [
-            SamplingRule::forUrl('/admin/*', 1.0),
+            SamplingRule::forPath('/admin/*', 1.0),
         ],
     ]);
 
@@ -56,7 +56,7 @@ it('falls back to base rate when no rule matches', function () {
     $sampler = new DynamicSampler([
         'base_rate' => 0,
         'rules' => [
-            SamplingRule::forUrl('/admin/*', 1.0),
+            SamplingRule::forPath('/admin/*', 1.0),
         ],
     ]);
 
@@ -137,8 +137,8 @@ it('respects priority: first matching rule wins', function () {
     $sampler = new DynamicSampler([
         'base_rate' => 0,
         'rules' => [
-            SamplingRule::forUrl('/admin/*', 1.0),
-            SamplingRule::forUrl('/admin/secret', 0),
+            SamplingRule::forPath('/admin/*', 1.0),
+            SamplingRule::forPath('/admin/secret', 0),
         ],
     ]);
 
@@ -152,7 +152,7 @@ it('breaks on deferred rule and samples optimistically for later reevaluation', 
         'base_rate' => 0,
         'rules' => [
             SamplingRule::forRoute('/admin/*', 1.0),
-            SamplingRule::forUrl('/api/*', 0),
+            SamplingRule::forPath('/api/*', 0),
         ],
     ]);
 
@@ -167,7 +167,7 @@ it('reevaluates correctly after breaking on deferred rule', function () {
         'base_rate' => 0,
         'rules' => [
             SamplingRule::forRoute('/admin/*', 1.0),
-            SamplingRule::forUrl('/api/*', 0),
+            SamplingRule::forPath('/api/*', 0),
         ],
     ]);
 
@@ -232,11 +232,73 @@ it('accepts array-defined rules in config', function () {
     $sampler = new DynamicSampler([
         'base_rate' => 0,
         'rules' => [
-            ['type' => SamplingRuleType::Url, 'pattern' => '/admin/*', 'rate' => 1.0],
+            ['type' => SamplingRuleType::Path, 'pattern' => '/admin/*', 'rate' => 1.0],
         ],
     ]);
 
     $entryPoint = new EntryPoint(EntryPointType::Web, 'https://example.com/admin/users');
 
     expect($sampler->shouldSample($entryPoint))->toBeTrue();
+});
+
+it('defers a closure rule until the handler is resolved', function () {
+    $sampler = new DynamicSampler([
+        'base_rate' => 0,
+        'rules' => [
+            SamplingRule::using(fn (EntryPoint $ep) => str_contains($ep->handlerIdentifier, 'admin') ? 1.0 : null),
+        ],
+    ]);
+
+    $entryPoint = new EntryPoint(EntryPointType::Web, 'https://example.com/admin/users');
+
+    expect($sampler->shouldSample($entryPoint))->toBeTrue();
+    expect($sampler->isPending())->toBeTrue();
+
+    $entryPoint->setHandler('GET /admin/users', 'AdminController', 'php_request');
+
+    expect($sampler->reevaluate($entryPoint))->toBeTrue();
+    expect($sampler->isPending())->toBeFalse();
+});
+
+it('runs an early closure without waiting for the handler', function () {
+    $sampler = new DynamicSampler([
+        'base_rate' => 0,
+        'rules' => [
+            SamplingRule::usingEarly(fn (EntryPoint $ep) => $ep->type === EntryPointType::Web ? 1.0 : null),
+        ],
+    ]);
+
+    $entryPoint = new EntryPoint(EntryPointType::Web, 'https://example.com/whatever');
+
+    expect($sampler->shouldSample($entryPoint))->toBeTrue();
+    expect($sampler->isPending())->toBeFalse();
+});
+
+it('lets a non-deferrable rule before a deferrable one decide immediately', function () {
+    $sampler = new DynamicSampler([
+        'base_rate' => 0,
+        'rules' => [
+            SamplingRule::forPath('/api/health', 1.0),
+            SamplingRule::forRoute('/api/*', 0),
+        ],
+    ]);
+
+    $entryPoint = new EntryPoint(EntryPointType::Web, 'https://example.com/api/health');
+
+    expect($sampler->shouldSample($entryPoint))->toBeTrue();
+    expect($sampler->isPending())->toBeFalse();
+});
+
+it('reevaluates to the base rate when called without prior pending state', function () {
+    $sampler = new DynamicSampler([
+        'base_rate' => 1,
+        'rules' => [
+            SamplingRule::forRoute('/admin/*', 0),
+        ],
+    ]);
+
+    $entryPoint = new EntryPoint(EntryPointType::Web, 'https://example.com/public');
+    $entryPoint->setHandler('GET /public', 'PublicController', 'php_request');
+
+    expect($sampler->reevaluate($entryPoint))->toBeTrue();
 });
