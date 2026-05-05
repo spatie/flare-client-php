@@ -20,6 +20,24 @@ A few new concepts are referenced throughout this guide:
 - **Entry points**: a new `EntryPoint` value object, resolved by `EntryPointResolver`, that describes the request, command, or job that initiated a trace. It replaces the loose `entryPointClass` arguments and the array context previously passed to samplers.
 - **Attribute providers**: contracts (`RequestAttributesProvider`, `ResponseAttributesProvider`, `RouteAttributesProvider`, `CommandAttributesProvider`, `JobAttributesProvider`, `UserAttributesProvider`) that recorders use to collect attributes. They replace the ad-hoc arguments and config-level provider hooks from v2.
 
+### Enabling logging with the daemon
+
+Standalone logging is opt-in. Enable it with `log()` on the config. Logs buffer in memory and are flushed when the request ends, so we recommend pairing it with the asynchronous [Flare daemon](https://github.com/spatie/flare-daemon) to keep delivery off the request thread.
+
+Install and run the daemon locally, then point the client at it with `sendUsing()`:
+
+```php
+use Monolog\Level;
+use Spatie\FlareClient\FlareConfig;
+use Spatie\FlareClient\Senders\DaemonSender;
+
+FlareConfig::make('your-api-key')
+    ->log(minimalLevel: Level::Info)
+    ->sendUsing(DaemonSender::class);
+```
+
+`DaemonSender` routes errors, traces, and logs through the daemon. If the daemon is unreachable, it falls back to direct delivery via curl.
+
 ### Changes
 
 #### `reportMessage()` has been removed
