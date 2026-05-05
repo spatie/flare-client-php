@@ -26,7 +26,7 @@ class PhpRequestAttributesProvider implements RequestAttributesProvider
             'url.full' => $this->url(),
             'url.scheme' => $this->scheme(),
             'url.path' => $this->path(),
-            'url.query' => $this->serverString('QUERY_STRING') ?? '',
+            'url.query' => $this->serverString('QUERY_STRING'),
 
             'server.address' => $this->serverString('SERVER_NAME') ?: $this->serverString('SERVER_ADDR'),
             'server.port' => $this->serverString('SERVER_PORT'),
@@ -46,7 +46,7 @@ class PhpRequestAttributesProvider implements RequestAttributesProvider
 
         return array_filter(
             $payload,
-            fn ($value) => $value !== null && $value !== '',
+            fn ($value) => $value !== null,
         );
     }
 
