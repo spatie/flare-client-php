@@ -1,6 +1,5 @@
 <?php
 
-use Spatie\FlareClient\EntryPoint\EntryPoint;
 use Spatie\FlareClient\EntryPoint\EntryPointResolver;
 use Spatie\FlareClient\Enums\EntryPointType;
 

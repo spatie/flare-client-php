@@ -1,7 +1,6 @@
 <?php
 
 use Spatie\FlareClient\AttributesProviders\PhpJobAttributesProvider;
-use Spatie\FlareClient\Contracts\JobAttributesProvider;
 
 it('returns an empty attributes array', function () {
     $provider = new PhpJobAttributesProvider('process-podcast');

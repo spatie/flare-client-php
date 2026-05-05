@@ -1,6 +1,5 @@
 <?php
 
-use Spatie\FlareClient\Enums\EntryPointType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Spans\Span;

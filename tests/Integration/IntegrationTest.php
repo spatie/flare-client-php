@@ -182,7 +182,7 @@ it('drives a console command lifecycle and propagates the cli entry point', func
 });
 
 it('drives a queued job in subtask mode without polluting the parent trace', function () {
-     $traceparent = '00-1234567890abcdef1234567890abcdef-fedcba9876543210-01';
+    $traceparent = '00-1234567890abcdef1234567890abcdef-fedcba9876543210-01';
 
     $flare = setupFlare(
         fn (FlareConfig $config) => $config
