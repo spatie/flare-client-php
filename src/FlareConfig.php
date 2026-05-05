@@ -15,10 +15,6 @@ use Spatie\Backtrace\Arguments\Reducers\DateTimeZoneArgumentReducer;
 use Spatie\Backtrace\Arguments\Reducers\EnumArgumentReducer;
 use Spatie\Backtrace\Arguments\Reducers\StdClassArgumentReducer;
 use Spatie\Backtrace\Arguments\Reducers\SymphonyRequestArgumentReducer;
-use Spatie\ErrorSolutions\SolutionProviderRepository;
-use Spatie\ErrorSolutions\SolutionProviders\BadMethodCallSolutionProvider;
-use Spatie\ErrorSolutions\SolutionProviders\MergeConflictSolutionProvider;
-use Spatie\ErrorSolutions\SolutionProviders\UndefinedPropertySolutionProvider;
 use Spatie\FlareClient\Contracts\FlareCollectType;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\CollectType;
@@ -62,7 +58,6 @@ class FlareConfig
      * @param null|Closure(ReportFactory): bool $filterReportsCallable
      * @param array<string, array{type: FlareCollectType, ignored: ?bool, options: array}> $collects
      * @param class-string<Sender> $sender
-     * @param class-string<SolutionProviderRepository> $solutionsProviderRepository
      * @param array{max_spans: int, max_attributes_per_span: int, max_span_events_per_span:int, max_attributes_per_span_event:int}|null $traceLimits
      * @param Closure(Scope):void|null $configureScopeCallable
      * @param Closure(Resource):void|null $configureResourceCallable
@@ -114,7 +109,6 @@ class FlareConfig
         // Client Infrastructure
         public string $sender = CurlSender::class,
         public array $senderConfig = [],
-        public string $solutionsProviderRepository = SolutionProviderRepository::class,
         public string $sampler = RateSampler::class,
         public array $samplerConfig = [],
         public string $exporter = OpenTelemetryJsonExporter::class,
@@ -183,7 +177,6 @@ class FlareConfig
             ->collectGitInfo()
             ->collectViews()
             ->collectGlows()
-            ->collectSolutions()
             ->collectErrorsWithTraces()
             ->collectStackFrameArguments()
             ->collectServerInfo()
@@ -199,15 +192,6 @@ class FlareConfig
                 'password',
                 'password_confirmation',
             );
-    }
-
-    public static function defaultSolutionProviders(): array
-    {
-        return [
-            BadMethodCallSolutionProvider::class,
-            MergeConflictSolutionProvider::class,
-            UndefinedPropertySolutionProvider::class,
-        ];
     }
 
     public static function defaultArgumentReducers(): array
@@ -352,21 +336,6 @@ class FlareConfig
     public function ignoreGlows(): static
     {
         return $this->ignoreCollect(CollectType::Glows);
-    }
-
-    public function collectSolutions(
-        ?array $solutionProviders = null,
-        array $extra = [],
-    ): static {
-        return $this->addCollect(CollectType::Solutions, [
-            'solution_providers' => $solutionProviders ?? static::defaultSolutionProviders(),
-            ...$extra,
-        ]);
-    }
-
-    public function ignoreSolutions(): static
-    {
-        return $this->ignoreCollect(CollectType::Solutions);
     }
 
     public function collectDumps(

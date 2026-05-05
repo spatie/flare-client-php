@@ -13,7 +13,6 @@ glows:
         meta_data:
             meta: data
         microtime: 1234
-solutions: {  }
 documentation_links: {  }
 stacktrace: {  }
 context:

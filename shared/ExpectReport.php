@@ -84,13 +84,6 @@ class ExpectReport
         return $this;
     }
 
-    public function expectSolutionCount(int $count): self
-    {
-        expect($this->report['solutions'])->toHaveCount($count);
-
-        return $this;
-    }
-
     public function expectEventCount(int $count, null|FlareSpanType|FlareSpanEventType $type = null): self
     {
         $events = $this->expectReportEvents;

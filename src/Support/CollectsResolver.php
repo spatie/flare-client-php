@@ -5,7 +5,6 @@ namespace Spatie\FlareClient\Support;
 use Psr\Container\ContainerInterface;
 use Spatie\Backtrace\Arguments\ArgumentReducers;
 use Spatie\Backtrace\Arguments\Reducers\ArgumentReducer;
-use Spatie\ErrorSolutions\Contracts\HasSolutionsForThrowable;
 use Spatie\FlareClient\AttributesProviders\GitAttributesProvider;
 use Spatie\FlareClient\Contracts\FlareCollectType;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
@@ -17,7 +16,6 @@ use Spatie\FlareClient\FlareMiddleware\AddEntryPoint;
 use Spatie\FlareClient\FlareMiddleware\AddJobInformation;
 use Spatie\FlareClient\FlareMiddleware\AddLogs;
 use Spatie\FlareClient\FlareMiddleware\AddRequestInformation;
-use Spatie\FlareClient\FlareMiddleware\AddSolutions;
 use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
@@ -44,9 +42,6 @@ class CollectsResolver
 
     /** @var array<class-string<Recorder>, array<string, mixed>> */
     public array $recorders = [];
-
-    /** @var array<class-string<HasSolutionsForThrowable>> */
-    public array $solutionProviders = [];
 
     /** @var array<callable(Resource, ContainerInterface):Resource> */
     public array $resourceModifiers = [];
@@ -97,7 +92,6 @@ class CollectsResolver
                 CollectType::Cache => $this->cache($options),
                 CollectType::Glows => $this->glows($options),
                 CollectType::LogsWithErrors => $this->logsWithErrors($options),
-                CollectType::Solutions => $this->solutions($options),
                 CollectType::Dumps => $this->dumps($options),
                 CollectType::Queries => $this->queries($options),
                 CollectType::Transactions => $this->transactions($options),
@@ -232,12 +226,6 @@ class CollectsResolver
             'max_items_with_errors',
             'minimal_level',
         ]));
-    }
-
-    protected function solutions(array $solutions): void
-    {
-        $this->addMiddleware($solutions['middleware'] ?? AddSolutions::class);
-        $this->solutionProviders = $solutions['solution_providers'] ?? [];
     }
 
     protected function dumps(array $options): void
