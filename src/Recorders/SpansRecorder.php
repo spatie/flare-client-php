@@ -76,11 +76,11 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
             return null;
         }
 
-        $name = $name instanceof Closure ? $name() : $name;
-        $attributes = $attributes instanceof Closure ? $attributes() : $attributes;
-
-        if ($nameAndAttributes) {
+        if ($nameAndAttributes !== null) {
             ['name' => $name, 'attributes' => $attributes] = $nameAndAttributes();
+        } else {
+            $name = $name instanceof Closure ? $name() : $name;
+            $attributes = $attributes instanceof Closure ? $attributes() : $attributes;
         }
 
         // Order of operations is important here, do not inline!
