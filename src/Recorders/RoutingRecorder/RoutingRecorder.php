@@ -2,11 +2,18 @@
 
 namespace Spatie\FlareClient\Recorders\RoutingRecorder;
 
+use Spatie\FlareClient\AttributesProviders\PhpRouteAttributesProvider;
+use Spatie\FlareClient\Contracts\EntryPointHandlerProvider;
+use Spatie\FlareClient\Contracts\RouteAttributesProvider;
+use Spatie\FlareClient\EntryPoint\EntryPointResolver;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Recorders\SpansRecorder;
 use Spatie\FlareClient\Spans\Span;
+use Spatie\FlareClient\Support\BackTracer;
+use Spatie\FlareClient\Support\PatternMatcher;
 use Spatie\FlareClient\Support\TimeInterval;
+use Spatie\FlareClient\Tracer;
 
 class RoutingRecorder extends SpansRecorder
 {
@@ -20,9 +27,25 @@ class RoutingRecorder extends SpansRecorder
 
     protected bool $globalAfterMiddleware = false;
 
+    /** @var array<int, string> */
+    protected array $ignoredRoutes = [];
+
+    public function __construct(
+        Tracer $tracer,
+        BackTracer $backTracer,
+        protected EntryPointResolver $entryPointResolver,
+        array $config,
+    ) {
+        parent::__construct($tracer, $backTracer, $config);
+    }
+
     protected function configure(array $config): void
     {
-        $this->withTraces = true;
+        if (! array_key_exists('with_traces', $config)) {
+            $this->withTraces = true;
+        }
+
+        $this->ignoredRoutes = $config['ignored_routes'] ?? [];
     }
 
     public static function type(): string|RecorderType
@@ -106,8 +129,65 @@ class RoutingRecorder extends SpansRecorder
     }
 
     public function recordRoutingEnd(
+        RouteAttributesProvider $routeAttributesProvider,
         array $attributes = [],
-        ?int $time = null
+        ?int $time = null,
+    ): ?Span {
+        if ($this->routing === false) {
+            return null;
+        }
+
+        $this->routing = false;
+
+        $routeName = $routeAttributesProvider->route();
+
+        $entryPoint = $this->entryPointResolver->get();
+
+        if (! $entryPoint->handlerResolved) {
+            $entryPointProvider = $routeAttributesProvider instanceof EntryPointHandlerProvider
+                ? $routeAttributesProvider
+                : null;
+
+            $entryPoint->setHandler(
+                handlerIdentifier: $entryPointProvider?->entryPointHandlerIdentifier() ?? 'unknown',
+                handlerName: $entryPointProvider?->entryPointHandlerName(),
+                handlerType: $entryPointProvider?->entryPointHandlerType() ?? 'php_request',
+            );
+        }
+
+        $this->tracer->reevaluateSampling();
+
+        if ($routeName !== null && $this->shouldIgnoreRoute($routeName)) {
+            $this->tracer->unsample();
+        }
+
+        if ($routeName !== null && ! array_key_exists('http.route', $attributes)) {
+            $attributes['http.route'] = $routeName;
+        }
+
+        return $this->endSpan(
+            time: $time,
+            additionalAttributes: $attributes,
+        );
+    }
+
+    public function recordRoutingEndFromDefined(
+        string $route,
+        ?string $method = null,
+        ?string $handlerName = null,
+        array $attributes = [],
+        ?int $time = null,
+    ): ?Span {
+        return $this->recordRoutingEnd(
+            new PhpRouteAttributesProvider($route, $method, $handlerName),
+            $attributes,
+            $time,
+        );
+    }
+
+    protected function recordForcedRoutingEnd(
+        array $attributes = [],
+        ?int $time = null,
     ): ?Span {
         if ($this->routing === false) {
             return null;
@@ -129,11 +209,11 @@ class RoutingRecorder extends SpansRecorder
     ): ?Span {
         [$start, $end] = TimeInterval::resolve($this->tracer->time, $start, $end, $duration);
 
-        if ($this->recordRoutingStart($attributes, time: $start)) {
-            return $this->recordRoutingEnd(time: $end);
+        if (! $this->recordRoutingStart($attributes, time: $start)) {
+            return null;
         }
 
-        return null;
+        return $this->recordForcedRoutingEnd(time: $end);
     }
 
     public function recordBeforeMiddlewareStart(
@@ -149,7 +229,7 @@ class RoutingRecorder extends SpansRecorder
         }
 
         if ($this->routing) {
-            $this->recordRoutingEnd(time: $time);
+            $this->recordForcedRoutingEnd(time: $time);
         }
 
         $this->beforeMiddleware = true;
@@ -315,5 +395,16 @@ class RoutingRecorder extends SpansRecorder
         }
 
         return null;
+    }
+
+    protected function shouldIgnoreRoute(string $route): bool
+    {
+        return PatternMatcher::matchesAny($route, [...$this->ignoredRoutes, ...$this->defaultIgnoredRoutes()]);
+    }
+
+    /** @return array<int, string> */
+    protected function defaultIgnoredRoutes(): array
+    {
+        return [];
     }
 }

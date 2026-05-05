@@ -3,11 +3,14 @@
 namespace Spatie\FlareClient\Tests;
 
 use Exception;
+use Spatie\FlareClient\EntryPoint\EntryPoint;
 use Spatie\FlareClient\Enums\AddSpanResult;
+use Spatie\FlareClient\Enums\EntryPointType;
 use Spatie\FlareClient\Enums\SpanStatusCode;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Sampling\NeverSampler;
+use Spatie\FlareClient\Sampling\SamplingRule;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Tests\Shared\FakeApi;
@@ -459,6 +462,70 @@ it('can temporarily pause a trace sampling', function () {
         ->expectParentId($nestedSpan);
 });
 
+it('treats pauseSampling and resumeSampling as idempotent toggles on a single bool', function () {
+    $tracer = setupFlare(alwaysSampleTraces: true)->tracer;
+
+    $tracer->startTrace();
+
+    expect($tracer->isSampling())->toBeTrue();
+    expect($tracer->isSamplingPaused())->toBeFalse();
+
+    $tracer->pauseSampling();
+
+    expect($tracer->isSampling())->toBeFalse();
+    expect($tracer->isSamplingPaused())->toBeTrue();
+
+    $tracer->pauseSampling();
+
+    expect($tracer->isSampling())->toBeFalse();
+    expect($tracer->isSamplingPaused())->toBeTrue();
+
+    $tracer->resumeSampling();
+
+    expect($tracer->isSampling())->toBeTrue();
+    expect($tracer->isSamplingPaused())->toBeFalse();
+
+    $tracer->resumeSampling();
+
+    expect($tracer->isSampling())->toBeTrue();
+    expect($tracer->isSamplingPaused())->toBeFalse();
+});
+
+it('clears paused state on unsample so a stray resume cannot revive an unsampled trace', function () {
+    $tracer = setupFlare(alwaysSampleTraces: true)->tracer;
+
+    $tracer->startTrace();
+    $tracer->pauseSampling();
+
+    expect($tracer->isSamplingPaused())->toBeTrue();
+
+    $tracer->unsample();
+
+    expect($tracer->isSampling())->toBeFalse();
+    expect($tracer->isSamplingPaused())->toBeFalse();
+
+    $tracer->resumeSampling();
+
+    expect($tracer->isSampling())->toBeFalse();
+    expect($tracer->isSamplingPaused())->toBeFalse();
+});
+
+it('does not enter pause tracking when sampling is already off', function () {
+    $tracer = setupFlare(alwaysSampleTraces: false)->tracer;
+
+    expect($tracer->isSampling())->toBeFalse();
+
+    $tracer->pauseSampling();
+
+    expect($tracer->isSamplingPaused())->toBeFalse();
+    expect($tracer->isSampling())->toBeFalse();
+
+    $tracer->resumeSampling();
+
+    expect($tracer->isSamplingPaused())->toBeFalse();
+    expect($tracer->isSampling())->toBeFalse();
+});
+
 it('returns AddSpanResult::LimitReached from addSpan when span limit is reached', function () {
     $tracer = setupFlare(
         fn (FlareConfig $config) => $config
@@ -531,4 +598,135 @@ it('still executes the callback in span() when limit is reached', function () {
     expect($executed)->toBeTrue();
     expect($result)->toBe('result');
     expect($tracer->currentTrace())->toHaveCount(1);
+});
+
+it('keeps sampling when using a non-deferrable sampler and reevaluation is triggered', function () {
+    $flare = setupFlare(alwaysSampleTraces: true);
+
+    $flare->tracer->startTrace();
+
+    expect($flare->tracer->isSampling())->toBeTrue();
+
+    $flare->tracer->reevaluateSampling();
+
+    expect($flare->tracer->isSampling())->toBeTrue();
+});
+
+it('drops an optimistically sampled trace when the route resolves to an ignored pattern', function () {
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config->sampleTracesDynamic(
+            baseRate: 1.0,
+            rules: [SamplingRule::forRoute('/api/health', 0)],
+        ),
+        entryPoint: $entryPoint = new EntryPoint(EntryPointType::Web, 'https://example.com/api/health'),
+    );
+
+    $flare->tracer->startTrace();
+
+    expect($flare->tracer->isSampling())->toBeTrue();
+    expect($flare->tracer->sampler->isPending())->toBeTrue();
+
+    $flare->tracer->startSpan('Request Span');
+
+    $entryPoint->setHandler('GET /api/health', 'HealthController', 'php_request');
+
+    $flare->tracer->reevaluateSampling();
+
+    expect($flare->tracer->isSampling())->toBeFalse();
+    expect($flare->tracer->sampler->isPending())->toBeFalse();
+    expect($flare->tracer->currentTrace())->toHaveCount(0);
+});
+
+it('continues sampling when a deferred rule resolves to a matching rate', function () {
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config->sampleTracesDynamic(
+            baseRate: 0,
+            rules: [SamplingRule::forRoute('/admin/*', 1.0)],
+        ),
+        entryPoint: $entryPoint = new EntryPoint(EntryPointType::Web, 'https://example.com/admin/users'),
+    );
+
+    $flare->tracer->startTrace();
+
+    expect($flare->tracer->isSampling())->toBeTrue();
+    expect($flare->tracer->sampler->isPending())->toBeTrue();
+
+    $flare->tracer->startSpan('Request Span');
+
+    $entryPoint->setHandler('GET /admin/users', 'AdminController', 'php_request');
+
+    $flare->tracer->reevaluateSampling();
+
+    expect($flare->tracer->isSampling())->toBeTrue();
+    expect($flare->tracer->sampler->isPending())->toBeFalse();
+    expect($flare->tracer->currentTrace())->toHaveCount(1);
+});
+
+it('clears pending sampling state when the trace ends', function () {
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config->sampleTracesDynamic(
+            baseRate: 0,
+            rules: [SamplingRule::forRoute('/admin/*', 1.0)],
+        ),
+        entryPoint: $entryPoint = new EntryPoint(EntryPointType::Web, 'https://example.com/admin/users'),
+    );
+
+    $flare->tracer->startTrace();
+
+    expect($flare->tracer->sampler->isPending())->toBeTrue();
+
+    $entryPoint->setHandler('GET /admin/users', 'AdminController', 'php_request');
+    $flare->tracer->reevaluateSampling();
+
+    $flare->tracer->endTrace();
+
+    expect($flare->tracer->sampler->isPending())->toBeFalse();
+});
+
+it('force-closes all open spans up the parent chain via gracefullyEndSpans', function () {
+    $tracer = setupFlare(alwaysSampleTraces: true)->tracer;
+
+    $tracer->startTrace();
+    $parent = $tracer->startSpan('Parent');
+    $child = $tracer->startSpan('Child');
+
+    expect($parent->end)->toBeNull();
+    expect($child->end)->toBeNull();
+
+    $tracer->gracefullyEndSpans(force: true);
+
+    expect($child->end)->not->toBeNull();
+    expect($parent->end)->not->toBeNull();
+});
+
+it('respects the gracefulSpanEnderClosure when force is false', function () {
+    $tracer = setupFlare(alwaysSampleTraces: true)->tracer;
+
+    invade($tracer)->gracefulSpanEnderClosure = fn (Span $span) => $span->name !== 'Should stay open';
+
+    $tracer->startTrace();
+    $closable = $tracer->startSpan('Closable');
+    $stayOpen = $tracer->startSpan('Should stay open');
+
+    $tracer->gracefullyEndSpans();
+
+    expect($stayOpen->end)->toBeNull();
+});
+
+it('clears pending sampling state when unsampled', function () {
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config->sampleTracesDynamic(
+            baseRate: 0,
+            rules: [SamplingRule::forRoute('/admin/*', 1.0)],
+        ),
+        entryPoint: new EntryPoint(EntryPointType::Web, 'https://example.com/admin/users'),
+    );
+
+    $flare->tracer->startTrace();
+
+    expect($flare->tracer->sampler->isPending())->toBeTrue();
+
+    $flare->tracer->unsample();
+
+    expect($flare->tracer->sampler->isPending())->toBeFalse();
 });

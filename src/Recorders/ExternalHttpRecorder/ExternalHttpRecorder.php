@@ -2,8 +2,6 @@
 
 namespace Spatie\FlareClient\Recorders\ExternalHttpRecorder;
 
-use Closure;
-use Psr\Container\ContainerInterface;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Recorders\SpansRecorder;
@@ -14,16 +12,6 @@ use Spatie\FlareClient\Tracer;
 
 class ExternalHttpRecorder extends SpansRecorder
 {
-    public static function register(ContainerInterface $container, array $config): Closure
-    {
-        return fn () => new self(
-            $container->get(Tracer::class),
-            $container->get(BackTracer::class),
-            $config,
-            $container->get(Redactor::class),
-        );
-    }
-
     public function __construct(
         Tracer $tracer,
         BackTracer $backTracer,

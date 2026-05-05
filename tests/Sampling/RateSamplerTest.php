@@ -1,31 +1,36 @@
 <?php
 
+use Spatie\FlareClient\EntryPoint\EntryPoint;
+use Spatie\FlareClient\Enums\EntryPointType;
 use Spatie\FlareClient\Sampling\RateSampler;
 
 it('never samples when rate is zero', function () {
     $sampler = new RateSampler(['rate' => 0]);
+    $entryPoint = new EntryPoint(EntryPointType::Web, 'http://localhost');
 
     for ($i = 0; $i < 10000; $i++) {
-        expect($sampler->shouldSample([]))->toBeFalse();
+        expect($sampler->shouldSample($entryPoint))->toBeFalse();
     }
 });
 
 it('always samples when rate is one', function () {
     $sampler = new RateSampler(['rate' => 1]);
+    $entryPoint = new EntryPoint(EntryPointType::Web, 'http://localhost');
 
     for ($i = 0; $i < 10000; $i++) {
-        expect($sampler->shouldSample([]))->toBeTrue();
+        expect($sampler->shouldSample($entryPoint))->toBeTrue();
     }
 });
 
 it('uses default sample rate of 10 percent', function () {
     $sampler = new RateSampler([]);
+    $entryPoint = new EntryPoint(EntryPointType::Web, 'http://localhost');
 
     $tries = 10000;
     $sampledCount = 0;
 
     for ($i = 0; $i < $tries; $i++) {
-        if ($sampler->shouldSample([])) {
+        if ($sampler->shouldSample($entryPoint)) {
             $sampledCount++;
         }
     }
@@ -38,12 +43,13 @@ it('uses default sample rate of 10 percent', function () {
 
 it('can manually define a sample rate', function () {
     $sampler = new RateSampler(['rate' => 0.3]);
+    $entryPoint = new EntryPoint(EntryPointType::Web, 'http://localhost');
 
     $tries = 10000;
     $sampledCount = 0;
 
     for ($i = 0; $i < $tries; $i++) {
-        if ($sampler->shouldSample([])) {
+        if ($sampler->shouldSample($entryPoint)) {
             $sampledCount++;
         }
     }

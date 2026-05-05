@@ -29,4 +29,12 @@ enum CollectType: string implements FlareCollectType
     case FlareMiddleware = 'flare_middleware';
     case ErrorsWithTraces = 'errors_with_traces';
     case LogsWithErrors = 'logs_with_errors';
+
+    public function resolvesEntryPoint(): bool
+    {
+        return match ($this) {
+            self::Requests, self::Commands, self::Jobs => true,
+            default => false,
+        };
+    }
 }

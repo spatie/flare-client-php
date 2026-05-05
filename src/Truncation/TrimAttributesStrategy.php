@@ -7,7 +7,9 @@ class TrimAttributesStrategy extends AbstractTruncationStrategy
     protected array $attributesToIgnore = [
         'flare.entry_point.type',
         'flare.entry_point.value',
-        'flare.entry_point.class',
+        'flare.entry_point.handler.identifier',
+        'flare.entry_point.handler.name',
+        'flare.entry_point.handler.type',
 
         'process.command_args',
 

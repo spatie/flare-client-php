@@ -3,7 +3,7 @@
 namespace Spatie\FlareClient\AttributesProviders;
 
 use RuntimeException;
-use Spatie\FlareClient\Enums\EntryPointType;
+use Spatie\FlareClient\Contracts\RequestAttributesProvider;
 use Spatie\FlareClient\Support\Redactor;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\InputBag;
@@ -12,89 +12,99 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Mime\Exception\InvalidArgumentException;
 use Throwable;
 
-class RequestAttributesProvider
+class SymfonyRequestAttributesProvider implements RequestAttributesProvider
 {
+    protected Request $request;
+
     public function __construct(
         protected Redactor $redactor,
-        protected UserAttributesProvider $userAttributesProvider
+        ?Request $request = null,
+        protected bool $includeContents = true,
     ) {
+        $this->request = $request ?? Request::createFromGlobals();
     }
 
-    public function toArray(
-        Request $request,
-        bool $includeContents = true,
-    ): array {
-        $user = $this->getUser($request);
-
-        $cookies = $this->redactor->shouldCensorCookies() ? [] : $this->getCookies($request);
-        $session = $this->redactor->shouldCensorSession() ? [] : $this->getSession($request);
+    public function toArray(): array
+    {
+        $cookies = $this->redactor->shouldCensorCookies() ? [] : $this->getCookies();
+        $session = $this->redactor->shouldCensorSession() ? [] : $this->getSession();
 
         return [
-            ...$this->getRequest($request, $includeContents),
-            ...$this->getHeaders($request),
+            ...$this->getRequest(),
+            ...$this->getHeaders(),
             ...$cookies,
             ...$session,
-            ...$user ? $this->userAttributesProvider->toArray($user) : [],
         ];
     }
 
-    protected function getRequest(Request $request, bool $includeContents): array
+    public function url(): string
+    {
+        return $this->request->getUri();
+    }
+
+    public function path(): ?string
+    {
+        return $this->request->getPathInfo();
+    }
+
+    public function method(): string
+    {
+        return strtoupper($this->request->getMethod());
+    }
+
+    protected function getRequest(): array
     {
         $payload = [
-            'url.full' => $request->getUri(),
-            'url.scheme' => $request->getScheme(),
-            'url.path' => $request->getPathInfo(),
-            'url.query' => http_build_query($request->query->all()),
+            'url.full' => $this->request->getUri(),
+            'url.scheme' => $this->request->getScheme(),
+            'url.path' => $this->request->getPathInfo(),
+            'url.query' => http_build_query($this->request->query->all()),
 
-            'flare.entry_point.type' => EntryPointType::Web->value,
-            'flare.entry_point.value' => $request->getUri(),
-            'flare.entry_point.class' => null,
+            'server.address' => empty($this->request->server->get('SERVER_NAME'))
+                ? $this->request->server->get('SERVER_ADDR')
+                : $this->request->server->get('SERVER_NAME'),
+            'server.port' => $this->request->server->get('SERVER_PORT'),
 
-            'server.address' => empty($request->server->get('SERVER_NAME'))
-                ? $request->server->get('SERVER_ADDR')
-                : $request->server->get('SERVER_NAME'),
-            'server.port' => $request->server->get('SERVER_PORT'),
+            'user_agent.original' => $this->request->headers->get('User-Agent'),
 
-            'user_agent.original' => $request->headers->get('User-Agent'),
-
-            'http.request.method' => strtoupper($request->getMethod()),
-            'http.request.body.size' => strlen($request->getContent()),
+            'http.request.method' => strtoupper($this->request->getMethod()),
+            'http.request.body.size' => strlen($this->request->getContent()),
         ];
 
-        $files = $this->mapFiles($request->files->all());
+        $files = $this->mapFiles($this->request->files->all());
 
         if (! empty($files)) {
             $payload['http.request.files'] = $files;
         }
 
         if ($this->redactor->shouldCensorClientIps() === false) {
-            $payload['client.address'] = $request->getClientIp();
+            $payload['client.address'] = $this->request->getClientIp();
         }
 
         $body = $this->redactor->censorBody(
-            $this->getInputBag($request)->all() + $request->query->all()
+            $this->getInputBag()->all() + $this->request->query->all()
         );
 
-        if (! empty($body) && $includeContents) {
+        if (! empty($body) && $this->includeContents) {
             $payload['http.request.body.contents'] = $body;
         }
 
         return $payload;
     }
 
-    protected function getInputBag(Request $request): InputBag|ParameterBag
+    protected function getInputBag(): InputBag|ParameterBag
     {
-        $contentType = $request->headers->get('CONTENT_TYPE') ?? 'text/html';
+        $contentType = $this->request->headers->get('CONTENT_TYPE') ?? 'text/html';
 
         $isJson = str_contains($contentType, '/json') || str_contains($contentType, '+json');
 
         if ($isJson) {
-            return new InputBag((array) json_decode($request->getContent(), true));
+            return new InputBag((array) json_decode($this->request->getContent(), true));
         }
 
-        return in_array($request->getMethod(), ['GET', 'HEAD'])
-            ? $request->query
-            : $request->request;
+        return in_array($this->request->getMethod(), ['GET', 'HEAD'])
+            ? $this->request->query
+            : $this->request->request;
     }
 
     protected function mapFiles(array $files): array
@@ -128,10 +138,10 @@ class RequestAttributesProvider
         }, $files);
     }
 
-    protected function getSession(Request $request): array
+    protected function getSession(): array
     {
         try {
-            $session = $request->getSession();
+            $session = $this->request->getSession();
         } catch (Throwable $exception) {
             return [];
         }
@@ -151,9 +161,9 @@ class RequestAttributesProvider
         ];
     }
 
-    protected function getCookies(Request $request): array
+    protected function getCookies(): array
     {
-        $cookies = $request->cookies->all();
+        $cookies = $this->request->cookies->all();
 
         if (empty($cookies)) {
             return [];
@@ -164,9 +174,9 @@ class RequestAttributesProvider
         ];
     }
 
-    protected function getHeaders(Request $request): array
+    protected function getHeaders(): array
     {
-        $headers = $request->headers->all();
+        $headers = $this->request->headers->all();
 
         foreach ($headers as $name => $value) {
             $headers[$name] = implode($value);
@@ -179,10 +189,5 @@ class RequestAttributesProvider
         return [
             'http.request.headers' => $this->redactor->censorHeaders($headers),
         ];
-    }
-
-    protected function getUser(Request $request): mixed
-    {
-        return null;
     }
 }

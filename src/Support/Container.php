@@ -42,12 +42,13 @@ class Container implements ContainerInterface
      * @template T
      *
      * @param class-string<T> $class
-     * @param null|Closure():T|class-string<T> $builder
+     * @param null|Closure():T|class-string<T>|array<string, mixed> $builder
      */
-    public function singleton(string $class, null|string|Closure $builder = null): void
+    public function singleton(string $class, null|string|Closure|array $builder = null): void
     {
         $this->singletons[$class] = match (true) {
             $builder === null => fn () => new $class(),
+            is_array($builder) => fn () => $this->tryAutowiringDefinition($class, $builder),
             is_string($builder) => fn () => $this->tryAutowiringDefinition($builder),
             default => $builder,
         };

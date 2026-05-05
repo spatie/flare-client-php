@@ -2,6 +2,8 @@
 
 namespace Spatie\FlareClient\Tests\Shared\Recorders\RoutingRecorder;
 
+use Spatie\FlareClient\EntryPoint\EntryPoint;
+use Spatie\FlareClient\Enums\EntryPointType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Tests\Shared\FakeApi;
@@ -19,7 +21,7 @@ test('it can run through a routing lifecycle', function () {
     $flare->routing()->recordGlobalBeforeMiddlewareStart(time: 10);
     $flare->routing()->recordGlobalBeforeMiddlewareEnd(time: 20);
     $flare->routing()->recordRoutingStart(time: 30);
-    $flare->routing()->recordRoutingEnd(time: 40);
+    $flare->routing()->recordRoutingEndFromDefined('/test', time: 40);
     $flare->routing()->recordBeforeMiddlewareStart(time: 50);
     $flare->routing()->recordBeforeMiddlewareEnd(time: 60);
     $flare->routing()->recordAfterMiddlewareStart(time: 70);
@@ -181,4 +183,38 @@ it('will automatically close other fases of the routing', function () {
         ->expectStart(50)
         ->expectEnd(60)
         ->expectType(SpanType::GlobalAfterMiddleware);
+});
+
+it('does not unsample when no ignored route matches', function () {
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config->collectRequests(ignoredRoutes: ['/api/health']),
+        alwaysSampleTraces: true,
+        entryPoint: new EntryPoint(EntryPointType::Web, 'https://example.com/api/users'),
+    );
+
+    $flare->tracer->startTrace();
+
+    $flare->routing()->recordRoutingStart();
+    $flare->routing()->recordRoutingEndFromDefined('/api/users');
+
+    expect($flare->tracer->isSampling())->toBeTrue();
+});
+
+it('unsamples a trace when an ignored route is matched', function () {
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config->collectRequests(ignoredRoutes: ['/api/health']),
+        alwaysSampleTraces: true,
+        entryPoint: new EntryPoint(EntryPointType::Web, 'https://example.com/api/health'),
+    );
+
+    $flare->tracer->startTrace();
+    $flare->tracer->startSpan('Some span');
+
+    expect($flare->tracer->isSampling())->toBeTrue();
+
+    $flare->routing()->recordRoutingStart();
+    $flare->routing()->recordRoutingEndFromDefined('/api/health');
+
+    expect($flare->tracer->isSampling())->toBeFalse();
+    expect($flare->tracer->currentTrace())->toBeEmpty();
 });

@@ -15,11 +15,6 @@ use Spatie\Backtrace\Arguments\Reducers\DateTimeZoneArgumentReducer;
 use Spatie\Backtrace\Arguments\Reducers\EnumArgumentReducer;
 use Spatie\Backtrace\Arguments\Reducers\StdClassArgumentReducer;
 use Spatie\Backtrace\Arguments\Reducers\SymphonyRequestArgumentReducer;
-use Spatie\FlareClient\AttributesProviders\ConsoleAttributesProvider;
-use Spatie\FlareClient\AttributesProviders\EmptyUserAttributesProvider;
-use Spatie\FlareClient\AttributesProviders\RequestAttributesProvider;
-use Spatie\FlareClient\AttributesProviders\ResponseAttributesProvider;
-use Spatie\FlareClient\AttributesProviders\UserAttributesProvider;
 use Spatie\FlareClient\Contracts\FlareCollectType;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\CollectType;
@@ -35,15 +30,18 @@ use Spatie\FlareClient\Recorders\DumpRecorder\DumpRecorder;
 use Spatie\FlareClient\Recorders\ExternalHttpRecorder\ExternalHttpRecorder;
 use Spatie\FlareClient\Recorders\FilesystemRecorder\FilesystemRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
+use Spatie\FlareClient\Recorders\JobRecorder\JobRecorder;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
 use Spatie\FlareClient\Recorders\RedisCommandRecorder\RedisCommandRecorder;
 use Spatie\FlareClient\Recorders\TransactionRecorder\TransactionRecorder;
 use Spatie\FlareClient\Recorders\ViewRecorder\ViewRecorder;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Sampling\AlwaysSampler;
+use Spatie\FlareClient\Sampling\DynamicSampler;
 use Spatie\FlareClient\Sampling\NeverSampler;
 use Spatie\FlareClient\Sampling\RateSampler;
 use Spatie\FlareClient\Sampling\Sampler;
+use Spatie\FlareClient\Sampling\SamplingRule;
 use Spatie\FlareClient\Scopes\Scope;
 use Spatie\FlareClient\Senders\CurlSender;
 use Spatie\FlareClient\Senders\Sender;
@@ -67,10 +65,6 @@ class FlareConfig
      * @param Closure(SpanEvent):(void|SpanEvent|null)|null $configureSpanEventsCallable
      * @param array<string> $censorHeaders
      * @param array<string> $censorBodyFields
-     * @param class-string<UserAttributesProvider> $userAttributesProvider
-     * @param class-string<RequestAttributesProvider> $requestAttributesProvider
-     * @param class-string<ResponseAttributesProvider> $responseAttributesProvider
-     * @param class-string<ConsoleAttributesProvider> $consoleAttributesProvider
      * @param array<class-string, OverriddenGrouping> $overriddenGroupings
      * @param class-string<CollectsResolver> $collectsResolver
      */
@@ -117,10 +111,6 @@ class FlareConfig
         public array $senderConfig = [],
         public string $sampler = RateSampler::class,
         public array $samplerConfig = [],
-        public string $userAttributesProvider = EmptyUserAttributesProvider::class,
-        public string $requestAttributesProvider = RequestAttributesProvider::class,
-        public string $responseAttributesProvider = ResponseAttributesProvider::class,
-        public string $consoleAttributesProvider = ConsoleAttributesProvider::class,
         public string $exporter = OpenTelemetryJsonExporter::class,
         public string $collectsResolver = CollectsResolver::class,
         public string $ids = Ids::class,
@@ -218,9 +208,23 @@ class FlareConfig
         ];
     }
 
-    public function collectRequests(array $extra = []): static
-    {
-        return $this->addCollect(CollectType::Requests, $extra);
+    /**
+     * @param array<int, string> $ignoredRoutes
+     * @param array<int, string> $ignoredUrls
+     * @param array<int, string> $ignoredPaths
+     */
+    public function collectRequests(
+        array $ignoredRoutes = [],
+        array $ignoredUrls = [],
+        array $ignoredPaths = [],
+        array $extra = [],
+    ): static {
+        return $this->addCollect(CollectType::Requests, [
+            'ignored_routes' => $ignoredRoutes,
+            'ignored_urls' => $ignoredUrls,
+            'ignored_paths' => $ignoredPaths,
+            ...$extra,
+        ]);
     }
 
     public function ignoreRequests(): static
@@ -228,16 +232,24 @@ class FlareConfig
         return $this->ignoreCollect(CollectType::Requests);
     }
 
+    /**
+     * @param array<int, string> $ignoredCommands
+     * @param array<int, class-string> $ignoredClasses
+     */
     public function collectCommands(
         bool $withTraces = CommandRecorder::DEFAULT_WITH_TRACES,
         bool $withErrors = CommandRecorder::DEFAULT_WITH_ERRORS,
         ?int $maxItemsWithErrors = CommandRecorder::DEFAULT_MAX_ITEMS_WITH_ERRORS,
+        array $ignoredCommands = [],
+        array $ignoredClasses = [],
         array $extra = [],
     ): static {
         return $this->addCollect(CollectType::Commands, [
             'with_traces' => $withTraces,
             'with_errors' => $withErrors,
             'max_items_with_errors' => $maxItemsWithErrors,
+            'ignored_commands' => $ignoredCommands,
+            'ignored_classes' => $ignoredClasses,
             ...$extra,
         ]);
     }
@@ -245,6 +257,30 @@ class FlareConfig
     public function ignoreCommands(): static
     {
         return $this->ignoreCollect(CollectType::Commands);
+    }
+
+    /**
+     * @param array<int, class-string> $ignoredClasses
+     */
+    public function collectJobs(
+        bool $withTraces = JobRecorder::DEFAULT_WITH_TRACES,
+        bool $withErrors = JobRecorder::DEFAULT_WITH_ERRORS,
+        ?int $maxItemsWithErrors = JobRecorder::DEFAULT_MAX_ITEMS_WITH_ERRORS,
+        array $ignoredClasses = [],
+        array $extra = [],
+    ): static {
+        return $this->addCollect(CollectType::Jobs, [
+            'with_traces' => $withTraces,
+            'with_errors' => $withErrors,
+            'max_items_with_errors' => $maxItemsWithErrors,
+            'ignored_classes' => $ignoredClasses,
+            ...$extra,
+        ]);
+    }
+
+    public function ignoreJobs(): static
+    {
+        return $this->ignoreCollect(CollectType::Jobs);
     }
 
     public function collectGitInfo(
@@ -544,7 +580,7 @@ class FlareConfig
      */
     public function applicationName(string|Closure $name): static
     {
-        $this->applicationName = is_callable($name) ? $name() : $name;
+        $this->applicationName = $name instanceof Closure ? $name() : $name;
 
         return $this;
     }
@@ -724,6 +760,15 @@ class FlareConfig
         return $this;
     }
 
+    /** @param array<SamplingRule> $rules */
+    public function sampleTracesDynamic(float $baseRate, array $rules = []): static
+    {
+        $this->sampler = DynamicSampler::class;
+        $this->samplerConfig = ['base_rate' => $baseRate, 'rules' => $rules];
+
+        return $this;
+    }
+
     /**
      * @param class-string<Sender> $senderClass
      */
@@ -761,39 +806,6 @@ class FlareConfig
             'max_span_events_per_span' => $maxSpanEventsPerSpan,
             'max_attributes_per_span_event' => $maxAttributesPerSpanEvent,
         ];
-
-        return $this;
-    }
-
-    /**
-     * @param class-string<UserAttributesProvider> $userAttributesProvider
-     */
-    public function userAttributesProvider(
-        string $userAttributesProvider
-    ): static {
-        $this->userAttributesProvider = $userAttributesProvider;
-
-        return $this;
-    }
-
-    /**
-     * @param class-string<RequestAttributesProvider> $requestAttributesProvider
-     */
-    public function requestAttributesProvider(
-        string $requestAttributesProvider
-    ): static {
-        $this->requestAttributesProvider = $requestAttributesProvider;
-
-        return $this;
-    }
-
-    /**
-     * @param class-string<ConsoleAttributesProvider> $consoleAttributesProvider
-     */
-    public function consoleAttributesProvider(
-        string $consoleAttributesProvider
-    ): static {
-        $this->consoleAttributesProvider = $consoleAttributesProvider;
 
         return $this;
     }

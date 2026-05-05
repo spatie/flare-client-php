@@ -2,6 +2,8 @@
 
 namespace Spatie\FlareClient\Sampling;
 
+use Spatie\FlareClient\EntryPoint\EntryPoint;
+
 class RateSampler implements Sampler
 {
     protected float $rate;
@@ -18,16 +20,26 @@ class RateSampler implements Sampler
         $this->rate = $rate;
     }
 
-    public function shouldSample(array $context): bool
+    public function shouldSample(EntryPoint $entryPoint): bool
     {
-        if ($this->rate === 0.0) {
+        return $this->decide($this->rate);
+    }
+
+    protected function decide(float $rate): bool
+    {
+        if ($rate <= 0.0) {
             return false;
         }
 
-        if ($this->rate === 1.0) {
+        if ($rate >= 1.0) {
             return true;
         }
 
-        return (mt_rand() / mt_getrandmax()) < $this->rate;
+        return $this->random() < $rate;
+    }
+
+    protected function random(): float
+    {
+        return mt_rand() / mt_getrandmax();
     }
 }

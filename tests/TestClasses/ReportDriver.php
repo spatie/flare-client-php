@@ -91,6 +91,10 @@ class ReportDriver extends YamlDriver
         $data['attributes']['process.owner'] = 'fake-process-owner';
         $data['attributes']['flare.language.version'] = '8.3.1';
 
+        if (isset($data['attributes']['flare.entry_point.value'])) {
+            $data['attributes']['flare.entry_point.value'] = 'vendor/bin/pest';
+        }
+
         return $data;
     }
 }

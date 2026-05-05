@@ -1,5 +1,7 @@
 <?php
 
+use Spatie\FlareClient\EntryPoint\EntryPoint;
+use Spatie\FlareClient\EntryPoint\EntryPointResolver;
 use Spatie\FlareClient\Flare;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\FlareProvider;
@@ -9,6 +11,7 @@ use Spatie\FlareClient\Tests\Shared\FakeIds;
 use Spatie\FlareClient\Tests\Shared\FakeMemory;
 use Spatie\FlareClient\Tests\Shared\FakeSender;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
+use Spatie\FlareClient\Tests\Shared\Samplers\FakeSampler;
 
 uses()->beforeEach(function () {
     Container::instance()->reset();
@@ -17,6 +20,7 @@ uses()->beforeEach(function () {
     FakeTime::reset();
     FakeIds::reset();
     FakeMemory::reset();
+    FakeSampler::reset();
 })->in(__DIR__);
 
 function makePathsRelative(string $text): string
@@ -34,6 +38,7 @@ function setupFlare(
     bool $isUsingSubtasks = false,
     bool $useFakeApi = true,
     bool $disableApiQueue = false,
+    ?EntryPoint $entryPoint = null,
 ): Flare {
     $config = new FlareConfig(
         apiToken: $withoutApiKey ? null : 'fake-api-key',
@@ -76,6 +81,10 @@ function setupFlare(
 
     $provider->register();
     $provider->boot();
+
+    if ($entryPoint !== null) {
+        $container->get(EntryPointResolver::class)->set($entryPoint);
+    }
 
     return test()->flare = $container->get(Flare::class);
 }

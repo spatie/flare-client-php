@@ -12,7 +12,9 @@ use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
 use Spatie\FlareClient\Recorders\ExternalHttpRecorder\ExternalHttpRecorder;
 use Spatie\FlareClient\Recorders\FilesystemRecorder\FilesystemRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
+use Spatie\FlareClient\Recorders\JobRecorder\JobRecorder;
 use Spatie\FlareClient\Recorders\QueryRecorder\QueryRecorder;
+use Spatie\FlareClient\Recorders\QueueRecorder\QueueRecorder;
 use Spatie\FlareClient\Recorders\RedisCommandRecorder\RedisCommandRecorder;
 use Spatie\FlareClient\Recorders\RequestRecorder\RequestRecorder;
 use Spatie\FlareClient\Recorders\ResponseRecorder\ResponseRecorder;
@@ -32,15 +34,14 @@ use Throwable;
 
 class Flare
 {
-    // TODO: agent
-    // TODO: check current GH PR's and issues if we need to make changes
     // TODO: quick tests on Vapor
-    // TODO: add ability to ignore certain commands and requests like we do with jobs
-    // TODO: dynamic sampling based upon context would be cool
-    // TODO: wp-admin.php calls
     // TODO: check the tester for handling errors + try to move some parts of the laravel command to the main repo
-    // TODO: reduce logging resource payload
-    // TODO: update the data collection docs on how to interact with each recorder individually
+    // TODO: solidify trace pausing
+    // https://app.bugsnag.com/spatie/flareapp-dot-io/errors/69ddf4881ff884595fecd67e?filters[error.status]=open&filters[event.since]=1d
+
+    // TODO next week:
+    // - Finalize Laravel package changes: check all recorders and attribute providers + middleware, especially request then TESTINg TESTIN TESTING
+    // In de middleware doen we rare dingen, idealiter doen we ook de gehele resolve van attributes op het einde van't request zodat onze dynamic sampling snel kan draaien
 
     // TODO: test this on vapor:
     // 1) Create a job with error
@@ -197,6 +198,16 @@ class Flare
         return $this->recorders->getRecorder(RecorderType::Request->value);
     }
 
+    public function job(): JobRecorder|null
+    {
+        return $this->recorders->getRecorder(RecorderType::Job->value);
+    }
+
+    public function queue(): QueueRecorder|null
+    {
+        return $this->recorders->getRecorder(RecorderType::Queue->value);
+    }
+
     public function response(): ResponseRecorder|null
     {
         return $this->recorders->getRecorder(RecorderType::Response->value);
@@ -232,7 +243,7 @@ class Flare
 
     public function withApplicationName(string|Closure $name): self
     {
-        $this->resource->serviceName(is_callable($name) ? $name() : $name);
+        $this->resource->serviceName($name instanceof Closure ? $name() : $name);
 
         return $this;
     }

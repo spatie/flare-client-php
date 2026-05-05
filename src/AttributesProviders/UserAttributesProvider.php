@@ -2,39 +2,46 @@
 
 namespace Spatie\FlareClient\AttributesProviders;
 
-abstract class UserAttributesProvider
+use Spatie\FlareClient\Contracts\AttributesProvider;
+
+abstract class UserAttributesProvider implements AttributesProvider
 {
-    public function id(mixed $user): string|int|null
+    public function __construct(
+        protected mixed $user,
+    ) {
+    }
+
+    public function id(): string|int|null
     {
         return null;
     }
 
-    public function fullName(mixed $user): string|null
+    public function fullName(): ?string
     {
         return null;
     }
 
-    public function email(mixed $user): string|null
+    public function email(): ?string
     {
         return null;
     }
 
-    public function attributes(mixed $user): array
+    public function attributes(): array
     {
         return [];
     }
 
-    public function toArray(mixed $user): array
+    public function toArray(): array
     {
-        if ($user === null) {
+        if ($this->user === null) {
             return [];
         }
 
         return array_filter([
-            'user.id' => $this->id($user),
-            'user.full_name' => $this->fullName($user),
-            'user.email' => $this->email($user),
-            'user.attributes' => $this->attributes($user),
+            'user.id' => $this->id(),
+            'user.full_name' => $this->fullName(),
+            'user.email' => $this->email(),
+            'user.attributes' => $this->attributes(),
         ]);
     }
 }

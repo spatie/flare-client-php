@@ -5,11 +5,13 @@ namespace Spatie\FlareClient;
 use Closure;
 use Exception;
 use Spatie\FlareClient\Contracts\FlareSpanType;
+use Spatie\FlareClient\EntryPoint\EntryPointResolver;
 use Spatie\FlareClient\Enums\AddSpanResult;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanStatusCode;
 use Spatie\FlareClient\Memory\Memory;
 use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
+use Spatie\FlareClient\Sampling\DeferrableSampler;
 use Spatie\FlareClient\Sampling\RateSampler;
 use Spatie\FlareClient\Sampling\Sampler;
 use Spatie\FlareClient\Spans\Span;
@@ -53,11 +55,12 @@ class Tracer
         public readonly Ids $ids,
         public readonly Memory $memory,
         protected Recorders $recorders,
+        protected readonly EntryPointResolver $entryPointResolver,
         public readonly Sampler $sampler = new RateSampler([]),
         public ?Closure $configureSpansCallable = null,
         public ?Closure $configureSpanEventsCallable = null,
         public bool $sampling = false,
-        public bool $pausedSampling = false,
+        protected bool $paused = false,
         public readonly bool $disabled = false,
         protected Closure|null $gracefulSpanEnderClosure = null,
     ) {
@@ -77,7 +80,6 @@ class Tracer
         ?string $traceId = null,
         ?string $spanId = null,
         ?bool $sample = null,
-        array $samplerContext = [],
         ?string $traceParent = null
     ): bool {
         if ($this->disabled === true) {
@@ -105,7 +107,7 @@ class Tracer
             throw new Exception("If one of traceId, spanId or sample is provided, all three must be provided.");
         }
 
-        return $this->sampling = $this->sampler->shouldSample($samplerContext);
+        return $this->sampling = $this->sampler->shouldSample($this->entryPointResolver->get());
     }
 
     protected function startFromTraceparent(
@@ -148,6 +150,10 @@ class Tracer
 
     public function endTrace(): void
     {
+        if ($this->sampler instanceof DeferrableSampler) {
+            $this->sampler->reset();
+        }
+
         if ($this->sampling === false) {
             return;
         }
@@ -173,8 +179,31 @@ class Tracer
         $this->spans = [];
     }
 
+    public function reevaluateSampling(): void
+    {
+        if (! $this->sampler instanceof DeferrableSampler || ! $this->sampler->isPending()) {
+            return;
+        }
+
+        $decision = $this->sampler->reevaluate($this->entryPointResolver->get());
+
+        if ($decision === false) {
+            $this->unsample();
+
+            return;
+        }
+
+        $this->sampling = true;
+    }
+
     public function unsample(): void
     {
+        if ($this->sampler instanceof DeferrableSampler) {
+            $this->sampler->reset();
+        }
+
+        $this->paused = false;
+
         if ($this->sampling === false) {
             return;
         }
@@ -191,22 +220,27 @@ class Tracer
         }
 
         $this->sampling = false;
-        $this->pausedSampling = true;
+        $this->paused = true;
     }
 
     public function resumeSampling(): void
     {
-        if ($this->pausedSampling === false) {
+        if ($this->paused === false) {
             return;
         }
 
+        $this->paused = false;
         $this->sampling = true;
-        $this->pausedSampling = false;
     }
 
     public function isSampling(): bool
     {
         return $this->sampling;
+    }
+
+    public function isSamplingPaused(): bool
+    {
+        return $this->paused;
     }
 
     public function currentTraceId(): string

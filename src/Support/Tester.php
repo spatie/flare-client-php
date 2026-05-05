@@ -5,6 +5,7 @@ namespace Spatie\FlareClient\Support;
 use Exception;
 use Monolog\Level;
 use Spatie\FlareClient\Api;
+use Spatie\FlareClient\EntryPoint\EntryPointResolver;
 use Spatie\FlareClient\Enums\FlareEntityType;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Enums\SpanType;
@@ -82,7 +83,9 @@ class Tester
                 'flare.span_type' => SpanType::Request,
                 'http.route' => 'test-flare-integration',
                 'http.request.method' => 'GET',
-                'flare.entry_point.class' => self::class,
+                'flare.entry_point.handler.identifier' => 'GET /test-flare-integration',
+                'flare.entry_point.handler.name' => self::class,
+                'flare.entry_point.handler.type' => 'php_class',
             ],
         );
 
@@ -172,6 +175,7 @@ class Tester
             ids: $this->ids,
             memory: $this->memory,
             recorders: new Recorders([]),
+            entryPointResolver: new EntryPointResolver(),
             sampler: new AlwaysSampler(),
         );
     }
@@ -183,6 +187,7 @@ class Tester
             time: $this->time,
             tracer: $this->getTestTracer(),
             recorders: new Recorders([]),
+            entryPointResolver: new EntryPointResolver(),
             disabled: false,
             minimalLogLevel: null,
         );

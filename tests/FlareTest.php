@@ -145,13 +145,17 @@ it('can censor request data', function () {
 
     $_SERVER['REQUEST_METHOD'] = 'POST';
 
-    reportException();
+    try {
+        reportException();
 
-    FakeApi::lastReport()
-        ->expectAttribute('http.request.body.contents', [
-            'user' => '<CENSORED:string>',
-            'password' => '<CENSORED:string>',
-        ]);
+        FakeApi::lastReport()
+            ->expectAttribute('http.request.body.contents', [
+                'user' => '<CENSORED:string>',
+                'password' => '<CENSORED:string>',
+            ]);
+    } finally {
+        unset($_ENV['FLARE_FAKE_WEB_REQUEST'], $_POST['user'], $_POST['password'], $_SERVER['REQUEST_METHOD']);
+    }
 });
 
 it('can merge user provided context', function () {

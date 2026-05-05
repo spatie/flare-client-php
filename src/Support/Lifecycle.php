@@ -4,6 +4,7 @@ namespace Spatie\FlareClient\Support;
 
 use Closure;
 use Spatie\FlareClient\Api;
+use Spatie\FlareClient\EntryPoint\EntryPointResolver;
 use Spatie\FlareClient\Enums\AddSpanResult;
 use Spatie\FlareClient\Enums\LifecycleStage;
 use Spatie\FlareClient\Enums\SpanType;
@@ -29,8 +30,6 @@ class Lifecycle
 
     /**
      * @param Closure():bool|null $isUsingSubtasksClosure
-     * @param Closure(bool):bool|null $shouldMakeSamplingDecisionClosure
-     * @param Closure():void|null $subtaskEndedClosure
      */
     public function __construct(
         protected Api $api,
@@ -41,10 +40,9 @@ class Lifecycle
         protected Recorders $recorders,
         protected SentReports $sentReports,
         protected Resource $resource,
+        protected EntryPointResolver $entryPointResolver,
         protected LifecycleStage $stage = LifecycleStage::Idle,
         protected ?Closure $isUsingSubtasksClosure = null,
-        protected ?Closure $shouldMakeSamplingDecisionClosure = null,
-        protected ?Closure $subtaskEndedClosure = null,
     ) {
         $this->usesSubtasks = $this->isUsingSubtasks();
 
@@ -60,24 +58,10 @@ class Lifecycle
         return false;
     }
 
-    protected function shouldPotentiallySampleTrace(?string $traceparent): bool
-    {
-        if ($traceparent) {
-            return true;
-        }
-
-        if ($this->shouldMakeSamplingDecisionClosure) {
-            return ($this->shouldMakeSamplingDecisionClosure)($this->usesSubtasks);
-        }
-
-        return true;
-    }
-
     public function start(
         ?int $timeUnixNano = null,
         array $attributes = [],
         ?string $traceparent = null,
-        array $samplerContext = [],
     ): void {
         if ($this->usesSubtasks || $this->stage === LifecycleStage::Started) {
             return;
@@ -91,11 +75,7 @@ class Lifecycle
 
         $this->stage = LifecycleStage::Started;
 
-        if ($this->shouldPotentiallySampleTrace($traceparent) === false) {
-            return;
-        }
-
-        $this->tracer->startTrace(samplerContext: $samplerContext, traceParent: $traceparent);
+        $this->tracer->startTrace(traceParent: $traceparent);
 
         if ($this->tracer->sampling === false) {
             return;
@@ -246,7 +226,6 @@ class Lifecycle
 
     public function startSubtask(
         ?string $traceparent = null,
-        array $samplerContext = [],
     ): void {
         if ($this->usesSubtasks === false || $this->stage === LifecycleStage::Subtask) {
             return;
@@ -258,17 +237,9 @@ class Lifecycle
             return;
         }
 
-        if ($this->shouldPotentiallySampleTrace($traceparent) === false) {
-            return;
-        }
-
-
         $this->stage = LifecycleStage::Subtask;
 
-        $this->tracer->startTrace(
-            samplerContext: $samplerContext,
-            traceParent: $traceparent,
-        );
+        $this->tracer->startTrace(traceParent: $traceparent);
     }
 
     public function endSubtask(): void
@@ -289,12 +260,10 @@ class Lifecycle
             $this->tracer->endTrace();
         }
 
+        $this->entryPointResolver->clear();
+
         $this->flush();
         $this->memory->resetPeakMemoryUsage();
-
-        if ($this->subtaskEndedClosure) {
-            ($this->subtaskEndedClosure)();
-        }
     }
 
     public function terminating(
@@ -418,6 +387,7 @@ class Lifecycle
         $this->logger->flush();
         $this->api->sendQueue();
 
+        $this->entryPointResolver->clear();
         $this->sentReports->clear();
         $this->recorders->reset();
 

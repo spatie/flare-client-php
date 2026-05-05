@@ -2,37 +2,44 @@
 
 namespace Spatie\FlareClient\AttributesProviders;
 
+use Spatie\FlareClient\Contracts\AttributesProvider;
 use Spatie\FlareClient\Resources\Resource;
 use Symfony\Component\Process\Process;
 use Throwable;
 
-class GitAttributesProvider
+class GitAttributesProvider implements AttributesProvider
 {
-    protected array $cached;
+    protected static ?array $cached = null;
 
     public function __construct(
         protected ?string $applicationPath = null,
+        protected bool $useProcess = Resource::DEFAULT_GIT_USE_PROCESS,
     ) {
     }
 
-    public function toArray(bool $useProcess = Resource::DEFAULT_GIT_USE_PROCESS): array
+    public static function clearCache(): void
     {
-        if (isset($this->cached)) {
-            return $this->cached;
+        self::$cached = null;
+    }
+
+    public function toArray(): array
+    {
+        if (self::$cached !== null) {
+            return self::$cached;
         }
 
         try {
             $baseDirectory = $this->getGitBaseDirectory();
 
             if (! $baseDirectory) {
-                return $this->cached = [];
+                return self::$cached = [];
             }
 
-            return  $this->cached = $useProcess
+            return  self::$cached = $this->useProcess
                 ? $this->collectGitProcessInfo($baseDirectory)
                 : $this->collectGitFileInfo($baseDirectory);
         } catch (Throwable) {
-            return $this->cached = [];
+            return self::$cached = [];
         }
     }
 
@@ -62,7 +69,7 @@ class GitAttributesProvider
     {
         $data = [];
 
-        if ($content && strlen($content) === 40) {
+        if ($content && strlen($content) === 40 && ctype_xdigit($content)) {
             // Detached HEAD state
             $data['git.hash'] = $content;
 
