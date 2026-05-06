@@ -5,13 +5,17 @@
 [![PHPStan](https://github.com/spatie/flare-client-php/actions/workflows/phpstan.yml/badge.svg)](https://github.com/spatie/flare-client-php/actions/workflows/phpstan.yml)
 [![Total Downloads](https://img.shields.io/packagist/dt/spatie/flare-client-php.svg?style=flat-square)](https://packagist.org/packages/spatie/flare-client-php)
 
+> **Documentation for this version lives in this repository under [`docs/`](docs/).** The latest package documentation is available at [flareapp.io](https://flareapp.io/docs/php/general/introduction).
+
 This repository contains the PHP client to send errors and exceptions to [Flare](https://flareapp.io). The client can be installed using composer and works for PHP 8.2 and above.
 
 Using Laravel? You probably want to use [Flare for Laravel](https://github.com/spatie/laravel-flare). 
 
 ## Documentation
 
-You can find the documentation of this package at [the docs of Flare](https://flareapp.io/docs/php/general/introduction).
+The documentation for this version is bundled with this repository in the [`docs/`](docs/) directory. Start with [`docs/general/installation.md`](docs/general/installation.md).
+
+The latest package documentation lives at [flareapp.io/docs/php/general/introduction](https://flareapp.io/docs/php/general/introduction).
 
 ## Changelog
 
