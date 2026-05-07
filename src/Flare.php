@@ -34,25 +34,6 @@ use Throwable;
 
 class Flare
 {
-    // TODO: quick tests on Vapor
-    // TODO: check the tester for handling errors + try to move some parts of the laravel command to the main repo
-    // TODO: solidify trace pausing
-    // https://app.bugsnag.com/spatie/flareapp-dot-io/errors/69ddf4881ff884595fecd67e?filters[error.status]=open&filters[event.since]=1d
-
-    // TODO next week:
-    // - Finalize Laravel package changes: check all recorders and attribute providers + middleware, especially request then TESTINg TESTIN TESTING
-    // In de middleware doen we rare dingen, idealiter doen we ook de gehele resolve van attributes op het einde van't request zodat onze dynamic sampling snel kan draaien
-
-    // TODO: test this on vapor:
-    // 1) Create a job with error
-    // 2) We do all tracing correctly and store some breadcrumbs
-    // 3) The subtask ends, so the error is sent
-    // 4) We're now in limbo
-    // 5) Error handling happens and a report is stored within the API
-    // 6) The shutdown function probably won't run, lifecycle won't flush the latest data
-    // 7) Our error is lost
-    // Also test tracing and exceptions on regular requests and jobs
-
     public function __construct(
         public readonly Lifecycle $lifecycle,
         public readonly Tracer $tracer,
