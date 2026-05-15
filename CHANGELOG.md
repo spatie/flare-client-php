@@ -2,6 +2,12 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 1.11.1 - 2026-05-15
+
+- Fixed: client now accepts HTTP status 201 as a successful response
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/1.11.0...1.11.1
+
 ## 1.11.0 - 2026-03-17
 
 ### What's Changed
