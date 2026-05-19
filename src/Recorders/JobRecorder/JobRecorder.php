@@ -3,7 +3,6 @@
 namespace Spatie\FlareClient\Recorders\JobRecorder;
 
 use Spatie\FlareClient\AttributesProviders\PhpJobAttributesProvider;
-use Spatie\FlareClient\Concerns\Recorders\PausableRecorder;
 use Spatie\FlareClient\Contracts\EntryPointHandlerProvider;
 use Spatie\FlareClient\Contracts\JobAttributesProvider;
 use Spatie\FlareClient\EntryPoint\EntryPoint;
@@ -25,8 +24,6 @@ use Throwable;
 
 class JobRecorder extends SpansRecorder
 {
-    use PausableRecorder;
-
     /** @var array<int, string> */
     protected array $ignoredClasses = [];
 
@@ -125,12 +122,6 @@ class JobRecorder extends SpansRecorder
 
     public function recordEnd(array $attributes = []): ?Span
     {
-        if ($this->pausedTrace()) {
-            $this->resumeTrace();
-
-            return null;
-        }
-
         $span = $this->endSpan(
             additionalAttributes: $attributes,
             includeMemoryUsage: true,
@@ -147,12 +138,6 @@ class JobRecorder extends SpansRecorder
         Throwable $exception,
         array $attributes = [],
     ): ?Span {
-        if ($this->pausedTrace()) {
-            $this->resumeTrace();
-
-            return null;
-        }
-
         $throwableClass = $exception::class;
 
         $trackingUuid = $this->tracer->ids->uuid();

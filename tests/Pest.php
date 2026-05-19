@@ -5,6 +5,7 @@ use Spatie\FlareClient\EntryPoint\EntryPointResolver;
 use Spatie\FlareClient\Flare;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\FlareProvider;
+use Spatie\FlareClient\Recorders\SpansRecorder;
 use Spatie\FlareClient\Support\Container;
 use Spatie\FlareClient\Tests\Shared\FakeApi;
 use Spatie\FlareClient\Tests\Shared\FakeIds;
@@ -21,6 +22,7 @@ uses()->beforeEach(function () {
     FakeIds::reset();
     FakeMemory::reset();
     FakeSampler::reset();
+    SpansRecorder::resetPauseState();
 })->in(__DIR__);
 
 function makePathsRelative(string $text): string

@@ -10,6 +10,7 @@ use Spatie\FlareClient\Enums\LifecycleStage;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Logger;
 use Spatie\FlareClient\Memory\Memory;
+use Spatie\FlareClient\Recorders\SpansRecorder;
 use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Time\Time;
@@ -390,6 +391,8 @@ class Lifecycle
         $this->entryPointResolver->clear();
         $this->sentReports->clear();
         $this->recorders->reset();
+
+        SpansRecorder::resetPauseState();
 
         $this->applicationSpan = null;
         $this->registeringSpan = null;

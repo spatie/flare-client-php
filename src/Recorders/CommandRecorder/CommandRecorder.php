@@ -4,7 +4,6 @@ namespace Spatie\FlareClient\Recorders\CommandRecorder;
 
 use Spatie\FlareClient\AttributesProviders\PhpCommandAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\SymfonyInputCommandAttributesProvider;
-use Spatie\FlareClient\Concerns\Recorders\PausableRecorder;
 use Spatie\FlareClient\Contracts\CommandAttributesProvider;
 use Spatie\FlareClient\Contracts\EntryPointHandlerProvider;
 use Spatie\FlareClient\EntryPoint\EntryPointResolver;
@@ -19,8 +18,6 @@ use Symfony\Component\Console\Input\InputInterface;
 
 class CommandRecorder extends SpansRecorder
 {
-    use PausableRecorder;
-
     /** @var array<int, string> */
     protected array $ignoredCommands = [];
 
@@ -152,12 +149,6 @@ class CommandRecorder extends SpansRecorder
         int $exitCode = 0,
         array $attributes = []
     ): ?Span {
-        if ($this->pausedTrace()) {
-            $this->resumeTrace();
-
-            return null;
-        }
-
         return $this->endSpan(additionalAttributes: [
             'process.exit_code' => $exitCode,
             ...$attributes,
