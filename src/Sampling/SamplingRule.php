@@ -108,6 +108,11 @@ class SamplingRule
             default => $entryPoint->handlerIdentifier,
         };
 
+        if ($this->type === SamplingRuleType::Path || $this->type === SamplingRuleType::Url) {
+            $value = rtrim($value, '/') ?: '/';
+            $pattern = rtrim($pattern, '/') ?: '/';
+        }
+
         return PatternMatcher::matches($value, $pattern) ? $this->rate : null;
     }
 }
