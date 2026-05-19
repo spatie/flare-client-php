@@ -13,14 +13,15 @@
         "php": "^8.2",
         "ext-curl": "*",
         "guzzlehttp/guzzle": "^7.9",
+        "monolog/monolog": "^3.0",
         "psr/container": "^2.0",
         "spatie/backtrace": "^1.8.0",
         "symfony/console": "^5.2|^6.0|^7.0|^8.0",
+        "spatie/flare-daemon": "^0.1",
         "symfony/http-foundation": "^5.2|^6.0|^7.0|^8.0",
         "symfony/mime": "^5.2|^6.0|^7.0|^8.0",
         "symfony/process": "^5.2|^6.0|^7.0|^8.0",
-        "symfony/var-dumper": "^5.2|^6.0|^7.0|^8.0",
-        "monolog/monolog": "^3.0"
+        "symfony/var-dumper": "^5.2|^6.0|^7.0|^8.0"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.89",
