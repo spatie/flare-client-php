@@ -27,7 +27,6 @@ use Spatie\FlareClient\Support\Redactor;
 use Spatie\FlareClient\Support\SentReports;
 use Spatie\FlareClient\Support\StacktraceMapper;
 use Spatie\FlareClient\Support\Telemetry;
-use Spatie\FlareClient\Support\Tester;
 use Spatie\FlareClient\Time\Time;
 
 class FlareProvider
@@ -246,15 +245,6 @@ class FlareProvider
             resource: $this->container->get(Resource::class),
             scope: $this->container->get(Scope::class),
             recorders: $this->container->get(Recorders::class),
-        ));
-
-        $this->container->singleton(Tester::class, fn () => new Tester(
-            api: $this->container->get(Api::class),
-            ids: $this->container->get(Ids::class),
-            time: $this->container->get(Time::class),
-            memory: $this->container->get(Memory::class),
-            resource: $this->container->get(Resource::class),
-            reportFactory: $this->container->get(ReportFactory::class),
         ));
 
         if ($collects->collectStackFrameArguments && $collects->forcePHPStackFrameArgumentsIniSetting) {
