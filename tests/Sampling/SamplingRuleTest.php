@@ -155,6 +155,16 @@ it('returns the matched rate when the entry point matches', function (SamplingRu
         new EntryPoint(EntryPointType::Web, 'https://example.com'),
         0.42,
     ],
+    'path pattern matches value with trailing slash' => fn () => [
+        SamplingRule::forPath('/foo', 1.0),
+        new EntryPoint(EntryPointType::Web, 'https://example.com/foo/'),
+        1.0,
+    ],
+    'url pattern matches value with trailing slash' => fn () => [
+        SamplingRule::forUrl('https://example.com/foo', 1.0),
+        new EntryPoint(EntryPointType::Web, 'https://example.com/foo/'),
+        1.0,
+    ],
     'route handler without method prefix uses full identifier' => function () {
         $entryPoint = new EntryPoint(EntryPointType::Web, 'https://example.com/users');
 
