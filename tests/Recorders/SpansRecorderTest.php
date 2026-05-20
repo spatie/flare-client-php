@@ -181,6 +181,183 @@ it('a closure passed span will not be executed when not tracing or reporting', f
     );
 });
 
+it('pauses and resumes tracing for a single ignored event', function () {
+    $flare = setupFlare(alwaysSampleTraces: true);
+
+    $recorder = new ConcreteSpansRecorder($flare->tracer, $flare->backTracer, config: [
+        'with_traces' => true,
+    ]);
+
+    $flare->tracer->startTrace();
+
+    $recorder->pause();
+
+    expect(ConcreteSpansRecorder::currentPauseDepth())->toBe(1);
+    expect(ConcreteSpansRecorder::pauseOwnedBy($recorder))->toBeTrue();
+    expect($flare->tracer->isSamplingPaused())->toBeTrue();
+
+    expect($recorder->popSpan())->toBeNull();
+
+    expect(ConcreteSpansRecorder::currentPauseDepth())->toBe(0);
+    expect(ConcreteSpansRecorder::pauseOwnedBy(null))->toBeTrue();
+    expect($flare->tracer->isSamplingPaused())->toBeFalse();
+});
+
+it('tracks depth through a normal span nested under a pause', function () {
+    $flare = setupFlare(alwaysSampleTraces: true);
+
+    $recorder = new ConcreteSpansRecorder($flare->tracer, $flare->backTracer, config: [
+        'with_traces' => true,
+    ]);
+
+    $flare->tracer->startTrace();
+
+    $recorder->pause();
+
+    expect(ConcreteSpansRecorder::currentPauseDepth())->toBe(1);
+
+    expect($recorder->pushSpan('Inner'))->toBeNull();
+
+    expect(ConcreteSpansRecorder::currentPauseDepth())->toBe(2);
+
+    expect($recorder->popSpan())->toBeNull();
+
+    expect(ConcreteSpansRecorder::currentPauseDepth())->toBe(1);
+    expect($flare->tracer->isSamplingPaused())->toBeTrue();
+
+    expect($recorder->popSpan())->toBeNull();
+
+    expect(ConcreteSpansRecorder::currentPauseDepth())->toBe(0);
+    expect($flare->tracer->isSamplingPaused())->toBeFalse();
+});
+
+it('tracks depth when pauseTrace is called while already the owner', function () {
+    $flare = setupFlare(alwaysSampleTraces: true);
+
+    $recorder = new ConcreteSpansRecorder($flare->tracer, $flare->backTracer, config: [
+        'with_traces' => true,
+    ]);
+
+    $flare->tracer->startTrace();
+
+    $recorder->pause();
+
+    expect(ConcreteSpansRecorder::currentPauseDepth())->toBe(1);
+
+    $recorder->pause();
+
+    expect(ConcreteSpansRecorder::currentPauseDepth())->toBe(2);
+
+    $recorder->popSpan();
+
+    expect(ConcreteSpansRecorder::currentPauseDepth())->toBe(1);
+    expect($flare->tracer->isSamplingPaused())->toBeTrue();
+
+    $recorder->popSpan();
+
+    expect(ConcreteSpansRecorder::currentPauseDepth())->toBe(0);
+    expect($flare->tracer->isSamplingPaused())->toBeFalse();
+});
+
+it('handles the three-span scenario: ignored under normal under ignored', function () {
+    $flare = setupFlare(alwaysSampleTraces: true);
+
+    $recorder = new ConcreteSpansRecorder($flare->tracer, $flare->backTracer, config: [
+        'with_traces' => true,
+    ]);
+
+    $flare->tracer->startTrace();
+
+    // A (ignored)
+    $recorder->pause();
+
+    expect(ConcreteSpansRecorder::currentPauseDepth())->toBe(1);
+
+    // B (normal, nested)
+    expect($recorder->pushSpan('B'))->toBeNull();
+
+    expect(ConcreteSpansRecorder::currentPauseDepth())->toBe(2);
+
+    // C (ignored, nested)
+    $recorder->pause();
+
+    expect(ConcreteSpansRecorder::currentPauseDepth())->toBe(3);
+
+    // end C
+    $recorder->popSpan();
+
+    expect(ConcreteSpansRecorder::currentPauseDepth())->toBe(2);
+    expect($flare->tracer->isSamplingPaused())->toBeTrue();
+
+    // end B
+    $recorder->popSpan();
+
+    expect(ConcreteSpansRecorder::currentPauseDepth())->toBe(1);
+    expect($flare->tracer->isSamplingPaused())->toBeTrue();
+
+    // end A
+    $recorder->popSpan();
+
+    expect(ConcreteSpansRecorder::currentPauseDepth())->toBe(0);
+    expect(ConcreteSpansRecorder::pauseOwnedBy(null))->toBeTrue();
+    expect($flare->tracer->isSamplingPaused())->toBeFalse();
+});
+
+it('treats a pause from a non-owner recorder as a no-op', function () {
+    $flare = setupFlare(alwaysSampleTraces: true);
+
+    $recorderA = new ConcreteSpansRecorder($flare->tracer, $flare->backTracer, config: [
+        'with_traces' => true,
+    ]);
+
+    $recorderB = new ConcreteSpansRecorder($flare->tracer, $flare->backTracer, config: [
+        'with_traces' => true,
+    ]);
+
+    $flare->tracer->startTrace();
+
+    $recorderA->pause();
+
+    expect(ConcreteSpansRecorder::currentPauseDepth())->toBe(1);
+    expect(ConcreteSpansRecorder::pauseOwnedBy($recorderA))->toBeTrue();
+
+    $recorderB->pause();
+
+    expect(ConcreteSpansRecorder::currentPauseDepth())->toBe(1);
+    expect(ConcreteSpansRecorder::pauseOwnedBy($recorderA))->toBeTrue();
+
+    expect($recorderB->popSpan())->toBeNull();
+
+    expect(ConcreteSpansRecorder::currentPauseDepth())->toBe(1);
+    expect(ConcreteSpansRecorder::pauseOwnedBy($recorderA))->toBeTrue();
+
+    $recorderA->popSpan();
+
+    expect(ConcreteSpansRecorder::currentPauseDepth())->toBe(0);
+    expect(ConcreteSpansRecorder::pauseOwnedBy(null))->toBeTrue();
+    expect($flare->tracer->isSamplingPaused())->toBeFalse();
+});
+
+it('clears pause state via resetPauseState', function () {
+    $flare = setupFlare(alwaysSampleTraces: true);
+
+    $recorder = new ConcreteSpansRecorder($flare->tracer, $flare->backTracer, config: [
+        'with_traces' => true,
+    ]);
+
+    $flare->tracer->startTrace();
+
+    $recorder->pause();
+    $recorder->pause();
+
+    expect(ConcreteSpansRecorder::currentPauseDepth())->toBe(2);
+
+    ConcreteSpansRecorder::resetPauseState();
+
+    expect(ConcreteSpansRecorder::currentPauseDepth())->toBe(0);
+    expect(ConcreteSpansRecorder::pauseOwnedBy(null))->toBeTrue();
+});
+
 it('will correctly nest spans', function () {
     $flare = setupFlare(alwaysSampleTraces: true);
 

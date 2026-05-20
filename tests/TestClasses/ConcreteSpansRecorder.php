@@ -32,4 +32,19 @@ class ConcreteSpansRecorder extends SpansRecorder
             duration: $duration,
         );
     }
+
+    public function pause(): void
+    {
+        $this->pauseTrace();
+    }
+
+    public static function currentPauseDepth(): int
+    {
+        return self::$pauseDepth;
+    }
+
+    public static function pauseOwnedBy(?ConcreteSpansRecorder $recorder): bool
+    {
+        return self::$pauseOwner === $recorder;
+    }
 }

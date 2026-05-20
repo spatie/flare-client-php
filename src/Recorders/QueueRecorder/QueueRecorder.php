@@ -3,7 +3,6 @@
 namespace Spatie\FlareClient\Recorders\QueueRecorder;
 
 use Spatie\FlareClient\AttributesProviders\PhpJobAttributesProvider;
-use Spatie\FlareClient\Concerns\Recorders\PausableRecorder;
 use Spatie\FlareClient\Contracts\JobAttributesProvider;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
@@ -15,8 +14,6 @@ use Spatie\FlareClient\Tracer;
 
 class QueueRecorder extends SpansRecorder
 {
-    use PausableRecorder;
-
     /** @var array<int, string> */
     protected array $ignoredClasses = [];
 
@@ -74,12 +71,6 @@ class QueueRecorder extends SpansRecorder
 
     public function recordEnd(array $attributes = []): ?Span
     {
-        if ($this->pausedTrace()) {
-            $this->resumeTrace();
-
-            return null;
-        }
-
         return $this->endSpan(additionalAttributes: $attributes);
     }
 

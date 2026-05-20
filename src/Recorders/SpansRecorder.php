@@ -25,6 +25,10 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
     /** @var array<Span> */
     protected array $stack = [];
 
+    protected static ?SpansRecorder $pauseOwner = null;
+
+    protected static int $pauseDepth = 0;
+
     public function __construct(
         protected Tracer $tracer,
         protected BackTracer $backTracer,
@@ -67,6 +71,12 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
     ): ?Span {
         if ($nameAndAttributes === null && $name === null) {
             throw new InvalidArgumentException('Either $nameAndAttributes must be set, or both $name and $attributes must be set.');
+        }
+
+        if (self::$pauseOwner === $this) {
+            self::$pauseDepth++;
+
+            return null;
         }
 
         $shouldTrace = $this->withTraces && $this->tracer->sampling;
@@ -120,6 +130,10 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
         ?Closure $spanCallback = null,
         bool $includeMemoryUsage = false,
     ): ?Span {
+        if ($this->consumePauseEnd()) {
+            return null;
+        }
+
         $span = array_pop($this->stack);
 
         if ($span === null) {
@@ -183,16 +197,16 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
             time: $start,
         );
 
-        if ($span === null) {
-            return null;
-        }
-
         $this->endSpan(
             time: $end,
             additionalAttributes: $additionalAttributes === null ? [] : $additionalAttributes,
             spanCallback: $spanCallback,
             includeMemoryUsage: $includeMemoryUsage,
         );
+
+        if ($span === null) {
+            return null;
+        }
 
         if ($this->withTraces && $this->tracer->sampling === true) {
             $this->backtraceEntry($span);
@@ -204,5 +218,48 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
     final public function getSpans(): array
     {
         return $this->entries;
+    }
+
+    public static function resetPauseState(): void
+    {
+        self::$pauseOwner = null;
+        self::$pauseDepth = 0;
+    }
+
+    protected function pauseTrace(): void
+    {
+        if (self::$pauseOwner === $this) {
+            self::$pauseDepth++;
+
+            return;
+        }
+
+        if (self::$pauseOwner !== null) {
+            return;
+        }
+
+        self::$pauseOwner = $this;
+        self::$pauseDepth = 1;
+
+        $this->tracer->pauseSampling();
+    }
+
+    private function consumePauseEnd(): bool
+    {
+        if (self::$pauseOwner !== $this) {
+            return false;
+        }
+
+        self::$pauseDepth--;
+
+        if (self::$pauseDepth > 0) {
+            return true;
+        }
+
+        self::$pauseOwner = null;
+
+        $this->tracer->resumeSampling();
+
+        return true;
     }
 }
