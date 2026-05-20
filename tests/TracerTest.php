@@ -84,25 +84,21 @@ it('will not start a trace when the sampler decides to', function () {
     expect($tracer->currentTraceId())->not()->toBeNull();
 });
 
-it('can potentially resume a trace', function () {
+it('can resume a trace with explicit ids and lets the sampler decide', function () {
     $tracer = setupFlare(fn (FlareConfig $config) => $config->sampleRate(1))->tracer;
 
-    $tracer->startTrace(traceId: 'traceid', spanId: 'spanid', sample: true);
+    $tracer->startTrace(traceId: 'traceid', spanId: 'spanid');
 
     expect($tracer->isSampling())->toBeTrue();
     expect($tracer->currentTraceId())->toEqual('traceid');
     expect($tracer->currentSpanId())->toEqual('spanid');
 });
 
-it('requires all three parameters to resume a possible trace', function () {
+it('requires both traceId and spanId when one is provided', function () {
     $tracer = setupFlare(fn (FlareConfig $config) => $config->sampleRate(1))->tracer;
 
     expect(fn () => $tracer->startTrace(traceId: 'traceid'))->toThrow(Exception::class);
     expect(fn () => $tracer->startTrace(spanId: 'span_id'))->toThrow(Exception::class);
-    expect(fn () => $tracer->startTrace(sample: true))->toThrow(Exception::class);
-    expect(fn () => $tracer->startTrace(traceId: 'traceid', spanId: 'spanid'))->toThrow(Exception::class);
-    expect(fn () => $tracer->startTrace(traceId: 'traceid', sample: true))->toThrow(Exception::class);
-    expect(fn () => $tracer->startTrace(spanId: 'spanid', sample: true))->toThrow(Exception::class);
 });
 
 it('can potentially resume a trace with traceparent', function () {

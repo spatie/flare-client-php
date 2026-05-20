@@ -6,5 +6,5 @@ use Spatie\FlareClient\EntryPoint\EntryPoint;
 
 interface Sampler
 {
-    public function shouldSample(EntryPoint $entryPoint): bool;
+    public function shouldSample(EntryPoint $entryPoint, ?bool $parentSampled = null): bool;
 }

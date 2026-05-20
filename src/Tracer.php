@@ -79,8 +79,7 @@ class Tracer
     public function startTrace(
         ?string $traceId = null,
         ?string $spanId = null,
-        ?bool $sample = null,
-        ?string $traceParent = null
+        ?string $traceParent = null,
     ): bool {
         if ($this->disabled === true) {
             return false;
@@ -90,62 +89,33 @@ class Tracer
             return $this->sampling;
         }
 
-        if ($traceParent) {
-            return $this->startFromTraceparent($traceParent);
+        $parentSampled = null;
+
+        if ($traceParent !== null) {
+            $parsed = $this->ids->parseTraceparent($traceParent);
+
+            if ($parsed !== null) {
+                $traceId = $parsed['traceId'];
+                $spanId = $parsed['parentSpanId'];
+                $parentSampled = $parsed['sampling'];
+            }
         }
 
-        if ($traceId && $spanId && $sample !== null) {
-            return $this->startFromDefined(
-                sample: $sample,
-                traceId: $traceId,
-                spanId: $spanId,
-                currentSpanIdAvailable: false,
-            );
+        if (($traceId === null) !== ($spanId === null)) {
+            throw new Exception('If one of traceId or spanId is provided, both must be provided.');
         }
 
-        if ($traceId || $spanId || $sample !== null) {
-            throw new Exception("If one of traceId, spanId or sample is provided, all three must be provided.");
+        if ($traceId !== null && $spanId !== null) {
+            $this->currentTraceId = $traceId;
+            $this->currentSpanId = $spanId;
+            $this->currentSpanIdAvailable = false;
+            $this->spans = [];
         }
 
-        return $this->sampling = $this->sampler->shouldSample($this->entryPointResolver->get());
-    }
-
-    protected function startFromTraceparent(
-        string $traceParent,
-    ): bool {
-        $parsedTraceparent = $this->ids->parseTraceparent($traceParent);
-
-        if ($parsedTraceparent === null) {
-            return $this->startTrace();
-        }
-
-        [
-            'traceId' => $traceId,
-            'parentSpanId' => $parentSpanId,
-            'sampling' => $sampling,
-        ] = $parsedTraceparent;
-
-        return $this->startFromDefined(
-            sample: $sampling,
-            traceId: $traceId,
-            spanId: $parentSpanId,
-            currentSpanIdAvailable: false
+        return $this->sampling = $this->sampler->shouldSample(
+            $this->entryPointResolver->get(),
+            $parentSampled,
         );
-    }
-
-    protected function startFromDefined(
-        bool $sample,
-        string $traceId,
-        string $spanId,
-        bool $currentSpanIdAvailable,
-    ): bool {
-        $this->currentTraceId = $traceId;
-        $this->currentSpanId = $spanId;
-        $this->currentSpanIdAvailable = $currentSpanIdAvailable;
-
-        $this->spans = [];
-
-        return $this->sampling = $sample;
     }
 
     public function endTrace(): void
