@@ -11,6 +11,8 @@ class DynamicSampler extends RateSampler implements DeferrableSampler
 
     protected bool $pending = false;
 
+    protected ?bool $parentSampled = null;
+
     public function __construct(array $config)
     {
         parent::__construct(['rate' => $config['base_rate'] ?? null]);
@@ -23,9 +25,10 @@ class DynamicSampler extends RateSampler implements DeferrableSampler
         );
     }
 
-    public function shouldSample(EntryPoint $entryPoint): bool
+    public function shouldSample(EntryPoint $entryPoint, ?bool $parentSampled = null): bool
     {
         $this->pending = false;
+        $this->parentSampled = $parentSampled;
 
         foreach ($this->rules as $rule) {
             if (! $rule->type()->appliesTo($entryPoint->type)) {
@@ -49,7 +52,7 @@ class DynamicSampler extends RateSampler implements DeferrableSampler
             return true;
         }
 
-        return parent::shouldSample($entryPoint);
+        return $parentSampled ?? parent::shouldSample($entryPoint, null);
     }
 
     public function isPending(): bool
@@ -77,11 +80,12 @@ class DynamicSampler extends RateSampler implements DeferrableSampler
             }
         }
 
-        return parent::shouldSample($entryPoint);
+        return $this->parentSampled ?? parent::shouldSample($entryPoint, null);
     }
 
     public function reset(): void
     {
         $this->pending = false;
+        $this->parentSampled = null;
     }
 }

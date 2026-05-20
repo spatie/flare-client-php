@@ -67,3 +67,28 @@ it('cannot define a negative sample rate', function () {
 it('cannot define a sample rate above 1', function () {
     new RateSampler(['rate' => 1.5]);
 })->throws(InvalidArgumentException::class, 'Rate must be between 0 and 1');
+
+it('honors parentSampled true regardless of rate', function () {
+    $sampler = new RateSampler(['rate' => 0]);
+    $entryPoint = new EntryPoint(EntryPointType::Web, 'http://localhost');
+
+    for ($i = 0; $i < 100; $i++) {
+        expect($sampler->shouldSample($entryPoint, true))->toBeTrue();
+    }
+});
+
+it('honors parentSampled false regardless of rate', function () {
+    $sampler = new RateSampler(['rate' => 1]);
+    $entryPoint = new EntryPoint(EntryPointType::Web, 'http://localhost');
+
+    for ($i = 0; $i < 100; $i++) {
+        expect($sampler->shouldSample($entryPoint, false))->toBeFalse();
+    }
+});
+
+it('rolls the rate when parentSampled is null', function () {
+    $sampler = new RateSampler(['rate' => 0]);
+    $entryPoint = new EntryPoint(EntryPointType::Web, 'http://localhost');
+
+    expect($sampler->shouldSample($entryPoint, null))->toBeFalse();
+});

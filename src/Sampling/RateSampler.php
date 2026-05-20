@@ -20,8 +20,12 @@ class RateSampler implements Sampler
         $this->rate = $rate;
     }
 
-    public function shouldSample(EntryPoint $entryPoint): bool
+    public function shouldSample(EntryPoint $entryPoint, ?bool $parentSampled = null): bool
     {
+        if ($parentSampled !== null) {
+            return $parentSampled;
+        }
+
         return $this->decide($this->rate);
     }
 

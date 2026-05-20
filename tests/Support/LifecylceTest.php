@@ -33,7 +33,7 @@ it('will start an unsampled trace when the sampling decision is negative', funct
 });
 
 it('can continue a trace with a traceparent', function () {
-    $flare = setupFlare(fn (FlareConfig $config) => $config->neverSampleTraces());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->sampleRate(0));
 
     $traceParent = $flare->ids->traceParent(
         $traceId = $flare->ids->trace(),

@@ -302,3 +302,90 @@ it('reevaluates to the base rate when called without prior pending state', funct
 
     expect($sampler->reevaluate($entryPoint))->toBeTrue();
 });
+
+it('honors parentSampled true when no rule matches and base rate is zero', function () {
+    $sampler = new DynamicSampler([
+        'base_rate' => 0,
+        'rules' => [
+            SamplingRule::forPath('/admin/*', 1.0),
+        ],
+    ]);
+
+    $entryPoint = new EntryPoint(EntryPointType::Web, 'https://example.com/public');
+
+    expect($sampler->shouldSample($entryPoint, parentSampled: true))->toBeTrue();
+});
+
+it('honors parentSampled false when no rule matches and base rate is one', function () {
+    $sampler = new DynamicSampler([
+        'base_rate' => 1,
+        'rules' => [
+            SamplingRule::forPath('/admin/*', 1.0),
+        ],
+    ]);
+
+    $entryPoint = new EntryPoint(EntryPointType::Web, 'https://example.com/public');
+
+    expect($sampler->shouldSample($entryPoint, parentSampled: false))->toBeFalse();
+});
+
+it('lets a matching rule override parentSampled', function () {
+    $sampler = new DynamicSampler([
+        'base_rate' => 0,
+        'rules' => [
+            SamplingRule::forPath('/admin/*', 1.0),
+        ],
+    ]);
+
+    $entryPoint = new EntryPoint(EntryPointType::Web, 'https://example.com/admin/users');
+
+    expect($sampler->shouldSample($entryPoint, parentSampled: false))->toBeTrue();
+});
+
+it('lets a matching rule with rate zero override parentSampled true', function () {
+    $sampler = new DynamicSampler([
+        'base_rate' => 0,
+        'rules' => [
+            SamplingRule::forPath('/admin/*', 0),
+        ],
+    ]);
+
+    $entryPoint = new EntryPoint(EntryPointType::Web, 'https://example.com/admin/users');
+
+    expect($sampler->shouldSample($entryPoint, parentSampled: true))->toBeFalse();
+});
+
+it('falls back to stored parentSampled on reevaluate when no rule matches', function () {
+    $sampler = new DynamicSampler([
+        'base_rate' => 0,
+        'rules' => [
+            SamplingRule::forRoute('/admin/*', 1.0),
+        ],
+    ]);
+
+    $entryPoint = new EntryPoint(EntryPointType::Web, 'https://example.com/public');
+
+    $sampler->shouldSample($entryPoint, parentSampled: true);
+
+    $entryPoint->setHandler('GET /public', 'PublicController', 'php_request');
+
+    expect($sampler->reevaluate($entryPoint))->toBeTrue();
+});
+
+it('reset clears stored parentSampled so reevaluate falls back to base rate', function () {
+    $sampler = new DynamicSampler([
+        'base_rate' => 0,
+        'rules' => [
+            SamplingRule::forRoute('/admin/*', 1.0),
+        ],
+    ]);
+
+    $entryPoint = new EntryPoint(EntryPointType::Web, 'https://example.com/public');
+
+    $sampler->shouldSample($entryPoint, parentSampled: true);
+    $sampler->reset();
+
+    $entryPoint->setHandler('GET /public', 'PublicController', 'php_request');
+
+    expect($sampler->reevaluate($entryPoint))->toBeFalse();
+});

@@ -157,21 +157,29 @@ Both are now managed internally by `Lifecycle`. Drop any direct calls.
 
 #### Custom `Sampler` signature changed
 
-`Sampler::shouldSample()` now receives an `EntryPoint` instead of an array.
+`Sampler::shouldSample()` now receives an `EntryPoint` and an optional `?bool $parentSampled` that carries the sampling decision from an inherited W3C traceparent (or `null` when there is no parent).
 
 ```php
 // Before
 public function shouldSample(array $context): bool;
 
 // After
-public function shouldSample(EntryPoint $entryPoint): bool;
+public function shouldSample(EntryPoint $entryPoint, ?bool $parentSampled = null): bool;
 ```
+
+Each built-in sampler handles the parent decision differently:
+
+- `AlwaysSampler` and `NeverSampler` ignore `$parentSampled` (their name is the contract).
+- `RateSampler` honors `$parentSampled` when set, otherwise rolls the configured rate.
+- `DynamicSampler` evaluates rules first. A matching rule wins (overriding the parent decision). If no rule matches, the parent's decision is honored, falling back to `base_rate` only when there is no parent.
+
+Custom samplers can ignore the new parameter to preserve existing behavior, but consider whether honoring the parent decision is the right default for your sampler.
 
 The `SamplingType` enum was also removed. Use the boolean `$tracer->sampling` (or `isSampling()`) instead.
 
 #### Changes in `Tracer`
 
-- `startTrace()` signature changed.
+- `startTrace()` signature changed. The `?bool $sample` parameter was dropped. Trace continuity (the traceId and parent spanId) is now decoupled from the sampling decision: explicit `traceId`/`spanId` arguments or a `traceParent` set the IDs, then the configured sampler is always called (with the parent's sampled flag when available).
 - `addRawSpan()` was renamed to `addSpan()`.
 - `startTraceWithSpan()`, `setCurrentSpanId()`, and `trashCurrentTrace()` were removed without replacement. They're managed internally now.
 
