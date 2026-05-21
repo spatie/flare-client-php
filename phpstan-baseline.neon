@@ -96,11 +96,6 @@ parameters:
 			path: src/Recorders/SpanEventsRecorder.php
 
 		-
-			message: "#^Unsafe usage of new static\\(\\)\\.$#"
-			count: 8
-			path: src/Sampling/SamplingRule.php
-
-		-
 			message: "#^Instanceof between \\*NEVER\\* and Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent will always evaluate to false\\.$#"
 			count: 1
 			path: src/Recorders/SpansRecorder.php

@@ -2,6 +2,7 @@
 
 namespace Spatie\FlareClient\Tests\Shared\Recorders\RoutingRecorder;
 
+use Spatie\FlareClient\Contracts\RouteAttributesProvider;
 use Spatie\FlareClient\EntryPoint\EntryPoint;
 use Spatie\FlareClient\Enums\EntryPointType;
 use Spatie\FlareClient\Enums\SpanType;
@@ -198,6 +199,40 @@ it('does not unsample when no ignored route matches', function () {
     $flare->routing()->recordRoutingEndFromDefined('/api/users');
 
     expect($flare->tracer->isSampling())->toBeTrue();
+});
+
+it('forwards route attributes provider data onto the routing span', function () {
+    $provider = new class implements RouteAttributesProvider {
+        public function toArray(): array
+        {
+            return [
+                'http.route' => '/admin/users',
+                'custom.route.attribute' => 'extra-value',
+            ];
+        }
+
+        public function route(): ?string
+        {
+            return '/admin/users';
+        }
+
+        public function method(): string
+        {
+            return 'GET';
+        }
+    };
+
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectRequests(), alwaysSampleTraces: true);
+
+    $flare->tracer->startTrace();
+    $flare->routing()->recordRoutingStart();
+    $flare->routing()->recordRoutingEnd($provider);
+    $flare->tracer->endTrace();
+
+    $routingSpan = FakeApi::lastTrace()->expectSpan(SpanType::Routing);
+
+    expect($routingSpan->attributes())->toHaveKey('http.route', '/admin/users');
+    expect($routingSpan->attributes())->toHaveKey('custom.route.attribute', 'extra-value');
 });
 
 it('unsamples a trace when an ignored route is matched', function () {

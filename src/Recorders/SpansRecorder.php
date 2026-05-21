@@ -146,6 +146,14 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
             $spanCallback($span);
         }
 
+        $shouldTrace = $this->withTraces
+            && $this->tracer->sampling
+            && ! $this->tracer->disabled;
+
+        if (! $shouldTrace && ! $this->shouldReport()) {
+            return $span;
+        }
+
         if (is_callable($additionalAttributes)) {
             $additionalAttributes = $additionalAttributes();
         }
@@ -154,13 +162,9 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
             $span->addAttributes($additionalAttributes);
         }
 
-        if ($this->withTraces === false
-            || $this->tracer->sampling === false
-            || $this->tracer->disabled === true) {
-            return $span;
+        if ($shouldTrace) {
+            $this->tracer->endSpan($span, includeMemoryUsage: $includeMemoryUsage);
         }
-
-        $this->tracer->endSpan($span, includeMemoryUsage: $includeMemoryUsage);
 
         return $span;
     }

@@ -3,7 +3,7 @@
 namespace Spatie\FlareClient\Recorders\QueueRecorder;
 
 use Spatie\FlareClient\AttributesProviders\PhpJobAttributesProvider;
-use Spatie\FlareClient\Contracts\JobAttributesProvider;
+use Spatie\FlareClient\Contracts\QueuedJobAttributesProvider;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Recorders\SpansRecorder;
@@ -36,7 +36,7 @@ class QueueRecorder extends SpansRecorder
     }
 
     public function recordStart(
-        JobAttributesProvider $provider,
+        QueuedJobAttributesProvider $provider,
         array $attributes = [],
     ): ?Span {
         $jobName = $provider->jobName();

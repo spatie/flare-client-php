@@ -5,7 +5,6 @@ namespace Spatie\FlareClient\Recorders\CommandRecorder;
 use Spatie\FlareClient\AttributesProviders\PhpCommandAttributesProvider;
 use Spatie\FlareClient\AttributesProviders\SymfonyInputCommandAttributesProvider;
 use Spatie\FlareClient\Contracts\CommandAttributesProvider;
-use Spatie\FlareClient\Contracts\EntryPointHandlerProvider;
 use Spatie\FlareClient\EntryPoint\EntryPointResolver;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanType;
@@ -54,15 +53,7 @@ class CommandRecorder extends SpansRecorder
         $entryPoint = $this->entryPointResolver->get();
 
         if (! $entryPoint->handlerResolved) {
-            $entryPointProvider = $commandAttributesProvider instanceof EntryPointHandlerProvider
-                ? $commandAttributesProvider
-                : null;
-
-            $entryPoint->setHandler(
-                handlerIdentifier: $entryPointProvider?->entryPointHandlerIdentifier() ?? $command,
-                handlerName: $entryPointProvider?->entryPointHandlerName() ?? $commandClass,
-                handlerType: $entryPointProvider?->entryPointHandlerType() ?? 'php_command',
-            );
+            $entryPoint->setHandlerFromAttributesProvider($commandAttributesProvider);
         }
 
         $this->tracer->reevaluateSampling();

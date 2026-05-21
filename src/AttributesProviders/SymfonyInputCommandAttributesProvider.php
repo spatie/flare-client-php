@@ -3,10 +3,9 @@
 namespace Spatie\FlareClient\AttributesProviders;
 
 use Spatie\FlareClient\Contracts\CommandAttributesProvider;
-use Spatie\FlareClient\Contracts\EntryPointHandlerProvider;
 use Symfony\Component\Console\Input\InputInterface;
 
-class SymfonyInputCommandAttributesProvider implements CommandAttributesProvider, EntryPointHandlerProvider
+class SymfonyInputCommandAttributesProvider implements CommandAttributesProvider
 {
     public function __construct(
         protected InputInterface $input,

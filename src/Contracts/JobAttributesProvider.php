@@ -2,9 +2,6 @@
 
 namespace Spatie\FlareClient\Contracts;
 
-interface JobAttributesProvider extends AttributesProvider
+interface JobAttributesProvider extends QueuedJobAttributesProvider, EntryPointHandlerProvider
 {
-    public function jobName(): string;
-
-    public function jobClass(): ?string;
 }

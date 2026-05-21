@@ -2,34 +2,8 @@
 
 use Spatie\FlareClient\EntryPoint\EntryPoint;
 use Spatie\FlareClient\Enums\EntryPointType;
+use Spatie\FlareClient\Sampling\DeferredSamplerRule;
 use Spatie\FlareClient\Sampling\SamplingRule;
-use Spatie\FlareClient\Sampling\SamplingRuleType;
-
-it('throws when creating a rule from an invalid array', function (array $data, string $message) {
-    expect(fn () => SamplingRule::fromArray($data))
-        ->toThrow(InvalidArgumentException::class, $message);
-})->with([
-    'non-enum type' => [
-        ['type' => 'route', 'pattern' => 'GET /api/*', 'rate' => 0.5],
-        'Sampling rule "type" must be a SamplingRuleType enum.',
-    ],
-    'closure type' => [
-        ['type' => SamplingRuleType::Closure, 'pattern' => 'anything', 'rate' => 1.0],
-        'Closure sampling rules cannot be created from arrays.',
-    ],
-    'missing keys' => [
-        ['rate' => 1.0],
-        'Sampling rule array must contain "type", "pattern" and "rate" keys.',
-    ],
-    'rate above 1' => [
-        ['type' => SamplingRuleType::Url, 'pattern' => '/api/*', 'rate' => 1.5],
-        'Sampling rate must be between 0 and 1.',
-    ],
-    'rate below 0' => [
-        ['type' => SamplingRuleType::Url, 'pattern' => '/api/*', 'rate' => -0.1],
-        'Sampling rate must be between 0 and 1.',
-    ],
-]);
 
 it('throws when constructing a static rule with an out-of-range rate', function (Closure $factory) {
     expect(fn () => $factory())->toThrow(InvalidArgumentException::class, 'Sampling rate must be between 0 and 1.');
@@ -41,29 +15,21 @@ it('throws when constructing a static rule with an out-of-range rate', function 
     'forJob below 0' => [fn () => SamplingRule::forJob('App\\Jobs\\*', -0.01)],
 ]);
 
-it('always allows url, job, and early closure rules to run', function (SamplingRule $rule) {
-    $entryPoint = new EntryPoint(EntryPointType::Web, 'https://example.com/test');
-
-    expect($rule->canRun($entryPoint))->toBeTrue();
+it('does not mark url, path, job, or immediate closure rules as deferred', function (SamplingRule $rule) {
+    expect($rule)->not->toBeInstanceOf(DeferredSamplerRule::class);
 })->with([
     'url' => fn () => SamplingRule::forUrl('https://example.com/*', 1.0),
     'path' => fn () => SamplingRule::forPath('/admin/*', 1.0),
     'job' => fn () => SamplingRule::forJob('App\\Jobs\\*', 0.5),
-    'early closure' => fn () => SamplingRule::usingEarly(fn () => 1.0),
+    'closure' => fn () => SamplingRule::using(fn () => 1.0),
 ]);
 
-it('only allows route, command, and closure rules to run when the handler is resolved', function (SamplingRule $rule) {
-    $entryPoint = new EntryPoint(EntryPointType::Web, 'https://example.com/test');
-
-    expect($rule->canRun($entryPoint))->toBeFalse();
-
-    $entryPoint->setHandler('GET /test', 'TestController', 'php_request');
-
-    expect($rule->canRun($entryPoint))->toBeTrue();
+it('marks route, command, and deferred closure rules as deferred', function (SamplingRule $rule) {
+    expect($rule)->toBeInstanceOf(DeferredSamplerRule::class);
 })->with([
     'route' => fn () => SamplingRule::forRoute('/api/*', 0.5),
     'command' => fn () => SamplingRule::forCommand('migrate', 0),
-    'closure' => fn () => SamplingRule::using(fn () => 1.0),
+    'deferred closure' => fn () => SamplingRule::usingDeferred(fn () => 1.0),
 ]);
 
 it('returns the matched rate when the entry point matches', function (SamplingRule $rule, EntryPoint $entryPoint, ?float $expected) {
@@ -145,8 +111,8 @@ it('returns the matched rate when the entry point matches', function (SamplingRu
 
         return [SamplingRule::using(fn (EntryPoint $ep) => null), $entryPoint, null];
     },
-    'early closure receives entry point without handler' => fn () => [
-        SamplingRule::usingEarly(fn (EntryPoint $ep) => $ep->type === EntryPointType::Web ? 0.5 : null),
+    'closure receives entry point without handler' => fn () => [
+        SamplingRule::using(fn (EntryPoint $ep) => $ep->type === EntryPointType::Web ? 0.5 : null),
         new EntryPoint(EntryPointType::Web, 'https://example.com/page'),
         0.5,
     ],
@@ -173,19 +139,3 @@ it('returns the matched rate when the entry point matches', function (SamplingRu
         return [SamplingRule::forRoute('users.index', 0.33), $entryPoint, 0.33];
     },
 ]);
-
-it('builds an equivalent rule from an array', function () {
-    $rule = SamplingRule::fromArray([
-        'type' => SamplingRuleType::Path,
-        'pattern' => '/admin/*',
-        'rate' => 0.5,
-    ]);
-
-    expect($rule->type())->toBe(SamplingRuleType::Path);
-
-    $matching = new EntryPoint(EntryPointType::Web, 'https://example.com/admin/users');
-    $other = new EntryPoint(EntryPointType::Web, 'https://example.com/public/page');
-
-    expect($rule->getMatchedRate($matching))->toBe(0.5);
-    expect($rule->getMatchedRate($other))->toBeNull();
-});

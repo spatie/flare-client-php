@@ -9,34 +9,30 @@ class DynamicSampler extends RateSampler implements DeferrableSampler
     /** @var array<SamplingRule> */
     protected array $rules;
 
-    protected bool $pending = false;
+    protected bool $deferred = false;
 
     protected ?bool $parentSampled = null;
 
+    /** @param array{base_rate?: float|null, rules?: array<SamplingRule>} $config */
     public function __construct(array $config)
     {
         parent::__construct(['rate' => $config['base_rate'] ?? null]);
 
-        $this->rules = array_map(
-            fn (SamplingRule|array $rule) => $rule instanceof SamplingRule
-                ? $rule
-                : SamplingRule::fromArray($rule),
-            $config['rules'] ?? [],
-        );
+        $this->rules = $config['rules'] ?? [];
     }
 
     public function shouldSample(EntryPoint $entryPoint, ?bool $parentSampled = null): bool
     {
-        $this->pending = false;
+        $this->deferred = false;
         $this->parentSampled = $parentSampled;
 
         foreach ($this->rules as $rule) {
-            if (! $rule->type()->appliesTo($entryPoint->type)) {
+            if (! $rule->appliesTo($entryPoint->type)) {
                 continue;
             }
 
-            if (! $rule->canRun($entryPoint)) {
-                $this->pending = true;
+            if ($rule instanceof DeferredSamplerRule && ! $entryPoint->handlerResolved) {
+                $this->deferred = true;
 
                 break;
             }
@@ -48,28 +44,28 @@ class DynamicSampler extends RateSampler implements DeferrableSampler
             }
         }
 
-        if ($this->pending) {
+        if ($this->deferred) {
             return true;
         }
 
         return $parentSampled ?? parent::shouldSample($entryPoint, null);
     }
 
-    public function isPending(): bool
+    public function isDeferred(): bool
     {
-        return $this->pending;
+        return $this->deferred;
     }
 
     public function reevaluate(EntryPoint $entryPoint): bool
     {
-        $this->pending = false;
+        $this->deferred = false;
 
         foreach ($this->rules as $rule) {
-            if (! $rule->type()->appliesTo($entryPoint->type)) {
+            if (! $rule->appliesTo($entryPoint->type)) {
                 continue;
             }
 
-            if (! $rule->canRun($entryPoint)) {
+            if ($rule instanceof DeferredSamplerRule && ! $entryPoint->handlerResolved) {
                 continue;
             }
 
@@ -85,7 +81,7 @@ class DynamicSampler extends RateSampler implements DeferrableSampler
 
     public function reset(): void
     {
-        $this->pending = false;
+        $this->deferred = false;
         $this->parentSampled = null;
     }
 }

@@ -620,7 +620,7 @@ it('drops an optimistically sampled trace when the route resolves to an ignored 
     $flare->tracer->startTrace();
 
     expect($flare->tracer->isSampling())->toBeTrue();
-    expect($flare->tracer->sampler->isPending())->toBeTrue();
+    expect($flare->tracer->sampler->isDeferred())->toBeTrue();
 
     $flare->tracer->startSpan('Request Span');
 
@@ -629,7 +629,7 @@ it('drops an optimistically sampled trace when the route resolves to an ignored 
     $flare->tracer->reevaluateSampling();
 
     expect($flare->tracer->isSampling())->toBeFalse();
-    expect($flare->tracer->sampler->isPending())->toBeFalse();
+    expect($flare->tracer->sampler->isDeferred())->toBeFalse();
     expect($flare->tracer->currentTrace())->toHaveCount(0);
 });
 
@@ -645,7 +645,7 @@ it('continues sampling when a deferred rule resolves to a matching rate', functi
     $flare->tracer->startTrace();
 
     expect($flare->tracer->isSampling())->toBeTrue();
-    expect($flare->tracer->sampler->isPending())->toBeTrue();
+    expect($flare->tracer->sampler->isDeferred())->toBeTrue();
 
     $flare->tracer->startSpan('Request Span');
 
@@ -654,11 +654,11 @@ it('continues sampling when a deferred rule resolves to a matching rate', functi
     $flare->tracer->reevaluateSampling();
 
     expect($flare->tracer->isSampling())->toBeTrue();
-    expect($flare->tracer->sampler->isPending())->toBeFalse();
+    expect($flare->tracer->sampler->isDeferred())->toBeFalse();
     expect($flare->tracer->currentTrace())->toHaveCount(1);
 });
 
-it('clears pending sampling state when the trace ends', function () {
+it('clears deferred sampling state when the trace ends', function () {
     $flare = setupFlare(
         fn (FlareConfig $config) => $config->sampleTracesDynamic(
             baseRate: 0,
@@ -669,14 +669,14 @@ it('clears pending sampling state when the trace ends', function () {
 
     $flare->tracer->startTrace();
 
-    expect($flare->tracer->sampler->isPending())->toBeTrue();
+    expect($flare->tracer->sampler->isDeferred())->toBeTrue();
 
     $entryPoint->setHandler('GET /admin/users', 'AdminController', 'php_request');
     $flare->tracer->reevaluateSampling();
 
     $flare->tracer->endTrace();
 
-    expect($flare->tracer->sampler->isPending())->toBeFalse();
+    expect($flare->tracer->sampler->isDeferred())->toBeFalse();
 });
 
 it('force-closes all open spans up the parent chain via gracefullyEndSpans', function () {
@@ -709,7 +709,7 @@ it('respects the gracefulSpanEnderClosure when force is false', function () {
     expect($stayOpen->end)->toBeNull();
 });
 
-it('clears pending sampling state when unsampled', function () {
+it('clears deferred sampling state when unsampled', function () {
     $flare = setupFlare(
         fn (FlareConfig $config) => $config->sampleTracesDynamic(
             baseRate: 0,
@@ -720,9 +720,9 @@ it('clears pending sampling state when unsampled', function () {
 
     $flare->tracer->startTrace();
 
-    expect($flare->tracer->sampler->isPending())->toBeTrue();
+    expect($flare->tracer->sampler->isDeferred())->toBeTrue();
 
     $flare->tracer->unsample();
 
-    expect($flare->tracer->sampler->isPending())->toBeFalse();
+    expect($flare->tracer->sampler->isDeferred())->toBeFalse();
 });
