@@ -151,7 +151,7 @@ class Tracer
 
     public function reevaluateSampling(): void
     {
-        if (! $this->sampler instanceof DeferrableSampler || ! $this->sampler->isPending()) {
+        if (! $this->sampler instanceof DeferrableSampler || ! $this->sampler->isDeferred()) {
             return;
         }
 

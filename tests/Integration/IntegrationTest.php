@@ -40,7 +40,7 @@ it('drives a full web request lifecycle including sampling, recording, logging, 
     $flare->request()->recordStartFromGlobals();
 
     expect($flare->tracer->isSampling())->toBeTrue();
-    expect($flare->tracer->sampler->isPending())->toBeTrue();
+    expect($flare->tracer->sampler->isDeferred())->toBeTrue();
 
     $flare->routing()->recordRoutingStart();
     $flare->routing()->recordRoutingEndFromDefined(
@@ -49,7 +49,7 @@ it('drives a full web request lifecycle including sampling, recording, logging, 
         handlerName: 'AdminController@index',
     );
 
-    expect($flare->tracer->sampler->isPending())->toBeFalse();
+    expect($flare->tracer->sampler->isDeferred())->toBeFalse();
 
 
     $flare->query()->record(

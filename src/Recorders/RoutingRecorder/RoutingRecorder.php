@@ -143,15 +143,15 @@ class RoutingRecorder extends SpansRecorder
 
         $entryPoint = $this->entryPointResolver->get();
 
-        if (! $entryPoint->handlerResolved) {
-            $entryPointProvider = $routeAttributesProvider instanceof EntryPointHandlerProvider
-                ? $routeAttributesProvider
-                : null;
+        if (! $entryPoint->handlerResolved && $routeAttributesProvider instanceof EntryPointHandlerProvider) {
+            $entryPoint->setHandlerFromAttributesProvider($routeAttributesProvider);
+        }
 
+        if (! $entryPoint->handlerResolved) {
             $entryPoint->setHandler(
-                handlerIdentifier: $entryPointProvider?->entryPointHandlerIdentifier() ?? 'unknown',
-                handlerName: $entryPointProvider?->entryPointHandlerName(),
-                handlerType: $entryPointProvider?->entryPointHandlerType() ?? 'php_request',
+                handlerIdentifier: 'unknown',
+                handlerName: null,
+                handlerType: 'php_request',
             );
         }
 
@@ -167,7 +167,10 @@ class RoutingRecorder extends SpansRecorder
 
         return $this->endSpan(
             time: $time,
-            additionalAttributes: $attributes,
+            additionalAttributes: fn () => [
+                ...$routeAttributesProvider->toArray(),
+                ...$attributes,
+            ],
         );
     }
 

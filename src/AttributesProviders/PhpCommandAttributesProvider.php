@@ -30,4 +30,19 @@ class PhpCommandAttributesProvider implements CommandAttributesProvider
     {
         return $this->commandClass;
     }
+
+    public function entryPointHandlerIdentifier(): ?string
+    {
+        return $this->command;
+    }
+
+    public function entryPointHandlerName(): ?string
+    {
+        return $this->commandClass;
+    }
+
+    public function entryPointHandlerType(): ?string
+    {
+        return 'php_command';
+    }
 }

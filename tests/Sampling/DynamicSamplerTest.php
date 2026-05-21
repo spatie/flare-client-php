@@ -4,14 +4,13 @@ use Spatie\FlareClient\EntryPoint\EntryPoint;
 use Spatie\FlareClient\Enums\EntryPointType;
 use Spatie\FlareClient\Sampling\DynamicSampler;
 use Spatie\FlareClient\Sampling\SamplingRule;
-use Spatie\FlareClient\Sampling\SamplingRuleType;
 
 it('behaves like rate sampler with no rules', function () {
     $sampler = new DynamicSampler(['base_rate' => 0]);
     $entryPoint = new EntryPoint(EntryPointType::Web, 'https://example.com/test');
 
     expect($sampler->shouldSample($entryPoint))->toBeFalse();
-    expect($sampler->isPending())->toBeFalse();
+    expect($sampler->isDeferred())->toBeFalse();
 });
 
 it('behaves like rate sampler with no rules and rate 1', function () {
@@ -19,7 +18,7 @@ it('behaves like rate sampler with no rules and rate 1', function () {
     $entryPoint = new EntryPoint(EntryPointType::Web, 'https://example.com/test');
 
     expect($sampler->shouldSample($entryPoint))->toBeTrue();
-    expect($sampler->isPending())->toBeFalse();
+    expect($sampler->isDeferred())->toBeFalse();
 });
 
 it('skips all rules when entry point type does not match any rule', function () {
@@ -34,10 +33,10 @@ it('skips all rules when entry point type does not match any rule', function () 
     $entryPoint = new EntryPoint(EntryPointType::Cli, 'artisan migrate');
 
     expect($sampler->shouldSample($entryPoint))->toBeFalse();
-    expect($sampler->isPending())->toBeFalse();
+    expect($sampler->isDeferred())->toBeFalse();
 });
 
-it('evaluates url rule immediately with no pending state', function () {
+it('evaluates url rule immediately with no deferred state', function () {
     $sampler = new DynamicSampler([
         'base_rate' => 0,
         'rules' => [
@@ -48,7 +47,7 @@ it('evaluates url rule immediately with no pending state', function () {
     $entryPoint = new EntryPoint(EntryPointType::Web, 'https://example.com/admin/users');
 
     expect($sampler->shouldSample($entryPoint))->toBeTrue();
-    expect($sampler->isPending())->toBeFalse();
+    expect($sampler->isDeferred())->toBeFalse();
 });
 
 
@@ -63,10 +62,10 @@ it('falls back to base rate when no rule matches', function () {
     $entryPoint = new EntryPoint(EntryPointType::Web, 'https://example.com/public/page');
 
     expect($sampler->shouldSample($entryPoint))->toBeFalse();
-    expect($sampler->isPending())->toBeFalse();
+    expect($sampler->isDeferred())->toBeFalse();
 });
 
-it('sets pending when a derrable rule cannot be evaluated', function () {
+it('sets deferred when a deferrable rule cannot be evaluated', function () {
     $sampler = new DynamicSampler([
         'base_rate' => 0,
         'rules' => [
@@ -77,7 +76,7 @@ it('sets pending when a derrable rule cannot be evaluated', function () {
     $entryPoint = new EntryPoint(EntryPointType::Web, 'https://example.com/admin/users');
 
     expect($sampler->shouldSample($entryPoint))->toBeTrue();
-    expect($sampler->isPending())->toBeTrue();
+    expect($sampler->isDeferred())->toBeTrue();
 });
 
 it('reevaluates when handler becomes available and rule matches', function () {
@@ -95,7 +94,7 @@ it('reevaluates when handler becomes available and rule matches', function () {
     $entryPoint->setHandler('GET /admin/users', 'AdminController', 'php_request');
 
     expect($sampler->reevaluate($entryPoint))->toBeTrue();
-    expect($sampler->isPending())->toBeFalse();
+    expect($sampler->isDeferred())->toBeFalse();
 });
 
 it('reevaluates to false when route rule has rate 0', function () {
@@ -109,7 +108,7 @@ it('reevaluates to false when route rule has rate 0', function () {
     $entryPoint = new EntryPoint(EntryPointType::Web, 'https://example.com/api/health');
 
     expect($sampler->shouldSample($entryPoint))->toBeTrue();
-    expect($sampler->isPending())->toBeTrue();
+    expect($sampler->isDeferred())->toBeTrue();
 
     $entryPoint->setHandler('GET /api/health', 'HealthController', 'php_request');
 
@@ -159,7 +158,7 @@ it('breaks on deferred rule and samples optimistically for later reevaluation', 
     $entryPoint = new EntryPoint(EntryPointType::Web, 'https://example.com/api/health');
 
     expect($sampler->shouldSample($entryPoint))->toBeTrue();
-    expect($sampler->isPending())->toBeTrue();
+    expect($sampler->isDeferred())->toBeTrue();
 });
 
 it('reevaluates correctly after breaking on deferred rule', function () {
@@ -180,7 +179,7 @@ it('reevaluates correctly after breaking on deferred rule', function () {
     expect($sampler->reevaluate($entryPoint))->toBeFalse();
 });
 
-it('command rule sets pending when handler not resolved', function () {
+it('command rule sets deferred when handler not resolved', function () {
     $sampler = new DynamicSampler([
         'base_rate' => 0,
         'rules' => [
@@ -191,7 +190,7 @@ it('command rule sets pending when handler not resolved', function () {
     $entryPoint = new EntryPoint(EntryPointType::Cli, 'artisan schedule:run');
 
     expect($sampler->shouldSample($entryPoint))->toBeTrue();
-    expect($sampler->isPending())->toBeTrue();
+    expect($sampler->isDeferred())->toBeTrue();
 });
 
 it('job rule evaluates immediately', function () {
@@ -206,10 +205,10 @@ it('job rule evaluates immediately', function () {
     $entryPoint->setHandler('App\\Jobs\\ProcessPodcast', 'App\\Jobs\\ProcessPodcast', 'php_job');
 
     expect($sampler->shouldSample($entryPoint))->toBeTrue();
-    expect($sampler->isPending())->toBeFalse();
+    expect($sampler->isDeferred())->toBeFalse();
 });
 
-it('reset clears pending state', function () {
+it('reset clears deferred state', function () {
     $sampler = new DynamicSampler([
         'base_rate' => 0,
         'rules' => [
@@ -221,57 +220,44 @@ it('reset clears pending state', function () {
 
     $sampler->shouldSample($entryPoint);
 
-    expect($sampler->isPending())->toBeTrue();
+    expect($sampler->isDeferred())->toBeTrue();
 
     $sampler->reset();
 
-    expect($sampler->isPending())->toBeFalse();
+    expect($sampler->isDeferred())->toBeFalse();
 });
 
-it('accepts array-defined rules in config', function () {
+it('defers a deferred closure rule until the handler is resolved', function () {
     $sampler = new DynamicSampler([
         'base_rate' => 0,
         'rules' => [
-            ['type' => SamplingRuleType::Path, 'pattern' => '/admin/*', 'rate' => 1.0],
+            SamplingRule::usingDeferred(fn (EntryPoint $ep) => str_contains($ep->handlerIdentifier, 'admin') ? 1.0 : null),
         ],
     ]);
 
     $entryPoint = new EntryPoint(EntryPointType::Web, 'https://example.com/admin/users');
 
     expect($sampler->shouldSample($entryPoint))->toBeTrue();
-});
-
-it('defers a closure rule until the handler is resolved', function () {
-    $sampler = new DynamicSampler([
-        'base_rate' => 0,
-        'rules' => [
-            SamplingRule::using(fn (EntryPoint $ep) => str_contains($ep->handlerIdentifier, 'admin') ? 1.0 : null),
-        ],
-    ]);
-
-    $entryPoint = new EntryPoint(EntryPointType::Web, 'https://example.com/admin/users');
-
-    expect($sampler->shouldSample($entryPoint))->toBeTrue();
-    expect($sampler->isPending())->toBeTrue();
+    expect($sampler->isDeferred())->toBeTrue();
 
     $entryPoint->setHandler('GET /admin/users', 'AdminController', 'php_request');
 
     expect($sampler->reevaluate($entryPoint))->toBeTrue();
-    expect($sampler->isPending())->toBeFalse();
+    expect($sampler->isDeferred())->toBeFalse();
 });
 
-it('runs an early closure without waiting for the handler', function () {
+it('runs an immediate closure without waiting for the handler', function () {
     $sampler = new DynamicSampler([
         'base_rate' => 0,
         'rules' => [
-            SamplingRule::usingEarly(fn (EntryPoint $ep) => $ep->type === EntryPointType::Web ? 1.0 : null),
+            SamplingRule::using(fn (EntryPoint $ep) => $ep->type === EntryPointType::Web ? 1.0 : null),
         ],
     ]);
 
     $entryPoint = new EntryPoint(EntryPointType::Web, 'https://example.com/whatever');
 
     expect($sampler->shouldSample($entryPoint))->toBeTrue();
-    expect($sampler->isPending())->toBeFalse();
+    expect($sampler->isDeferred())->toBeFalse();
 });
 
 it('lets a non-deferrable rule before a deferrable one decide immediately', function () {
@@ -286,10 +272,10 @@ it('lets a non-deferrable rule before a deferrable one decide immediately', func
     $entryPoint = new EntryPoint(EntryPointType::Web, 'https://example.com/api/health');
 
     expect($sampler->shouldSample($entryPoint))->toBeTrue();
-    expect($sampler->isPending())->toBeFalse();
+    expect($sampler->isDeferred())->toBeFalse();
 });
 
-it('reevaluates to the base rate when called without prior pending state', function () {
+it('reevaluates to the base rate when called without prior deferred state', function () {
     $sampler = new DynamicSampler([
         'base_rate' => 1,
         'rules' => [

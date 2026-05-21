@@ -2,7 +2,7 @@
 
 namespace Spatie\FlareClient\Contracts;
 
-interface CommandAttributesProvider extends AttributesProvider
+interface CommandAttributesProvider extends AttributesProvider, EntryPointHandlerProvider
 {
     public function command(): string;
 

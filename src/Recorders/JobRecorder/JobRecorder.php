@@ -3,7 +3,6 @@
 namespace Spatie\FlareClient\Recorders\JobRecorder;
 
 use Spatie\FlareClient\AttributesProviders\PhpJobAttributesProvider;
-use Spatie\FlareClient\Contracts\EntryPointHandlerProvider;
 use Spatie\FlareClient\Contracts\JobAttributesProvider;
 use Spatie\FlareClient\EntryPoint\EntryPoint;
 use Spatie\FlareClient\EntryPoint\EntryPointResolver;
@@ -82,13 +81,7 @@ class JobRecorder extends SpansRecorder
             value: $jobClass ?? $jobName,
         );
 
-        $entryPointProvider = $jobAttributesProvider instanceof EntryPointHandlerProvider ? $jobAttributesProvider : null;
-
-        $entryPoint->setHandler(
-            handlerIdentifier: $entryPointProvider?->entryPointHandlerIdentifier() ?? $jobName,
-            handlerName: $entryPointProvider?->entryPointHandlerName() ?? $jobClass,
-            handlerType: $entryPointProvider?->entryPointHandlerType() ?? 'php_job',
-        );
+        $entryPoint->setHandlerFromAttributesProvider($jobAttributesProvider);
 
         if ($this->lifecycle->usesSubtasks) {
             $this->entryPointResolver->set($entryPoint);

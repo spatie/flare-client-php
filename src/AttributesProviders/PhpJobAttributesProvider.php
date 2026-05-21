@@ -26,4 +26,19 @@ class PhpJobAttributesProvider implements JobAttributesProvider
     {
         return $this->jobClass;
     }
+
+    public function entryPointHandlerIdentifier(): ?string
+    {
+        return $this->jobName;
+    }
+
+    public function entryPointHandlerName(): ?string
+    {
+        return $this->jobClass;
+    }
+
+    public function entryPointHandlerType(): ?string
+    {
+        return 'php_job';
+    }
 }
