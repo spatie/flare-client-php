@@ -2,6 +2,26 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 3.0.0 - 2026-05-21
+
+Logs, logs, logs and more:
+
+- **Dedicated logging**: new first-class logger on `$flare->log()` that records messages in the OpenTelemetry log format, replacing `reportMessage()`. Log levels now use Monolog's `Level` enum. See [Logs](https://flareapp.io/docs/php/logs/introduction).
+- **Dynamic sampling**: new `DynamicSampler` with `SamplingRule` definitions, letting you sample per entry point (e.g. health checks at 0%, checkout flows at 100%) without writing a custom sampler. See [Sampling](https://flareapp.io/docs/php/performance/sampling).
+- **W3C traceparent aware sampling**: samplers now receive an `?bool $parentSampled` and can honor (or override) the inherited decision.
+- **Job and queue recorders**: first-class `JobRecorder` and `QueueRecorder` as part of the standard recorder pipeline. See [Jobs and queues](https://flareapp.io/docs/php/data-collection/jobs-and-queues).
+- **Subtask mode**: jobs and commands executed inside an existing trace attach as subtasks instead of starting a new root trace.
+- **Entry points**: new `EntryPoint` value object resolved via `EntryPointResolver`, replacing the loose `entryPointClass` arguments and array context passed to samplers.
+- **Attribute providers**: recorders now accept dedicated `RequestAttributesProvider`, `ResponseAttributesProvider`, `RouteAttributesProvider`, `CommandAttributesProvider`, `JobAttributesProvider`, and `UserAttributesProvider` contracts, replacing ad-hoc recorder arguments. See [Attribute providers](https://flareapp.io/docs/php/general/attribute-providers).
+- **Lifecycle**: new `Lifecycle` class on `$flare->lifecycle` that owns flushing, resets, and internal state previously exposed on `Flare`. See [Application lifecycle](https://flareapp.io/docs/php/general/application-lifecycle).
+- **Flare daemon bundled by default**: `DaemonSender` ships with the client and routes errors, traces, and logs through the local [Flare daemon](https://flareapp.io/docs/php/general/flare-daemon), with curl fallback when it's unreachable.
+- **`Flare` accessors are now properties**: `$flare->tracer`, `$flare->backTracer`, `$flare->sentReports`, `$flare->ids`, `$flare->time`, `$flare->lifecycle`, `$flare->logger`, `$flare->reporter` are public readonly properties.
+- **Removed**: error solutions (`collectSolutions()`, `withSolutionProvider()`, `AddSolutions` middleware, the `spatie/error-solutions` dependency).
+- **Removed**: `reportMessage()`, `includeStackTraceWithMessages()`, `MessageLevels` enum, `sendReportsImmediately()`, `Flare::reset()`, `$flare->application()`.
+- **Renamed**: `collectLogs()` → `collectLogsWithErrors()`, `ignoreLogs()` → `ignoreLogsWithErrors()`, `Tracer::addRawSpan()` → `addSpan()`.
+
+Full upgrade notes in [UPGRADING.md](https://github.com/spatie/flare-client-php/blob/main/UPGRADING.md).
+
 ## 1.11.1 - 2026-05-15
 
 - Fixed: client now accepts HTTP status 201 as a successful response
