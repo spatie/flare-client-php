@@ -3,8 +3,8 @@
 namespace Spatie\FlareClient\Sampling\Rules;
 
 use InvalidArgumentException;
-use Spatie\FlareClient\Enums\EntryPointType;
 use Spatie\FlareClient\EntryPoint\EntryPoint;
+use Spatie\FlareClient\Enums\EntryPointType;
 use Spatie\FlareClient\Sampling\SamplingRule;
 use Spatie\FlareClient\Support\PatternMatcher;
 

@@ -3,8 +3,8 @@
 namespace Spatie\FlareClient\Sampling;
 
 use Closure;
-use Spatie\FlareClient\Enums\EntryPointType;
 use Spatie\FlareClient\EntryPoint\EntryPoint;
+use Spatie\FlareClient\Enums\EntryPointType;
 use Spatie\FlareClient\Sampling\Rules\ClosureSamplingRule;
 use Spatie\FlareClient\Sampling\Rules\CommandSamplingRule;
 use Spatie\FlareClient\Sampling\Rules\DeferredClosureSamplingRule;
