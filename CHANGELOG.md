@@ -2,6 +2,10 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 3.0.1 - 2026-05-24
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/3.0.0...3.0.1
+
 ## 3.0.0 - 2026-05-21
 
 Logs, logs, logs and more:
