@@ -14,6 +14,7 @@ class ReportDriver extends YamlDriver
         $data = $this->emptyStacktrace($data);
         $data = $this->removePhpunitArguments($data);
         $data = $this->removeUuid($data);
+        $data = $this->removeTraceInfo($data);
         $data = $this->removeResourceAttributes($data);
 
         $yaml = parent::serialize($data);
@@ -27,6 +28,7 @@ class ReportDriver extends YamlDriver
         $actual = $this->emptyStacktrace($actual);
         $actual = $this->removePhpunitArguments($actual);
         $actual = $this->removeUuid($actual);
+        $actual = $this->removeTraceInfo($actual);
         $actual = $this->removeResourceAttributes($actual);
 
         if (is_array($actual)) {
@@ -66,6 +68,14 @@ class ReportDriver extends YamlDriver
     protected function removeUuid(array $data): array
     {
         $data['trackingUuid'] = 'fake-uuid';
+
+        return $data;
+    }
+
+    protected function removeTraceInfo(array $data): array
+    {
+        $data['traceId'] = 'fake-trace-id';
+        $data['spanId'] = 'fake-span-id';
 
         return $data;
     }

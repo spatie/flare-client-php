@@ -51,6 +51,15 @@ it('will generate a uuid', function () {
     );
 });
 
+it('attaches the current trace and span id to a report', function () {
+    $flare = setupFlare();
+
+    $report = $flare->report(new Exception('this is an exception'))->toArray();
+
+    expect($report['traceId'])->toBe($flare->tracer->currentTraceId());
+    expect($report['spanId'])->toBe($flare->tracer->currentSpanId());
+});
+
 it('can create a report with error exception and will cleanup the stack trace', function () {
     $flare = setupFlare();
 

@@ -6,6 +6,8 @@ previous: {  }
 openFrameIndex: null
 applicationPath: null
 trackingUuid: fake-uuid
+traceId: fake-trace-id
+spanId: fake-span-id
 handled: null
 attributes:
     service.name: 'PHP application'
