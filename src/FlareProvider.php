@@ -202,6 +202,7 @@ class FlareProvider
             stacktraceMapper: $this->container->get(StacktraceMapper::class),
             time: $this->container->get(Time::class),
             ids: $this->container->get(Ids::class),
+            tracer: $this->container->get(Tracer::class),
             resource: $this->container->get(Resource::class),
             argumentReducers: $this->container->get(ArgumentReducers::class),
             collectStackTraceArguments: $collects->collectStackFrameArguments,
