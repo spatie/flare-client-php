@@ -383,7 +383,7 @@ it('can add logs', function () {
 });
 
 it('can add queries', function () {
-    $flare = setupFlare(fn (FlareConfig $config) => $config->collectQueries());
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectQueries(findOrigin: false));
 
     $flare->tracer->startTrace();
 
