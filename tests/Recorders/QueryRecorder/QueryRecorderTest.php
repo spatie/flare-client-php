@@ -235,6 +235,8 @@ it('will not find the origin of a query when only reporting', function () {
         ]
     );
 
+    $flare->tracer->startTrace();
+
     $recorder->record('select * from users where id = ?', TimeHelper::milliseconds(299), ['id' => 1], 'users', 'mysql');
 
     expect($recorder->getSpans())->toHaveCount(1);

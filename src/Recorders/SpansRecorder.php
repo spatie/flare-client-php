@@ -86,6 +86,12 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
             return null;
         }
 
+        $currentTraceId = $this->tracer->currentTraceId();
+
+        if ($currentTraceId === null) {
+            return null;
+        }
+
         if ($nameAndAttributes !== null) {
             ['name' => $name, 'attributes' => $attributes] = $nameAndAttributes();
         } else {
@@ -98,7 +104,7 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
         $spanId = $this->tracer->nextSpanId();
 
         $span = new Span(
-            traceId: $this->tracer->currentTraceId(),
+            traceId: $currentTraceId,
             spanId: $spanId,
             parentSpanId: $parentSpanId,
             name: $name,

@@ -124,6 +124,8 @@ it('will not trace span events when there is no current span', function () {
         'with_traces' => true,
     ]);
 
+    $flare->tracer->startTrace();
+
     $span = $flare->tracer->startSpan(
         'root span'
     );
@@ -235,6 +237,8 @@ it('will not find origins when tracing events when find origin is disabled', fun
         'with_traces' => true,
         'find_origin' => false,
     ]);
+
+    $flare->tracer->startTrace();
 
     $span = $flare->tracer->startSpan('Parent Span');
 
