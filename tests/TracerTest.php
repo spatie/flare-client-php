@@ -241,17 +241,16 @@ it('can start a span resuming a propagated trace', function () {
     expect($span->spanId)->not()->toBeNull();
 });
 
-it('can unsample a trace and all its spans', function () {
+it('can unsample a trace and clear its state', function () {
     $tracer = setupFlare(alwaysSampleTraces: true)->tracer;
 
     $tracer->startTrace();
-
-    $span = $tracer->startSpan('Some span');
+    $tracer->startSpan('Some span');
 
     $tracer->unsample();
 
-    expect($tracer->currentTraceId())->toBe($span->traceId);
-    expect($tracer->currentSpanId())->toBe($span->spanId);
+    expect($tracer->currentTraceId())->toBeNull();
+    expect($tracer->currentSpanId())->toBeNull();
     expect($tracer->sampling)->toBeFalse();
     expect($tracer->currentTrace())->toBeEmpty();
 });
@@ -387,27 +386,70 @@ it('can remove a span event', function () {
     expect($span->events[0]->name)->toEqual('Some event');
 });
 
-it('will always have a trace and span id even when a trace start call has not happened yet', function () {
+it('has no trace and span id before startTrace is called', function () {
     $tracer = setupFlare()->tracer;
 
-    expect($tracer->currentTraceId())->not()->toBeNull();
-    expect($tracer->currentSpanId())->not()->toBeNull();
+    expect($tracer->currentTraceId())->toBeNull();
+    expect($tracer->currentSpanId())->toBeNull();
 });
 
-it('will use the initial trace and span id until a trace is started', function () {
+it('clears the trace and span id when a sampled trace ends', function () {
     $tracer = setupFlare(alwaysSampleTraces: true)->tracer;
 
-    expect($tracer->currentTraceId())->not()->toBeNull();
-    expect($tracer->currentSpanId())->not()->toBeNull();
+    $tracer->startTrace();
+    $tracer->startSpan('Some span');
+    $tracer->endSpan();
+    $tracer->endTrace();
 
-    $currentTraceId = $tracer->currentTraceId();
-    $currentSpanId = $tracer->currentSpanId();
+    expect($tracer->currentTraceId())->toBeNull();
+    expect($tracer->currentSpanId())->toBeNull();
+});
+
+
+it('preserves the active trace when startTrace is called again on an unsampled trace', function () {
+    $tracer = setupFlare(fn (FlareConfig $config) => $config->sampler(NeverSampler::class))->tracer;
 
     $tracer->startTrace();
-    $span = $tracer->startSpan('Some span');
 
-    expect($span->traceId)->toBe($currentTraceId);
-    expect($span->spanId)->toBe($currentSpanId);
+    $firstTraceId = $tracer->currentTraceId();
+    $firstSpanId = $tracer->currentSpanId();
+
+    $tracer->startTrace();
+
+    expect($tracer->currentTraceId())->toBe($firstTraceId);
+    expect($tracer->currentSpanId())->toBe($firstSpanId);
+});
+
+it('adopts an inbound traceparent even when the tracer is disabled so logs stay correlated', function () {
+    $tracer = setupFlare(fn (FlareConfig $config) => $config->trace = false)->tracer;
+
+    $tracer->startTrace(traceParent: '00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01');
+
+    expect($tracer->sampling)->toBeFalse();
+    expect($tracer->currentTraceId())->toBe('0af7651916cd43dd8448eb211c80319c');
+    expect($tracer->currentSpanId())->toBe('b7ad6b7169203331');
+});
+
+it('returns a null traceparent when there is no active trace context', function () {
+    $tracer = setupFlare()->tracer;
+
+    expect($tracer->traceParent())->toBeNull();
+});
+
+it('returns a traceparent with the local sampling flag when a trace context exists', function () {
+    $tracer = setupFlare(alwaysSampleTraces: true)->tracer;
+
+    $tracer->startTrace();
+
+    expect($tracer->traceParent())->toMatch('/^00-[0-9a-f]{32}-[0-9a-f]{16}-01$/');
+});
+
+it('propagates an inherited traceparent for downstream services even when not sampling locally', function () {
+    $tracer = setupFlare(fn (FlareConfig $config) => $config->trace = false)->tracer;
+
+    $tracer->startTrace(traceParent: '00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01');
+
+    expect($tracer->traceParent())->toMatch('/^00-0af7651916cd43dd8448eb211c80319c-[0-9a-f]{16}-00$/');
 });
 
 it('can include the peak memory usage when ending a span', function () {

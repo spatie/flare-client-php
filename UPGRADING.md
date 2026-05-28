@@ -2,6 +2,18 @@
 
 There are some breaking changes you should be aware of. We've categorized them so you can prioritize. This guide covers the most common cases. Edge cases may not be covered, and PRs to improve it are welcome.
 
+## From v3.0 to v3.1
+
+`Tracer::currentTraceId()`, `currentSpanId()`, and `traceParent()` now return `?string`, with `null` when no trace is active. Recorders skip silently without an active trace instead of recording orphan spans.
+
+If you use `spatie/laravel-flare` no changes are needed. For framework agnostic apps, replace `registerFlareHandlers()` with `$flare->start()`, which also opens the lifecycle:
+
+```php
+$flare = Flare::make($config)->start();
+```
+
+For subtask mode (queue workers, long-running processes), keep using `$flare->lifecycle->startSubtask()` per work unit.
+
 ## From v2 to v3
 
 The new version of the package adds better support for logging and tracing lifetimes. We don't expect upgrading to require a lot of code changes for typical applications.

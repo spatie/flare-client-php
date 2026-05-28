@@ -43,6 +43,16 @@ it('can report an exception', function () {
     );
 });
 
+it('can start and end a flare lifecycle', function () {
+    $flare = setupFlare(alwaysSampleTraces: true)->start();
+
+    expect($flare->tracer->isSampling())->toBeTrue();
+
+    $flare->end();
+
+    expect($flare->tracer->isSampling())->toBeFalse();
+});
+
 
 it('can reset queued exceptions', function () {
     $flare = setupFlare(fn (FlareConfig $config) => $config->collectContext());
@@ -375,6 +385,8 @@ it('can add logs', function () {
 it('can add queries', function () {
     $flare = setupFlare(fn (FlareConfig $config) => $config->collectQueries());
 
+    $flare->tracer->startTrace();
+
     $flare->query()->record(
         'select * from users where id = ?',
         TimeHelper::milliseconds(250),
@@ -423,6 +435,8 @@ it('can add queries', function () {
 it('can begin and commit transactions', function () {
     $flare = setupFlare(fn (FlareConfig $config) => $config->collectTransactions());
 
+    $flare->tracer->startTrace();
+
     $flare->transaction()->recordBegin();
 
     FakeTime::setup('2019-01-01 12:34:57'); // One second later 1546346097000000
@@ -445,6 +459,8 @@ it('can begin and commit transactions', function () {
 
 it('can begin and rollback transactions', function () {
     $flare = setupFlare(fn (FlareConfig $config) => $config->collectTransactions());
+
+    $flare->tracer->startTrace();
 
     $flare->transaction()->recordBegin();
 
@@ -830,6 +846,8 @@ it('can add an additional recorders', function () {
             ],
         ])
     );
+
+    $flare->tracer->startTrace();
 
     $flare->recorder('spans')->record('Hi', duration: TimeHelper::milliseconds(300));
 

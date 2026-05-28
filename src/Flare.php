@@ -64,6 +64,41 @@ class Flare
         return $container->get(Flare::class);
     }
 
+    public function start(
+        ?int $timeUnixNano = null,
+        array $attributes = [],
+        ?string $traceparent = null,
+    ): self {
+        if ($this->lifecycle->usesSubtasks) {
+            throw new Exception(
+                'Flare::start() is for the main lifecycle. In subtask mode, use $flare->lifecycle->startSubtask() per work unit.'
+            );
+        }
+
+        $this->reporter->registerFlareHandlers();
+        $this->lifecycle->start($timeUnixNano, $attributes, $traceparent);
+
+        return $this;
+    }
+
+    public function end(
+        ?int $timeUnixNano = null,
+        array $additionalTerminationAttributes = [],
+        array $additionalApplicationAttributes = [],
+    ): void {
+        if ($this->lifecycle->usesSubtasks) {
+            throw new Exception(
+                'Flare::end() is for the main lifecycle. In subtask mode, use $flare->lifecycle->endSubtask() per work unit.'
+            );
+        }
+
+        $this->lifecycle->terminated(
+            $timeUnixNano,
+            $additionalTerminationAttributes,
+            $additionalApplicationAttributes,
+        );
+    }
+
     public function registerFlareHandlers(): self
     {
         $this->reporter->registerFlareHandlers();

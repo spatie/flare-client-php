@@ -36,11 +36,11 @@ class Tracer
     /** @var array @param array{max_spans: int, max_attributes_per_span: int, max_span_events_per_span: int, max_attributes_per_span_event: int}|null */
     public readonly array $limits;
 
-    protected string $currentTraceId;
+    protected ?string $currentTraceId = null;
 
-    protected string $currentSpanId;
+    protected ?string $currentSpanId = null;
 
-    protected bool $currentSpanIdAvailable;
+    protected bool $currentSpanIdAvailable = true;
 
     /**
      * @param array{max_spans: int, max_attributes_per_span: int, max_span_events_per_span: int, max_attributes_per_span_event: int}|null $limits
@@ -64,10 +64,6 @@ class Tracer
         public readonly bool $disabled = false,
         protected Closure|null $gracefulSpanEnderClosure = null,
     ) {
-        $this->currentTraceId = $this->ids->trace();
-        $this->currentSpanId = $this->ids->span();
-        $this->currentSpanIdAvailable = true;
-
         $this->limits = [
             'max_spans' => $limits['max_spans'] ?? self::DEFAULT_MAX_SPANS_LIMIT,
             'max_attributes_per_span' => $limits['max_attributes_per_span'] ?? self::DEFAULT_MAX_ATTRIBUTES_PER_SPAN_LIMIT,
@@ -81,35 +77,38 @@ class Tracer
         ?string $spanId = null,
         ?string $traceParent = null,
     ): bool {
-        if ($this->disabled === true) {
-            return false;
-        }
-
-        if ($this->sampling) {
+        if ($this->currentTraceId !== null) {
             return $this->sampling;
-        }
-
-        $parentSampled = null;
-
-        if ($traceParent !== null) {
-            $parsed = $this->ids->parseTraceparent($traceParent);
-
-            if ($parsed !== null) {
-                $traceId = $parsed['traceId'];
-                $spanId = $parsed['parentSpanId'];
-                $parentSampled = $parsed['sampling'];
-            }
         }
 
         if (($traceId === null) !== ($spanId === null)) {
             throw new Exception('If one of traceId or spanId is provided, both must be provided.');
         }
 
+        $parentSampled = null;
+        $currentSpanAvailable = true;
+
+        $parsedTraceParent = $traceParent !== null
+            ? $this->ids->parseTraceparent($traceParent)
+            : null;
+
         if ($traceId !== null && $spanId !== null) {
-            $this->currentTraceId = $traceId;
-            $this->currentSpanId = $spanId;
-            $this->currentSpanIdAvailable = false;
-            $this->spans = [];
+            $currentSpanAvailable = false;
+        }
+
+        if ($parsedTraceParent) {
+            $traceId = $parsedTraceParent['traceId'];
+            $spanId = $parsedTraceParent['parentSpanId'];
+            $parentSampled = $parsedTraceParent['sampling'];
+            $currentSpanAvailable = false;
+        }
+
+        $this->currentTraceId = $traceId ?? $this->ids->trace();
+        $this->currentSpanId = $spanId ?? $this->ids->span();
+        $this->currentSpanIdAvailable = $currentSpanAvailable;
+
+        if ($this->disabled === true) {
+            return false;
         }
 
         return $this->sampling = $this->sampler->shouldSample(
@@ -124,12 +123,8 @@ class Tracer
             $this->sampler->reset();
         }
 
-        if ($this->sampling === false) {
-            return;
-        }
-
-        $this->currentTraceId = $this->ids->trace();
-        $this->currentSpanId = $this->ids->span();
+        $this->currentTraceId = null;
+        $this->currentSpanId = null;
         $this->currentSpanIdAvailable = true;
         $this->sampling = false;
 
@@ -173,11 +168,8 @@ class Tracer
         }
 
         $this->paused = false;
-
-        if ($this->sampling === false) {
-            return;
-        }
-
+        $this->currentTraceId = null;
+        $this->currentSpanId = null;
         $this->currentSpanIdAvailable = true;
         $this->sampling = false;
         $this->spans = [];
@@ -213,12 +205,12 @@ class Tracer
         return $this->paused;
     }
 
-    public function currentTraceId(): string
+    public function currentTraceId(): ?string
     {
         return $this->currentTraceId;
     }
 
-    public function currentSpanId(): string
+    public function currentSpanId(): ?string
     {
         return $this->currentSpanId;
     }
@@ -232,7 +224,7 @@ class Tracer
 
     public function nextSpanId(): string
     {
-        if ($this->sampling && $this->currentSpanIdAvailable === true) {
+        if ($this->sampling && $this->currentSpanIdAvailable === true && $this->currentSpanId !== null) {
             $this->currentSpanIdAvailable = false;
 
             return $this->currentSpanId;
@@ -241,11 +233,15 @@ class Tracer
         return $this->ids->span();
     }
 
-    public function traceParent(): string
+    public function traceParent(): ?string
     {
+        if ($this->currentTraceId === null || $this->currentSpanId === null) {
+            return null;
+        }
+
         return $this->ids->traceParent(
-            $this->currentTraceId ?? '',
-            $this->currentSpanId ?? '',
+            $this->currentTraceId,
+            $this->currentSpanId,
             $this->isSampling(),
         );
     }
@@ -283,6 +279,10 @@ class Tracer
 
     public function currentSpan(): ?Span
     {
+        if ($this->currentSpanId === null) {
+            return null;
+        }
+
         return $this->spans[$this->currentSpanId] ?? null;
     }
 
@@ -312,12 +312,16 @@ class Tracer
         ?int $time = null,
         array $attributes = [],
     ): Span|AddSpanResult {
+        if ($this->currentTraceId === null) {
+            throw new Exception('Cannot start a span without an active trace.');
+        }
+
         // Order of operations is important here, do not inline!
         $parentSpanId = $this->currentParentSpanId();
         $spanId = $this->nextSpanId();
 
         $span = new Span(
-            traceId: $this->currentTraceId ?? $this->ids->trace(),
+            traceId: $this->currentTraceId,
             spanId: $spanId,
             parentSpanId: $parentSpanId,
             name: $name,

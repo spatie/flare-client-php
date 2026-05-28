@@ -324,6 +324,8 @@ class Lifecycle
         $this->stage = LifecycleStage::Terminated;
 
         if ($this->tracer->sampling === false) {
+            $this->tracer->endTrace();
+
             return;
         }
 

@@ -42,6 +42,8 @@ it('can report a span with tracing disabled', function () {
         'with_traces' => false,
     ]);
 
+    $flare->tracer->startTrace();
+
     $recorder->record('Span', 100);
 
     $spans = $recorder->getSpans();
@@ -65,6 +67,8 @@ it('does not store more than the max defined number of reported spans and remove
         'max_items_with_errors' => 35,
     ]);
 
+    $flare->tracer->startTrace();
+
     foreach (range(1, 40) as $i) {
         $recorder->pushSpan("Span - Hello {$i}");
         $recorder->popSpan();
@@ -82,6 +86,8 @@ it('can disable the limit of spans stored for reporting', function () {
         'with_errors' => true,
         'max_items_with_errors' => null,
     ]);
+
+    $flare->tracer->startTrace();
 
     foreach (range(1, 250) as $i) {
         $recorder->pushSpan("Hello {$i}");
@@ -163,6 +169,8 @@ it('a closure passed span will not be executed when not tracing or reporting', f
     }
 
     $flare = setupFlare(alwaysSampleTraces: true);
+
+    $flare->tracer->startTrace();
 
     expect(fn () => (new TestConcreteSpanRecorderExecution($flare->tracer, $flare->backTracer, config: [
         'with_traces' => true,
