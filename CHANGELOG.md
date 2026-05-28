@@ -2,6 +2,15 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 3.1.0 - 2026-05-28
+
+### What's Changed
+
+* Attach trace and span id to error reports by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/77
+* Tie trace ids to active lifetime, add Flare::start()/end() by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/78
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/3.0.1...3.1.0
+
 ## 3.0.1 - 2026-05-24
 
 **Full Changelog**: https://github.com/spatie/flare-client-php/compare/3.0.0...3.0.1
