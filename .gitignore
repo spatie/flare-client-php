@@ -7,3 +7,4 @@ coverage
 /.phpunit.cache/
 .claude/
 .chief/
+.conductor/
