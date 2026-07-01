@@ -112,7 +112,9 @@ it('can create entries for previous exceptions', function () {
     $flare = setupFlare();
 
     $rootException = new InvalidArgumentException('This is the root cause exception');
+    $rootLine = __LINE__ - 1;
     $childException = new RuntimeException('This is the previous exception', previous: $rootException);
+    $childLine = __LINE__ - 1;
     $reportedException = new Exception('This is the main exception', previous: $childException);
 
     $flare->report($reportedException);
@@ -124,10 +126,10 @@ it('can create entries for previous exceptions', function () {
     $report->expectPrevious(0)
         ->expectExceptionClass(RuntimeException::class)
         ->expectMessage('This is the previous exception')
-        ->expectStacktraceFrame(0)->expectFile(__FILE__);
+        ->expectStacktraceFrame(0)->expectFile(__FILE__)->expectLineNumber($childLine);
 
     $report->expectPrevious(1)
         ->expectExceptionClass(InvalidArgumentException::class)
         ->expectMessage('This is the root cause exception')
-        ->expectStacktraceFrame(0)->expectFile(__FILE__);
+        ->expectStacktraceFrame(0)->expectFile(__FILE__)->expectLineNumber($rootLine);
 });
