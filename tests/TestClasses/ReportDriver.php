@@ -19,7 +19,7 @@ class ReportDriver extends YamlDriver
 
         $yaml = parent::serialize($data);
 
-        return makePathsRelative($yaml);
+        return $this->normalizeEmptyCollections(makePathsRelative($yaml));
     }
 
     public function match($expected, $actual)
@@ -35,9 +35,16 @@ class ReportDriver extends YamlDriver
             $actual = Yaml::dump($actual, PHP_INT_MAX);
         }
 
-        $actual = makePathsRelative($actual);
+        $actual = $this->normalizeEmptyCollections(makePathsRelative($actual));
+        $expected = $this->normalizeEmptyCollections($expected);
 
         Assert::assertEquals($expected, $actual);
+    }
+
+    protected function normalizeEmptyCollections(string $yaml): string
+    {
+        // symfony/yaml >= 8.1 dumps empty maps as {} while older versions use {  }, normalize so snapshots match on every version
+        return preg_replace('/\{\s*\}/', '{}', $yaml);
     }
 
     protected function removeTimeValues(array $data): array

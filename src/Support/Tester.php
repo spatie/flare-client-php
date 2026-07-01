@@ -352,7 +352,7 @@ abstract class Tester
         return [
             ['Platform', PHP_OS],
             ['PHP', phpversion()],
-            ['spatie/flare-client-php', InstalledVersions::getVersion('spatie/flare-client-php')],
+            ['spatie/flare-client-php', InstalledVersions::getVersion('spatie/flare-client-php') ?? 'Unknown'],
             ['Curl', curl_version()['version'] ?? 'Unknown'],
             ['SSL', curl_version()['ssl_version'] ?? 'Unknown'],
         ];

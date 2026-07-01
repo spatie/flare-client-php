@@ -64,7 +64,7 @@ class StacktraceMapper
 
         $restructuredFrames[$firstErrorFrameIndex]->arguments = null; // Remove error arguments
 
-        return array_values(array_slice($restructuredFrames, $firstErrorFrameIndex));
+        return array_slice($restructuredFrames, $firstErrorFrameIndex);
     }
 
     /**

@@ -90,7 +90,6 @@ class ReportFactory implements WithAttributes
                 E_USER_ERROR => 'user_error',
                 E_USER_WARNING => 'user_warning',
                 E_USER_NOTICE => 'user_notice',
-                E_STRICT => 'strict',
                 E_RECOVERABLE_ERROR => 'recoverable_error',
                 E_DEPRECATED => 'deprecated',
                 E_USER_DEPRECATED => 'user_deprecated',
