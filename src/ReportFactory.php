@@ -176,7 +176,7 @@ class ReportFactory implements WithAttributes
             'exceptionClass' => $this->throwable::class,
             'seenAtUnixNano' => $this->time->getCurrentTime(),
             'message' => $this->message,
-            'stacktrace' => $this->stacktraceMapper->map($this->buildStacktrace(), $this->throwable),
+            'stacktrace' => $this->stacktraceMapper->map($this->buildStacktrace($this->throwable), $this->throwable),
             'previous' => $this->buildPrevious(),
             'openFrameIndex' => null,
             'applicationPath' => $this->applicationPath,
@@ -210,7 +210,7 @@ class ReportFactory implements WithAttributes
             $previous[] = [
                 'exceptionClass' => $previousThrowable::class,
                 'message' => $previousThrowable->getMessage(),
-                'stacktrace' => $this->stacktraceMapper->map($this->buildStacktrace(), $previousThrowable),
+                'stacktrace' => $this->stacktraceMapper->map($this->buildStacktrace($previousThrowable), $previousThrowable),
             ];
 
             $current = $previousThrowable;
@@ -220,9 +220,9 @@ class ReportFactory implements WithAttributes
     }
 
     /** @return array<Frame> */
-    protected function buildStacktrace(): array
+    protected function buildStacktrace(Throwable $throwable): array
     {
-        $frames = Backtrace::createForThrowable($this->throwable)
+        $frames = Backtrace::createForThrowable($throwable)
             ->withArguments($this->collectStackTraceArguments)
             ->reduceArguments($this->argumentReducers)
             ->applicationPath($this->applicationPath ?? '')
