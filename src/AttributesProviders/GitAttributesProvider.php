@@ -161,7 +161,7 @@ BASH;
             'git.is_dirty' => $parts[5] === 'dirty',
         ];
 
-        return array_filter($data, fn ($value) => is_bool($value) || ($value !== null && $value !== ''));
+        return array_filter($data, fn ($value) => is_bool($value) || $value !== null);
     }
 
     protected function getGitBaseDirectory(): ?string

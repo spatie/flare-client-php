@@ -1,126 +1,211 @@
 parameters:
 	ignoreErrors:
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:cache\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\CacheRecorder\\\\CacheRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
+			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/AttributesProviders/PhpRequestAttributesProvider.php
+
+		-
+			message: '#^Call to function method_exists\(\) with Symfony\\Component\\HttpFoundation\\Session\\SessionInterface and ''all'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/AttributesProviders/SymfonyRequestAttributesProvider.php
+
+		-
+			message: '#^Call to function array_key_exists\(\) with ''body'' and array\{time_unix_nano\: int, observed_time_unix_nano\: int, trace_id\?\: string, span_id\?\: string, flags\?\: string, severity_text\?\: string, severity_number\?\: int, body\: mixed, \.\.\.\} will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Exporters/OpenTelemetryJsonExporter.php
+
+		-
+			message: '#^Method Spatie\\FlareClient\\Flare\:\:cache\(\) should return Spatie\\FlareClient\\Recorders\\CacheRecorder\\CacheRecorder\|null but returns Spatie\\FlareClient\\Contracts\\Recorders\\Recorder\|null\.$#'
+			identifier: return.type
 			count: 1
 			path: src/Flare.php
 
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:command\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\CommandRecorder\\\\CommandRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
+			message: '#^Method Spatie\\FlareClient\\Flare\:\:command\(\) should return Spatie\\FlareClient\\Recorders\\CommandRecorder\\CommandRecorder\|null but returns Spatie\\FlareClient\\Contracts\\Recorders\\Recorder\|null\.$#'
+			identifier: return.type
 			count: 1
 			path: src/Flare.php
 
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:externalHttp\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\ExternalHttpRecorder\\\\ExternalHttpRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
+			message: '#^Method Spatie\\FlareClient\\Flare\:\:externalHttp\(\) should return Spatie\\FlareClient\\Recorders\\ExternalHttpRecorder\\ExternalHttpRecorder\|null but returns Spatie\\FlareClient\\Contracts\\Recorders\\Recorder\|null\.$#'
+			identifier: return.type
 			count: 1
 			path: src/Flare.php
 
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:filesystem\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\FilesystemRecorder\\\\FilesystemRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
+			message: '#^Method Spatie\\FlareClient\\Flare\:\:filesystem\(\) should return Spatie\\FlareClient\\Recorders\\FilesystemRecorder\\FilesystemRecorder\|null but returns Spatie\\FlareClient\\Contracts\\Recorders\\Recorder\|null\.$#'
+			identifier: return.type
 			count: 1
 			path: src/Flare.php
 
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:glow\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\GlowRecorder\\\\GlowRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
+			message: '#^Method Spatie\\FlareClient\\Flare\:\:glow\(\) should return Spatie\\FlareClient\\Recorders\\GlowRecorder\\GlowRecorder\|null but returns Spatie\\FlareClient\\Contracts\\Recorders\\Recorder\|null\.$#'
+			identifier: return.type
 			count: 1
 			path: src/Flare.php
 
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:job\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\JobRecorder\\\\JobRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
+			message: '#^Method Spatie\\FlareClient\\Flare\:\:job\(\) should return Spatie\\FlareClient\\Recorders\\JobRecorder\\JobRecorder\|null but returns Spatie\\FlareClient\\Contracts\\Recorders\\Recorder\|null\.$#'
+			identifier: return.type
 			count: 1
 			path: src/Flare.php
 
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:query\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\QueryRecorder\\\\QueryRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
+			message: '#^Method Spatie\\FlareClient\\Flare\:\:query\(\) should return Spatie\\FlareClient\\Recorders\\QueryRecorder\\QueryRecorder\|null but returns Spatie\\FlareClient\\Contracts\\Recorders\\Recorder\|null\.$#'
+			identifier: return.type
 			count: 1
 			path: src/Flare.php
 
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:queue\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\QueueRecorder\\\\QueueRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
+			message: '#^Method Spatie\\FlareClient\\Flare\:\:queue\(\) should return Spatie\\FlareClient\\Recorders\\QueueRecorder\\QueueRecorder\|null but returns Spatie\\FlareClient\\Contracts\\Recorders\\Recorder\|null\.$#'
+			identifier: return.type
 			count: 1
 			path: src/Flare.php
 
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:redisCommand\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\RedisCommandRecorder\\\\RedisCommandRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
+			message: '#^Method Spatie\\FlareClient\\Flare\:\:redisCommand\(\) should return Spatie\\FlareClient\\Recorders\\RedisCommandRecorder\\RedisCommandRecorder\|null but returns Spatie\\FlareClient\\Contracts\\Recorders\\Recorder\|null\.$#'
+			identifier: return.type
 			count: 1
 			path: src/Flare.php
 
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:request\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\RequestRecorder\\\\RequestRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
+			message: '#^Method Spatie\\FlareClient\\Flare\:\:request\(\) should return Spatie\\FlareClient\\Recorders\\RequestRecorder\\RequestRecorder\|null but returns Spatie\\FlareClient\\Contracts\\Recorders\\Recorder\|null\.$#'
+			identifier: return.type
 			count: 1
 			path: src/Flare.php
 
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:response\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\ResponseRecorder\\\\ResponseRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
+			message: '#^Method Spatie\\FlareClient\\Flare\:\:response\(\) should return Spatie\\FlareClient\\Recorders\\ResponseRecorder\\ResponseRecorder\|null but returns Spatie\\FlareClient\\Contracts\\Recorders\\Recorder\|null\.$#'
+			identifier: return.type
 			count: 1
 			path: src/Flare.php
 
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:routing\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\RoutingRecorder\\\\RoutingRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
+			message: '#^Method Spatie\\FlareClient\\Flare\:\:routing\(\) should return Spatie\\FlareClient\\Recorders\\RoutingRecorder\\RoutingRecorder\|null but returns Spatie\\FlareClient\\Contracts\\Recorders\\Recorder\|null\.$#'
+			identifier: return.type
 			count: 1
 			path: src/Flare.php
 
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:transaction\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\TransactionRecorder\\\\TransactionRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
+			message: '#^Method Spatie\\FlareClient\\Flare\:\:transaction\(\) should return Spatie\\FlareClient\\Recorders\\TransactionRecorder\\TransactionRecorder\|null but returns Spatie\\FlareClient\\Contracts\\Recorders\\Recorder\|null\.$#'
+			identifier: return.type
 			count: 1
 			path: src/Flare.php
 
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Flare\\:\\:view\\(\\) should return Spatie\\\\FlareClient\\\\Recorders\\\\ViewRecorder\\\\ViewRecorder\\|null but returns Spatie\\\\FlareClient\\\\Contracts\\\\Recorders\\\\Recorder\\|null\\.$#"
+			message: '#^Method Spatie\\FlareClient\\Flare\:\:view\(\) should return Spatie\\FlareClient\\Recorders\\ViewRecorder\\ViewRecorder\|null but returns Spatie\\FlareClient\\Contracts\\Recorders\\Recorder\|null\.$#'
+			identifier: return.type
 			count: 1
 			path: src/Flare.php
 
 		-
-			message: "#^Access to an undefined property Spatie\\\\FlareClient\\\\Contracts\\\\FlareCollectType\\:\\:\\$value\\.$#"
+			message: '#^Access to an undefined property Spatie\\FlareClient\\Contracts\\FlareCollectType\:\:\$value\.$#'
+			identifier: property.notFound
 			count: 4
 			path: src/FlareConfig.php
 
 		-
-			message: "#^Unsafe usage of new static\\(\\)\\.$#"
+			message: '#^Property Spatie\\FlareClient\\FlareConfig\:\:\$collects \(array\<string, array\{type\: Spatie\\FlareClient\\Contracts\\FlareCollectType, ignored\: bool\|null, options\: array\}\>\) does not accept non\-empty\-array\<array\{type\: Spatie\\FlareClient\\Contracts\\FlareCollectType, ignored\: bool\|null, options\?\: array\}\>\.$#'
+			identifier: assign.propertyType
 			count: 1
 			path: src/FlareConfig.php
 
 		-
-			message: "#^Property Spatie\\\\FlareClient\\\\Logger\\:\\:\\$logs \\(array\\<int, array\\{timeUnixNano\\: int, observedTimeUnixNano\\: int, traceId\\?\\: string, spanId\\?\\: string, flags\\?\\: string, severityText\\?\\: string, severityNumber\\?\\: int, body\\: mixed, \\.\\.\\.\\}\\>\\) does not accept non\\-empty\\-array\\<int, array\\{body\\: mixed, timeUnixNano\\?\\: int\\|int\\<1, max\\>, observedTimeUnixNano\\?\\: int\\|int\\<1, max\\>, traceId\\?\\: string, spanId\\?\\: string, flags\\?\\: string, severityText\\?\\: string, severityNumber\\?\\: int\\|int\\<1, max\\>, \\.\\.\\.\\}\\>\\.$#"
+			message: '#^Property Spatie\\FlareClient\\FlareConfig\:\:\$collects \(array\<string, array\{type\: Spatie\\FlareClient\\Contracts\\FlareCollectType, ignored\: bool\|null, options\: array\}\>\) does not accept non\-empty\-array\<array\{type\: Spatie\\FlareClient\\Contracts\\FlareCollectType, ignored\?\: bool\|null, options\: array\}\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: src/FlareConfig.php
+
+		-
+			message: '#^Unsafe usage of new static\(\)\.$#'
+			identifier: new.static
+			count: 1
+			path: src/FlareConfig.php
+
+		-
+			message: '#^Property Spatie\\FlareClient\\FlareProvider\:\:\$container on left side of \?\?\= is not nullable nor uninitialized\.$#'
+			identifier: nullCoalesce.initializedProperty
+			count: 1
+			path: src/FlareProvider.php
+
+		-
+			message: '#^Property Spatie\\FlareClient\\Logger\:\:\$logs \(array\<int, array\{timeUnixNano\: int, observedTimeUnixNano\: int, traceId\?\: string, spanId\?\: string, flags\?\: string, severityText\?\: string, severityNumber\?\: int, body\: mixed, \.\.\.\}\>\) does not accept non\-empty\-array\<int, array\{body\: mixed, timeUnixNano\?\: int, observedTimeUnixNano\?\: int, traceId\?\: string, spanId\?\: string, flags\?\: string, severityText\?\: string, severityNumber\?\: int, \.\.\.\}\>\.$#'
+			identifier: assign.propertyType
 			count: 1
 			path: src/Logger.php
 
 		-
-			message: "#^Class Spatie\\\\FlareClient\\\\Recorders\\\\ExternalHttpRecorder\\\\Guzzle\\\\FlareHandlerStack extends @final class GuzzleHttp\\\\HandlerStack\\.$#"
+			message: '#^Class Spatie\\FlareClient\\Recorders\\ExternalHttpRecorder\\Guzzle\\FlareHandlerStack extends @final class GuzzleHttp\\HandlerStack\.$#'
+			identifier: class.extendsFinalByPhpDoc
 			count: 1
 			path: src/Recorders/ExternalHttpRecorder/Guzzle/FlareHandlerStack.php
 
 		-
-			message: "#^Instanceof between Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent and Spatie\\\\FlareClient\\\\Spans\\\\Span will always evaluate to false\\.$#"
+			message: '#^Cannot unset property Spatie\\FlareClient\\ReportFactory\:\:\$throwable because it might have hooks in a subclass\.$#'
+			identifier: unset.possiblyHookedProperty
 			count: 1
-			path: src/Recorders/SpanEventsRecorder.php
+			path: src/ReportFactory.php
 
 		-
-			message: "#^Instanceof between \\*NEVER\\* and Spatie\\\\FlareClient\\\\Spans\\\\SpanEvent will always evaluate to false\\.$#"
+			message: '#^Property Spatie\\FlareClient\\ReportFactory\:\:\$resource in isset\(\) is not nullable nor uninitialized\.$#'
+			identifier: isset.initializedProperty
 			count: 1
-			path: src/Recorders/SpansRecorder.php
+			path: src/ReportFactory.php
 
 		-
-			message: "#^Match arm is unreachable because previous comparison is always true\\.$#"
-			count: 1
-			path: src/Recorders/SpansRecorder.php
-
-		-
-			message: "#^Parameter \\#1 \\$callback of function set_error_handler expects \\(callable\\(int, string, string, int\\)\\: bool\\)\\|null, array\\{\\$this\\(Spatie\\\\FlareClient\\\\Reporter\\), 'handleError'\\} given\\.$#"
+			message: '#^Parameter \#1 \$callback of function set_error_handler expects \(callable\(int, string, string, int\)\: bool\)\|null, array\{\$this\(Spatie\\FlareClient\\Reporter\), ''handleError''\} given\.$#'
+			identifier: argument.type
 			count: 2
 			path: src/Reporter.php
 
 		-
-			message: "#^Method Spatie\\\\FlareClient\\\\Support\\\\Container\\:\\:resolveAutowiringDefinition\\(\\) should return array\\<string, array\\{id\\: class\\-string, default\\?\\: mixed\\}\\>\\|null but returns array\\<non\\-empty\\-string, array\\{id\\: string, default\\: mixed\\}\\>\\.$#"
+			message: '#^Parameter \#3 \$value of function curl_setopt expects array\|string, string\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Senders/CurlSender.php
+
+		-
+			message: '#^Parameter \#3 \$value of function curl_setopt expects non\-empty\-string, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Senders/CurlSender.php
+
+		-
+			message: '#^Parameter \#3 \$value of function curl_setopt expects non\-empty\-string, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Senders/DaemonSender.php
+
+		-
+			message: '#^Method Spatie\\FlareClient\\Support\\Container\:\:resolveAutowiringDefinition\(\) should return array\<string, array\{id\: class\-string, default\?\: mixed\}\>\|null but returns array\<non\-empty\-string, array\{id\: string, default\: mixed\}\>\.$#'
+			identifier: return.type
 			count: 1
 			path: src/Support/Container.php
 
 		-
-			message: "#^Access to an undefined property Spatie\\\\FlareClient\\\\Contracts\\\\FlareSpanType\\:\\:\\$value\\.$#"
+			message: '#^Parameter \#1 \$array \(list\<array\|null\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: src/Support/OpenTelemetryAttributeMapper.php
+
+		-
+			message: '#^Access to an undefined property Spatie\\FlareClient\\Contracts\\FlareSpanType\:\:\$value\.$#'
+			identifier: property.notFound
 			count: 2
 			path: src/Tracer.php
 
 		-
-			message: "#^Comparison operation \"\\>\" between int\\<1, max\\> and 0 is always true\\.$#"
+			message: '#^Comparison operation "\>" between int\<1, max\> and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 1
+			path: src/Tracer.php
+
+		-
+			message: '#^Trying to invoke \(Closure\(Spatie\\FlareClient\\Spans\\SpanEvent\)\: \(Spatie\\FlareClient\\Spans\\SpanEvent\|void\|null\)\)\|null but it might not be a callable\.$#'
+			identifier: callable.nonCallable
 			count: 1
 			path: src/Tracer.php

@@ -46,7 +46,7 @@ class SymfonyInputCommandAttributesProvider implements CommandAttributesProvider
                 continue;
             }
 
-            if (is_bool($option) && $option === true) {
+            if ($option === true) {
                 $options[] = "--{$key}";
 
                 continue;

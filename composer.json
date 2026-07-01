@@ -27,8 +27,9 @@
         "friendsofphp/php-cs-fixer": "^3.89",
         "pestphp/pest": "^2.36.0|^3.0|^4.0",
         "phpstan/extension-installer": "^1.4",
-        "phpstan/phpstan-deprecation-rules": "^1.2",
-        "phpstan/phpstan-phpunit": "^1.4",
+        "phpstan/phpstan": "^2.0",
+        "phpstan/phpstan-deprecation-rules": "^2.0",
+        "phpstan/phpstan-phpunit": "^2.0",
         "spatie/invade": "^2.1",
         "spatie/pest-plugin-snapshots": "^2.2"
     },
