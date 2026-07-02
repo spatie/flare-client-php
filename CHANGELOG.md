@@ -2,6 +2,14 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 3.1.2 - 2026-07-02
+
+### What's Changed
+
+* Strip embedded credentials from git remote URL by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/81
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/3.1.1...3.1.2
+
 ## 3.1.1 - 2026-07-01
 
 ### What's Changed
