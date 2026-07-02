@@ -11,6 +11,10 @@ class SystemMemory implements Memory
 
     public function resetPeakMemoryUsage(): void
     {
+        if (PHP_VERSION_ID < 80200) {
+            return;
+        }
+
         memory_reset_peak_usage();
     }
 }

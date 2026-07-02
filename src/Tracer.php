@@ -365,7 +365,8 @@ class Tracer
             $span->addAttributes($additionalAttributes);
         }
 
-        if ($includeMemoryUsage) {
+        // memory_reset_peak_usage() only exists on PHP 8.2+, so peak memory cannot be scoped per span before then
+        if ($includeMemoryUsage && PHP_VERSION_ID >= 80200) {
             $span->addAttribute('flare.peak_memory_usage', $this->memory->getPeakMemoryUsage());
         }
 

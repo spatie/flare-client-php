@@ -467,7 +467,20 @@ it('can include the peak memory usage when ending a span', function () {
         ->expectAttributes([
             'flare.peak_memory_usage' => 5 * 1024 * 1024,
         ]);
-});
+})->skip(PHP_VERSION_ID < 80200, 'Peak memory usage cannot be tracked before PHP 8.2');
+
+it('does not send the peak memory usage attribute before PHP 8.2', function () {
+    $tracer = setupFlare(alwaysSampleTraces: true)->tracer;
+
+    $tracer->startTrace();
+    $tracer->startSpan('Some span');
+    $tracer->endSpan(includeMemoryUsage: true);
+    $tracer->endTrace();
+
+    $span = FakeApi::lastTrace()->expectSpan(0);
+
+    expect($span->attributes())->not->toHaveKey('flare.peak_memory_usage');
+})->skip(PHP_VERSION_ID >= 80200, 'Only relevant before PHP 8.2');
 
 it('can temporarily pause a trace sampling', function () {
     $tracer = setupFlare(alwaysSampleTraces: true)->tracer;
