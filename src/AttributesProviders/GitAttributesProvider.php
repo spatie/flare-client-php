@@ -58,7 +58,7 @@ class GitAttributesProvider implements AttributesProvider
 
         if ($config = file_get_contents($gitDirectory.'/config')) {
             if (preg_match('/\[remote "origin"\][^[]*url\s*=\s*(.+?)$/m', $config, $matches)) {
-                $data['git.remote'] = trim($matches[1]);
+                $data['git.remote'] = $this->sanitizeRemoteUrl(trim($matches[1]));
             }
         }
 
@@ -156,12 +156,21 @@ BASH;
             'git.hash' => $parts[0] ?: null,
             'git.message' => $parts[1] ?: null,
             'git.tag' => $parts[2] ?: null,
-            'git.remote' => $parts[3] ?: null,
+            'git.remote' => $parts[3] ? $this->sanitizeRemoteUrl($parts[3]) : null,
             'git.branch' => $parts[4] ?: null,
             'git.is_dirty' => $parts[5] === 'dirty',
         ];
 
         return array_filter($data, fn ($value) => is_bool($value) || $value !== null);
+    }
+
+    protected function sanitizeRemoteUrl(string $url): string
+    {
+        if (! preg_match('#^(https?://)[^/]*@(.+)$#i', $url, $matches)) {
+            return $url;
+        }
+
+        return $matches[1].$matches[2];
     }
 
     protected function getGitBaseDirectory(): ?string
