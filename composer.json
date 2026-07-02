@@ -56,6 +56,11 @@
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "phpstan/extension-installer": true
+        },
+        "policy": {
+            "advisories": {
+                "block": false
+            }
         }
     },
     "prefer-stable": true,
