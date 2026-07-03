@@ -85,18 +85,30 @@ class Reporter
     }
 
     /**
+     * @param Throwable|ReportFactory $throwable A throwable to build a report
+     *                                           for, or an already built report
+     *                                           (from the uncaught handler) to
+     *                                           render and send. When a report is
+     *                                           passed it is rendered first, then
+     *                                           the ignore and filter gating runs.
      * @param Closure(ReportFactory $report):void|null $callback
-     * @param ReportFactory|null $report An already built report to send instead
-     *                                   of building a fresh one. Lets the caller
-     *                                   build (and render) the report first while
-     *                                   the ignore and filter gating still runs.
      */
     public function report(
-        Throwable $throwable,
+        Throwable|ReportFactory $throwable,
         ?Closure $callback = null,
-        ?bool $handled = null,
-        ?ReportFactory $report = null
+        ?bool $handled = null
     ): ?ReportFactory {
+        $report = null;
+
+        if ($throwable instanceof ReportFactory) {
+            $report = $throwable;
+            $throwable = $report->throwable;
+
+            if ($this->renderReportCallable !== null) {
+                ($this->renderReportCallable)($report);
+            }
+        }
+
         if (! $this->shouldReport($throwable)) {
             $this->tracer->gracefullyEndSpans();
 
@@ -217,7 +229,12 @@ class Reporter
 
     public function handleException(Throwable $throwable): void
     {
-        $this->renderAndReport($throwable);
+        // When a renderer is registered, build the report first so it can be
+        // rendered even for exceptions that are ignored or filtered from being
+        // sent. report() renders the passed report, then applies the gating.
+        $this->report(
+            $this->renderReportCallable !== null ? $this->createReport($throwable) : $throwable
+        );
 
         if ($this->previousExceptionHandler && is_callable($this->previousExceptionHandler)) {
             call_user_func($this->previousExceptionHandler, $throwable);
@@ -228,7 +245,9 @@ class Reporter
     {
         $exception = new ErrorException($message, 0, $code, $file, $line);
 
-        $this->renderAndReport($exception);
+        $this->report(
+            $this->renderReportCallable !== null ? $this->createReport($exception) : $exception
+        );
 
         if ($this->previousErrorHandler) {
             call_user_func(
@@ -239,24 +258,6 @@ class Reporter
                 $line
             );
         }
-    }
-
-    protected function renderAndReport(Throwable $throwable): void
-    {
-        if ($this->renderReportCallable === null) {
-            $this->report($throwable);
-
-            return;
-        }
-
-        // Build the report once so it can be rendered locally even when the
-        // exception is ignored or filtered from being sent to Flare. report()
-        // still runs the ignore and filter gating before sending.
-        $report = $this->createReport($throwable);
-
-        ($this->renderReportCallable)($report);
-
-        $this->report($throwable, report: $report);
     }
 
     protected function addReportToTrace(Throwable $throwable, ?bool $handled, ReportFactory $report): void

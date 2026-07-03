@@ -14,6 +14,7 @@ use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Sampling\NeverSampler;
 use Spatie\FlareClient\Sampling\Sampler;
 use Spatie\FlareClient\Scopes\Scope;
+use Spatie\FlareClient\Senders\NullSender;
 use Spatie\FlareClient\Senders\Sender;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Support\BackTracer;
@@ -59,9 +60,9 @@ class FlareProvider
     {
         $this->container ??= Container::instance();
 
-        $this->container->singleton(Sender::class, fn () => new $this->config->sender(
-            $this->config->senderConfig
-        ));
+        $this->container->singleton(Sender::class, fn () => $this->mode === FlareMode::Ignition
+            ? new NullSender()
+            : new $this->config->sender($this->config->senderConfig));
 
         $this->container->singleton(Api::class, fn () => new ($this->config->api)(
             apiToken: $this->config->apiToken ?? 'No Api Token provided',
@@ -71,7 +72,6 @@ class FlareProvider
             resource: $this->container->get(Resource::class),
             scope: $this->container->get(Scope::class),
             disableQueue: $this->disableApiQueue,
-            sendingDisabled: $this->mode === FlareMode::Ignition,
         ));
 
         $this->container->singleton(EntryPointResolver::class, fn () => new EntryPointResolver());
