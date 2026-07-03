@@ -171,7 +171,7 @@ class Flare
      */
     public function renderReportsUsing(Closure $renderReportCallable): static
     {
-        $this->reporter->renderReportsUsing($renderReportCallable);
+        $this->reporter->reportRenderer($renderReportCallable);
 
         return $this;
     }

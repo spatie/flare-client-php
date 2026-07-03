@@ -25,12 +25,11 @@ class Reporter
 
     protected mixed $previousErrorHandler = null;
 
-    protected null|Closure $renderReportCallable = null;
-
     /**
      * @param array<int, FlareMiddleware> $middleware
      * @param null|Closure(Exception): bool $filterExceptionsCallable
      * @param null|Closure(ReportFactory): bool $filterReportsCallable
+     * @param null|Closure(ReportFactory): void $reportRenderer
      */
     public function __construct(
         protected readonly Api $api,
@@ -45,6 +44,7 @@ class Reporter
         protected readonly array $middleware,
         protected readonly Recorders $recorders,
         protected readonly bool $addReportsToTraces,
+        protected null|Closure $reportRenderer = null,
     ) {
     }
 
@@ -77,36 +77,27 @@ class Reporter
         return $this;
     }
 
-    public function renderReportsUsing(Closure $renderReportCallable): static
+    public function reportRenderer(Closure $renderReportCallable): static
     {
-        $this->renderReportCallable = $renderReportCallable;
+        $this->reportRenderer = $renderReportCallable;
 
         return $this;
     }
 
     /**
-     * @param Throwable|ReportFactory $throwable A throwable to build a report
-     *                                           for, or an already built report
-     *                                           (from the uncaught handler) to
-     *                                           render and send. When a report is
-     *                                           passed it is rendered first, then
-     *                                           the ignore and filter gating runs.
      * @param Closure(ReportFactory $report):void|null $callback
      */
     public function report(
-        Throwable|ReportFactory $throwable,
+        Throwable $throwable,
         ?Closure $callback = null,
         ?bool $handled = null
     ): ?ReportFactory {
         $report = null;
 
-        if ($throwable instanceof ReportFactory) {
-            $report = $throwable;
-            $throwable = $report->throwable;
+        if ($handled === false && $this->reportRenderer) {
+            $report = $this->createReport($throwable, $callback, $handled);
 
-            if ($this->renderReportCallable !== null) {
-                ($this->renderReportCallable)($report);
-            }
+            ($this->reportRenderer)($report);
         }
 
         if (! $this->shouldReport($throwable)) {
@@ -120,7 +111,6 @@ class Reporter
         $this->addReportToTrace($throwable, $handled, $report);
 
         $this->tracer->gracefullyEndSpans();
-
 
         if ($this->filterReportsCallable && ($this->filterReportsCallable)($report) === false) {
             return null;
@@ -229,12 +219,7 @@ class Reporter
 
     public function handleException(Throwable $throwable): void
     {
-        // When a renderer is registered, build the report first so it can be
-        // rendered even for exceptions that are ignored or filtered from being
-        // sent. report() renders the passed report, then applies the gating.
-        $this->report(
-            $this->renderReportCallable !== null ? $this->createReport($throwable) : $throwable
-        );
+        $this->report($throwable, handled: false);
 
         if ($this->previousExceptionHandler && is_callable($this->previousExceptionHandler)) {
             call_user_func($this->previousExceptionHandler, $throwable);
@@ -245,9 +230,7 @@ class Reporter
     {
         $exception = new ErrorException($message, 0, $code, $file, $line);
 
-        $this->report(
-            $this->renderReportCallable !== null ? $this->createReport($exception) : $exception
-        );
+        $this->report($exception, handled: false);
 
         if ($this->previousErrorHandler) {
             call_user_func(

@@ -60,9 +60,6 @@ class FlareProvider
     {
         $this->container ??= Container::instance();
 
-        // Without an API token there is nothing to authenticate with, so never
-        // transmit: reports and traces are still built (and rendered by Ignition)
-        // but the send is a no-op.
         $this->container->singleton(Sender::class, fn () => empty($this->config->apiToken)
             ? new NullSender()
             : new $this->config->sender($this->config->senderConfig));
@@ -232,7 +229,8 @@ class FlareProvider
                 reportFactory: $this->container->get(ReportFactory::class),
                 middleware: $middleware,
                 recorders: $recorders,
-                addReportsToTraces: $collects->collectErrorsWithTraces
+                addReportsToTraces: $collects->collectErrorsWithTraces,
+                reportRenderer: $this->config->reportRendererCallable,
             );
         });
 
