@@ -49,9 +49,7 @@ class FlareProvider
         protected bool $disableApiQueue = false
     ) {
         $this->registerRecorderAndMiddlewaresCallback ??= $this->defaultRegisterRecordersAndMiddlewaresCallback();
-        $this->mode = match (true) {
-            // TODO: disabled until we have Ignition support
-            //            empty($this->config->apiToken) && $this->config->applicationStage === 'local' => FlareMode::Ignition,
+        $this->mode = $this->config->mode ?? match (true) {
             empty($this->config->apiToken) => FlareMode::Disabled,
             default => FlareMode::Enabled,
         };
@@ -73,6 +71,7 @@ class FlareProvider
             resource: $this->container->get(Resource::class),
             scope: $this->container->get(Scope::class),
             disableQueue: $this->disableApiQueue,
+            sendingDisabled: $this->mode === FlareMode::Ignition,
         ));
 
         $this->container->singleton(EntryPointResolver::class, fn () => new EntryPointResolver());
@@ -243,6 +242,7 @@ class FlareProvider
             ids: $this->container->get(Ids::class),
             time: $this->container->get(Time::class),
             sentReports: $this->container->get(SentReports::class),
+            mode: $this->mode,
             resource: $this->container->get(Resource::class),
             scope: $this->container->get(Scope::class),
             recorders: $this->container->get(Recorders::class),

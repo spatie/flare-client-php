@@ -36,6 +36,7 @@ class Api
         protected Scope $scope,
         protected Sender $sender,
         protected bool $disableQueue,
+        protected bool $sendingDisabled = false,
     ) {
     }
 
@@ -136,6 +137,10 @@ class Api
 
     protected function sendEntity(FlareEntityType $type, mixed $payload, bool $immediately, bool $test = false): void
     {
+        if ($this->sendingDisabled) {
+            return;
+        }
+
         if ($immediately === false && $test === false && $this->disableQueue === false) {
             match ($type) {
                 FlareEntityType::Errors => $this->reportQueue[] = $payload,

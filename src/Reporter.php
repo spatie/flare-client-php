@@ -100,10 +100,36 @@ class Reporter
 
         $report = $this->createReport($throwable, $callback, $handled);
 
-        return $this->finishReport($report, $throwable, $handled);
+        $this->addReportToTrace($throwable, $handled, $report);
+
+        $this->tracer->gracefullyEndSpans();
+
+
+        if ($this->filterReportsCallable && ($this->filterReportsCallable)($report) === false) {
+            return null;
+        }
+
+        // This is in the case we have errors before or after a lifecycle or subtask or during a termination phase
+        // Famous one is Laravel Jobs which end the subtask before the exception is handled or dispatch after
+        // response which can throw an exception and will completely fail the php process
+        $sendImmediately = match ($this->lifecycle->getStage()) {
+            LifecycleStage::Idle, LifecycleStage::Terminating, LifecycleStage::Terminated => true,
+            default => false,
+        };
+
+        $reportPayload = $this->api->report($report, $sendImmediately);
+
+        $this->sentReports->add($reportPayload);
+
+        return $report;
     }
 
-    protected function finishReport(
+    /**
+     * Send an already built report, applying the same trace attachment and
+     * report filtering as report(). Used by the uncaught handler so a report
+     * can be built (and rendered) once before deciding whether to send it.
+     */
+    public function finalizeReport(
         ReportFactory $report,
         Throwable $throwable,
         ?bool $handled = null
@@ -116,9 +142,6 @@ class Reporter
             return null;
         }
 
-        // This is in the case we have errors before or after a lifecycle or subtask or during a termination phase
-        // Famous one is Laravel Jobs which end the subtask before the exception is handled or dispatch after
-        // response which can throw an exception and will completely fail the php process
         $sendImmediately = match ($this->lifecycle->getStage()) {
             LifecycleStage::Idle, LifecycleStage::Terminating, LifecycleStage::Terminated => true,
             default => false,
@@ -258,7 +281,7 @@ class Reporter
         ($this->renderReportCallable)($report);
 
         if ($this->shouldReport($throwable)) {
-            $this->finishReport($report, $throwable);
+            $this->finalizeReport($report, $throwable);
 
             return;
         }
