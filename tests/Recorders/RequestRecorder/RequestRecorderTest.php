@@ -2,6 +2,7 @@
 
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\FlareConfig;
+use Spatie\FlareClient\Memory\SystemMemory;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Tests\Shared\FakeMemory;
 use Symfony\Component\HttpFoundation\Request;
@@ -31,7 +32,7 @@ it('can trace requests', function () {
     expect($span->attributes)
         ->toHaveKey('flare.span_type', SpanType::Request);
 
-    if (PHP_VERSION_ID >= 80200) {
+    if (SystemMemory::phpVersionCanTrackMemory()) {
         expect($span->attributes)->toHaveKey('flare.peak_memory_usage', 5 * 1024 * 1024);
     }
 });

@@ -10,6 +10,7 @@ use Spatie\FlareClient\Enums\AddSpanResult;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanStatusCode;
 use Spatie\FlareClient\Memory\Memory;
+use Spatie\FlareClient\Memory\SystemMemory;
 use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
 use Spatie\FlareClient\Sampling\DeferrableSampler;
 use Spatie\FlareClient\Sampling\RateSampler;
@@ -365,8 +366,7 @@ class Tracer
             $span->addAttributes($additionalAttributes);
         }
 
-        // memory_reset_peak_usage() only exists on PHP 8.2+, so peak memory cannot be scoped per span before then
-        if ($includeMemoryUsage && PHP_VERSION_ID >= 80200) {
+        if ($includeMemoryUsage && SystemMemory::phpVersionCanTrackMemory()) {
             $span->addAttribute('flare.peak_memory_usage', $this->memory->getPeakMemoryUsage());
         }
 

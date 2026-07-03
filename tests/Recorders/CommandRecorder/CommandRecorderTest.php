@@ -5,6 +5,7 @@ use Spatie\FlareClient\EntryPoint\EntryPointResolver;
 use Spatie\FlareClient\Enums\EntryPointType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\FlareConfig;
+use Spatie\FlareClient\Memory\SystemMemory;
 use Spatie\FlareClient\Support\Container;
 use Spatie\FlareClient\Tests\Shared\FakeApi;
 use Spatie\FlareClient\Tests\Shared\FakeMemory;
@@ -62,7 +63,7 @@ it('records the exit code and peak memory usage on recordEnd', function () {
         ->toHaveKey('process.exit_code', 2)
         ->toHaveKey('flare.peak_memory_usage', 7 * 1024 * 1024)
         ->toHaveKey('custom.key', 'value');
-})->skip(PHP_VERSION_ID < 80200, 'Peak memory usage cannot be tracked before PHP 8.2');
+})->skip(! SystemMemory::phpVersionCanTrackMemory(), 'Peak memory usage cannot be tracked before PHP 8.2');
 
 it('records a span from a Symfony InputInterface', function () {
     $flare = setupFlare(fn (FlareConfig $config) => $config->collectCommands(), alwaysSampleTraces: true);

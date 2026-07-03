@@ -9,6 +9,7 @@ use Spatie\FlareClient\Enums\EntryPointType;
 use Spatie\FlareClient\Enums\SpanStatusCode;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\FlareConfig;
+use Spatie\FlareClient\Memory\SystemMemory;
 use Spatie\FlareClient\Sampling\NeverSampler;
 use Spatie\FlareClient\Sampling\SamplingRule;
 use Spatie\FlareClient\Spans\Span;
@@ -467,7 +468,7 @@ it('can include the peak memory usage when ending a span', function () {
         ->expectAttributes([
             'flare.peak_memory_usage' => 5 * 1024 * 1024,
         ]);
-})->skip(PHP_VERSION_ID < 80200, 'Peak memory usage cannot be tracked before PHP 8.2');
+})->skip(! SystemMemory::phpVersionCanTrackMemory(), 'Peak memory usage cannot be tracked before PHP 8.2');
 
 it('does not send the peak memory usage attribute before PHP 8.2', function () {
     $tracer = setupFlare(alwaysSampleTraces: true)->tracer;
@@ -480,7 +481,7 @@ it('does not send the peak memory usage attribute before PHP 8.2', function () {
     $span = FakeApi::lastTrace()->expectSpan(0);
 
     expect($span->attributes())->not->toHaveKey('flare.peak_memory_usage');
-})->skip(PHP_VERSION_ID >= 80200, 'Only relevant before PHP 8.2');
+})->skip(SystemMemory::phpVersionCanTrackMemory(), 'Only relevant before PHP 8.2');
 
 it('can temporarily pause a trace sampling', function () {
     $tracer = setupFlare(alwaysSampleTraces: true)->tracer;
