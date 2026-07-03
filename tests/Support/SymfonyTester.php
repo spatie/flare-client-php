@@ -63,8 +63,11 @@ it('can send a trace', function () {
         ->expectParentId($applicationSpan)
         ->expectType(SpanType::Command)
         ->expectAttribute('process.command', 'flare:test')
-        ->expectAttribute('process.exit_code', 0)
-        ->expectHasAttribute('flare.peak_memory_usage');
+        ->expectAttribute('process.exit_code', 0);
+
+    if (PHP_VERSION_ID >= 80200) {
+        $commandSpan->expectHasAttribute('flare.peak_memory_usage');
+    }
 
     $commandSpan
         ->expectSpanEventCount(1)

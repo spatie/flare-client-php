@@ -29,8 +29,11 @@ it('can trace requests', function () {
         ->traceId->toBe($flare->tracer->currentTraceId());
 
     expect($span->attributes)
-        ->toHaveKey('flare.span_type', SpanType::Request)
-        ->toHaveKey('flare.peak_memory_usage', 5 * 1024 * 1024);
+        ->toHaveKey('flare.span_type', SpanType::Request);
+
+    if (PHP_VERSION_ID >= 80200) {
+        expect($span->attributes)->toHaveKey('flare.peak_memory_usage', 5 * 1024 * 1024);
+    }
 });
 
 it('does not unsample when url does not match ignored list', function () {

@@ -99,7 +99,7 @@ it('records the end of a job and includes peak memory usage', function () {
     expect($span->attributes)
         ->toHaveKey('flare.peak_memory_usage', 8 * 1024 * 1024)
         ->toHaveKey('custom.key', 'value');
-});
+})->skip(PHP_VERSION_ID < 80200, 'Peak memory usage cannot be tracked before PHP 8.2');
 
 it('pauses sampling for an ignored job by name and resumes after recordEnd in non-subtask mode', function () {
     $flare = setupFlare(
