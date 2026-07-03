@@ -10,6 +10,7 @@ use Spatie\FlareClient\Enums\AddSpanResult;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanStatusCode;
 use Spatie\FlareClient\Memory\Memory;
+use Spatie\FlareClient\Memory\SystemMemory;
 use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
 use Spatie\FlareClient\Sampling\DeferrableSampler;
 use Spatie\FlareClient\Sampling\RateSampler;
@@ -365,7 +366,7 @@ class Tracer
             $span->addAttributes($additionalAttributes);
         }
 
-        if ($includeMemoryUsage) {
+        if ($includeMemoryUsage && SystemMemory::phpVersionCanTrackMemory()) {
             $span->addAttribute('flare.peak_memory_usage', $this->memory->getPeakMemoryUsage());
         }
 
