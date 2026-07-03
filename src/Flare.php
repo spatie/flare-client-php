@@ -53,13 +53,12 @@ class Flare
 
     public static function make(
         string|FlareConfig $apiToken,
-        ?Closure $reportRenderer = null,
     ): self {
         $config = is_string($apiToken) ? FlareConfig::make($apiToken)->useDefaults() : $apiToken;
 
         $container = Container::instance();
 
-        $provider = new FlareProvider($config, $container, reportRenderer: $reportRenderer);
+        $provider = new FlareProvider($config, $container);
 
         $provider->register();
         $provider->boot();
