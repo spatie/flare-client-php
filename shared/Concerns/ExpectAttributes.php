@@ -30,6 +30,15 @@ trait ExpectAttributes
         return $this;
     }
 
+    public function expectAttributeIf(bool $condition, string $key, mixed $value): self
+    {
+        if (! $condition) {
+            return $this;
+        }
+
+        return $this->expectAttribute($key, $value);
+    }
+
     public function expectHasAttribute(string $key): self
     {
         expect($this->attributes())->toHaveKey($key);
