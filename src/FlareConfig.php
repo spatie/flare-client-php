@@ -94,7 +94,6 @@ class FlareConfig
         public ?int $reportErrorLevels = null,
         public ?Closure $filterExceptionsCallable = null,
         public ?Closure $filterReportsCallable = null,
-        public ?Closure $reportRendererCallable = null,
         public array $overriddenGroupings = [],
 
         // Tracing
@@ -649,16 +648,6 @@ class FlareConfig
     public function filterReportsUsing(Closure $filterReportsCallable): static
     {
         $this->filterReportsCallable = $filterReportsCallable;
-
-        return $this;
-    }
-
-    /**
-     * @param Closure(ReportFactory): void $reportRendererCallable
-     */
-    public function renderReportsUsing(Closure $reportRendererCallable): static
-    {
-        $this->reportRendererCallable = $reportRendererCallable;
 
         return $this;
     }

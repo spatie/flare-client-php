@@ -47,7 +47,8 @@ class FlareProvider
         protected ?Closure $registerRecorderAndMiddlewaresCallback = null,
         protected ?Closure $isUsingSubtasksClosure = null,
         protected ?Closure $gracefulSpanEnderClosure = null,
-        protected bool $disableApiQueue = false
+        protected bool $disableApiQueue = false,
+        protected ?Closure $reportRenderer = null,
     ) {
         $this->registerRecorderAndMiddlewaresCallback ??= $this->defaultRegisterRecordersAndMiddlewaresCallback();
         $this->mode = $this->config->mode ?? match (true) {
@@ -230,7 +231,7 @@ class FlareProvider
                 middleware: $middleware,
                 recorders: $recorders,
                 addReportsToTraces: $collects->collectErrorsWithTraces,
-                reportRenderer: $this->config->reportRendererCallable,
+                reportRenderer: $this->reportRenderer,
             );
         });
 
