@@ -94,7 +94,7 @@ class Reporter
     ): ?ReportFactory {
         $report = null;
 
-        if ($handled === false && $this->reportRenderer) {
+        if ($handled !== true && $this->reportRenderer) {
             $report = $this->createReport($throwable, $callback, $handled);
 
             ($this->reportRenderer)($report);
@@ -219,7 +219,7 @@ class Reporter
 
     public function handleException(Throwable $throwable): void
     {
-        $this->report($throwable, handled: false);
+        $this->report($throwable);
 
         if ($this->previousExceptionHandler && is_callable($this->previousExceptionHandler)) {
             call_user_func($this->previousExceptionHandler, $throwable);
@@ -230,7 +230,7 @@ class Reporter
     {
         $exception = new ErrorException($message, 0, $code, $file, $line);
 
-        $this->report($exception, handled: false);
+        $this->report($exception);
 
         if ($this->previousErrorHandler) {
             call_user_func(
