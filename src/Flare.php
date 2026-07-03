@@ -166,16 +166,6 @@ class Flare
         return $this;
     }
 
-    /**
-     * @param Closure(ReportFactory): void $renderReportCallable
-     */
-    public function renderReportsUsing(Closure $renderReportCallable): static
-    {
-        $this->reporter->reportRenderer($renderReportCallable);
-
-        return $this;
-    }
-
     public function cache(): CacheRecorder|null
     {
         return $this->recorders->getRecorder(RecorderType::Cache->value);

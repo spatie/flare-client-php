@@ -77,13 +77,6 @@ class Reporter
         return $this;
     }
 
-    public function reportRenderer(Closure $renderReportCallable): static
-    {
-        $this->reportRenderer = $renderReportCallable;
-
-        return $this;
-    }
-
     /**
      * @param Closure(ReportFactory $report):void|null $callback
      */
