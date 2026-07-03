@@ -59,7 +59,7 @@
         },
         "policy": {
             "advisories": {
-                "block": false
+                "ignore-id": ["PKSA-z3gr-8qht-p93v"]
             }
         }
     },
