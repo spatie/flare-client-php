@@ -4,6 +4,7 @@ use Spatie\FlareClient\Enums\FlareEntityType;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\FlareConfig;
+use Spatie\FlareClient\Memory\SystemMemory;
 use Spatie\FlareClient\Senders\DaemonSender;
 use Spatie\FlareClient\Senders\Exceptions\BadResponseCode;
 use Spatie\FlareClient\Senders\Support\Response;
@@ -63,8 +64,11 @@ it('can send a trace', function () {
         ->expectParentId($applicationSpan)
         ->expectType(SpanType::Command)
         ->expectAttribute('process.command', 'flare:test')
-        ->expectAttribute('process.exit_code', 0)
-        ->expectHasAttribute('flare.peak_memory_usage');
+        ->expectAttribute('process.exit_code', 0);
+
+    if (SystemMemory::phpVersionCanTrackMemory()) {
+        $commandSpan->expectHasAttribute('flare.peak_memory_usage');
+    }
 
     $commandSpan
         ->expectSpanEventCount(1)

@@ -2,6 +2,31 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 3.2.0 - 2026-07-03
+
+### What's Changed
+
+* Support PHP 8.1 by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/82
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/3.1.2...3.2.0
+
+## 3.1.2 - 2026-07-02
+
+### What's Changed
+
+* Strip embedded credentials from git remote URL by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/81
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/3.1.1...3.1.2
+
+## 3.1.1 - 2026-07-01
+
+### What's Changed
+
+* Fix previous throwable stacktrace using the wrong exception's frames by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/79
+* Fix CI failures caused by Symfony 8 by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/80
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/3.1.0...3.1.1
+
 ## 3.1.0 - 2026-05-28
 
 ### What's Changed

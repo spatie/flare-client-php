@@ -15,4 +15,3 @@ parameters:
             path: src/FlareProvider.php
 
     tmpDir: build/phpstan
-    checkMissingIterableValueType: true

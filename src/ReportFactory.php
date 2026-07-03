@@ -90,7 +90,6 @@ class ReportFactory implements WithAttributes
                 E_USER_ERROR => 'user_error',
                 E_USER_WARNING => 'user_warning',
                 E_USER_NOTICE => 'user_notice',
-                E_STRICT => 'strict',
                 E_RECOVERABLE_ERROR => 'recoverable_error',
                 E_DEPRECATED => 'deprecated',
                 E_USER_DEPRECATED => 'user_deprecated',
@@ -176,7 +175,7 @@ class ReportFactory implements WithAttributes
             'exceptionClass' => $this->throwable::class,
             'seenAtUnixNano' => $this->time->getCurrentTime(),
             'message' => $this->message,
-            'stacktrace' => $this->stacktraceMapper->map($this->buildStacktrace(), $this->throwable),
+            'stacktrace' => $this->stacktraceMapper->map($this->buildStacktrace($this->throwable), $this->throwable),
             'previous' => $this->buildPrevious(),
             'openFrameIndex' => null,
             'applicationPath' => $this->applicationPath,
@@ -210,7 +209,7 @@ class ReportFactory implements WithAttributes
             $previous[] = [
                 'exceptionClass' => $previousThrowable::class,
                 'message' => $previousThrowable->getMessage(),
-                'stacktrace' => $this->stacktraceMapper->map($this->buildStacktrace(), $previousThrowable),
+                'stacktrace' => $this->stacktraceMapper->map($this->buildStacktrace($previousThrowable), $previousThrowable),
             ];
 
             $current = $previousThrowable;
@@ -220,9 +219,9 @@ class ReportFactory implements WithAttributes
     }
 
     /** @return array<Frame> */
-    protected function buildStacktrace(): array
+    protected function buildStacktrace(Throwable $throwable): array
     {
-        $frames = Backtrace::createForThrowable($this->throwable)
+        $frames = Backtrace::createForThrowable($throwable)
             ->withArguments($this->collectStackTraceArguments)
             ->reduceArguments($this->argumentReducers)
             ->applicationPath($this->applicationPath ?? '')

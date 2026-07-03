@@ -2,6 +2,7 @@
 
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\FlareConfig;
+use Spatie\FlareClient\Memory\SystemMemory;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Tests\Shared\FakeMemory;
 use Symfony\Component\HttpFoundation\Request;
@@ -29,8 +30,11 @@ it('can trace requests', function () {
         ->traceId->toBe($flare->tracer->currentTraceId());
 
     expect($span->attributes)
-        ->toHaveKey('flare.span_type', SpanType::Request)
-        ->toHaveKey('flare.peak_memory_usage', 5 * 1024 * 1024);
+        ->toHaveKey('flare.span_type', SpanType::Request);
+
+    if (SystemMemory::phpVersionCanTrackMemory()) {
+        expect($span->attributes)->toHaveKey('flare.peak_memory_usage', 5 * 1024 * 1024);
+    }
 });
 
 it('does not unsample when url does not match ignored list', function () {

@@ -73,6 +73,25 @@ it('file-based and process-based modes return same commit message when available
     }
 });
 
+it('strips embedded credentials from the git remote url', function () {
+    $baseDirectory = sys_get_temp_dir().'/flare-git-'.uniqid();
+    mkdir($baseDirectory.'/.git', 0777, true);
+    file_put_contents($baseDirectory.'/.git/HEAD', str_repeat('a', 40));
+    file_put_contents($baseDirectory.'/.git/config', <<<'CONFIG'
+        [remote "origin"]
+            url = https://user:password@development.intern.securepoint.de/vtigercrm/vtigercrm.git
+        CONFIG);
+
+    $result = (new GitAttributesProvider(applicationPath: $baseDirectory, useProcess: false))->toArray();
+
+    expect($result['git.remote'])->toBe('https://development.intern.securepoint.de/vtigercrm/vtigercrm.git');
+
+    unlink($baseDirectory.'/.git/HEAD');
+    unlink($baseDirectory.'/.git/config');
+    rmdir($baseDirectory.'/.git');
+    rmdir($baseDirectory);
+});
+
 it('returns empty array when path does not have git directory', function () {
     $provider = new GitAttributesProvider(applicationPath: sys_get_temp_dir(), useProcess: false);
     $result = $provider->toArray();
