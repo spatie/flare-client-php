@@ -2,6 +2,14 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 3.2.0 - 2026-07-03
+
+### What's Changed
+
+* Support PHP 8.1 by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/82
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/3.1.2...3.2.0
+
 ## 3.1.2 - 2026-07-02
 
 ### What's Changed
