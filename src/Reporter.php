@@ -25,6 +25,8 @@ class Reporter
 
     protected mixed $previousErrorHandler = null;
 
+    protected null|Closure $renderReportCallable = null;
+
     /**
      * @param array<int, FlareMiddleware> $middleware
      * @param null|Closure(Exception): bool $filterExceptionsCallable
@@ -75,6 +77,13 @@ class Reporter
         return $this;
     }
 
+    public function renderReportsUsing(Closure $renderReportCallable): static
+    {
+        $this->renderReportCallable = $renderReportCallable;
+
+        return $this;
+    }
+
     /**
      * @param Closure(ReportFactory $report):void|null $callback
      */
@@ -91,10 +100,17 @@ class Reporter
 
         $report = $this->createReport($throwable, $callback, $handled);
 
+        return $this->finishReport($report, $throwable, $handled);
+    }
+
+    protected function finishReport(
+        ReportFactory $report,
+        Throwable $throwable,
+        ?bool $handled = null
+    ): ?ReportFactory {
         $this->addReportToTrace($throwable, $handled, $report);
 
         $this->tracer->gracefullyEndSpans();
-
 
         if ($this->filterReportsCallable && ($this->filterReportsCallable)($report) === false) {
             return null;
@@ -203,7 +219,7 @@ class Reporter
 
     public function handleException(Throwable $throwable): void
     {
-        $this->report($throwable);
+        $this->renderAndReport($throwable);
 
         if ($this->previousExceptionHandler && is_callable($this->previousExceptionHandler)) {
             call_user_func($this->previousExceptionHandler, $throwable);
@@ -214,7 +230,7 @@ class Reporter
     {
         $exception = new ErrorException($message, 0, $code, $file, $line);
 
-        $this->report($exception);
+        $this->renderAndReport($exception);
 
         if ($this->previousErrorHandler) {
             call_user_func(
@@ -225,6 +241,29 @@ class Reporter
                 $line
             );
         }
+    }
+
+    protected function renderAndReport(Throwable $throwable): void
+    {
+        if ($this->renderReportCallable === null) {
+            $this->report($throwable);
+
+            return;
+        }
+
+        // Build the report once so it can be rendered locally even when the
+        // exception is ignored or filtered from being sent to Flare.
+        $report = $this->createReport($throwable);
+
+        ($this->renderReportCallable)($report);
+
+        if ($this->shouldReport($throwable)) {
+            $this->finishReport($report, $throwable);
+
+            return;
+        }
+
+        $this->tracer->gracefullyEndSpans();
     }
 
     protected function addReportToTrace(Throwable $throwable, ?bool $handled, ReportFactory $report): void
