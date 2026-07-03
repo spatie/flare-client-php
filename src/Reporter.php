@@ -86,11 +86,16 @@ class Reporter
 
     /**
      * @param Closure(ReportFactory $report):void|null $callback
+     * @param ReportFactory|null $report An already built report to send instead
+     *                                   of building a fresh one. Lets the caller
+     *                                   build (and render) the report first while
+     *                                   the ignore and filter gating still runs.
      */
     public function report(
         Throwable $throwable,
         ?Closure $callback = null,
-        ?bool $handled = null
+        ?bool $handled = null,
+        ?ReportFactory $report = null
     ): ?ReportFactory {
         if (! $this->shouldReport($throwable)) {
             $this->tracer->gracefullyEndSpans();
@@ -98,7 +103,7 @@ class Reporter
             return null;
         }
 
-        $report = $this->createReport($throwable, $callback, $handled);
+        $report ??= $this->createReport($throwable, $callback, $handled);
 
         $this->addReportToTrace($throwable, $handled, $report);
 
@@ -112,36 +117,6 @@ class Reporter
         // This is in the case we have errors before or after a lifecycle or subtask or during a termination phase
         // Famous one is Laravel Jobs which end the subtask before the exception is handled or dispatch after
         // response which can throw an exception and will completely fail the php process
-        $sendImmediately = match ($this->lifecycle->getStage()) {
-            LifecycleStage::Idle, LifecycleStage::Terminating, LifecycleStage::Terminated => true,
-            default => false,
-        };
-
-        $reportPayload = $this->api->report($report, $sendImmediately);
-
-        $this->sentReports->add($reportPayload);
-
-        return $report;
-    }
-
-    /**
-     * Send an already built report, applying the same trace attachment and
-     * report filtering as report(). Used by the uncaught handler so a report
-     * can be built (and rendered) once before deciding whether to send it.
-     */
-    public function finalizeReport(
-        ReportFactory $report,
-        Throwable $throwable,
-        ?bool $handled = null
-    ): ?ReportFactory {
-        $this->addReportToTrace($throwable, $handled, $report);
-
-        $this->tracer->gracefullyEndSpans();
-
-        if ($this->filterReportsCallable && ($this->filterReportsCallable)($report) === false) {
-            return null;
-        }
-
         $sendImmediately = match ($this->lifecycle->getStage()) {
             LifecycleStage::Idle, LifecycleStage::Terminating, LifecycleStage::Terminated => true,
             default => false,
@@ -275,18 +250,13 @@ class Reporter
         }
 
         // Build the report once so it can be rendered locally even when the
-        // exception is ignored or filtered from being sent to Flare.
+        // exception is ignored or filtered from being sent to Flare. report()
+        // still runs the ignore and filter gating before sending.
         $report = $this->createReport($throwable);
 
         ($this->renderReportCallable)($report);
 
-        if ($this->shouldReport($throwable)) {
-            $this->finalizeReport($report, $throwable);
-
-            return;
-        }
-
-        $this->tracer->gracefullyEndSpans();
+        $this->report($throwable, report: $report);
     }
 
     protected function addReportToTrace(Throwable $throwable, ?bool $handled, ReportFactory $report): void
