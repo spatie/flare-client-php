@@ -60,7 +60,10 @@ class FlareProvider
     {
         $this->container ??= Container::instance();
 
-        $this->container->singleton(Sender::class, fn () => $this->mode === FlareMode::Ignition
+        // Without an API token there is nothing to authenticate with, so never
+        // transmit: reports and traces are still built (and rendered by Ignition)
+        // but the send is a no-op.
+        $this->container->singleton(Sender::class, fn () => empty($this->config->apiToken)
             ? new NullSender()
             : new $this->config->sender($this->config->senderConfig));
 
