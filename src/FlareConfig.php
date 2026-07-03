@@ -19,7 +19,6 @@ use Spatie\FlareClient\Contracts\FlareCollectType;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
 use Spatie\FlareClient\Enums\CollectType;
 use Spatie\FlareClient\Enums\FlareEntityType;
-use Spatie\FlareClient\Enums\FlareMode;
 use Spatie\FlareClient\Enums\OverriddenGrouping;
 use Spatie\FlareClient\Exporters\OpenTelemetryJsonExporter;
 use Spatie\FlareClient\FlareMiddleware\AddLogs;
@@ -74,7 +73,6 @@ class FlareConfig
         public ?string $apiToken = null,
         public string $baseUrl = Api::BASE_URL,
         public array $collects = [],
-        public ?FlareMode $mode = null,
 
         // App
         public ?string $applicationPath = null,
@@ -593,13 +591,6 @@ class FlareConfig
     public function applicationStage(string|Closure $stage): static
     {
         $this->applicationStage = is_callable($stage) ? $stage() : $stage;
-
-        return $this;
-    }
-
-    public function mode(?FlareMode $mode): static
-    {
-        $this->mode = $mode;
 
         return $this;
     }

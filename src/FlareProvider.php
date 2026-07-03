@@ -49,9 +49,10 @@ class FlareProvider
         protected ?Closure $gracefulSpanEnderClosure = null,
         protected bool $disableApiQueue = false,
         protected ?Closure $reportRenderer = null,
+        ?FlareMode $mode = null,
     ) {
         $this->registerRecorderAndMiddlewaresCallback ??= $this->defaultRegisterRecordersAndMiddlewaresCallback();
-        $this->mode = $this->config->mode ?? match (true) {
+        $this->mode = $mode ?? match (true) {
             empty($this->config->apiToken) => FlareMode::Disabled,
             default => FlareMode::Enabled,
         };
