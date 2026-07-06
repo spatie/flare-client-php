@@ -15,6 +15,11 @@ class GlowRecorder extends SpanEventsRecorder
         return RecorderType::Glow;
     }
 
+    protected function shouldTrimAttributes(): bool
+    {
+        return true;
+    }
+
     public function record(
         string $name,
         Level $level = Level::Info,

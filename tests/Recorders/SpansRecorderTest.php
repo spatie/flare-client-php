@@ -396,3 +396,31 @@ it('will correctly nest spans', function () {
 
     $recorder->popSpan();
 });
+
+it('strips string and array attributes larger than the max attribute size', function () {
+    $flare = setupFlare(function (FlareConfig $config) {
+        $config->alwaysSampleTraces()->trace(maxAttributeSizeInKb: 1);
+    });
+
+    $recorder = new ConcreteSpansRecorder($flare->tracer, $flare->backTracer, config: [
+        'with_traces' => true,
+    ]);
+
+    $flare->tracer->startTrace();
+
+    $recorder->record('Span', 100, [
+        'big_string' => str_repeat('a', 2000),
+        'big_array' => ['nested' => str_repeat('b', 2000)],
+        'small_string' => 'kept',
+        'number' => 999999999,
+    ]);
+
+    $span = array_values($flare->tracer->currentTrace())[0];
+
+    expect($span->attributes)
+        ->not()->toHaveKey('big_string')
+        ->not()->toHaveKey('big_array')
+        ->toHaveKey('small_string', 'kept')
+        ->toHaveKey('number', 999999999);
+    expect($span->droppedAttributesCount)->toBe(2);
+});

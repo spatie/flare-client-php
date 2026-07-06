@@ -184,7 +184,7 @@ it('is possible to disable the recorder for tracing', function () {
 it('a closure passed span event will not be executed when not tracing or reporting', function () {
     class TestConcreteSpanEventsRecorderExecution extends ConcreteSpanEventsRecorder
     {
-        public function record(string $message): ?SpanEvent
+        public function record(string $message, array $attributes = []): ?SpanEvent
         {
             $this->spanEvent(fn () => throw new Exception('Closure executed'));
         }
@@ -288,4 +288,30 @@ it('will not find origins when only reporting', function () {
         'code.lineno',
         'code.function',
     ]);
+});
+
+it('strips string and array attributes larger than the max attribute size', function () {
+    $flare = setupFlare(function (FlareConfig $config) {
+        $config->trace(maxAttributeSizeInKb: 1);
+    });
+
+    $recorder = new ConcreteSpanEventsRecorder($flare->tracer, $flare->backTracer, config: [
+        'with_errors' => true,
+    ]);
+
+    $recorder->record('Hello World', [
+        'big_string' => str_repeat('a', 2000),
+        'big_array' => ['nested' => str_repeat('b', 2000)],
+        'small_string' => 'kept',
+        'number' => 999999999,
+    ]);
+
+    $spanEvent = $recorder->getSpanEvents()[0];
+
+    expect($spanEvent->attributes)
+        ->not()->toHaveKey('big_string')
+        ->not()->toHaveKey('big_array')
+        ->toHaveKey('small_string', 'kept')
+        ->toHaveKey('number', 999999999);
+    expect($spanEvent->droppedAttributesCount)->toBe(2);
 });

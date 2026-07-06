@@ -58,7 +58,7 @@ class FlareConfig
      * @param null|Closure(ReportFactory): bool $filterReportsCallable
      * @param array<string, array{type: FlareCollectType, ignored: ?bool, options: array}> $collects
      * @param class-string<Sender> $sender
-     * @param array{max_spans: int, max_attributes_per_span: int, max_span_events_per_span:int, max_attributes_per_span_event:int}|null $traceLimits
+     * @param array{max_spans: int, max_attributes_per_span: int, max_span_events_per_span:int, max_attributes_per_span_event:int, max_attribute_size_in_kb?:int}|null $traceLimits
      * @param Closure(Scope):void|null $configureScopeCallable
      * @param Closure(Resource):void|null $configureResourceCallable
      * @param Closure(Span):(void|Span)|null $configureSpansCallable
@@ -656,6 +656,7 @@ class FlareConfig
         int $maxAttributesPerSpan = Tracer::DEFAULT_MAX_ATTRIBUTES_PER_SPAN_LIMIT,
         int $maxSpanEventsPerSpan = Tracer::DEFAULT_MAX_SPAN_EVENTS_PER_SPAN_LIMIT,
         int $maxAttributesPerSpanEvent = Tracer::DEFAULT_MAX_ATTRIBUTES_PER_SPAN_EVENT_LIMIT,
+        int $maxAttributeSizeInKb = Tracer::DEFAULT_MAX_ATTRIBUTE_SIZE_IN_KB,
     ): static {
         $this->trace = $trace;
 
@@ -664,6 +665,7 @@ class FlareConfig
             'max_attributes_per_span' => $maxAttributesPerSpan,
             'max_span_events_per_span' => $maxSpanEventsPerSpan,
             'max_attributes_per_span_event' => $maxAttributesPerSpanEvent,
+            'max_attribute_size_in_kb' => $maxAttributeSizeInKb,
         ];
 
         return $this;
@@ -799,12 +801,14 @@ class FlareConfig
         int $maxAttributesPerSpan = Tracer::DEFAULT_MAX_ATTRIBUTES_PER_SPAN_LIMIT,
         int $maxSpanEventsPerSpan = Tracer::DEFAULT_MAX_SPAN_EVENTS_PER_SPAN_LIMIT,
         int $maxAttributesPerSpanEvent = Tracer::DEFAULT_MAX_ATTRIBUTES_PER_SPAN_EVENT_LIMIT,
+        int $maxAttributeSizeInKb = Tracer::DEFAULT_MAX_ATTRIBUTE_SIZE_IN_KB,
     ): static {
         $this->traceLimits = [
             'max_spans' => $maxSpans,
             'max_attributes_per_span' => $maxAttributesPerSpan,
             'max_span_events_per_span' => $maxSpanEventsPerSpan,
             'max_attributes_per_span_event' => $maxAttributesPerSpanEvent,
+            'max_attribute_size_in_kb' => $maxAttributeSizeInKb,
         ];
 
         return $this;

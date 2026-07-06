@@ -6,6 +6,7 @@ use Closure;
 use InvalidArgumentException;
 use Spatie\FlareClient\Concerns\Recorders\BacktracingRecorder;
 use Spatie\FlareClient\Concerns\Recorders\ErrorsRecorder;
+use Spatie\FlareClient\Concerns\Recorders\LargeAttributesTrimmingRecorder;
 use Spatie\FlareClient\Concerns\Recorders\TracingRecorder;
 use Spatie\FlareClient\Contracts\Recorders\SpansRecorder as SpansRecorderContract;
 use Spatie\FlareClient\Spans\Span;
@@ -15,6 +16,8 @@ use Spatie\FlareClient\Tracer;
 
 abstract class SpansRecorder extends Recorder implements SpansRecorderContract
 {
+    use LargeAttributesTrimmingRecorder;
+
     /** @use BacktracingRecorder<Span> */
     use BacktracingRecorder;
 
@@ -167,6 +170,8 @@ abstract class SpansRecorder extends Recorder implements SpansRecorderContract
         if (count($additionalAttributes) > 0) {
             $span->addAttributes($additionalAttributes);
         }
+
+        $this->trimAttributes($span);
 
         if ($shouldTrace) {
             $this->tracer->endSpan($span, includeMemoryUsage: $includeMemoryUsage);

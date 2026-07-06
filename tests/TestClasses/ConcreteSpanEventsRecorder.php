@@ -13,13 +13,19 @@ class ConcreteSpanEventsRecorder extends SpanEventsRecorder
         return 'spans';
     }
 
-    public function record(string $message): ?SpanEvent
+    public function record(string $message, array $attributes = []): ?SpanEvent
     {
         return $this->spanEvent(
             name: "Span Event - {$message}",
             attributes: fn () => [
                 'message' => $message,
+                ...$attributes,
             ],
         );
+    }
+
+    protected function shouldTrimAttributes(): bool
+    {
+        return true;
     }
 }

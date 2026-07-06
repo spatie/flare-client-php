@@ -26,11 +26,18 @@ class ConcreteSpansRecorder extends SpansRecorder
     public function record(
         string $name,
         int $duration,
+        array $attributes = [],
     ): ?Span {
         return $this->span(
             $name,
+            attributes: $attributes,
             duration: $duration,
         );
+    }
+
+    protected function shouldTrimAttributes(): bool
+    {
+        return true;
     }
 
     public function pause(): void

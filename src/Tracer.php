@@ -28,13 +28,14 @@ class Tracer
     public const DEFAULT_MAX_ATTRIBUTES_PER_SPAN_LIMIT = 128;
     public const DEFAULT_MAX_SPAN_EVENTS_PER_SPAN_LIMIT = 128;
     public const DEFAULT_MAX_ATTRIBUTES_PER_SPAN_EVENT_LIMIT = 128;
+    public const DEFAULT_MAX_ATTRIBUTE_SIZE_IN_KB = 32; // string/array attributes larger than this are dropped
 
     public const DEFAULT_COLLECT_ERRORS_WITH_TRACES = true;
 
     /** @var array<Span> */
     protected array $spans = [];
 
-    /** @var array @param array{max_spans: int, max_attributes_per_span: int, max_span_events_per_span: int, max_attributes_per_span_event: int}|null */
+    /** @var array @param array{max_spans: int, max_attributes_per_span: int, max_span_events_per_span: int, max_attributes_per_span_event: int, max_attribute_size_in_kb?: int}|null */
     public readonly array $limits;
 
     protected ?string $currentTraceId = null;
@@ -44,7 +45,7 @@ class Tracer
     protected bool $currentSpanIdAvailable = true;
 
     /**
-     * @param array{max_spans: int, max_attributes_per_span: int, max_span_events_per_span: int, max_attributes_per_span_event: int}|null $limits
+     * @param array{max_spans: int, max_attributes_per_span: int, max_span_events_per_span: int, max_attributes_per_span_event: int, max_attribute_size_in_kb?: int}|null $limits
      * @param Closure(Span):(void|Span)|null $configureSpansCallable
      * @param Closure(SpanEvent):(void|SpanEvent|null)|null $configureSpanEventsCallable
      * @param Closure(Span):(bool)|null $gracefulSpanEnderClosure ,
@@ -70,6 +71,7 @@ class Tracer
             'max_attributes_per_span' => $limits['max_attributes_per_span'] ?? self::DEFAULT_MAX_ATTRIBUTES_PER_SPAN_LIMIT,
             'max_span_events_per_span' => $limits['max_span_events_per_span'] ?? self::DEFAULT_MAX_SPAN_EVENTS_PER_SPAN_LIMIT,
             'max_attributes_per_span_event' => $limits['max_attributes_per_span_event'] ?? self::DEFAULT_MAX_ATTRIBUTES_PER_SPAN_EVENT_LIMIT,
+            'max_attribute_size_in_kb' => $limits['max_attribute_size_in_kb'] ?? self::DEFAULT_MAX_ATTRIBUTE_SIZE_IN_KB,
         ];
     }
 

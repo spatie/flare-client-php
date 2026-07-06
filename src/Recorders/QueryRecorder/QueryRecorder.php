@@ -28,6 +28,11 @@ class QueryRecorder extends SpansRecorder
         $this->includeBindings = $config['include_bindings'] ?? true;
     }
 
+    protected function shouldTrimAttributes(): bool
+    {
+        return true;
+    }
+
     public function record(
         string $sql,
         int $duration,
