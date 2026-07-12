@@ -5,14 +5,16 @@ namespace Spatie\FlareClient\Recorders\ExternalHttpRecorder\Guzzle;
 use GuzzleHttp\HandlerStack;
 use Spatie\FlareClient\Flare;
 
-class FlareHandlerStack extends HandlerStack
+class FlareHandlerStack
 {
-    public function __construct(
+    public static function create(
         Flare $flare,
         ?callable $handler = null
-    ) {
-        parent::__construct($handler);
+    ): HandlerStack {
+        $stack = new HandlerStack($handler);
 
-        $this->push((new FlareMiddleware($flare)));
+        $stack->push(new FlareMiddleware($flare));
+
+        return $stack;
     }
 }

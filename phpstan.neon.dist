@@ -13,5 +13,10 @@ parameters:
         -
             message: "#Illuminate\\\\Contracts\\\\Container\\\\Container#"
             path: src/FlareProvider.php
+        -
+            # Only reported when Guzzle 8 is installed.
+            message: "#return type with generic class GuzzleHttp\\\\HandlerStack does not specify its types#"
+            path: src/Recorders/ExternalHttpRecorder/Guzzle/FlareHandlerStack.php
+            reportUnmatched: false
 
     tmpDir: build/phpstan

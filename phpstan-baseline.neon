@@ -139,12 +139,6 @@ parameters:
 			path: src/Logger.php
 
 		-
-			message: '#^Class Spatie\\FlareClient\\Recorders\\ExternalHttpRecorder\\Guzzle\\FlareHandlerStack extends @final class GuzzleHttp\\HandlerStack\.$#'
-			identifier: class.extendsFinalByPhpDoc
-			count: 1
-			path: src/Recorders/ExternalHttpRecorder/Guzzle/FlareHandlerStack.php
-
-		-
 			message: '#^Cannot unset property Spatie\\FlareClient\\ReportFactory\:\:\$throwable because it might have hooks in a subclass\.$#'
 			identifier: unset.possiblyHookedProperty
 			count: 1
