@@ -13,9 +13,9 @@ class ConcreteSpansRecorder extends SpansRecorder
         return 'spans';
     }
 
-    public function pushSpan(string $name): ?Span
+    public function pushSpan(string $name, array $attributes = []): ?Span
     {
-        return $this->startSpan(name: $name);
+        return $this->startSpan(name: $name, attributes: $attributes);
     }
 
     public function popSpan(): ?Span
@@ -26,11 +26,18 @@ class ConcreteSpansRecorder extends SpansRecorder
     public function record(
         string $name,
         int $duration,
+        array $attributes = [],
     ): ?Span {
         return $this->span(
             $name,
+            attributes: $attributes,
             duration: $duration,
         );
+    }
+
+    protected function shouldTrimAttributes(): bool
+    {
+        return true;
     }
 
     public function pause(): void

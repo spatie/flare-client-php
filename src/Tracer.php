@@ -18,6 +18,7 @@ use Spatie\FlareClient\Sampling\Sampler;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Support\Ids;
+use Spatie\FlareClient\Support\LargeAttributesTrimmer;
 use Spatie\FlareClient\Support\Recorders;
 use Spatie\FlareClient\Time\Time;
 use Throwable;
@@ -28,13 +29,14 @@ class Tracer
     public const DEFAULT_MAX_ATTRIBUTES_PER_SPAN_LIMIT = 128;
     public const DEFAULT_MAX_SPAN_EVENTS_PER_SPAN_LIMIT = 128;
     public const DEFAULT_MAX_ATTRIBUTES_PER_SPAN_EVENT_LIMIT = 128;
+    public const DEFAULT_MAX_ATTRIBUTE_SIZE_IN_KB = 32; // string/array attributes larger than this are dropped
 
     public const DEFAULT_COLLECT_ERRORS_WITH_TRACES = true;
 
     /** @var array<Span> */
     protected array $spans = [];
 
-    /** @var array @param array{max_spans: int, max_attributes_per_span: int, max_span_events_per_span: int, max_attributes_per_span_event: int}|null */
+    /** @var array @param array{max_spans: int, max_attributes_per_span: int, max_span_events_per_span: int, max_attributes_per_span_event: int, max_attribute_size_in_kb?: int}|null */
     public readonly array $limits;
 
     protected ?string $currentTraceId = null;
@@ -44,7 +46,7 @@ class Tracer
     protected bool $currentSpanIdAvailable = true;
 
     /**
-     * @param array{max_spans: int, max_attributes_per_span: int, max_span_events_per_span: int, max_attributes_per_span_event: int}|null $limits
+     * @param array{max_spans: int, max_attributes_per_span: int, max_span_events_per_span: int, max_attributes_per_span_event: int, max_attribute_size_in_kb?: int}|null $limits
      * @param Closure(Span):(void|Span)|null $configureSpansCallable
      * @param Closure(SpanEvent):(void|SpanEvent|null)|null $configureSpanEventsCallable
      * @param Closure(Span):(bool)|null $gracefulSpanEnderClosure ,
@@ -64,12 +66,14 @@ class Tracer
         protected bool $paused = false,
         public readonly bool $disabled = false,
         protected Closure|null $gracefulSpanEnderClosure = null,
+        public readonly LargeAttributesTrimmer $largeAttributesTrimmer = new LargeAttributesTrimmer(),
     ) {
         $this->limits = [
             'max_spans' => $limits['max_spans'] ?? self::DEFAULT_MAX_SPANS_LIMIT,
             'max_attributes_per_span' => $limits['max_attributes_per_span'] ?? self::DEFAULT_MAX_ATTRIBUTES_PER_SPAN_LIMIT,
             'max_span_events_per_span' => $limits['max_span_events_per_span'] ?? self::DEFAULT_MAX_SPAN_EVENTS_PER_SPAN_LIMIT,
             'max_attributes_per_span_event' => $limits['max_attributes_per_span_event'] ?? self::DEFAULT_MAX_ATTRIBUTES_PER_SPAN_EVENT_LIMIT,
+            'max_attribute_size_in_kb' => $limits['max_attribute_size_in_kb'] ?? self::DEFAULT_MAX_ATTRIBUTE_SIZE_IN_KB,
         ];
     }
 
@@ -488,6 +492,8 @@ class Tracer
             }
 
             if ($this->gracefulSpanEnderClosure === null || $force || ($this->gracefulSpanEnderClosure)($currentSpan)) {
+                $this->largeAttributesTrimmer->trim($currentSpan, $this->limits['max_attribute_size_in_kb']);
+
                 $this->endSpan($currentSpan);
             }
 

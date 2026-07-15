@@ -6,6 +6,7 @@ use Closure;
 use InvalidArgumentException;
 use Spatie\FlareClient\Concerns\Recorders\BacktracingRecorder;
 use Spatie\FlareClient\Concerns\Recorders\ErrorsRecorder;
+use Spatie\FlareClient\Concerns\Recorders\LargeAttributesTrimmingRecorder;
 use Spatie\FlareClient\Concerns\Recorders\TracingRecorder;
 use Spatie\FlareClient\Contracts\Recorders\SpanEventsRecorder as SpanEventsRecorderContract;
 use Spatie\FlareClient\Spans\SpanEvent;
@@ -14,6 +15,8 @@ use Spatie\FlareClient\Tracer;
 
 abstract class SpanEventsRecorder extends Recorder implements SpanEventsRecorderContract
 {
+    use LargeAttributesTrimmingRecorder;
+
     /** @use BacktracingRecorder<SpanEvent> */
     use BacktracingRecorder;
 
@@ -114,6 +117,8 @@ abstract class SpanEventsRecorder extends Recorder implements SpanEventsRecorder
         if ($spanEventCallback) {
             $spanEventCallback($spanEvent);
         }
+
+        $this->trimAttributes($spanEvent);
 
         if ($shouldReport) {
             $this->addEntryToReport($spanEvent);
