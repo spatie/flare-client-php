@@ -2,16 +2,30 @@
 
 namespace Spatie\FlareClient\Support;
 
-class AttributeSizeLimiter
+use Spatie\FlareClient\Spans\Span;
+use Spatie\FlareClient\Spans\SpanEvent;
+
+class LargeAttributesTrimmer
 {
     protected const LEAF_BYTES = 4;
+
+    public function trim(Span|SpanEvent $entry, int $budgetInKb): void
+    {
+        if ($budgetInKb <= 0) {
+            return;
+        }
+
+        [$entry->attributes, $dropped] = $this->limit($entry->attributes, $budgetInKb * 1024);
+
+        $entry->droppedAttributesCount += $dropped;
+    }
 
     /**
      * @param array<string, mixed> $attributes
      *
      * @return array{array<string, mixed>, int}
      */
-    public function limit(array $attributes, int $budget): array
+    protected function limit(array $attributes, int $budget): array
     {
         $dropped = 0;
 

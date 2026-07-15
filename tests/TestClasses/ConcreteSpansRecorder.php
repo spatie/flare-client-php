@@ -13,9 +13,9 @@ class ConcreteSpansRecorder extends SpansRecorder
         return 'spans';
     }
 
-    public function pushSpan(string $name): ?Span
+    public function pushSpan(string $name, array $attributes = []): ?Span
     {
-        return $this->startSpan(name: $name);
+        return $this->startSpan(name: $name, attributes: $attributes);
     }
 
     public function popSpan(): ?Span

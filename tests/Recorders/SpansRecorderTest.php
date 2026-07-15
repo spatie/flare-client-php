@@ -424,3 +424,30 @@ it('strips string and array attributes larger than the max attribute size', func
         ->toHaveKey('number', 999999999);
     expect($span->droppedAttributesCount)->toBe(2);
 });
+
+it('strips large attributes from spans gracefully ended by the tracer', function () {
+    $flare = setupFlare(function (FlareConfig $config) {
+        $config->alwaysSampleTraces()->trace(maxAttributeSizeInKb: 1);
+    });
+
+    $recorder = new ConcreteSpansRecorder($flare->tracer, $flare->backTracer, config: [
+        'with_traces' => true,
+    ]);
+
+    $flare->tracer->startTrace();
+
+    $recorder->pushSpan('Span', [
+        'big_string' => str_repeat('a', 2000),
+        'small_string' => 'kept',
+    ]);
+
+    $flare->tracer->gracefullyEndSpans(force: true);
+
+    $span = array_values($flare->tracer->currentTrace())[0];
+
+    expect($span->end)->not()->toBeNull();
+    expect($span->attributes)
+        ->not()->toHaveKey('big_string')
+        ->toHaveKey('small_string', 'kept');
+    expect($span->droppedAttributesCount)->toBe(1);
+});

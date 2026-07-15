@@ -18,6 +18,7 @@ use Spatie\FlareClient\Sampling\Sampler;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Support\Ids;
+use Spatie\FlareClient\Support\LargeAttributesTrimmer;
 use Spatie\FlareClient\Support\Recorders;
 use Spatie\FlareClient\Time\Time;
 use Throwable;
@@ -490,6 +491,8 @@ class Tracer
             }
 
             if ($this->gracefulSpanEnderClosure === null || $force || ($this->gracefulSpanEnderClosure)($currentSpan)) {
+                (new LargeAttributesTrimmer())->trim($currentSpan, $this->limits['max_attribute_size_in_kb']);
+
                 $this->endSpan($currentSpan);
             }
 
