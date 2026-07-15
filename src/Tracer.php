@@ -66,6 +66,7 @@ class Tracer
         protected bool $paused = false,
         public readonly bool $disabled = false,
         protected Closure|null $gracefulSpanEnderClosure = null,
+        public readonly LargeAttributesTrimmer $largeAttributesTrimmer = new LargeAttributesTrimmer(),
     ) {
         $this->limits = [
             'max_spans' => $limits['max_spans'] ?? self::DEFAULT_MAX_SPANS_LIMIT,
@@ -491,7 +492,7 @@ class Tracer
             }
 
             if ($this->gracefulSpanEnderClosure === null || $force || ($this->gracefulSpanEnderClosure)($currentSpan)) {
-                (new LargeAttributesTrimmer())->trim($currentSpan, $this->limits['max_attribute_size_in_kb']);
+                $this->largeAttributesTrimmer->trim($currentSpan, $this->limits['max_attribute_size_in_kb']);
 
                 $this->endSpan($currentSpan);
             }

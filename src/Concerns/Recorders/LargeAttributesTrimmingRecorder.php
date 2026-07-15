@@ -4,7 +4,6 @@ namespace Spatie\FlareClient\Concerns\Recorders;
 
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
-use Spatie\FlareClient\Support\LargeAttributesTrimmer;
 
 trait LargeAttributesTrimmingRecorder
 {
@@ -19,6 +18,6 @@ trait LargeAttributesTrimmingRecorder
             return;
         }
 
-        (new LargeAttributesTrimmer())->trim($entry, $this->tracer->limits['max_attribute_size_in_kb']);
+        $this->tracer->largeAttributesTrimmer->trim($entry, $this->tracer->limits['max_attribute_size_in_kb']);
     }
 }
