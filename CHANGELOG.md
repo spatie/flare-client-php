@@ -2,6 +2,18 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 3.3.1 - 2026-07-22
+
+### What's Changed
+
+* Add support for Guzzle 8 by @GrahamCampbell in https://github.com/spatie/flare-client-php/pull/86
+
+### New Contributors
+
+* @GrahamCampbell made their first contribution in https://github.com/spatie/flare-client-php/pull/86
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/3.3.0...3.3.1
+
 ## 3.3.0 - 2026-07-15
 
 ### What's Changed
