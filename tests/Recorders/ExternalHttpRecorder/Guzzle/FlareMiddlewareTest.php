@@ -5,6 +5,7 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Utils;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Recorders\ExternalHttpRecorder\Guzzle\FlareHandlerStack;
@@ -22,7 +23,7 @@ test('middleware records successful requests and responses', function () {
         ),
     ]);
 
-    $client = new Client(['handler' => new FlareHandlerStack($flare, $mockHandler)]);
+    $client = new Client(['handler' => FlareHandlerStack::create($flare, $mockHandler)]);
 
     $response = $client->request('POST', 'https://example.com/api', [
         'headers' => [
@@ -51,7 +52,7 @@ test('middleware records successful requests and responses', function () {
         ->toHaveKey('url.fragment', null)
         ->toHaveKey('http.request.body.size', 13)
         ->toHaveKey('http.request.headers', [
-            'User-Agent' => 'GuzzleHttp/7',
+            'User-Agent' => Utils::defaultUserAgent(),
             'Host' => 'example.com',
             'Accept' => 'application/json',
             'X-Test-Header' => 'test-value',
@@ -78,7 +79,7 @@ test('middleware records HTTP error responses', function () {
     ]);
 
     $client = new Client([
-        'handler' => new FlareHandlerStack($flare, $mockHandler),
+        'handler' => FlareHandlerStack::create($flare, $mockHandler),
         'http_errors' => false, // Prevent Guzzle from throwing exceptions for HTTP errors
     ]);
 
@@ -102,7 +103,7 @@ test('middleware records HTTP error responses', function () {
         ->toHaveKey('url.query', null)
         ->toHaveKey('url.fragment', null)
         ->toHaveKey('http.request.headers', [
-            'User-Agent' => 'GuzzleHttp/7',
+            'User-Agent' => Utils::defaultUserAgent(),
             'Host' => 'example.com',
         ])
         ->toHaveKey('http.response.status_code', 404)
@@ -122,7 +123,7 @@ test('middleware records connection errors', function () {
     $exception = new RequestException('Connection timed out', $request);
     $mockHandler = new MockHandler([$exception]);
 
-    $client = new Client(['handler' => new FlareHandlerStack($flare, $mockHandler)]);
+    $client = new Client(['handler' => FlareHandlerStack::create($flare, $mockHandler)]);
 
     try {
         $client->request('GET', 'https://example.com');
@@ -158,7 +159,7 @@ test('middleware correctly formats headers', function () {
         ),
     ]);
 
-    $client = new Client(['handler' => new FlareHandlerStack($flare, $mockHandler)]);
+    $client = new Client(['handler' => FlareHandlerStack::create($flare, $mockHandler)]);
 
     $response = $client->request('GET', 'https://example.com', [
         'headers' => [
@@ -179,7 +180,7 @@ test('middleware correctly formats headers', function () {
         ->toHaveKey('url.full', 'https://example.com')
         ->toHaveKey('http.request.method', 'GET')
         ->toHaveKey('http.request.headers', [
-            'User-Agent' => 'GuzzleHttp/7',
+            'User-Agent' => Utils::defaultUserAgent(),
             'Host' => 'example.com',
             'Accept' => 'application/json, text/html',
             'X-Test' => 'value1, value2',
