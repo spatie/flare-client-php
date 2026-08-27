@@ -59,9 +59,11 @@ it('matches a regex pattern', function () {
 it('never matches an invalid regex pattern', function () {
     set_error_handler(fn () => true);
 
-    expect(PatternMatcher::regex('anything', '/^unterminated('))->toBeFalse();
-
-    restore_error_handler();
+    try {
+        expect(PatternMatcher::regex('anything', '/^unterminated('))->toBeFalse();
+    } finally {
+        restore_error_handler();
+    }
 });
 
 it('matches any regex pattern', function () {
