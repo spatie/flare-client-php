@@ -47,3 +47,25 @@ it('matches any when at least one pattern matches', function () {
 it('does not match any when no pattern matches', function () {
     expect(PatternMatcher::matchesAny('serve', ['migrate', 'make:*', 'queue:work']))->toBeFalse();
 });
+
+it('matches a regex pattern', function () {
+    expect(PatternMatcher::regex('telescope:prune', '/^telescope:/'))->toBeTrue();
+    expect(PatternMatcher::regex('app:telescope:prune', '/^telescope:/'))->toBeFalse();
+    expect(PatternMatcher::regex('framework/schedule', '/^framework\/schedule/'))->toBeTrue();
+    expect(PatternMatcher::regex('illuminate:cache:key', '/^illuminate:(?!cache:flexible:created:)/'))->toBeTrue();
+    expect(PatternMatcher::regex('illuminate:cache:flexible:created:key', '/^illuminate:(?!cache:flexible:created:)/'))->toBeFalse();
+});
+
+it('never matches an invalid regex pattern', function () {
+    set_error_handler(fn () => true);
+
+    expect(PatternMatcher::regex('anything', '/^unterminated('))->toBeFalse();
+
+    restore_error_handler();
+});
+
+it('matches any regex pattern', function () {
+    expect(PatternMatcher::regexAny('telescope:prune', ['/^queue:/', '/^telescope:/']))->toBeTrue();
+    expect(PatternMatcher::regexAny('serve', ['/^queue:/', '/^telescope:/']))->toBeFalse();
+    expect(PatternMatcher::regexAny('anything', []))->toBeFalse();
+});
