@@ -2,6 +2,10 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 3.4.1 - 2026-08-27
+
+Rerelease due to tagging conflict
+
 ## 3.4.0 - 2026-08-27
 
 ### What's Changed
