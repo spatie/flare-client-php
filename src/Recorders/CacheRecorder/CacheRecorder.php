@@ -95,10 +95,10 @@ class CacheRecorder extends SpanEventsRecorder
 
     protected function shouldIgnoreKey(string $key): bool
     {
-        return PatternMatcher::matchesAny($key, [...$this->ignoredKeys, ...$this->defaultIgnoredKeys()]);
+        return PatternMatcher::regexAny($key, [...$this->ignoredKeys, ...$this->defaultIgnoredKeys()]);
     }
 
-    /** @return array<int, string> */
+    /** @return array<int, string> Regexes, just like the user configured ignored keys */
     protected function defaultIgnoredKeys(): array
     {
         return [];

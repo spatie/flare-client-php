@@ -121,7 +121,7 @@ it('can ignore cache keys', function () {
             'with_errors' => true,
             'max_items_with_errors' => 10,
             'operations' => [CacheOperation::Get, CacheOperation::Set, CacheOperation::Forget],
-            'ignored_keys' => ['framework:*', 'exact-key'],
+            'ignored_keys' => ['/^framework:/', '/^exact-key$/'],
         ]
     );
 
