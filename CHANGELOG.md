@@ -2,6 +2,15 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 3.4.0 - 2026-08-27
+
+### What's Changed
+
+* Add ability to skip cache keys in the CacheRecorder by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/87
+* Add regex matching to PatternMatcher by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/88
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/3.3.1...3.4.0
+
 ## 3.3.1 - 2026-07-22
 
 ### What's Changed
