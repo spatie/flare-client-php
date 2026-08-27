@@ -208,6 +208,7 @@ class CollectsResolver
             'with_errors',
             'max_items_with_errors',
             'operations',
+            'ignored_keys',
         ]));
     }
 

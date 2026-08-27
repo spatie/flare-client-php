@@ -109,3 +109,27 @@ it('can limit the kinds of events being recorder', function () {
 
     expect($events)->toBe([$keyWrite]);
 });
+
+it('can ignore cache keys', function () {
+    $flare = setupFlare();
+
+    $recorder = new CacheRecorder(
+        tracer: $flare->tracer,
+        backTracer: $flare->backTracer,
+        config: [
+            'with_traces' => true,
+            'with_errors' => true,
+            'max_items_with_errors' => 10,
+            'operations' => [CacheOperation::Get, CacheOperation::Set, CacheOperation::Forget],
+            'ignored_keys' => ['framework:*', 'exact-key'],
+        ]
+    );
+
+    $recorder->boot();
+
+    $recorder->recordHit('framework:schedule', 'store');
+    $recorder->recordHit('exact-key', 'store');
+    $recorded = $recorder->recordHit('some-key', 'store');
+
+    expect($recorder->getSpanEvents())->toBe([$recorded]);
+});

@@ -300,11 +300,15 @@ class FlareConfig
         return $this->ignoreCollect(CollectType::GitInfo);
     }
 
+    /**
+     * @param array<int, string> $ignoredKeys
+     */
     public function collectCacheEvents(
         bool $withTraces = CacheRecorder::DEFAULT_WITH_TRACES,
         bool $withErrors = CacheRecorder::DEFAULT_WITH_ERRORS,
         ?int $maxItemsWithErrors = CacheRecorder::DEFAULT_MAX_ITEMS_WITH_ERRORS,
         array $operations = CacheRecorder::DEFAULT_OPERATIONS,
+        array $ignoredKeys = [],
         array $extra = [],
     ): static {
         return $this->addCollect(CollectType::Cache, [
@@ -312,6 +316,7 @@ class FlareConfig
             'with_errors' => $withErrors,
             'max_items_with_errors' => $maxItemsWithErrors,
             'operations' => $operations,
+            'ignored_keys' => $ignoredKeys,
             ...$extra,
         ]);
     }

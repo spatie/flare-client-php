@@ -8,6 +8,7 @@ use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Recorders\SpanEventsRecorder;
 use Spatie\FlareClient\Spans\SpanEvent;
+use Spatie\FlareClient\Support\PatternMatcher;
 
 class CacheRecorder extends SpanEventsRecorder
 {
@@ -15,6 +16,9 @@ class CacheRecorder extends SpanEventsRecorder
      * @var array<CacheOperation|string>
      */
     protected array $operations = [];
+
+    /** @var array<int, string> */
+    protected array $ignoredKeys = [];
 
     public const DEFAULT_OPERATIONS = [CacheOperation::Get, CacheOperation::Set, CacheOperation::Forget];
 
@@ -29,6 +33,8 @@ class CacheRecorder extends SpanEventsRecorder
             fn (string|CacheOperation $spanEventType) => is_string($spanEventType) ? CacheOperation::tryFrom($spanEventType) : $spanEventType,
             $config['operations'] ?? [],
         ));
+
+        $this->ignoredKeys = $config['ignored_keys'] ?? [];
     }
 
     public function recordHit(string $key, ?string $store): ?SpanEvent
@@ -62,6 +68,10 @@ class CacheRecorder extends SpanEventsRecorder
             return null;
         }
 
+        if ($this->shouldIgnoreKey($key)) {
+            return null;
+        }
+
         $name = match ([$operation, $result]) {
             [CacheOperation::Get, CacheResult::Hit] => 'hit',
             [CacheOperation::Get, CacheResult::Miss] => 'miss',
@@ -81,5 +91,16 @@ class CacheRecorder extends SpanEventsRecorder
                 ...$attributes,
             ]
         );
+    }
+
+    protected function shouldIgnoreKey(string $key): bool
+    {
+        return PatternMatcher::matchesAny($key, [...$this->ignoredKeys, ...$this->defaultIgnoredKeys()]);
+    }
+
+    /** @return array<int, string> */
+    protected function defaultIgnoredKeys(): array
+    {
+        return [];
     }
 }
