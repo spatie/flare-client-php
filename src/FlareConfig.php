@@ -300,6 +300,9 @@ class FlareConfig
         return $this->ignoreCollect(CollectType::GitInfo);
     }
 
+    /**
+     * @param array<int, string> $ignoredKeys
+     */
     public function collectCacheEvents(
         bool $withTraces = CacheRecorder::DEFAULT_WITH_TRACES,
         bool $withErrors = CacheRecorder::DEFAULT_WITH_ERRORS,
