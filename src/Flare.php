@@ -5,6 +5,7 @@ namespace Spatie\FlareClient;
 use Closure;
 use Exception;
 use Spatie\FlareClient\Contracts\Recorders\Recorder;
+use Spatie\FlareClient\Enums\FlareMode;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
@@ -43,6 +44,7 @@ class Flare
         public readonly Ids $ids,
         public readonly Time $time,
         public readonly SentReports $sentReports,
+        public readonly FlareMode $mode,
         protected Resource $resource,
         protected Scope $scope,
         protected Recorders $recorders,

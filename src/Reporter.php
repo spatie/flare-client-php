@@ -29,6 +29,7 @@ class Reporter
      * @param array<int, FlareMiddleware> $middleware
      * @param null|Closure(Exception): bool $filterExceptionsCallable
      * @param null|Closure(ReportFactory): bool $filterReportsCallable
+     * @param null|Closure(ReportFactory): void $reportRenderer
      */
     public function __construct(
         protected readonly Api $api,
@@ -43,6 +44,7 @@ class Reporter
         protected readonly array $middleware,
         protected readonly Recorders $recorders,
         protected readonly bool $addReportsToTraces,
+        protected null|Closure $reportRenderer = null,
     ) {
     }
 
@@ -83,18 +85,25 @@ class Reporter
         ?Closure $callback = null,
         ?bool $handled = null
     ): ?ReportFactory {
+        $report = null;
+
+        if ($handled !== true && $this->reportRenderer) {
+            $report = $this->createReport($throwable, $callback, $handled);
+
+            ($this->reportRenderer)($report);
+        }
+
         if (! $this->shouldReport($throwable)) {
             $this->tracer->gracefullyEndSpans();
 
             return null;
         }
 
-        $report = $this->createReport($throwable, $callback, $handled);
+        $report ??= $this->createReport($throwable, $callback, $handled);
 
         $this->addReportToTrace($throwable, $handled, $report);
 
         $this->tracer->gracefullyEndSpans();
-
 
         if ($this->filterReportsCallable && ($this->filterReportsCallable)($report) === false) {
             return null;

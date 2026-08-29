@@ -14,6 +14,7 @@ use Spatie\FlareClient\Resources\Resource;
 use Spatie\FlareClient\Sampling\NeverSampler;
 use Spatie\FlareClient\Sampling\Sampler;
 use Spatie\FlareClient\Scopes\Scope;
+use Spatie\FlareClient\Senders\NullSender;
 use Spatie\FlareClient\Senders\Sender;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Support\BackTracer;
@@ -46,12 +47,12 @@ class FlareProvider
         protected ?Closure $registerRecorderAndMiddlewaresCallback = null,
         protected ?Closure $isUsingSubtasksClosure = null,
         protected ?Closure $gracefulSpanEnderClosure = null,
-        protected bool $disableApiQueue = false
+        protected bool $disableApiQueue = false,
+        protected ?Closure $reportRenderer = null,
+        ?FlareMode $mode = null,
     ) {
         $this->registerRecorderAndMiddlewaresCallback ??= $this->defaultRegisterRecordersAndMiddlewaresCallback();
-        $this->mode = match (true) {
-            // TODO: disabled until we have Ignition support
-            //            empty($this->config->apiToken) && $this->config->applicationStage === 'local' => FlareMode::Ignition,
+        $this->mode = $mode ?? match (true) {
             empty($this->config->apiToken) => FlareMode::Disabled,
             default => FlareMode::Enabled,
         };
@@ -61,9 +62,9 @@ class FlareProvider
     {
         $this->container ??= Container::instance();
 
-        $this->container->singleton(Sender::class, fn () => new $this->config->sender(
-            $this->config->senderConfig
-        ));
+        $this->container->singleton(Sender::class, fn () => empty($this->config->apiToken)
+            ? new NullSender()
+            : new $this->config->sender($this->config->senderConfig));
 
         $this->container->singleton(Api::class, fn () => new ($this->config->api)(
             apiToken: $this->config->apiToken ?? 'No Api Token provided',
@@ -230,7 +231,8 @@ class FlareProvider
                 reportFactory: $this->container->get(ReportFactory::class),
                 middleware: $middleware,
                 recorders: $recorders,
-                addReportsToTraces: $collects->collectErrorsWithTraces
+                addReportsToTraces: $collects->collectErrorsWithTraces,
+                reportRenderer: $this->reportRenderer,
             );
         });
 
@@ -243,6 +245,7 @@ class FlareProvider
             ids: $this->container->get(Ids::class),
             time: $this->container->get(Time::class),
             sentReports: $this->container->get(SentReports::class),
+            mode: $this->mode,
             resource: $this->container->get(Resource::class),
             scope: $this->container->get(Scope::class),
             recorders: $this->container->get(Recorders::class),
