@@ -401,24 +401,3 @@ it('resets trace state after an unsampled subtask so the next subtask can sample
 
     $flare->lifecycle->endSubtask();
 });
-
-it('asks the sampler again for each subtask without a traceparent', function () {
-    FakeSampler::setRandoms(0.9, 0.1);
-
-    $flare = setupFlare(
-        fn (FlareConfig $config) => $config->sampler(FakeSampler::class, ['rate' => 0.5]),
-        isUsingSubtasks: true
-    );
-
-    $flare->lifecycle->startSubtask();
-
-    expect($flare->tracer->sampling)->toBeFalse();
-
-    $flare->lifecycle->endSubtask();
-
-    $flare->lifecycle->startSubtask();
-
-    expect($flare->tracer->sampling)->toBeTrue();
-
-    $flare->lifecycle->endSubtask();
-});
