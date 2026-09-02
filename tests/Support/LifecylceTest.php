@@ -376,3 +376,28 @@ it('completes the lifecycle correctly when span limit is reached before lifecycl
             'done' => true,
         ]);
 });
+
+it('resets trace state after an unsampled subtask so the next subtask can sample', function () {
+    $flare = setupFlare(fn (FlareConfig $config) => $config->sampleRate(1.0), isUsingSubtasks: true);
+
+    $flare->lifecycle->startSubtask(
+        $flare->ids->traceParent($flare->ids->trace(), $flare->ids->span(), sampling: false)
+    );
+
+    expect($flare->tracer->sampling)->toBeFalse();
+
+    $flare->lifecycle->endSubtask();
+
+    expect($flare->tracer->currentTraceId())->toBeNull();
+
+    $traceId = $flare->ids->trace();
+
+    $flare->lifecycle->startSubtask(
+        $flare->ids->traceParent($traceId, $flare->ids->span(), sampling: true)
+    );
+
+    expect($flare->tracer->sampling)->toBeTrue();
+    expect($flare->tracer->currentTraceId())->toBe($traceId);
+
+    $flare->lifecycle->endSubtask();
+});

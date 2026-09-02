@@ -128,6 +128,7 @@ class Tracer
             $this->sampler->reset();
         }
 
+        $this->paused = false;
         $this->currentTraceId = null;
         $this->currentSpanId = null;
         $this->currentSpanIdAvailable = true;
