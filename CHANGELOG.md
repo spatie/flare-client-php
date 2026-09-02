@@ -2,6 +2,14 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 3.4.2 - 2026-09-02
+
+### What's Changed
+
+* Always end the trace when a subtask ends by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/91
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/3.4.0...3.4.2
+
 ## 3.4.1 - 2026-08-27
 
 Rerelease due to tagging conflict
