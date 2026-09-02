@@ -562,6 +562,23 @@ it('clears paused state on unsample so a stray resume cannot revive an unsampled
     expect($tracer->isSamplingPaused())->toBeFalse();
 });
 
+it('clears paused state when a trace ends so a stray resume cannot sample the next trace', function () {
+    $tracer = setupFlare(alwaysSampleTraces: true)->tracer;
+
+    $tracer->startTrace();
+    $tracer->pauseSampling();
+
+    expect($tracer->isSamplingPaused())->toBeTrue();
+
+    $tracer->endTrace();
+
+    expect($tracer->isSamplingPaused())->toBeFalse();
+
+    $tracer->resumeSampling();
+
+    expect($tracer->isSampling())->toBeFalse();
+});
+
 it('does not enter pause tracking when sampling is already off', function () {
     $tracer = setupFlare(alwaysSampleTraces: false)->tracer;
 

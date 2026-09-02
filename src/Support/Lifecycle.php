@@ -257,9 +257,7 @@ class Lifecycle
 
         $this->stage = LifecycleStage::Idle;
 
-        if ($this->tracer->sampling === true) {
-            $this->tracer->endTrace();
-        }
+        $this->tracer->endTrace();
 
         $this->entryPointResolver->clear();
 
