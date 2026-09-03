@@ -378,3 +378,23 @@ it('skips the pre-check of a disabled entity and keeps testing the other types',
 
     FakeApi::assertSent(reports: 0, logs: 1);
 });
+
+it('does not warn about an entity that is disabled', function () {
+    setupFlare();
+
+    $enabled = FakeSymfonyTester::create(options: ['logs' => true]);
+
+    expect($enabled->run())->toBeTrue();
+    expect($enabled->output())->toContain('Logs are being sent without the Flare daemon');
+
+    $disabled = FakeSymfonyTester::create(options: ['logs' => true]);
+    $disabled->entityEnabled = [FlareEntityType::Logs->value => false];
+
+    expect($disabled->run())->toBeTrue();
+
+    $text = $disabled->output();
+    expect($text)->toContain('Logging is disabled');
+    expect($text)->not->toContain('Logs are being sent without the Flare daemon');
+
+    FakeApi::assertSent(logs: 1);
+});
