@@ -353,3 +353,29 @@ it('renders the failure block including the extra environment rows when sending 
     expect($text)->toContain('1.2.3');
     expect($text)->toContain('Platform');
 });
+
+it('skips the pre-check of a disabled entity and keeps testing the other types', function () {
+    setupFlare();
+
+    $tester = FakeSymfonyTester::create(options: ['errors' => true, 'logs' => true]);
+    $tester->entityEnabled = [FlareEntityType::Logs->value => false];
+    $tester->preCheckCallback = function (FlareEntityType $type, FakeSymfonyTester $tester): bool {
+        if ($type === FlareEntityType::Logs) {
+            $tester->writeLinePublic('Custom pre-check failed for logs');
+
+            return false;
+        }
+
+        return true;
+    };
+
+    expect($tester->run())->toBeTrue();
+
+    $text = $tester->output();
+    expect($text)->toContain('Logging is disabled');
+    expect($text)->not->toContain('Custom pre-check failed for logs');
+    expect($text)->not->toContain('Logs are being sent without the Flare daemon');
+    expect($text)->toContain('Error sent to Flare');
+
+    FakeApi::assertSent(reports: 1, logs: 0);
+});

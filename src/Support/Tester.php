@@ -64,15 +64,17 @@ abstract class Tester
         $success = true;
 
         foreach ($this->testEntityTypes() as $entityType) {
+            if (! $this->isEntityEnabled($entityType)) {
+                $this->writeLine("⏭️ {$this->entityDisabledMessage($entityType)}", self::STYLE_INFO);
+
+                continue;
+            }
+
             if (! $this->preCheckEntity($entityType)) {
                 return false;
             }
 
-            if (! $this->isEntityEnabled($entityType)) {
-                $this->writeLine("❌ {$this->entityDisabledMessage($entityType)}", self::STYLE_INFO);
-
-                continue;
-            }
+            $this->warnAboutEntity($entityType);
 
             $success = $this->sendTestPayload($entityType) && $success;
         }
@@ -133,6 +135,11 @@ abstract class Tester
 
     protected function preCheckEntity(FlareEntityType $type): bool
     {
+        return true;
+    }
+
+    protected function warnAboutEntity(FlareEntityType $type): void
+    {
         if ($type === FlareEntityType::Errors
             && $this->shouldWarnAboutStackFrameArgumentsIniSetting($this->stackFrameArgumentsEnabled())
         ) {
@@ -142,8 +149,6 @@ abstract class Tester
         if ($type === FlareEntityType::Logs && $this->config->sender !== DaemonSender::class) {
             $this->writeLine('⚠️ Logs are being sent without the Flare daemon. We recommend using the daemon sender for better performance and reliability.', self::STYLE_WARNING);
         }
-
-        return true;
     }
 
     protected function isEntityEnabled(FlareEntityType $type): bool
