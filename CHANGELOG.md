@@ -2,6 +2,14 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 3.4.3 - 2026-09-03
+
+### What's Changed
+
+* Check whether an entity is enabled before running its pre-checks in flare:test by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/92
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/3.4.2...3.4.3
+
 ## 3.4.2 - 2026-09-02
 
 ### What's Changed
