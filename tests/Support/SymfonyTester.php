@@ -358,10 +358,10 @@ it('skips the pre-check of a disabled entity and keeps testing the other types',
     setupFlare();
 
     $tester = FakeSymfonyTester::create(options: ['errors' => true, 'logs' => true]);
-    $tester->entityEnabled = [FlareEntityType::Logs->value => false];
+    $tester->entityEnabled = [FlareEntityType::Errors->value => false];
     $tester->preCheckCallback = function (FlareEntityType $type, FakeSymfonyTester $tester): bool {
-        if ($type === FlareEntityType::Logs) {
-            $tester->writeLinePublic('Custom pre-check failed for logs');
+        if ($type === FlareEntityType::Errors) {
+            $tester->writeLinePublic('Custom pre-check failed for errors');
 
             return false;
         }
@@ -372,10 +372,9 @@ it('skips the pre-check of a disabled entity and keeps testing the other types',
     expect($tester->run())->toBeTrue();
 
     $text = $tester->output();
-    expect($text)->toContain('Logging is disabled');
-    expect($text)->not->toContain('Custom pre-check failed for logs');
-    expect($text)->not->toContain('Logs are being sent without the Flare daemon');
-    expect($text)->toContain('Error sent to Flare');
+    expect($text)->toContain('Error reporting is disabled');
+    expect($text)->not->toContain('Custom pre-check failed for errors');
+    expect($text)->toContain('Log sent to Flare');
 
-    FakeApi::assertSent(reports: 1, logs: 0);
+    FakeApi::assertSent(reports: 0, logs: 1);
 });

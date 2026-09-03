@@ -136,10 +136,6 @@ class FakeSymfonyTester extends SymfonyTester
 
     protected function preCheckEntity(FlareEntityType $type): bool
     {
-        if (! parent::preCheckEntity($type)) {
-            return false;
-        }
-
         if ($this->preCheckCallback === null) {
             return true;
         }
