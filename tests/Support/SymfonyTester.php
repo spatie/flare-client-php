@@ -353,3 +353,48 @@ it('renders the failure block including the extra environment rows when sending 
     expect($text)->toContain('1.2.3');
     expect($text)->toContain('Platform');
 });
+
+it('skips the pre-check of a disabled entity and keeps testing the other types', function () {
+    setupFlare();
+
+    $tester = FakeSymfonyTester::create(options: ['errors' => true, 'logs' => true]);
+    $tester->entityEnabled = [FlareEntityType::Errors->value => false];
+    $tester->preCheckCallback = function (FlareEntityType $type, FakeSymfonyTester $tester): bool {
+        if ($type === FlareEntityType::Errors) {
+            $tester->writeLinePublic('Custom pre-check failed for errors');
+
+            return false;
+        }
+
+        return true;
+    };
+
+    expect($tester->run())->toBeTrue();
+
+    $text = $tester->output();
+    expect($text)->toContain('Error reporting is disabled');
+    expect($text)->not->toContain('Custom pre-check failed for errors');
+    expect($text)->toContain('Log sent to Flare');
+
+    FakeApi::assertSent(reports: 0, logs: 1);
+});
+
+it('does not warn about an entity that is disabled', function () {
+    setupFlare();
+
+    $enabled = FakeSymfonyTester::create(options: ['logs' => true]);
+
+    expect($enabled->run())->toBeTrue();
+    expect($enabled->output())->toContain('Logs are being sent without the Flare daemon');
+
+    $disabled = FakeSymfonyTester::create(options: ['logs' => true]);
+    $disabled->entityEnabled = [FlareEntityType::Logs->value => false];
+
+    expect($disabled->run())->toBeTrue();
+
+    $text = $disabled->output();
+    expect($text)->toContain('Logging is disabled');
+    expect($text)->not->toContain('Logs are being sent without the Flare daemon');
+
+    FakeApi::assertSent(logs: 1);
+});
