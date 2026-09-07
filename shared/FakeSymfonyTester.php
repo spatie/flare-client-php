@@ -81,11 +81,6 @@ class FakeSymfonyTester extends SymfonyTester
         return $this->bufferedOutput->fetch();
     }
 
-    public function setVerbosity(int $verbosity): void
-    {
-        $this->bufferedOutput->setVerbosity($verbosity);
-        $this->output->setVerbosity($verbosity);
-    }
 
     public function sendErrorPayload(): void
     {

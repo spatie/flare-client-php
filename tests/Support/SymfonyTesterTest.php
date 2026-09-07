@@ -12,7 +12,6 @@ use Spatie\FlareClient\Tests\Shared\FakeApi;
 use Spatie\FlareClient\Tests\Shared\FakeSender;
 use Spatie\FlareClient\Tests\Shared\FakeSymfonyTester;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
-use Symfony\Component\Console\Output\OutputInterface;
 
 beforeEach(function () {
     FakeTime::setup('2019-01-01 12:34:56');
@@ -404,9 +403,8 @@ it('dumps the Flare config when the output is in debug verbosity', function () {
     setupFlare();
 
     $tester = FakeSymfonyTester::create(options: ['logs' => true]);
-    $tester->setVerbosity(OutputInterface::VERBOSITY_DEBUG);
 
-    expect($tester->run())->toBeTrue();
+    expect($tester->run(debug: true))->toBeTrue();
 
     $text = $tester->output();
     expect($text)->toContain('Flare config');
@@ -419,16 +417,15 @@ it('dumps the Flare config in debug verbosity even when no api key is set', func
     setupFlare();
 
     $tester = FakeSymfonyTester::create(options: ['logs' => true], config: new FlareConfig(apiToken: null));
-    $tester->setVerbosity(OutputInterface::VERBOSITY_DEBUG);
 
-    expect($tester->run())->toBeFalse();
+    expect($tester->run(debug: true))->toBeFalse();
 
     $text = $tester->output();
     expect($text)->toContain('Flare key not specified');
     expect($text)->toContain('Flare config');
 });
 
-it('does not dump the Flare config on normal verbosity', function () {
+it('does not dump the Flare config when debug is not requested', function () {
     setupFlare();
 
     $tester = FakeSymfonyTester::create(options: ['logs' => true]);

@@ -50,11 +50,13 @@ abstract class Tester
 
     abstract protected function writeNewline(): void;
 
-    public function run(): bool
+    public function run(bool $debug = false): bool
     {
         $success = $this->runTests();
 
-        $this->writeDebugSections();
+        if ($debug) {
+            $this->writeDebugSections();
+        }
 
         return $success;
     }

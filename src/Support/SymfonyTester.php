@@ -91,15 +91,6 @@ class SymfonyTester extends Tester
         $this->io->newLine();
     }
 
-    protected function writeDebugSections(): void
-    {
-        if (! $this->output->isDebug()) {
-            return;
-        }
-
-        parent::writeDebugSections();
-    }
-
     /** @return array<string, mixed> */
     protected function debugSections(): array
     {
