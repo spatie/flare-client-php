@@ -2,6 +2,14 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 3.4.4 - 2026-09-07
+
+### What's Changed
+
+* Dump the Flare configuration when running the tester in debug verbosity by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/93
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/3.4.3...3.4.4
+
 ## 3.4.3 - 2026-09-03
 
 ### What's Changed
