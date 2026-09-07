@@ -52,8 +52,15 @@ abstract class Tester
 
     public function run(): bool
     {
+        $success = $this->runTests();
+
         $this->writeDebugSections();
 
+        return $success;
+    }
+
+    protected function runTests(): bool
+    {
         if (empty($this->config->apiToken)) {
             $this->writeLine('❌ Flare key not specified. Make sure you specify a value in the `key` setting of your Flare configuration.', self::STYLE_ERROR);
 

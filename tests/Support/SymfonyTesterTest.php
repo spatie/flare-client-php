@@ -412,6 +412,20 @@ it('dumps the Flare config when the output is in debug verbosity', function () {
     expect($text)->toContain('Flare config');
     expect($text)->toContain('<redacted>');
     expect($text)->not->toContain('fake-api-key');
+    expect(strpos($text, 'Flare config'))->toBeGreaterThan(strpos($text, 'Log sent to Flare'));
+});
+
+it('dumps the Flare config in debug verbosity even when no api key is set', function () {
+    setupFlare();
+
+    $tester = FakeSymfonyTester::create(options: ['logs' => true], config: new FlareConfig(apiToken: null));
+    $tester->setVerbosity(OutputInterface::VERBOSITY_DEBUG);
+
+    expect($tester->run())->toBeFalse();
+
+    $text = $tester->output();
+    expect($text)->toContain('Flare key not specified');
+    expect($text)->toContain('Flare config');
 });
 
 it('does not dump the Flare config on normal verbosity', function () {
