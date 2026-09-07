@@ -81,6 +81,7 @@ class FakeSymfonyTester extends SymfonyTester
         return $this->bufferedOutput->fetch();
     }
 
+
     public function sendErrorPayload(): void
     {
         parent::sendErrorPayload();

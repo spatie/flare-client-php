@@ -398,3 +398,38 @@ it('does not warn about an entity that is disabled', function () {
 
     FakeApi::assertSent(logs: 1);
 });
+
+it('dumps the Flare config when the output is in debug verbosity', function () {
+    setupFlare();
+
+    $tester = FakeSymfonyTester::create(options: ['logs' => true]);
+
+    expect($tester->run(debug: true))->toBeTrue();
+
+    $text = $tester->output();
+    expect($text)->toContain('Flare config');
+    expect($text)->toContain('<redacted>');
+    expect($text)->not->toContain('fake-api-key');
+    expect(strpos($text, 'Flare config'))->toBeGreaterThan(strpos($text, 'Log sent to Flare'));
+});
+
+it('dumps the Flare config in debug verbosity even when no api key is set', function () {
+    setupFlare();
+
+    $tester = FakeSymfonyTester::create(options: ['logs' => true], config: new FlareConfig(apiToken: null));
+
+    expect($tester->run(debug: true))->toBeFalse();
+
+    $text = $tester->output();
+    expect($text)->toContain('Flare key not specified');
+    expect($text)->toContain('Flare config');
+});
+
+it('does not dump the Flare config when debug is not requested', function () {
+    setupFlare();
+
+    $tester = FakeSymfonyTester::create(options: ['logs' => true]);
+
+    expect($tester->run())->toBeTrue();
+    expect($tester->output())->not->toContain('Flare config');
+});
