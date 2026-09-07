@@ -10,9 +10,9 @@ use Spatie\FlareClient\Senders\Exceptions\BadResponseCode;
 use Spatie\FlareClient\Senders\Support\Response;
 use Spatie\FlareClient\Tests\Shared\FakeApi;
 use Spatie\FlareClient\Tests\Shared\FakeSender;
-use Symfony\Component\Console\Output\OutputInterface;
 use Spatie\FlareClient\Tests\Shared\FakeSymfonyTester;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
+use Symfony\Component\Console\Output\OutputInterface;
 
 beforeEach(function () {
     FakeTime::setup('2019-01-01 12:34:56');
