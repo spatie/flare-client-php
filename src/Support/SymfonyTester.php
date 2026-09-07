@@ -91,6 +91,19 @@ class SymfonyTester extends Tester
         $this->io->newLine();
     }
 
+    /** @return array<string, mixed> */
+    protected function debugSections(): array
+    {
+        if (! $this->output->isDebug()) {
+            return [];
+        }
+
+        $config = clone $this->config;
+        $config->apiToken = '<redacted>';
+
+        return ['Flare config' => $config];
+    }
+
     protected function buildEntryPoint(): EntryPoint
     {
         $entryPoint = new EntryPoint(

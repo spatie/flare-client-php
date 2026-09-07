@@ -10,6 +10,7 @@ use Spatie\FlareClient\Senders\Exceptions\BadResponseCode;
 use Spatie\FlareClient\Senders\Support\Response;
 use Spatie\FlareClient\Tests\Shared\FakeApi;
 use Spatie\FlareClient\Tests\Shared\FakeSender;
+use Symfony\Component\Console\Output\OutputInterface;
 use Spatie\FlareClient\Tests\Shared\FakeSymfonyTester;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
 
@@ -397,4 +398,27 @@ it('does not warn about an entity that is disabled', function () {
     expect($text)->not->toContain('Logs are being sent without the Flare daemon');
 
     FakeApi::assertSent(logs: 1);
+});
+
+it('dumps the Flare config when the output is in debug verbosity', function () {
+    setupFlare();
+
+    $tester = FakeSymfonyTester::create(options: ['logs' => true]);
+    $tester->setVerbosity(OutputInterface::VERBOSITY_DEBUG);
+
+    expect($tester->run())->toBeTrue();
+
+    $text = $tester->output();
+    expect($text)->toContain('Flare config');
+    expect($text)->toContain('<redacted>');
+    expect($text)->not->toContain('fake-api-key');
+});
+
+it('does not dump the Flare config on normal verbosity', function () {
+    setupFlare();
+
+    $tester = FakeSymfonyTester::create(options: ['logs' => true]);
+
+    expect($tester->run())->toBeTrue();
+    expect($tester->output())->not->toContain('Flare config');
 });

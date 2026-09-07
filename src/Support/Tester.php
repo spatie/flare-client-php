@@ -52,6 +52,8 @@ abstract class Tester
 
     public function run(): bool
     {
+        $this->writeDebugSections();
+
         if (empty($this->config->apiToken)) {
             $this->writeLine('❌ Flare key not specified. Make sure you specify a value in the `key` setting of your Flare configuration.', self::STYLE_ERROR);
 
@@ -361,6 +363,21 @@ abstract class Tester
             ['Curl', curl_version()['version'] ?? 'Unknown'],
             ['SSL', curl_version()['ssl_version'] ?? 'Unknown'],
         ];
+    }
+
+    /** @return array<string, mixed> */
+    protected function debugSections(): array
+    {
+        return [];
+    }
+
+    protected function writeDebugSections(): void
+    {
+        foreach ($this->debugSections() as $label => $value) {
+            $this->writeLine($label, self::STYLE_INFO);
+            $this->writeLine(print_r($value, true));
+            $this->writeNewline();
+        }
     }
 
     protected function writeEnvironmentInfo(): void
