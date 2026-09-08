@@ -7,6 +7,7 @@ use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\FlareMiddleware\AddJobInformation;
 use Spatie\FlareClient\Memory\SystemMemory;
+use Spatie\FlareClient\Sampling\SamplingRule;
 use Spatie\FlareClient\Tests\Shared\FakeIds;
 use Spatie\FlareClient\Tests\Shared\FakeMemory;
 
@@ -313,4 +314,84 @@ it('handles a retry loop cleanly in subtask mode', function () {
 
     expect(AddJobInformation::$usedTrackingUuid)->toBe('uuid-2');
     expect(AddJobInformation::$latestJob)->toBe($span2);
+});
+
+it('lets a job sampling rule override an inherited sampled parent decision', function () {
+    $traceparent = '00-1234567890abcdef1234567890abcdef-fedcba9876543210-01';
+
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config
+            ->collectJobs()
+            ->sampleTracesDynamic(baseRate: 1.0, rules: [SamplingRule::forJob('App\\Jobs\\Send', 0)]),
+        isUsingSubtasks: true,
+    );
+
+    $flare->job()->recordStartFromJob('App\\Jobs\\Send', 'App\\Jobs\\Send', traceparent: $traceparent);
+
+    expect($flare->tracer->isSampling())->toBeFalse();
+    expect($flare->tracer->currentTrace())->toBeEmpty();
+});
+
+it('keeps the parent trace when a job sampling rule agrees with a sampled parent', function () {
+    $traceparent = '00-1234567890abcdef1234567890abcdef-fedcba9876543210-01';
+
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config
+            ->collectJobs()
+            ->sampleTracesDynamic(baseRate: 0, rules: [SamplingRule::forJob('App\\Jobs\\Send', 1.0)]),
+        isUsingSubtasks: true,
+    );
+
+    $span = $flare->job()->recordStartFromJob('App\\Jobs\\Send', 'App\\Jobs\\Send', traceparent: $traceparent);
+
+    expect($span)->not()->toBeNull();
+    expect($span->traceId)->toBe('1234567890abcdef1234567890abcdef');
+});
+
+it('starts a new trace when a job sampling rule overrides an unsampled parent', function () {
+    FakeIds::setup()->nextTraceId('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+
+    $traceparent = '00-1234567890abcdef1234567890abcdef-fedcba9876543210-00';
+
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config
+            ->collectJobs()
+            ->sampleTracesDynamic(baseRate: 0, rules: [SamplingRule::forJob('App\\Jobs\\Send', 1.0)]),
+        isUsingSubtasks: true,
+    );
+
+    $span = $flare->job()->recordStartFromJob('App\\Jobs\\Send', 'App\\Jobs\\Send', traceparent: $traceparent);
+
+    expect($span)->not()->toBeNull();
+    expect($span->traceId)->toBe('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+    expect($span->parentSpanId)->toBeNull();
+});
+
+it('keeps inheriting an unsampled parent when no job sampling rule matches', function () {
+    $traceparent = '00-1234567890abcdef1234567890abcdef-fedcba9876543210-00';
+
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config
+            ->collectJobs()
+            ->sampleTracesDynamic(baseRate: 1.0, rules: [SamplingRule::forJob('App\\Jobs\\Other', 1.0)]),
+        isUsingSubtasks: true,
+    );
+
+    $flare->job()->recordStartFromJob('App\\Jobs\\Send', 'App\\Jobs\\Send', traceparent: $traceparent);
+
+    expect($flare->tracer->isSampling())->toBeFalse();
+    expect($flare->tracer->currentTrace())->toBeEmpty();
+});
+
+it('applies a job sampling rule to a job dispatched without a traceparent', function () {
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config
+            ->collectJobs()
+            ->sampleTracesDynamic(baseRate: 0, rules: [SamplingRule::forJob('App\\Jobs\\Send', 1.0)]),
+        isUsingSubtasks: true,
+    );
+
+    $span = $flare->job()->recordStartFromJob('App\\Jobs\\Send', 'App\\Jobs\\Send');
+
+    expect($span)->not()->toBeNull();
 });

@@ -116,10 +116,19 @@ class Tracer
             return false;
         }
 
-        return $this->sampling = $this->sampler->shouldSample(
+        $this->sampling = $this->sampler->shouldSample(
             $this->entryPointResolver->get(),
             $parentSampled,
         );
+
+        // The inherited trace never gets sent, continuing it would produce a rootless trace
+        if ($parentSampled === false && $this->sampling === true) {
+            $this->currentTraceId = $this->ids->trace();
+            $this->currentSpanId = $this->ids->span();
+            $this->currentSpanIdAvailable = true;
+        }
+
+        return $this->sampling;
     }
 
     public function endTrace(): void

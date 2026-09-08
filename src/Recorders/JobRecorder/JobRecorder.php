@@ -62,6 +62,19 @@ class JobRecorder extends SpansRecorder
             $traceparent = $this->tracer->ids->setTraceparentSampling($traceparent, false);
         }
 
+        $entryPoint = new EntryPoint(
+            type: EntryPointType::Queue,
+            value: $jobClass ?? $jobName,
+        );
+
+        $entryPoint->setHandlerFromAttributesProvider($jobAttributesProvider);
+
+        // The entry point has to be known before the subtask starts, the sampler decides
+        // there and job/queue sampling rules can only match a resolved queue entry point.
+        if ($this->lifecycle->usesSubtasks) {
+            $this->entryPointResolver->set($entryPoint);
+        }
+
         $this->lifecycle->startSubtask(traceparent: $traceparent);
 
         if ($shouldIgnore && $this->lifecycle->usesSubtasks) {
@@ -74,19 +87,6 @@ class JobRecorder extends SpansRecorder
             $this->pauseTrace();
 
             return null;
-        }
-
-        $entryPoint = new EntryPoint(
-            type: EntryPointType::Queue,
-            value: $jobClass ?? $jobName,
-        );
-
-        $entryPoint->setHandlerFromAttributesProvider($jobAttributesProvider);
-
-        if ($this->lifecycle->usesSubtasks) {
-            $this->entryPointResolver->set($entryPoint);
-
-            $this->tracer->reevaluateSampling();
         }
 
         return $this->startSpan(
