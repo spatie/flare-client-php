@@ -2,6 +2,15 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 3.5.0 - 2026-09-08
+
+### What's Changed
+
+* Fix external HTTP spans leaking and missing error information by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/94
+* Let job and queue sampling rules decide per job by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/95
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/3.4.4...3.5.0
+
 ## 3.4.4 - 2026-09-07
 
 ### What's Changed
