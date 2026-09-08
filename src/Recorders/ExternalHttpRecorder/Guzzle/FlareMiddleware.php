@@ -64,7 +64,7 @@ class FlareMiddleware
 
     protected function recordFailure(mixed $reason): void
     {
-        $errorType = is_object($reason) ? $reason::class : get_debug_type($reason);
+        $errorType = get_debug_type($reason);
 
         $response = $this->responseFromFailure($reason);
 
