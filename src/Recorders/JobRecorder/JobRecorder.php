@@ -89,32 +89,15 @@ class JobRecorder extends SpansRecorder
             return null;
         }
 
-        if ($this->lifecycle->usesSubtasks) {
-            $this->tracer->reevaluateSampling();
-        }
-
         return $this->startSpan(
             name: "Job - {$jobName}",
             attributes: fn () => [
                 'flare.span_type' => SpanType::Job,
                 ...$entryPoint->toAttributes(),
                 ...$jobAttributesProvider->toArray(),
-                ...$this->dispatchTraceAttributes(),
                 ...$attributes,
             ],
         );
-    }
-
-    /** @return array<string, string> */
-    protected function dispatchTraceAttributes(): array
-    {
-        $detachedFromTraceId = $this->tracer->detachedFromTraceId();
-
-        if ($detachedFromTraceId === null) {
-            return [];
-        }
-
-        return ['flare.dispatch.trace_id' => $detachedFromTraceId];
     }
 
     public function recordStartFromJob(

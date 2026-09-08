@@ -346,7 +346,6 @@ it('keeps the parent trace when a job sampling rule agrees with a sampled parent
 
     expect($span)->not()->toBeNull();
     expect($span->traceId)->toBe('1234567890abcdef1234567890abcdef');
-    expect($span->attributes)->not()->toHaveKey('flare.dispatch.trace_id');
 });
 
 it('starts a new trace when a job sampling rule overrides an unsampled parent', function () {
@@ -366,7 +365,6 @@ it('starts a new trace when a job sampling rule overrides an unsampled parent', 
     expect($span)->not()->toBeNull();
     expect($span->traceId)->toBe('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
     expect($span->parentSpanId)->toBeNull();
-    expect($span->attributes)->toHaveKey('flare.dispatch.trace_id', '1234567890abcdef1234567890abcdef');
 });
 
 it('keeps inheriting an unsampled parent when no job sampling rule matches', function () {
@@ -396,5 +394,4 @@ it('applies a job sampling rule to a job dispatched without a traceparent', func
     $span = $flare->job()->recordStartFromJob('App\\Jobs\\Send', 'App\\Jobs\\Send');
 
     expect($span)->not()->toBeNull();
-    expect($span->attributes)->not()->toHaveKey('flare.dispatch.trace_id');
 });
