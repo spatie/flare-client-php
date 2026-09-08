@@ -45,6 +45,10 @@ class Tracer
 
     protected bool $currentSpanIdAvailable = true;
 
+    protected ?bool $parentSampled = null;
+
+    protected ?string $detachedFromTraceId = null;
+
     /**
      * @param array{max_spans: int, max_attributes_per_span: int, max_span_events_per_span: int, max_attributes_per_span_event: int, max_attribute_size_in_kb?: int}|null $limits
      * @param Closure(Span):(void|Span)|null $configureSpansCallable
@@ -111,15 +115,44 @@ class Tracer
         $this->currentTraceId = $traceId ?? $this->ids->trace();
         $this->currentSpanId = $spanId ?? $this->ids->span();
         $this->currentSpanIdAvailable = $currentSpanAvailable;
+        $this->parentSampled = $parentSampled;
 
         if ($this->disabled === true) {
             return false;
         }
 
-        return $this->sampling = $this->sampler->shouldSample(
+        $this->sampling = $this->sampler->shouldSample(
             $this->entryPointResolver->get(),
             $parentSampled,
         );
+
+        $this->detachFromUnsampledParent();
+
+        return $this->sampling;
+    }
+
+    /**
+     * A sampling rule can decide to sample something whose parent was not sampled. The
+     * inherited trace never gets sent, so continuing it would produce a trace without a
+     * root span shared by every sibling. Start a new trace instead and remember where it
+     * came from.
+     */
+    protected function detachFromUnsampledParent(): void
+    {
+        if ($this->parentSampled !== false || $this->sampling === false) {
+            return;
+        }
+
+        $this->detachedFromTraceId = $this->currentTraceId;
+        $this->currentTraceId = $this->ids->trace();
+        $this->currentSpanId = $this->ids->span();
+        $this->currentSpanIdAvailable = true;
+        $this->parentSampled = null;
+    }
+
+    public function detachedFromTraceId(): ?string
+    {
+        return $this->detachedFromTraceId;
     }
 
     public function endTrace(): void
@@ -133,6 +166,8 @@ class Tracer
         $this->currentSpanId = null;
         $this->currentSpanIdAvailable = true;
         $this->sampling = false;
+        $this->parentSampled = null;
+        $this->detachedFromTraceId = null;
 
         if (empty($this->spans)) {
             return;
@@ -165,6 +200,8 @@ class Tracer
         }
 
         $this->sampling = true;
+
+        $this->detachFromUnsampledParent();
     }
 
     public function unsample(): void
@@ -178,6 +215,8 @@ class Tracer
         $this->currentSpanId = null;
         $this->currentSpanIdAvailable = true;
         $this->sampling = false;
+        $this->parentSampled = null;
+        $this->detachedFromTraceId = null;
         $this->spans = [];
     }
 

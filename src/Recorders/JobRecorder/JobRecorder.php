@@ -62,6 +62,19 @@ class JobRecorder extends SpansRecorder
             $traceparent = $this->tracer->ids->setTraceparentSampling($traceparent, false);
         }
 
+        $entryPoint = new EntryPoint(
+            type: EntryPointType::Queue,
+            value: $jobClass ?? $jobName,
+        );
+
+        $entryPoint->setHandlerFromAttributesProvider($jobAttributesProvider);
+
+        // The entry point has to be known before the subtask starts, the sampler decides
+        // there and job/queue sampling rules can only match a resolved queue entry point.
+        if ($this->lifecycle->usesSubtasks) {
+            $this->entryPointResolver->set($entryPoint);
+        }
+
         $this->lifecycle->startSubtask(traceparent: $traceparent);
 
         if ($shouldIgnore && $this->lifecycle->usesSubtasks) {
@@ -76,16 +89,7 @@ class JobRecorder extends SpansRecorder
             return null;
         }
 
-        $entryPoint = new EntryPoint(
-            type: EntryPointType::Queue,
-            value: $jobClass ?? $jobName,
-        );
-
-        $entryPoint->setHandlerFromAttributesProvider($jobAttributesProvider);
-
         if ($this->lifecycle->usesSubtasks) {
-            $this->entryPointResolver->set($entryPoint);
-
             $this->tracer->reevaluateSampling();
         }
 
@@ -95,9 +99,22 @@ class JobRecorder extends SpansRecorder
                 'flare.span_type' => SpanType::Job,
                 ...$entryPoint->toAttributes(),
                 ...$jobAttributesProvider->toArray(),
+                ...$this->dispatchTraceAttributes(),
                 ...$attributes,
             ],
         );
+    }
+
+    /** @return array<string, string> */
+    protected function dispatchTraceAttributes(): array
+    {
+        $detachedFromTraceId = $this->tracer->detachedFromTraceId();
+
+        if ($detachedFromTraceId === null) {
+            return [];
+        }
+
+        return ['flare.dispatch.trace_id' => $detachedFromTraceId];
     }
 
     public function recordStartFromJob(
