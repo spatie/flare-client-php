@@ -3,6 +3,7 @@
 namespace Spatie\FlareClient\Recorders\ExternalHttpRecorder;
 
 use Spatie\FlareClient\Enums\RecorderType;
+use Spatie\FlareClient\Enums\SpanStatusCode;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Recorders\SpansRecorder;
 use Spatie\FlareClient\Spans\Span;
@@ -60,19 +61,35 @@ class ExternalHttpRecorder extends SpansRecorder
         int $responseCode,
         ?int $responseBodySize = null,
         array $responseHeaders = [],
+        ?string $errorType = null,
     ): ?Span {
-        return $this->endSpan(additionalAttributes:  [
+        $errorType ??= $responseCode >= 400 ? (string) $responseCode : null;
+
+        $attributes = [
             'http.response.status_code' => $responseCode,
             'http.response.body.size' => $responseBodySize,
             'http.response.headers' => $this->redactor->censorHeaders($responseHeaders),
-        ]);
+        ];
+
+        if ($errorType !== null) {
+            $attributes['error.type'] = $errorType;
+        }
+
+        return $this->endSpan(
+            additionalAttributes: $attributes,
+            spanCallback: $errorType === null
+                ? null
+                : fn (Span $span) => $span->setStatus(SpanStatusCode::Error, $errorType),
+        );
     }
 
-    public function recordConnectionFailed(
-        string $errorType
-    ): ?Span {
-        return $this->endSpan(additionalAttributes:  [
-            'error.type' => $errorType,
-        ]);
+    public function recordConnectionFailed(string $errorType): ?Span
+    {
+        return $this->endSpan(
+            additionalAttributes: [
+                'error.type' => $errorType,
+            ],
+            spanCallback: fn (Span $span) => $span->setStatus(SpanStatusCode::Error, $errorType),
+        );
     }
 }
