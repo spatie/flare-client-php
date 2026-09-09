@@ -2,7 +2,6 @@
 
 namespace Spatie\FlareClient\Support;
 
-use Composer\InstalledVersions;
 use Exception;
 use Monolog\Level;
 use Spatie\FlareClient\Api;
@@ -368,7 +367,7 @@ abstract class Tester
         return [
             ['Platform', PHP_OS],
             ['PHP', phpversion()],
-            ['spatie/flare-client-php', InstalledVersions::getVersion('spatie/flare-client-php') ?? 'Unknown'],
+            ['spatie/flare-client-php', Telemetry::getVersion()],
             ['Curl', curl_version()['version'] ?? 'Unknown'],
             ['SSL', curl_version()['ssl_version'] ?? 'Unknown'],
         ];
