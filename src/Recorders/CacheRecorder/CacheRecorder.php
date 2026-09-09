@@ -21,7 +21,7 @@ class CacheRecorder extends SpanEventsRecorder
     /** @var array<int, string> */
     protected array $ignoredKeys = [];
 
-    public const DEFAULT_OPERATIONS = [CacheOperation::Get, CacheOperation::Set, CacheOperation::Forget];
+    public const DEFAULT_OPERATIONS = [CacheOperation::Get, CacheOperation::Set, CacheOperation::Forget, CacheOperation::Flush];
 
     public static function type(): string|RecorderType
     {
@@ -68,6 +68,26 @@ class CacheRecorder extends SpanEventsRecorder
         return $this->record($key, $store, CacheOperation::Forget, CacheResult::Failure);
     }
 
+    public function recordFlushed(?string $store): ?SpanEvent
+    {
+        return $this->record('', $store, CacheOperation::Flush, CacheResult::Success);
+    }
+
+    public function recordFlushFailed(?string $store): ?SpanEvent
+    {
+        return $this->record('', $store, CacheOperation::Flush, CacheResult::Failure);
+    }
+
+    public function recordLocksFlushed(?string $store): ?SpanEvent
+    {
+        return $this->record('', $store, CacheOperation::Flush, CacheResult::Success, name: 'locks flushed');
+    }
+
+    public function recordLocksFlushFailed(?string $store): ?SpanEvent
+    {
+        return $this->record('', $store, CacheOperation::Flush, CacheResult::Failure, name: 'locks flush failed');
+    }
+
     /**
      * A store falling over is an operational event without a key or an operation, so it is never
      * filtered by the ignored keys or the configured operations.
@@ -94,32 +114,35 @@ class CacheRecorder extends SpanEventsRecorder
         CacheOperation $operation,
         CacheResult $result,
         array $attributes = [],
+        ?string $name = null,
     ): ?SpanEvent {
         if (! in_array($operation, $this->operations)) {
             return null;
         }
 
-        if ($this->shouldIgnoreKey($key)) {
+        if ($key !== '' && $this->shouldIgnoreKey($key)) {
             return null;
         }
 
-        $name = match ([$operation, $result]) {
+        $name ??= match ([$operation, $result]) {
             [CacheOperation::Get, CacheResult::Hit] => 'hit',
             [CacheOperation::Get, CacheResult::Miss] => 'miss',
             [CacheOperation::Set, CacheResult::Success] => 'key written',
             [CacheOperation::Forget, CacheResult::Success] => 'key forgotten',
             [CacheOperation::Set, CacheResult::Failure] => 'key write failed',
             [CacheOperation::Forget, CacheResult::Failure] => 'key forget failed',
+            [CacheOperation::Flush, CacheResult::Success] => 'flushed',
+            [CacheOperation::Flush, CacheResult::Failure] => 'flush failed',
             default => '',
         };
 
         return $this->spanEvent(
-            "Cache {$name} - {$key}",
+            $key === '' ? "Cache {$name}" : "Cache {$name} - {$key}",
             attributes: [
                 'flare.span_event_type' => SpanEventType::Cache,
                 'cache.operation' => $operation,
                 'cache.result' => $result,
-                'cache.key' => $key,
+                ...$key === '' ? [] : ['cache.key' => $key],
                 'cache.store' => $store,
                 ...$attributes,
             ]
