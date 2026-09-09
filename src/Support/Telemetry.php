@@ -19,6 +19,6 @@ class Telemetry
             return 'unknown';
         }
 
-        return InstalledVersions::getVersion(static::NAME) ?? 'unknown';
+        return InstalledVersions::getPrettyVersion(static::NAME) ?? 'unknown';
     }
 }
