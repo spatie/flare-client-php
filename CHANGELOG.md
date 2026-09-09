@@ -2,6 +2,14 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 3.5.1 - 2026-09-09
+
+### What's Changed
+
+* Send the pretty package version as the telemetry SDK version by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/96
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/3.5.0...3.5.1
+
 ## 3.5.0 - 2026-09-08
 
 ### What's Changed
