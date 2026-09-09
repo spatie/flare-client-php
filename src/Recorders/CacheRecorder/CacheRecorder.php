@@ -9,6 +9,7 @@ use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Recorders\SpanEventsRecorder;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Support\PatternMatcher;
+use Throwable;
 
 class CacheRecorder extends SpanEventsRecorder
 {
@@ -57,6 +58,36 @@ class CacheRecorder extends SpanEventsRecorder
         return $this->record($key, $store, CacheOperation::Forget, CacheResult::Success);
     }
 
+    public function recordKeyWriteFailed(string $key, ?string $store): ?SpanEvent
+    {
+        return $this->record($key, $store, CacheOperation::Set, CacheResult::Failure);
+    }
+
+    public function recordKeyForgetFailed(string $key, ?string $store): ?SpanEvent
+    {
+        return $this->record($key, $store, CacheOperation::Forget, CacheResult::Failure);
+    }
+
+    /**
+     * A store falling over is an operational event without a key or an operation, so it is never
+     * filtered by the ignored keys or the configured operations.
+     */
+    public function recordFailedOver(?string $store, ?Throwable $exception = null): ?SpanEvent
+    {
+        return $this->spanEvent(
+            $store === null ? 'Cache failed over' : "Cache failed over - {$store}",
+            attributes: [
+                'flare.span_event_type' => SpanEventType::Cache,
+                'cache.result' => CacheResult::Failure,
+                'cache.store' => $store,
+                ...$exception === null ? [] : [
+                    'exception.message' => $exception->getMessage(),
+                    'exception.type' => $exception::class,
+                ],
+            ]
+        );
+    }
+
     public function record(
         string $key,
         ?string $store,
@@ -77,6 +108,8 @@ class CacheRecorder extends SpanEventsRecorder
             [CacheOperation::Get, CacheResult::Miss] => 'miss',
             [CacheOperation::Set, CacheResult::Success] => 'key written',
             [CacheOperation::Forget, CacheResult::Success] => 'key forgotten',
+            [CacheOperation::Set, CacheResult::Failure] => 'key write failed',
+            [CacheOperation::Forget, CacheResult::Failure] => 'key forget failed',
             default => '',
         };
 

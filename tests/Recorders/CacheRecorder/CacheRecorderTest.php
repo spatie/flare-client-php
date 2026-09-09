@@ -133,3 +133,107 @@ it('can ignore cache keys', function () {
 
     expect($recorder->getSpanEvents())->toBe([$recorded]);
 });
+
+it('can record failed cache writes and forgets', function () {
+    $flare = setupFlare();
+
+    $recorder = new CacheRecorder(
+        tracer: $flare->tracer,
+        backTracer: $flare->backTracer,
+        config: [
+            'with_traces' => true,
+            'with_errors' => true,
+            'max_items_with_errors' => 10,
+            'operations' => [CacheOperation::Get, CacheOperation::Set, CacheOperation::Forget],
+        ]
+    );
+
+    $recorder->boot();
+
+    $recorder->recordKeyWriteFailed('key', 'store');
+    $recorder->recordKeyForgetFailed('key', 'store');
+
+    $events = $recorder->getSpanEvents();
+
+    expect($events)->toHaveCount(2);
+
+    expect($events[0])
+        ->toBeInstanceOf(SpanEvent::class)
+        ->name->toBe('Cache key write failed - key')
+        ->attributes
+        ->toHaveCount(5)
+        ->toHaveKey('flare.span_event_type', SpanEventType::Cache)
+        ->toHaveKey('cache.key', 'key')
+        ->toHaveKey('cache.store', 'store')
+        ->toHaveKey('cache.operation', CacheOperation::Set)
+        ->toHaveKey('cache.result', CacheResult::Failure);
+
+    expect($events[1])
+        ->toBeInstanceOf(SpanEvent::class)
+        ->name->toBe('Cache key forget failed - key')
+        ->attributes
+        ->toHaveCount(5)
+        ->toHaveKey('flare.span_event_type', SpanEventType::Cache)
+        ->toHaveKey('cache.key', 'key')
+        ->toHaveKey('cache.store', 'store')
+        ->toHaveKey('cache.operation', CacheOperation::Forget)
+        ->toHaveKey('cache.result', CacheResult::Failure);
+});
+
+it('ignores failed cache writes and forgets for ignored keys', function () {
+    $flare = setupFlare();
+
+    $recorder = new CacheRecorder(
+        tracer: $flare->tracer,
+        backTracer: $flare->backTracer,
+        config: [
+            'with_traces' => true,
+            'with_errors' => true,
+            'max_items_with_errors' => 10,
+            'operations' => [CacheOperation::Get, CacheOperation::Set, CacheOperation::Forget],
+            'ignored_keys' => ['/^framework:/'],
+        ]
+    );
+
+    $recorder->boot();
+
+    $recorder->recordKeyWriteFailed('framework:schedule', 'store');
+    $recorder->recordKeyForgetFailed('framework:schedule', 'store');
+
+    expect($recorder->getSpanEvents())->toBeEmpty();
+});
+
+it('records a cache store failing over without filtering it', function () {
+    $flare = setupFlare();
+
+    $recorder = new CacheRecorder(
+        tracer: $flare->tracer,
+        backTracer: $flare->backTracer,
+        config: [
+            'with_traces' => true,
+            'with_errors' => true,
+            'max_items_with_errors' => 10,
+            'operations' => [],
+            'ignored_keys' => ['//'],
+        ]
+    );
+
+    $recorder->boot();
+
+    $recorder->recordFailedOver('redis', new RuntimeException('Connection refused'));
+
+    $events = $recorder->getSpanEvents();
+
+    expect($events)->toHaveCount(1);
+
+    expect($events[0])
+        ->toBeInstanceOf(SpanEvent::class)
+        ->name->toBe('Cache failed over - redis')
+        ->attributes
+        ->toHaveCount(5)
+        ->toHaveKey('flare.span_event_type', SpanEventType::Cache)
+        ->toHaveKey('cache.store', 'redis')
+        ->toHaveKey('cache.result', CacheResult::Failure)
+        ->toHaveKey('exception.message', 'Connection refused')
+        ->toHaveKey('exception.type', RuntimeException::class);
+});
