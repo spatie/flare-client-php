@@ -50,7 +50,18 @@ class AddGitInformation
 
     protected function remote(): ?string
     {
-        return $this->command('git config --get remote.origin.url') ?: null;
+        $remote = $this->command('git config --get remote.origin.url');
+
+        return $remote ? $this->sanitizeRemoteUrl($remote) : null;
+    }
+
+    protected function sanitizeRemoteUrl(string $url): string
+    {
+        if (! preg_match('#^(https?://)[^/]*@(.+)$#i', $url, $matches)) {
+            return $url;
+        }
+
+        return $matches[1].$matches[2];
     }
 
     protected function isClean(): bool
