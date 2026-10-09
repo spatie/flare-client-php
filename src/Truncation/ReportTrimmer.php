@@ -39,7 +39,32 @@ class ReportTrimmer
      */
     public function needsToBeTrimmed(array $payload): bool
     {
+        // Encoding never shortens strings, so skip encoding payloads that are too large anyway
+        if ($this->sumStringLengths($payload) > self::getMaxPayloadSize()) {
+            return true;
+        }
+
         return strlen((string) json_encode($payload)) > self::getMaxPayloadSize();
+    }
+
+    /**
+     * @param array<int|string, mixed> $values
+     */
+    protected function sumStringLengths(array $values): int
+    {
+        $length = 0;
+
+        foreach ($values as $value) {
+            if (is_string($value)) {
+                $length += strlen($value);
+            }
+
+            if (is_array($value)) {
+                $length += $this->sumStringLengths($value);
+            }
+        }
+
+        return $length;
     }
 
     public static function getMaxPayloadSize(): int
