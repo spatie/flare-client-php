@@ -495,14 +495,27 @@ class FlareConfig
         return $this->ignoreCollect(CollectType::RedisCommands);
     }
 
+    /**
+     * @param int|array<string, mixed>|null $maxItemsWithErrors
+     * @param array<string, mixed> $extra
+     */
     public function collectViews(
         bool $withTraces = ViewRecorder::DEFAULT_WITH_TRACES,
         bool $withErrors = ViewRecorder::DEFAULT_WITH_ERRORS,
+        int|array|null $maxItemsWithErrors = ViewRecorder::DEFAULT_MAX_ITEMS_WITH_ERRORS,
         array $extra = [],
     ): static {
+        if (is_array($maxItemsWithErrors)) {
+            $extra = array_merge($maxItemsWithErrors, $extra);
+            $maxItemsWithErrors = array_key_exists('max_items_with_errors', $extra)
+                ? $extra['max_items_with_errors']
+                : ViewRecorder::DEFAULT_MAX_ITEMS_WITH_ERRORS;
+        }
+
         return $this->addCollect(CollectType::Views, [
             'with_traces' => $withTraces,
             'with_errors' => $withErrors,
+            'max_items_with_errors' => $maxItemsWithErrors,
             ...$extra,
         ]);
     }
