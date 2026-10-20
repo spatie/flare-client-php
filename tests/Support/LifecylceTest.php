@@ -319,6 +319,22 @@ it('will not finish a trace when shutting down if spans are not closed yet', fun
     FakeApi::assertTracesSent(0);
 });
 
+it('will not export an inherited parent trace when shutting down in a forked child process', function () {
+    FakeTime::setup(20);
+
+    $flare = setupFlare(alwaysSampleTraces: true);
+
+    $flare->lifecycle->start(timeUnixNano: 0);
+    $flare->lifecycle->terminating(timeUnixNano: 10);
+
+    // Simulate pcntl_fork(): child inherits Lifecycle + shutdown handler but runs under a new PID.
+    invade($flare->lifecycle)->ownerPid = (getmypid() ?: 0) + 1;
+
+    invade($flare->lifecycle)->shutdown();
+
+    FakeApi::assertTracesSent(0);
+});
+
 it('completes the lifecycle correctly when span limit is reached mid-request', function () {
     $flare = setupFlare(
         fn (FlareConfig $config) => $config
