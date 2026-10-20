@@ -30,6 +30,15 @@ class Lifecycle
     protected Span|AddSpanResult|null $terminatingSpan = null;
 
     /**
+     * PID that registered the shutdown handler.
+     *
+     * After pcntl_fork(), children inherit this Lifecycle (and its shutdown
+     * function). Exporting the parent's open trace from those children
+     * duplicates traces — see https://github.com/spatie/flare-client-php/issues/99
+     */
+    protected int $ownerPid;
+
+    /**
      * @param Closure():bool|null $isUsingSubtasksClosure
      */
     public function __construct(
@@ -46,6 +55,7 @@ class Lifecycle
         protected ?Closure $isUsingSubtasksClosure = null,
     ) {
         $this->usesSubtasks = $this->isUsingSubtasks();
+        $this->ownerPid = getmypid() ?: 0;
 
         register_shutdown_function([$this, 'shutdown']);
     }
@@ -350,6 +360,12 @@ class Lifecycle
 
     protected function shutdown(): void
     {
+        // Forked children inherit this object and its shutdown handler; do not
+        // export the parent's trace (or flush its queue) from a different PID.
+        if ($this->ownerPid !== 0 && $this->ownerPid !== getmypid()) {
+            return;
+        }
+
         if (! $this->tracer->sampling) {
             $this->flush();
 
