@@ -40,7 +40,9 @@ class Redactor
     public function censorBody(array $body): array
     {
         foreach ($this->censorBodyFields as $censor) {
-            $body = $this->censorByPath($body, explode('.', $censor));
+            $body = str_contains($censor, '.') || $censor === '*'
+                ? $this->censorByPath($body, explode('.', $censor))
+                : $this->censorAtAnyDepth($body, $censor);
         }
 
         return $body;
@@ -79,6 +81,23 @@ class Redactor
     protected function censorValue(mixed $value): string
     {
         return '<CENSORED:'.get_debug_type($value).'>';
+    }
+
+    private function censorAtAnyDepth(array $data, string $field): array
+    {
+        foreach ($data as $key => $value) {
+            if ($this->normalizeBodyFieldName((string) $key) === $field) {
+                $data[$key] = $this->censorValue($value);
+
+                continue;
+            }
+
+            if (is_array($value)) {
+                $data[$key] = $this->censorAtAnyDepth($value, $field);
+            }
+        }
+
+        return $data;
     }
 
     private function censorByPath(array $data, array $segments): array

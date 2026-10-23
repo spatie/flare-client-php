@@ -45,6 +45,48 @@ it('censors top-level body fields', function () {
     ]);
 });
 
+it('censors body fields without dot notation at any depth', function () {
+    $redactor = new Redactor(censorBodyFields: ['password']);
+
+    $censored = $redactor->censorBody([
+        'password' => 'secret',
+        'user' => [
+            'name' => 'ruben',
+            'password' => 'secret',
+            'devices' => [
+                ['name' => 'phone', 'password' => 'secret'],
+            ],
+        ],
+    ]);
+
+    expect($censored)->toBe([
+        'password' => '<CENSORED:string>',
+        'user' => [
+            'name' => 'ruben',
+            'password' => '<CENSORED:string>',
+            'devices' => [
+                ['name' => 'phone', 'password' => '<CENSORED:string>'],
+            ],
+        ],
+    ]);
+});
+
+it('only censors body fields with dot notation at that exact path', function () {
+    $redactor = new Redactor(censorBodyFields: ['user.password']);
+
+    $censored = $redactor->censorBody([
+        'password' => 'visible',
+        'user' => ['password' => 'secret'],
+        'admin' => ['user' => ['password' => 'visible']],
+    ]);
+
+    expect($censored)->toBe([
+        'password' => 'visible',
+        'user' => ['password' => '<CENSORED:string>'],
+        'admin' => ['user' => ['password' => 'visible']],
+    ]);
+});
+
 it('censors nested body fields using dot notation', function () {
     $redactor = new Redactor(censorBodyFields: ['user.password', 'user.tokens.api']);
 
