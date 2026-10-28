@@ -75,6 +75,7 @@ class RequestRecorder extends SpansRecorder
                 'attributes' => [
                     'flare.span_type' => SpanType::Request,
                     ...$this->entryPointResolver->get()->toAttributes(),
+                    ...$requestAttributesProvider->toArray(),
                     ...$attributes,
                 ],
             ];
