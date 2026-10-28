@@ -43,6 +43,39 @@ it('can report an exception', function () {
     );
 });
 
+it('rethrows an uncaught exception when there is no previous exception handler', function () {
+    $flare = setupFlare();
+
+    $exception = new RuntimeException('Uncaught exception');
+
+    expect(fn () => $flare->reporter->handleException($exception))->toThrow($exception);
+
+    FakeApi::assertSent(reports: 1);
+});
+
+it('passes an uncaught exception to the previous exception handler', function () {
+    $flare = setupFlare();
+
+    $handledException = null;
+
+    set_exception_handler(function (Throwable $throwable) use (&$handledException) {
+        $handledException = $throwable;
+    });
+
+    $flare->reporter->registerExceptionHandler();
+
+    $exception = new RuntimeException('Uncaught exception');
+
+    $flare->reporter->handleException($exception);
+
+    restore_exception_handler();
+    restore_exception_handler();
+
+    expect($handledException)->toBe($exception);
+
+    FakeApi::assertSent(reports: 1);
+});
+
 it('can start and end a flare lifecycle', function () {
     $flare = setupFlare(alwaysSampleTraces: true)->start();
 

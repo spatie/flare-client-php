@@ -207,7 +207,11 @@ class Reporter
 
         if ($this->previousExceptionHandler && is_callable($this->previousExceptionHandler)) {
             call_user_func($this->previousExceptionHandler, $throwable);
+
+            return;
         }
+
+        throw $throwable;
     }
 
     public function handleError(mixed $code, string $message, string $file = '', int $line = 0): void
