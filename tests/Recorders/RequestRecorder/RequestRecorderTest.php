@@ -37,6 +37,23 @@ it('can trace requests', function () {
     }
 });
 
+it('records the request attributes when the request starts', function () {
+    $flare = setupFlare(fn (FlareConfig $config) => $config->collectRequests()->alwaysSampleTraces());
+
+    $flare->tracer->startTrace();
+
+    $request = Request::create('https://example.com/blog/hello-world?page=2', 'POST');
+
+    $span = $flare->request()->recordStartFromSymfonyRequest($request);
+
+    $flare->request()->recordEndFromDefined(statusCode: 200);
+
+    expect($span->attributes)
+        ->toHaveKey('http.request.method', 'POST')
+        ->toHaveKey('url.full', 'https://example.com/blog/hello-world?page=2')
+        ->toHaveKey('http.response.status_code', 200);
+});
+
 it('does not unsample when url does not match ignored list', function () {
     $flare = setupFlare(
         fn (FlareConfig $config) => $config->collectRequests(ignoredUrls: ['*/api/health']),
