@@ -2,6 +2,12 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 1.11.2 - 2026-11-04
+
+- Strip embedded credentials (for example a GitHub OAuth token from Laravel Forge deployments) from the git remote URL before it is sent to Flare, by @marventhieme in https://github.com/spatie/flare-client-php/pull/100
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/1.11.1...1.11.2
+
 ## 3.5.1 - 2026-09-09
 
 ### What's Changed
