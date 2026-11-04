@@ -14,6 +14,8 @@ use Spatie\FlareClient\Sampling\NeverSampler;
 use Spatie\FlareClient\Sampling\SamplingRule;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
+use Spatie\FlareClient\Support\Container;
+use Spatie\FlareClient\Support\ForkedProcess;
 use Spatie\FlareClient\Tests\Shared\FakeApi;
 use Spatie\FlareClient\Tests\Shared\FakeIds;
 use Spatie\FlareClient\Tests\Shared\FakeMemory;
@@ -240,6 +242,59 @@ it('can start a span resuming a propagated trace', function () {
     expect($span->parentSpanId)->toEqual('fake_span_id');
     expect($span->spanId)->not()->toEqual('fake_span_id');
     expect($span->spanId)->not()->toBeNull();
+});
+
+it('only exports spans created in a forked child process while continuing the parent trace', function () {
+    $tracer = setupFlare(alwaysSampleTraces: true)->tracer;
+
+    $tracer->startTrace();
+
+    $traceId = $tracer->currentTraceId();
+    $parentSpan = $tracer->startSpan('Parent span');
+
+    invade(Container::instance()->get(ForkedProcess::class))->processId = getmypid() + 1;
+
+    $tracer->startSpan('Child span');
+    $tracer->endSpan();
+    $tracer->endTrace();
+
+    FakeApi::lastTrace()
+        ->expectSpanCount(1)
+        ->expectSpan(0)
+        ->expectName('Child span')
+        ->expectTraceId($traceId)
+        ->expectParentId($parentSpan);
+});
+
+it('does not export a trace from a forked child process that created no spans', function () {
+    $tracer = setupFlare(alwaysSampleTraces: true)->tracer;
+
+    $tracer->startTrace();
+    $parentSpan = $tracer->startSpan('Parent span');
+
+    invade(Container::instance()->get(ForkedProcess::class))->processId = getmypid() + 1;
+
+    $tracer->gracefullyEndSpans(force: true);
+    $tracer->endTrace();
+
+    expect($parentSpan->end)->toBeNull();
+
+    FakeApi::assertTracesSent(0);
+});
+
+it('uses the reserved root span id as parent in a child forked before the first span', function () {
+    $tracer = setupFlare(alwaysSampleTraces: true)->tracer;
+
+    $tracer->startTrace();
+
+    $reservedSpanId = invade($tracer)->currentSpanId;
+
+    invade(Container::instance()->get(ForkedProcess::class))->processId = getmypid() + 1;
+
+    $span = $tracer->startSpan('Child span');
+
+    expect($span->parentSpanId)->toBe($reservedSpanId);
+    expect($span->spanId)->not()->toBe($reservedSpanId);
 });
 
 it('can unsample a trace and clear its state', function () {

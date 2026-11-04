@@ -43,3 +43,20 @@ it('closes the span on recordRendered', function () {
     expect($span->end)->not->toBeNull();
     expect($span->name)->toBe('View - users.index');
 });
+
+it('limits the view spans kept for error reports', function () {
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config->collectViews(maxItemsWithErrors: 2),
+    );
+
+    $flare->tracer->startTrace();
+
+    foreach (['view.one', 'view.two', 'view.three'] as $view) {
+        $flare->view()->recordRendering($view);
+        $flare->view()->recordRendered();
+    }
+
+    expect($flare->view()->getSpans())->toHaveCount(2);
+    expect($flare->view()->getSpans()[0]->name)->toBe('View - view.two');
+    expect($flare->view()->getSpans()[1]->name)->toBe('View - view.three');
+});

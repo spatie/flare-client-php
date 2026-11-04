@@ -7,6 +7,7 @@ use Monolog\Level;
 use Spatie\FlareClient\EntryPoint\EntryPointResolver;
 use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
+use Spatie\FlareClient\Support\ForkedProcess;
 use Spatie\FlareClient\Support\Recorders;
 use Spatie\FlareClient\Support\SeverityMapper;
 use Spatie\FlareClient\Time\Time;
@@ -29,11 +30,16 @@ class Logger
         protected readonly Recorders $recorders,
         protected readonly EntryPointResolver $entryPointResolver,
         protected readonly bool $disabled,
-        ?Level $minimalLogLevel
+        ?Level $minimalLogLevel,
+        protected readonly ForkedProcess $forkedProcess,
     ) {
         if ($minimalLogLevel) {
             $this->minimalSeverityNumber = SeverityMapper::fromMonolog($minimalLogLevel);
         }
+
+        $this->forkedProcess->onFork(function (): void {
+            $this->logs = [];
+        });
     }
 
     public function record(
@@ -64,6 +70,8 @@ class Logger
         ?string $spanId = null,
         ?string $flags = null,
     ): void {
+        $this->forkedProcess->detect();
+
         if ($this->disabled) {
             return;
         }
@@ -121,6 +129,8 @@ class Logger
 
     public function flush(): void
     {
+        $this->forkedProcess->detect();
+
         if (count($this->logs) === 0) {
             return;
         }

@@ -3,7 +3,13 @@
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\FlareConfig;
 use Spatie\FlareClient\Spans\Span;
+use Spatie\FlareClient\Support\Container;
+use Spatie\FlareClient\Support\ForkedProcess;
+use Spatie\FlareClient\Tests\Shared\ExpectLogData;
+use Spatie\FlareClient\Tests\Shared\ExpectReport;
+use Spatie\FlareClient\Tests\Shared\ExpectTrace;
 use Spatie\FlareClient\Tests\Shared\FakeApi;
+use Spatie\FlareClient\Tests\Shared\FakeSender;
 use Spatie\FlareClient\Tests\Shared\FakeTime;
 use Spatie\FlareClient\Tests\Shared\Samplers\FakeSampler;
 
@@ -317,6 +323,48 @@ it('will not finish a trace when shutting down if spans are not closed yet', fun
     invade($flare->lifecycle)->shutdown();
 
     FakeApi::assertTracesSent(0);
+});
+
+it('only sends the spans, logs and reports of a forked child process when shutting down', function () {
+    $flare = setupFlare(
+        fn (FlareConfig $config) => $config->sender = FakeSender::class,
+        alwaysSampleTraces: true,
+        useFakeApi: false,
+    );
+
+    $flare->lifecycle->start();
+
+    $traceId = $flare->tracer->currentTraceId();
+
+    $flare->logger->log(body: 'Parent log', severityText: 'INFO', severityNumber: 9);
+    $flare->report(new Exception('Parent error'));
+
+    invade(Container::instance()->get(ForkedProcess::class))->processId = getmypid() + 1;
+
+    $flare->tracer->startSpan('Child span');
+    $flare->tracer->endSpan();
+
+    $flare->logger->log(body: 'Child log', severityText: 'INFO', severityNumber: 9);
+    $flare->report(new Exception('Child error'));
+
+    invade($flare->lifecycle)->shutdown();
+
+    FakeSender::assertSent(reports: 1, traces: 1, logs: 1);
+
+    [$report, $trace, $logs] = array_column(FakeSender::$sent, 'payload');
+
+    ExpectReport::create($report)->expectMessage('Child error');
+
+    ExpectTrace::create($trace)
+        ->expectSpanCount(1)
+        ->expectSpan(0)
+        ->expectName('Child span')
+        ->expectTraceId($traceId);
+
+    ExpectLogData::create($logs)
+        ->expectLogCount(1)
+        ->expectLog(0)
+        ->expectBody('Child log');
 });
 
 it('completes the lifecycle correctly when span limit is reached mid-request', function () {
