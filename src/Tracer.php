@@ -17,6 +17,7 @@ use Spatie\FlareClient\Sampling\RateSampler;
 use Spatie\FlareClient\Sampling\Sampler;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Spans\SpanEvent;
+use Spatie\FlareClient\Support\ForkedProcess;
 use Spatie\FlareClient\Support\Ids;
 use Spatie\FlareClient\Support\LargeAttributesTrimmer;
 use Spatie\FlareClient\Support\Recorders;
@@ -59,6 +60,7 @@ class Tracer
         public readonly Memory $memory,
         protected Recorders $recorders,
         protected readonly EntryPointResolver $entryPointResolver,
+        protected readonly ForkedProcess $forkedProcess,
         public readonly Sampler $sampler = new RateSampler([]),
         public ?Closure $configureSpansCallable = null,
         public ?Closure $configureSpanEventsCallable = null,
@@ -75,6 +77,11 @@ class Tracer
             'max_attributes_per_span_event' => $limits['max_attributes_per_span_event'] ?? self::DEFAULT_MAX_ATTRIBUTES_PER_SPAN_EVENT_LIMIT,
             'max_attribute_size_in_kb' => $limits['max_attribute_size_in_kb'] ?? self::DEFAULT_MAX_ATTRIBUTE_SIZE_IN_KB,
         ];
+
+        $this->forkedProcess->onFork(function (): void {
+            $this->spans = [];
+            $this->currentSpanIdAvailable = false;
+        });
     }
 
     public function startTrace(
@@ -133,6 +140,8 @@ class Tracer
 
     public function endTrace(): void
     {
+        $this->forkedProcess->detect();
+
         if ($this->sampler instanceof DeferrableSampler) {
             $this->sampler->reset();
         }
@@ -232,6 +241,8 @@ class Tracer
 
     public function currentParentSpanId(): ?string
     {
+        $this->forkedProcess->detect();
+
         return $this->currentSpanIdAvailable
             ? null
             : $this->currentSpanId;
@@ -490,6 +501,8 @@ class Tracer
 
     public function gracefullyEndSpans(bool $force = false): void
     {
+        $this->forkedProcess->detect();
+
         if ($this->isSampling() === false) {
             return;
         }

@@ -12,6 +12,7 @@ use Spatie\FlareClient\Senders\Exceptions\NotFound;
 use Spatie\FlareClient\Senders\Sender;
 use Spatie\FlareClient\Senders\Support\Response;
 use Spatie\FlareClient\Spans\Span;
+use Spatie\FlareClient\Support\ForkedProcess;
 use Spatie\FlareClient\Truncation\ReportTrimmer;
 use Throwable;
 
@@ -36,7 +37,13 @@ class Api
         protected Scope $scope,
         protected Sender $sender,
         protected bool $disableQueue,
+        protected readonly ForkedProcess $forkedProcess,
     ) {
+        $this->forkedProcess->onFork(function (): void {
+            $this->reportQueue = [];
+            $this->traceQueue = [];
+            $this->logQueue = [];
+        });
     }
 
     public function report(
@@ -103,6 +110,8 @@ class Api
 
     public function sendQueue(): void
     {
+        $this->forkedProcess->detect();
+
         foreach ($this->reportQueue as $report) {
             $this->sendEntity(
                 FlareEntityType::Errors,
@@ -136,6 +145,8 @@ class Api
 
     protected function sendEntity(FlareEntityType $type, mixed $payload, bool $immediately, bool $test = false): void
     {
+        $this->forkedProcess->detect();
+
         if ($immediately === false && $test === false && $this->disableQueue === false) {
             match ($type) {
                 FlareEntityType::Errors => $this->reportQueue[] = $payload,
