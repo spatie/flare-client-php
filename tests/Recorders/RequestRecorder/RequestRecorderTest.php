@@ -37,21 +37,26 @@ it('can trace requests', function () {
     }
 });
 
-it('records the request attributes when the request starts', function () {
+it('records the request attributes from the globals when the request ends', function () {
+    $originalServer = $_SERVER;
+
+    $_SERVER['HTTP_HOST'] = 'example.com';
+    $_SERVER['REQUEST_URI'] = '/blog/hello-world?page=2';
+    $_SERVER['REQUEST_METHOD'] = 'POST';
+
     $flare = setupFlare(fn (FlareConfig $config) => $config->collectRequests()->alwaysSampleTraces());
 
     $flare->tracer->startTrace();
 
-    $request = Request::create('https://example.com/blog/hello-world?page=2', 'POST');
+    $flare->request()->recordStartFromGlobals();
 
-    $span = $flare->request()->recordStartFromSymfonyRequest($request);
+    $span = $flare->request()->recordEndFromGlobals();
 
-    $flare->request()->recordEndFromDefined(statusCode: 200);
+    $_SERVER = $originalServer;
 
     expect($span->attributes)
         ->toHaveKey('http.request.method', 'POST')
-        ->toHaveKey('url.full', 'https://example.com/blog/hello-world?page=2')
-        ->toHaveKey('http.response.status_code', 200);
+        ->toHaveKey('url.full', 'http://example.com/blog/hello-world?page=2');
 });
 
 it('does not unsample when url does not match ignored list', function () {

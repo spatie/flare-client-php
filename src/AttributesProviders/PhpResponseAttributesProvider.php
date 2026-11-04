@@ -7,13 +7,17 @@ use Spatie\FlareClient\Support\Redactor;
 
 class PhpResponseAttributesProvider implements ResponseAttributesProvider
 {
-    /** @param array<string, string> $headers */
+    /** @param array<string, string>|null $headers */
     public function __construct(
         protected Redactor $redactor,
         protected ?int $statusCode = null,
         protected ?int $bodySize = null,
-        protected array $headers = [],
+        protected ?array $headers = null,
     ) {
+        $responseCode = http_response_code();
+
+        $this->statusCode ??= is_int($responseCode) ? $responseCode : null;
+        $this->headers ??= $this->resolveHeaders();
     }
 
     public function toArray(): array
@@ -38,5 +42,25 @@ class PhpResponseAttributesProvider implements ResponseAttributesProvider
     public function statusCode(): ?int
     {
         return $this->statusCode;
+    }
+
+    /** @return array<string, string> */
+    protected function resolveHeaders(): array
+    {
+        $headers = [];
+
+        foreach (headers_list() as $header) {
+            if (! str_contains($header, ':')) {
+                continue;
+            }
+
+            [$name, $value] = explode(':', $header, 2);
+
+            $headers[$name] = isset($headers[$name])
+                ? "{$headers[$name]}, ".trim($value)
+                : trim($value);
+        }
+
+        return $headers;
     }
 }
