@@ -2,18 +2,21 @@
 
 namespace Spatie\FlareClient\AttributesProviders;
 
+use GuzzleHttp\Utils;
 use Spatie\FlareClient\Contracts\ResponseAttributesProvider;
 use Spatie\FlareClient\Support\Redactor;
 
 class PhpResponseAttributesProvider implements ResponseAttributesProvider
 {
-    /** @param array<string, string> $headers */
+    /** @param array<string, string>|null $headers */
     public function __construct(
         protected Redactor $redactor,
         protected ?int $statusCode = null,
         protected ?int $bodySize = null,
-        protected array $headers = [],
+        protected ?array $headers = null,
     ) {
+        $this->statusCode ??= $this->resolveStatusCode();
+        $this->headers ??= $this->resolveHeaders();
     }
 
     public function toArray(): array
@@ -38,5 +41,21 @@ class PhpResponseAttributesProvider implements ResponseAttributesProvider
     public function statusCode(): ?int
     {
         return $this->statusCode;
+    }
+
+    protected function resolveStatusCode(): ?int
+    {
+        $statusCode = http_response_code();
+
+        return is_int($statusCode) ? $statusCode : null;
+    }
+
+    /** @return array<string, string> */
+    protected function resolveHeaders(): array
+    {
+        return array_map(
+            fn (array $values) => implode(', ', $values),
+            Utils::headersFromLines(headers_list()),
+        );
     }
 }

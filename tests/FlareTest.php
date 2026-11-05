@@ -43,6 +43,39 @@ it('can report an exception', function () {
     );
 });
 
+it('rethrows an uncaught exception when there is no previous exception handler', function () {
+    $flare = setupFlare();
+
+    $exception = new RuntimeException('Uncaught exception');
+
+    expect(fn () => $flare->reporter->handleException($exception))->toThrow($exception);
+
+    FakeApi::assertSent(reports: 1);
+});
+
+it('passes an uncaught exception to the previous exception handler', function () {
+    $flare = setupFlare();
+
+    $handledException = null;
+
+    set_exception_handler(function (Throwable $throwable) use (&$handledException) {
+        $handledException = $throwable;
+    });
+
+    $flare->reporter->registerExceptionHandler();
+
+    $exception = new RuntimeException('Uncaught exception');
+
+    $flare->reporter->handleException($exception);
+
+    restore_exception_handler();
+    restore_exception_handler();
+
+    expect($handledException)->toBe($exception);
+
+    FakeApi::assertSent(reports: 1);
+});
+
 it('can start and end a flare lifecycle', function () {
     $flare = setupFlare(alwaysSampleTraces: true)->start();
 
@@ -165,6 +198,30 @@ it('can censor request data', function () {
             ]);
     } finally {
         unset($_ENV['FLARE_FAKE_WEB_REQUEST'], $_POST['user'], $_POST['password'], $_SERVER['REQUEST_METHOD']);
+    }
+});
+
+it('can censor cookies by name', function () {
+    setupFlare(
+        fn (FlareConfig $config) => $config->censorCookieNames('auth.token', 'remember_*')->collectRequests()
+    );
+
+    $_ENV['FLARE_FAKE_WEB_REQUEST'] = true;
+    $_COOKIE['auth.token'] = 'secret';
+    $_COOKIE['remember_web_59ba36addc2b'] = 'secret';
+    $_COOKIE['theme'] = 'dark';
+
+    try {
+        reportException();
+
+        FakeApi::lastReport()
+            ->expectAttribute('http.request.cookies', [
+                'auth.token' => '<CENSORED:string>',
+                'remember_web_59ba36addc2b' => '<CENSORED:string>',
+                'theme' => 'dark',
+            ]);
+    } finally {
+        unset($_ENV['FLARE_FAKE_WEB_REQUEST'], $_COOKIE['auth.token'], $_COOKIE['remember_web_59ba36addc2b'], $_COOKIE['theme']);
     }
 });
 

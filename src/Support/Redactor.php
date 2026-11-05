@@ -7,6 +7,7 @@ class Redactor
     /**
      * @param array<string> $censorHeaders
      * @param array<string> $censorBodyFields
+     * @param array<string> $censorCookieNames
      */
     public function __construct(
         protected bool $censorClientIps = false,
@@ -14,6 +15,7 @@ class Redactor
         protected array $censorBodyFields = [],
         protected bool $censorCookies = false,
         protected bool $censorSession = false,
+        protected array $censorCookieNames = [],
     ) {
         $this->censorHeaders = array_map(
             fn (string $header) => $this->normalizeHeaderName($header),
@@ -23,6 +25,11 @@ class Redactor
         $this->censorBodyFields = array_map(
             fn (string $field) => $this->normalizeBodyFieldName($field),
             $this->censorBodyFields
+        );
+
+        $this->censorCookieNames = array_map(
+            fn (string $name) => $this->normalizeBodyFieldName($name),
+            $this->censorCookieNames
         );
     }
 
@@ -46,6 +53,15 @@ class Redactor
         }
 
         return $body;
+    }
+
+    public function censorCookieValues(array $cookies): array
+    {
+        foreach ($this->censorCookieNames as $censor) {
+            $cookies = $this->censorByPath($cookies, [$censor]);
+        }
+
+        return $cookies;
     }
 
     public function shouldCensorClientIps(): bool
@@ -86,7 +102,7 @@ class Redactor
     private function censorAtAnyDepth(array $data, string $field): array
     {
         foreach ($data as $key => $value) {
-            if ($this->normalizeBodyFieldName((string) $key) === $field) {
+            if ($this->segmentMatches($field, $this->normalizeBodyFieldName((string) $key))) {
                 $data[$key] = $this->censorValue($value);
 
                 continue;
@@ -98,6 +114,15 @@ class Redactor
         }
 
         return $data;
+    }
+
+    private function segmentMatches(string $segment, string $key): bool
+    {
+        if (str_ends_with($segment, '*')) {
+            return str_starts_with($key, substr($segment, 0, -1));
+        }
+
+        return $key === $segment;
     }
 
     private function censorByPath(array $data, array $segments): array
@@ -112,9 +137,7 @@ class Redactor
         foreach ($data as $key => $value) {
             $normalizedKey = $this->normalizeBodyFieldName((string) $key);
 
-            $matches = ($currentSegment === '*') || ($normalizedKey === $currentSegment);
-
-            if (! $matches) {
+            if (! $this->segmentMatches($currentSegment, $normalizedKey)) {
                 continue;
             }
 

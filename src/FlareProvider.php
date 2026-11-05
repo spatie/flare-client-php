@@ -19,6 +19,7 @@ use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Support\BackTracer;
 use Spatie\FlareClient\Support\CollectsResolver;
 use Spatie\FlareClient\Support\Container;
+use Spatie\FlareClient\Support\ForkedProcess;
 use Spatie\FlareClient\Support\Ids;
 use Spatie\FlareClient\Support\Lifecycle;
 use Spatie\FlareClient\Support\PhpStackFrameArgumentsFixer;
@@ -65,6 +66,8 @@ class FlareProvider
             $this->config->senderConfig
         ));
 
+        $this->container->singleton(ForkedProcess::class, fn () => new ForkedProcess());
+
         $this->container->singleton(Api::class, fn () => new ($this->config->api)(
             apiToken: $this->config->apiToken ?? 'No Api Token provided',
             baseUrl: $this->config->baseUrl,
@@ -73,6 +76,7 @@ class FlareProvider
             resource: $this->container->get(Resource::class),
             scope: $this->container->get(Scope::class),
             disableQueue: $this->disableApiQueue,
+            forkedProcess: $this->container->get(ForkedProcess::class),
         ));
 
         $this->container->singleton(EntryPointResolver::class, fn () => new EntryPointResolver());
@@ -101,6 +105,7 @@ class FlareProvider
             censorBodyFields: $this->config->censorBodyFields,
             censorCookies: $this->config->censorCookies,
             censorSession: $this->config->censorSession,
+            censorCookieNames: $this->config->censorCookieNames,
         ));
 
         /** @var CollectsResolver $collects */
@@ -185,7 +190,8 @@ class FlareProvider
             configureSpanEventsCallable: $this->config->configureSpanEventsCallable,
             sampling: false,
             disabled: $this->config->trace === false || $this->mode === FlareMode::Disabled,
-            gracefulSpanEnderClosure: $this->gracefulSpanEnderClosure
+            gracefulSpanEnderClosure: $this->gracefulSpanEnderClosure,
+            forkedProcess: $this->container->get(ForkedProcess::class),
         ));
 
         $this->container->singleton(Logger::class, fn () => new Logger(
@@ -196,6 +202,7 @@ class FlareProvider
             entryPointResolver: $this->container->get(EntryPointResolver::class),
             disabled: $this->config->log === false || $this->mode === FlareMode::Disabled,
             minimalLogLevel: $this->config->minimalLogLevel,
+            forkedProcess: $this->container->get(ForkedProcess::class),
         ));
 
         $this->container->singleton(ReportFactory::class, fn () => new ReportFactory(

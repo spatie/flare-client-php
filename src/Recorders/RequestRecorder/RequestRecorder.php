@@ -143,11 +143,21 @@ class RequestRecorder extends SpansRecorder
         );
     }
 
-    /** @param array<string, string> $headers */
+    public function recordEndFromGlobals(
+        array $attributes = [],
+    ): ?Span {
+        return $this->recordEnd(
+            requestAttributesProvider: new PhpRequestAttributesProvider($this->redactor),
+            responseAttributesProvider: new PhpResponseAttributesProvider($this->redactor),
+            attributes: $attributes,
+        );
+    }
+
+    /** @param array<string, string>|null $headers */
     public function recordEndFromDefined(
         ?int $statusCode = null,
         ?int $bodySize = null,
-        array $headers = [],
+        ?array $headers = null,
         array $attributes = [],
     ): ?Span {
         return $this->recordEnd(

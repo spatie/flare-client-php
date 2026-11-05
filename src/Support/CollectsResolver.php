@@ -296,6 +296,7 @@ class CollectsResolver
         $this->addRecorder($options['recorder'] ?? ViewRecorder::class, $this->only($options, [
             'with_traces',
             'with_errors',
+            'max_items_with_errors',
         ]));
     }
 

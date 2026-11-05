@@ -432,6 +432,7 @@ abstract class Tester
             memory: $this->memory,
             recorders: new Recorders([]),
             entryPointResolver: $this->getTestEntryPointResolver(),
+            forkedProcess: new ForkedProcess(),
             sampler: new AlwaysSampler(),
         );
     }
@@ -456,6 +457,7 @@ abstract class Tester
             entryPointResolver: $this->getTestEntryPointResolver(),
             disabled: false,
             minimalLogLevel: null,
+            forkedProcess: new ForkedProcess(),
         );
     }
 }
