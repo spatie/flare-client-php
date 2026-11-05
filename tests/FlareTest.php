@@ -201,6 +201,30 @@ it('can censor request data', function () {
     }
 });
 
+it('can censor cookies by name', function () {
+    setupFlare(
+        fn (FlareConfig $config) => $config->censorCookieNames('auth.token', 'remember_*')->collectRequests()
+    );
+
+    $_ENV['FLARE_FAKE_WEB_REQUEST'] = true;
+    $_COOKIE['auth.token'] = 'secret';
+    $_COOKIE['remember_web_59ba36addc2b'] = 'secret';
+    $_COOKIE['theme'] = 'dark';
+
+    try {
+        reportException();
+
+        FakeApi::lastReport()
+            ->expectAttribute('http.request.cookies', [
+                'auth.token' => '<CENSORED:string>',
+                'remember_web_59ba36addc2b' => '<CENSORED:string>',
+                'theme' => 'dark',
+            ]);
+    } finally {
+        unset($_ENV['FLARE_FAKE_WEB_REQUEST'], $_COOKIE['auth.token'], $_COOKIE['remember_web_59ba36addc2b'], $_COOKIE['theme']);
+    }
+});
+
 it('can merge user provided context', function () {
     $flare = setupFlare(fn (FlareConfig $config) => $config->collectContext());
 

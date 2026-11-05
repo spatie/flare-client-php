@@ -53,10 +53,10 @@ class Redactor
         return $body;
     }
 
-    public function censorCookies(array $cookies): array
+    public function censorCookieValues(array $cookies): array
     {
         foreach ($this->censorCookieNames as $censor) {
-            $cookies = $this->censorByPath($cookies, explode('.', $censor));
+            $cookies = $this->censorByPath($cookies, [$censor]);
         }
 
         return $cookies;

@@ -304,22 +304,6 @@ it('can censor cookies', function () {
     expect($attributes)->not->toHaveKey('http.request.cookies');
 });
 
-it('can censor cookies by name', function () {
-    $request = new Request(cookies: [
-        'session_id' => 'abc123',
-        'remember_web_59ba36addc2b' => 'secret',
-        'theme' => 'dark',
-    ]);
-
-    $attributes = buildRequestAttributesProvider($request, new Redactor(censorCookieNames: ['session_id', 'remember_*']))->toArray();
-
-    expect($attributes['http.request.cookies'])->toBe([
-        'session_id' => '<CENSORED:string>',
-        'remember_web_59ba36addc2b' => '<CENSORED:string>',
-        'theme' => 'dark',
-    ]);
-});
-
 it('can censor session', function () {
     $request = new Request();
 
