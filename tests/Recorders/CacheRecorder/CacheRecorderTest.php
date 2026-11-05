@@ -215,7 +215,7 @@ it('records a cache store failing over without filtering it', function () {
         ->toHaveKey('exception.type', RuntimeException::class);
 });
 
-it('can record cache flushes without a key', function () {
+it('can record cache flushes without a key and with tags', function () {
     $flare = setupFlare();
 
     $recorder = new CacheRecorder(
@@ -233,7 +233,7 @@ it('can record cache flushes without a key', function () {
     $recorder->boot();
 
     $recorder->recordFlushed('store');
-    $recorder->recordFlushFailed('store');
+    $recorder->recordFlushFailed('store', ['users']);
 
     $events = $recorder->getSpanEvents();
 
@@ -253,5 +253,7 @@ it('can record cache flushes without a key', function () {
         ->toHaveKey('cache.result', CacheResult::Success)
         ->not()->toHaveKey('cache.key');
 
-    expect($events[1]->attributes)->toHaveKey('cache.result', CacheResult::Failure);
+    expect($events[1]->attributes)
+        ->toHaveKey('cache.result', CacheResult::Failure)
+        ->toHaveKey('cache.tags', ['users']);
 });
