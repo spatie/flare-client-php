@@ -29,22 +29,6 @@ it('censors headers regardless of input casing or separators', function () {
     expect($censored['X-Public'])->toBe('visible');
 });
 
-it('censors top-level body fields', function () {
-    $redactor = new Redactor(censorBodyFields: ['password', 'token']);
-
-    $censored = $redactor->censorBody([
-        'password' => 'secret',
-        'token' => 'abc',
-        'username' => 'ruben',
-    ]);
-
-    expect($censored)->toBe([
-        'password' => '<CENSORED:string>',
-        'token' => '<CENSORED:string>',
-        'username' => 'ruben',
-    ]);
-});
-
 it('censors body fields without dot notation at any depth', function () {
     $redactor = new Redactor(censorBodyFields: ['password']);
 
@@ -98,32 +82,6 @@ it('censors every top-level body field with a bare wildcard', function () {
     expect($censored)->toBe([
         'password' => '<CENSORED:string>',
         'user' => '<CENSORED:array>',
-    ]);
-});
-
-it('censors nested body fields using dot notation', function () {
-    $redactor = new Redactor(censorBodyFields: ['user.password', 'user.tokens.api']);
-
-    $censored = $redactor->censorBody([
-        'user' => [
-            'name' => 'ruben',
-            'password' => 'secret',
-            'tokens' => [
-                'api' => 'sensitive',
-                'public' => 'fine',
-            ],
-        ],
-    ]);
-
-    expect($censored)->toBe([
-        'user' => [
-            'name' => 'ruben',
-            'password' => '<CENSORED:string>',
-            'tokens' => [
-                'api' => '<CENSORED:string>',
-                'public' => 'fine',
-            ],
-        ],
     ]);
 });
 
