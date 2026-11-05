@@ -1,5 +1,6 @@
 <?php
 
+use Spatie\FlareClient\Memory\SystemMemory;
 use Spatie\FlareClient\Truncation\ReportTrimmer;
 
 it('trims a payload with a very large string without encoding it in full', function () {
@@ -24,4 +25,4 @@ it('trims a payload with a very large string without encoding it in full', funct
 
     expect($memoryUsedWhileTrimming)->toBeLessThan(ReportTrimmer::getMaxPayloadSize() * 4);
     expect(strlen(json_encode($trimmedPayload)))->toBeLessThanOrEqual(ReportTrimmer::getMaxPayloadSize());
-});
+})->skip(! SystemMemory::phpVersionCanTrackMemory(), 'Peak memory usage cannot be tracked before PHP 8.2');
