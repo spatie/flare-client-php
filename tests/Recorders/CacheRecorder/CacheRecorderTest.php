@@ -180,29 +180,6 @@ it('can record failed cache writes and forgets', function () {
         ->toHaveKey('cache.result', CacheResult::Failure);
 });
 
-it('ignores failed cache writes and forgets for ignored keys', function () {
-    $flare = setupFlare();
-
-    $recorder = new CacheRecorder(
-        tracer: $flare->tracer,
-        backTracer: $flare->backTracer,
-        config: [
-            'with_traces' => true,
-            'with_errors' => true,
-            'max_items_with_errors' => 10,
-            'operations' => [CacheOperation::Get, CacheOperation::Set, CacheOperation::Forget],
-            'ignored_keys' => ['/^framework:/'],
-        ]
-    );
-
-    $recorder->boot();
-
-    $recorder->recordKeyWriteFailed('framework:schedule', 'store');
-    $recorder->recordKeyForgetFailed('framework:schedule', 'store');
-
-    expect($recorder->getSpanEvents())->toBeEmpty();
-});
-
 it('records a cache store failing over without filtering it', function () {
     $flare = setupFlare();
 

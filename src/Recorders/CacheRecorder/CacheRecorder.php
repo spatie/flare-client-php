@@ -68,10 +68,6 @@ class CacheRecorder extends SpanEventsRecorder
         return $this->record($key, $store, CacheOperation::Forget, CacheResult::Failure);
     }
 
-    /**
-     * A store falling over is an operational event without a key or an operation, so it is never
-     * filtered by the ignored keys or the configured operations.
-     */
     public function recordFailedOver(?string $store, ?Throwable $exception = null): ?SpanEvent
     {
         return $this->spanEvent(
