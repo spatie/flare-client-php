@@ -245,7 +245,8 @@ $flare->request()->recordEnd(
 );
 
 // Or use the helpers:
-$flare->request()->recordEndFromSymfonyResponse($response);
+$flare->request()->recordEndFromSymfonyResponse($response, $request);
+$flare->request()->recordEndFromGlobals();
 $flare->request()->recordEndFromDefined(statusCode: 200, bodySize: 1024);
 ```
 
