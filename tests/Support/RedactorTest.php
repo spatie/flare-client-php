@@ -86,6 +86,22 @@ it('supports wildcards in body field paths', function () {
     expect($censored['users'][0]['name'])->toBe('a');
 });
 
+it('supports prefix wildcards in body field paths', function () {
+    $redactor = new Redactor(censorBodyFields: ['pass*', 'user.api_*']);
+
+    $censored = $redactor->censorBody([
+        'password' => 'secret',
+        'passphrase' => 'secret',
+        'user' => ['api_token' => 'secret', 'name' => 'ruben'],
+    ]);
+
+    expect($censored)->toBe([
+        'password' => '<CENSORED:string>',
+        'passphrase' => '<CENSORED:string>',
+        'user' => ['api_token' => '<CENSORED:string>', 'name' => 'ruben'],
+    ]);
+});
+
 it('matches body field names case-insensitively', function () {
     $redactor = new Redactor(censorBodyFields: ['API_KEY']);
 

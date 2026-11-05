@@ -26,6 +26,11 @@ class Redactor
             fn (string $field) => $this->normalizeBodyFieldName($field),
             $this->censorBodyFields
         );
+
+        $this->censorCookieNames = array_map(
+            fn (string $name) => $this->normalizeBodyFieldName($name),
+            $this->censorCookieNames
+        );
     }
 
     public function censorHeaders(array $headers): array
@@ -50,10 +55,8 @@ class Redactor
 
     public function censorCookies(array $cookies): array
     {
-        foreach ($cookies as $name => $value) {
-            if ($this->shouldCensorCookieName((string) $name)) {
-                $cookies[$name] = $this->censorValue($value);
-            }
+        foreach ($this->censorCookieNames as $censor) {
+            $cookies = $this->censorByPath($cookies, explode('.', $censor));
         }
 
         return $cookies;
@@ -89,28 +92,18 @@ class Redactor
         return mb_strtolower($name);
     }
 
-    protected function shouldCensorCookieName(string $name): bool
-    {
-        foreach ($this->censorCookieNames as $censor) {
-            if ($censor === $name) {
-                return true;
-            }
-
-            if (! str_ends_with($censor, '*')) {
-                continue;
-            }
-
-            if (str_starts_with($name, substr($censor, 0, -1))) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     protected function censorValue(mixed $value): string
     {
         return '<CENSORED:'.get_debug_type($value).'>';
+    }
+
+    private function segmentMatches(string $segment, string $key): bool
+    {
+        if (str_ends_with($segment, '*')) {
+            return str_starts_with($key, substr($segment, 0, -1));
+        }
+
+        return $key === $segment;
     }
 
     private function censorByPath(array $data, array $segments): array
@@ -125,9 +118,7 @@ class Redactor
         foreach ($data as $key => $value) {
             $normalizedKey = $this->normalizeBodyFieldName((string) $key);
 
-            $matches = ($currentSegment === '*') || ($normalizedKey === $currentSegment);
-
-            if (! $matches) {
+            if (! $this->segmentMatches($currentSegment, $normalizedKey)) {
                 continue;
             }
 
