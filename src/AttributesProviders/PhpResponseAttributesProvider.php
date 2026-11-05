@@ -14,9 +14,7 @@ class PhpResponseAttributesProvider implements ResponseAttributesProvider
         protected ?int $bodySize = null,
         protected ?array $headers = null,
     ) {
-        $responseCode = http_response_code();
-
-        $this->statusCode ??= is_int($responseCode) ? $responseCode : null;
+        $this->statusCode ??= $this->resolveStatusCode();
         $this->headers ??= $this->resolveHeaders();
     }
 
@@ -42,6 +40,13 @@ class PhpResponseAttributesProvider implements ResponseAttributesProvider
     public function statusCode(): ?int
     {
         return $this->statusCode;
+    }
+
+    protected function resolveStatusCode(): ?int
+    {
+        $statusCode = http_response_code();
+
+        return is_int($statusCode) ? $statusCode : null;
     }
 
     /** @return array<string, string> */
