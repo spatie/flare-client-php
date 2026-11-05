@@ -65,6 +65,7 @@ class FlareConfig
      * @param Closure(SpanEvent):(void|SpanEvent|null)|null $configureSpanEventsCallable
      * @param array<string> $censorHeaders
      * @param array<string> $censorBodyFields
+     * @param array<string> $censorCookieNames
      * @param array<class-string, OverriddenGrouping> $overriddenGroupings
      * @param class-string<CollectsResolver> $collectsResolver
      */
@@ -86,6 +87,7 @@ class FlareConfig
         public array $censorBodyFields = [],
         public bool $censorCookies = false,
         public bool $censorSession = false,
+        public array $censorCookieNames = [],
 
         // Reporting
         public bool $report = true,
@@ -149,6 +151,13 @@ class FlareConfig
     public function censorCookies(bool $censorCookies = true): static
     {
         $this->censorCookies = $censorCookies;
+
+        return $this;
+    }
+
+    public function censorCookieNames(string ...$names): static
+    {
+        array_push($this->censorCookieNames, ...$names);
 
         return $this;
     }
