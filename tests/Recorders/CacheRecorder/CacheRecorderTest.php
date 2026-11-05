@@ -214,3 +214,46 @@ it('records a cache store failing over without filtering it', function () {
         ->toHaveKey('exception.message', 'Connection refused')
         ->toHaveKey('exception.type', RuntimeException::class);
 });
+
+it('can record cache flushes without a key and with tags', function () {
+    $flare = setupFlare();
+
+    $recorder = new CacheRecorder(
+        tracer: $flare->tracer,
+        backTracer: $flare->backTracer,
+        config: [
+            'with_traces' => true,
+            'with_errors' => true,
+            'max_items_with_errors' => 10,
+            'operations' => [CacheOperation::Flush],
+            'ignored_keys' => ['//'],
+        ]
+    );
+
+    $recorder->boot();
+
+    $recorder->recordFlushed('store');
+    $recorder->recordFlushFailed('store', ['users']);
+
+    $events = $recorder->getSpanEvents();
+
+    expect($events)->toHaveCount(2);
+
+    expect(array_map(fn (SpanEvent $event) => $event->name, $events))->toBe([
+        'Cache flushed',
+        'Cache flush failed',
+    ]);
+
+    expect($events[0])
+        ->attributes
+        ->toHaveCount(4)
+        ->toHaveKey('flare.span_event_type', SpanEventType::Cache)
+        ->toHaveKey('cache.store', 'store')
+        ->toHaveKey('cache.operation', CacheOperation::Flush)
+        ->toHaveKey('cache.result', CacheResult::Success)
+        ->not()->toHaveKey('cache.key');
+
+    expect($events[1]->attributes)
+        ->toHaveKey('cache.result', CacheResult::Failure)
+        ->toHaveKey('cache.tags', ['users']);
+});
