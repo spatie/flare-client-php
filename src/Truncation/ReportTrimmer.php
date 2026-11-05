@@ -39,7 +39,31 @@ class ReportTrimmer
      */
     public function needsToBeTrimmed(array $payload): bool
     {
+        if ($this->minimumEncodedLength($payload) > self::getMaxPayloadSize()) {
+            return true;
+        }
+
         return strlen((string) json_encode($payload)) > self::getMaxPayloadSize();
+    }
+
+    /**
+     * @param array<int|string, mixed> $values
+     */
+    protected function minimumEncodedLength(array $values): int
+    {
+        $length = 0;
+
+        foreach ($values as $value) {
+            if (is_string($value)) {
+                $length += strlen($value);
+            }
+
+            if (is_array($value)) {
+                $length += $this->minimumEncodedLength($value);
+            }
+        }
+
+        return $length;
     }
 
     public static function getMaxPayloadSize(): int
