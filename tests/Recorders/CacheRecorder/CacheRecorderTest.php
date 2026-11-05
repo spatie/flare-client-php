@@ -234,18 +234,14 @@ it('can record cache flushes without a key', function () {
 
     $recorder->recordFlushed('store');
     $recorder->recordFlushFailed('store');
-    $recorder->recordLocksFlushed('store');
-    $recorder->recordLocksFlushFailed('store');
 
     $events = $recorder->getSpanEvents();
 
-    expect($events)->toHaveCount(4);
+    expect($events)->toHaveCount(2);
 
     expect(array_map(fn (SpanEvent $event) => $event->name, $events))->toBe([
         'Cache flushed',
         'Cache flush failed',
-        'Cache locks flushed',
-        'Cache locks flush failed',
     ]);
 
     expect($events[0])
@@ -258,28 +254,4 @@ it('can record cache flushes without a key', function () {
         ->not()->toHaveKey('cache.key');
 
     expect($events[1]->attributes)->toHaveKey('cache.result', CacheResult::Failure);
-    expect($events[2]->attributes)->toHaveKey('cache.result', CacheResult::Success);
-    expect($events[3]->attributes)->toHaveKey('cache.result', CacheResult::Failure);
-});
-
-it('does not record cache flushes when the flush operation is not collected', function () {
-    $flare = setupFlare();
-
-    $recorder = new CacheRecorder(
-        tracer: $flare->tracer,
-        backTracer: $flare->backTracer,
-        config: [
-            'with_traces' => true,
-            'with_errors' => true,
-            'max_items_with_errors' => 10,
-            'operations' => [CacheOperation::Get],
-        ]
-    );
-
-    $recorder->boot();
-
-    $recorder->recordFlushed('store');
-    $recorder->recordLocksFlushed('store');
-
-    expect($recorder->getSpanEvents())->toBeEmpty();
 });

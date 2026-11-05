@@ -78,16 +78,6 @@ class CacheRecorder extends SpanEventsRecorder
         return $this->record('', $store, CacheOperation::Flush, CacheResult::Failure);
     }
 
-    public function recordLocksFlushed(?string $store): ?SpanEvent
-    {
-        return $this->record('', $store, CacheOperation::Flush, CacheResult::Success, name: 'locks flushed');
-    }
-
-    public function recordLocksFlushFailed(?string $store): ?SpanEvent
-    {
-        return $this->record('', $store, CacheOperation::Flush, CacheResult::Failure, name: 'locks flush failed');
-    }
-
     public function recordFailedOver(?string $store, ?Throwable $exception = null): ?SpanEvent
     {
         return $this->spanEvent(
@@ -110,7 +100,6 @@ class CacheRecorder extends SpanEventsRecorder
         CacheOperation $operation,
         CacheResult $result,
         array $attributes = [],
-        ?string $name = null,
     ): ?SpanEvent {
         if (! in_array($operation, $this->operations)) {
             return null;
@@ -120,7 +109,7 @@ class CacheRecorder extends SpanEventsRecorder
             return null;
         }
 
-        $name ??= match ([$operation, $result]) {
+        $name = match ([$operation, $result]) {
             [CacheOperation::Get, CacheResult::Hit] => 'hit',
             [CacheOperation::Get, CacheResult::Miss] => 'miss',
             [CacheOperation::Set, CacheResult::Success] => 'key written',
