@@ -17,7 +17,7 @@ it('can trace database connections without adding them to error reports', functi
 
     $flare->tracer->startTrace();
 
-    $recorder->recordStart('mysql', 'users', ['laravel.db.connection' => 'mysql']);
+    $recorder->recordStart('users', 'mysql', ['laravel.db.connection' => 'mysql', 'laravel.db.read' => false]);
 
     FakeTime::setCurrentTime('2019-01-01 12:34:57');
 
@@ -35,11 +35,12 @@ it('can trace database connections without adding them to error reports', functi
         ->end->toBe(1546346097000000000);
 
     expect($span->attributes)
-        ->toHaveCount(4)
+        ->toHaveCount(5)
         ->toHaveKey('flare.span_type', SpanType::DatabaseConnection)
         ->toHaveKey('db.system', 'mysql')
         ->toHaveKey('db.name', 'users')
-        ->toHaveKey('laravel.db.connection', 'mysql');
+        ->toHaveKey('laravel.db.connection', 'mysql')
+        ->toHaveKey('laravel.db.read', false);
 });
 
 it('can trace failed database connections', function () {
@@ -49,7 +50,7 @@ it('can trace failed database connections', function () {
 
     $flare->tracer->startTrace();
 
-    $recorder->recordStart('mysql', 'users');
+    $recorder->recordStart('users', 'mysql');
     $recorder->recordFailed();
 
     $span = array_values($flare->tracer->currentTrace())[0];

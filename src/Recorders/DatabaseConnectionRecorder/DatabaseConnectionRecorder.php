@@ -16,8 +16,8 @@ class DatabaseConnectionRecorder extends SpansRecorder
     }
 
     public function recordStart(
-        ?string $driverName = null,
         ?string $databaseName = null,
+        ?string $driverName = null,
         array $attributes = [],
     ): ?Span {
         return $this->startSpan(
@@ -27,7 +27,7 @@ class DatabaseConnectionRecorder extends SpansRecorder
                 'db.system' => $driverName,
                 'db.name' => $databaseName,
                 ...$attributes,
-            ]),
+            ], fn (mixed $value) => $value !== null),
         );
     }
 
