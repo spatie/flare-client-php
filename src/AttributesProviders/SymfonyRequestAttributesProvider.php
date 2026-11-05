@@ -170,7 +170,7 @@ class SymfonyRequestAttributesProvider implements RequestAttributesProvider
         }
 
         return [
-            'http.request.cookies' => $cookies,
+            'http.request.cookies' => $this->redactor->censorCookies($cookies),
         ];
     }
 

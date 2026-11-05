@@ -105,6 +105,7 @@ class FlareProvider
             censorBodyFields: $this->config->censorBodyFields,
             censorCookies: $this->config->censorCookies,
             censorSession: $this->config->censorSession,
+            censorCookieNames: $this->config->censorCookieNames,
         ));
 
         /** @var CollectsResolver $collects */

@@ -7,6 +7,7 @@ class Redactor
     /**
      * @param array<string> $censorHeaders
      * @param array<string> $censorBodyFields
+     * @param array<string> $censorCookieNames
      */
     public function __construct(
         protected bool $censorClientIps = false,
@@ -14,6 +15,7 @@ class Redactor
         protected array $censorBodyFields = [],
         protected bool $censorCookies = false,
         protected bool $censorSession = false,
+        protected array $censorCookieNames = [],
     ) {
         $this->censorHeaders = array_map(
             fn (string $header) => $this->normalizeHeaderName($header),
@@ -46,6 +48,17 @@ class Redactor
         return $body;
     }
 
+    public function censorCookies(array $cookies): array
+    {
+        foreach ($cookies as $name => $value) {
+            if ($this->shouldCensorCookieName((string) $name)) {
+                $cookies[$name] = $this->censorValue($value);
+            }
+        }
+
+        return $cookies;
+    }
+
     public function shouldCensorClientIps(): bool
     {
         return $this->censorClientIps;
@@ -74,6 +87,25 @@ class Redactor
     public function normalizeBodyFieldName(string $name): string
     {
         return mb_strtolower($name);
+    }
+
+    protected function shouldCensorCookieName(string $name): bool
+    {
+        foreach ($this->censorCookieNames as $censor) {
+            if ($censor === $name) {
+                return true;
+            }
+
+            if (! str_ends_with($censor, '*')) {
+                continue;
+            }
+
+            if (str_starts_with($name, substr($censor, 0, -1))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     protected function censorValue(mixed $value): string
