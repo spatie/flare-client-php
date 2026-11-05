@@ -2,6 +2,7 @@
 
 namespace Spatie\FlareClient\AttributesProviders;
 
+use GuzzleHttp\Utils;
 use Spatie\FlareClient\Contracts\ResponseAttributesProvider;
 use Spatie\FlareClient\Support\Redactor;
 
@@ -52,20 +53,9 @@ class PhpResponseAttributesProvider implements ResponseAttributesProvider
     /** @return array<string, string> */
     protected function resolveHeaders(): array
     {
-        $headers = [];
-
-        foreach (headers_list() as $header) {
-            if (! str_contains($header, ':')) {
-                continue;
-            }
-
-            [$name, $value] = explode(':', $header, 2);
-
-            $headers[$name] = isset($headers[$name])
-                ? "{$headers[$name]}, ".trim($value)
-                : trim($value);
-        }
-
-        return $headers;
+        return array_map(
+            fn (array $values) => implode(', ', $values),
+            Utils::headersFromLines(headers_list()),
+        );
     }
 }
