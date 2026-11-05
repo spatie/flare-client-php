@@ -25,6 +25,12 @@ parameters:
 			path: src/Flare.php
 
 		-
+			message: '#^Method Spatie\\FlareClient\\Flare\:\:databaseConnection\(\) should return Spatie\\FlareClient\\Recorders\\DatabaseConnectionRecorder\\DatabaseConnectionRecorder\|null but returns Spatie\\FlareClient\\Contracts\\Recorders\\Recorder\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Flare.php
+
+		-
 			message: '#^Method Spatie\\FlareClient\\Flare\:\:command\(\) should return Spatie\\FlareClient\\Recorders\\CommandRecorder\\CommandRecorder\|null but returns Spatie\\FlareClient\\Contracts\\Recorders\\Recorder\|null\.$#'
 			identifier: return.type
 			count: 1

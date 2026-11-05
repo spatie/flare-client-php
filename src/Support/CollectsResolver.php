@@ -20,6 +20,7 @@ use Spatie\FlareClient\FlareMiddleware\FlareMiddleware;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
 use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
+use Spatie\FlareClient\Recorders\DatabaseConnectionRecorder\DatabaseConnectionRecorder;
 use Spatie\FlareClient\Recorders\DumpRecorder\DumpRecorder;
 use Spatie\FlareClient\Recorders\ExternalHttpRecorder\ExternalHttpRecorder;
 use Spatie\FlareClient\Recorders\FilesystemRecorder\FilesystemRecorder;
@@ -252,6 +253,16 @@ class CollectsResolver
             'find_origin',
             'find_origin_threshold',
         ]));
+
+        $this->databaseConnections($options);
+    }
+
+    protected function databaseConnections(array $options): void
+    {
+        $this->addRecorder($options['database_connection_recorder'] ?? DatabaseConnectionRecorder::class, [
+            ...$this->only($options, ['with_traces']),
+            'with_errors' => false,
+        ]);
     }
 
     protected function transactions(array $options): void

@@ -8,6 +8,7 @@ enum RecorderType: string
     case Cache = 'cache';
     case Command = 'command';
     case Context = 'context';
+    case DatabaseConnection = 'database_connection';
     case Dump = 'dump';
     case Event = 'event';
     case Filesystem = 'filesystem';

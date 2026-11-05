@@ -9,6 +9,7 @@ enum SpanType: string implements FlareSpanType
     case Request = 'php_request';
     case Response = 'php_response';
     case Query = 'php_query';
+    case DatabaseConnection = 'php_database_connection';
     case RedisCommand = 'redis_command';
     case Transaction = 'php_transaction';
     case Command = 'php_command';
