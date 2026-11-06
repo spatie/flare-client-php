@@ -9,7 +9,6 @@ use Spatie\FlareClient\Enums\SpanEventType;
 use Spatie\FlareClient\Recorders\SpanEventsRecorder;
 use Spatie\FlareClient\Spans\SpanEvent;
 use Spatie\FlareClient\Support\PatternMatcher;
-use Throwable;
 
 class CacheRecorder extends SpanEventsRecorder
 {
@@ -76,22 +75,6 @@ class CacheRecorder extends SpanEventsRecorder
     public function recordFlushFailed(?string $store, array $tags = []): ?SpanEvent
     {
         return $this->record('', $store, CacheOperation::Flush, CacheResult::Failure, tags: $tags);
-    }
-
-    public function recordFailedOver(?string $store, ?Throwable $exception = null): ?SpanEvent
-    {
-        return $this->spanEvent(
-            $store === null ? 'Cache failed over' : "Cache failed over - {$store}",
-            attributes: [
-                'flare.span_event_type' => SpanEventType::Cache,
-                'cache.result' => CacheResult::Failure,
-                'cache.store' => $store,
-                ...$exception === null ? [] : [
-                    'exception.message' => $exception->getMessage(),
-                    'exception.type' => $exception::class,
-                ],
-            ]
-        );
     }
 
     public function record(
