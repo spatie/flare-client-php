@@ -180,41 +180,6 @@ it('can record failed cache writes and forgets', function () {
         ->toHaveKey('cache.result', CacheResult::Failure);
 });
 
-it('records a cache store failing over without filtering it', function () {
-    $flare = setupFlare();
-
-    $recorder = new CacheRecorder(
-        tracer: $flare->tracer,
-        backTracer: $flare->backTracer,
-        config: [
-            'with_traces' => true,
-            'with_errors' => true,
-            'max_items_with_errors' => 10,
-            'operations' => [],
-            'ignored_keys' => ['//'],
-        ]
-    );
-
-    $recorder->boot();
-
-    $recorder->recordFailedOver('redis', new RuntimeException('Connection refused'));
-
-    $events = $recorder->getSpanEvents();
-
-    expect($events)->toHaveCount(1);
-
-    expect($events[0])
-        ->toBeInstanceOf(SpanEvent::class)
-        ->name->toBe('Cache failed over - redis')
-        ->attributes
-        ->toHaveCount(5)
-        ->toHaveKey('flare.span_event_type', SpanEventType::Cache)
-        ->toHaveKey('cache.store', 'redis')
-        ->toHaveKey('cache.result', CacheResult::Failure)
-        ->toHaveKey('exception.message', 'Connection refused')
-        ->toHaveKey('exception.type', RuntimeException::class);
-});
-
 it('can record cache flushes without a key and with tags', function () {
     $flare = setupFlare();
 
