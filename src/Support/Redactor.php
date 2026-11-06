@@ -46,22 +46,25 @@ class Redactor
 
     public function censorBody(array $body): array
     {
-        foreach ($this->censorBodyFields as $censor) {
-            $body = str_contains($censor, '.') || $censor === '*'
-                ? $this->censorByPath($body, explode('.', $censor))
-                : $this->censorAtAnyDepth($body, $censor);
+        $anyDepthNames = [];
+        $exactPaths = [];
+
+        foreach ($this->censorBodyFields as $field) {
+            if (str_contains($field, '.')) {
+                $exactPaths[] = explode('.', $field);
+
+                continue;
+            }
+
+            $anyDepthNames[] = $field;
         }
 
-        return $body;
+        return $this->censor($body, $anyDepthNames, $exactPaths);
     }
 
     public function censorCookieValues(array $cookies): array
     {
-        foreach ($this->censorCookieNames as $censor) {
-            $cookies = $this->censorByPath($cookies, [$censor]);
-        }
-
-        return $cookies;
+        return $this->censor($cookies, $this->censorCookieNames, []);
     }
 
     public function shouldCensorClientIps(): bool
@@ -99,21 +102,84 @@ class Redactor
         return '<CENSORED:'.get_debug_type($value).'>';
     }
 
-    private function censorAtAnyDepth(array $data, string $field): array
+    /**
+     * @param array<int, string> $anyDepthNames
+     * @param array<int, array<int, string>> $exactPaths
+     */
+    private function censor(array $data, array $anyDepthNames, array $exactPaths): array
     {
+        if ($anyDepthNames === [] && $exactPaths === []) {
+            return $data;
+        }
+
         foreach ($data as $key => $value) {
-            if ($this->segmentMatches($field, $this->normalizeBodyFieldName((string) $key))) {
+            $normalizedKey = $this->normalizeBodyFieldName((string) $key);
+
+            $shouldCensor = $this->matchesAnyDepthName($anyDepthNames, $normalizedKey)
+                || $this->matchesEndOfPath($exactPaths, $normalizedKey);
+
+            if ($shouldCensor) {
                 $data[$key] = $this->censorValue($value);
 
                 continue;
             }
 
-            if (is_array($value)) {
-                $data[$key] = $this->censorAtAnyDepth($value, $field);
+            if (! is_array($value)) {
+                continue;
             }
+
+            $data[$key] = $this->censor($value, $anyDepthNames, $this->descendPaths($exactPaths, $normalizedKey));
         }
 
         return $data;
+    }
+
+    /** @param array<int, string> $anyDepthNames */
+    private function matchesAnyDepthName(array $anyDepthNames, string $key): bool
+    {
+        foreach ($anyDepthNames as $name) {
+            if ($this->segmentMatches($name, $key)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** @param array<int, array<int, string>> $exactPaths */
+    private function matchesEndOfPath(array $exactPaths, string $key): bool
+    {
+        foreach ($exactPaths as $segments) {
+            if (count($segments) === 1 && $this->segmentMatches($segments[0], $key)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param array<int, array<int, string>> $exactPaths
+     *
+     * @return array<int, array<int, string>>
+     */
+    private function descendPaths(array $exactPaths, string $key): array
+    {
+        $descended = [];
+
+        foreach ($exactPaths as $segments) {
+            if (count($segments) === 1) {
+                continue;
+            }
+
+            if (! $this->segmentMatches($segments[0], $key)) {
+                continue;
+            }
+
+            $descended[] = array_slice($segments, 1);
+        }
+
+        return $descended;
     }
 
     private function segmentMatches(string $segment, string $key): bool
@@ -123,35 +189,5 @@ class Redactor
         }
 
         return $key === $segment;
-    }
-
-    private function censorByPath(array $data, array $segments): array
-    {
-        if (empty($segments)) {
-            return $data;
-        }
-
-        $currentSegment = $segments[0];
-        $remainingSegments = array_slice($segments, 1);
-
-        foreach ($data as $key => $value) {
-            $normalizedKey = $this->normalizeBodyFieldName((string) $key);
-
-            if (! $this->segmentMatches($currentSegment, $normalizedKey)) {
-                continue;
-            }
-
-            if (empty($remainingSegments)) {
-                $data[$key] = $this->censorValue($value);
-
-                continue;
-            }
-
-            if (is_array($value)) {
-                $data[$key] = $this->censorByPath($value, $remainingSegments);
-            }
-        }
-
-        return $data;
     }
 }

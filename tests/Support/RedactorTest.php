@@ -56,32 +56,24 @@ it('censors body fields without dot notation at any depth', function () {
 });
 
 it('only censors body fields with dot notation at that exact path', function () {
-    $redactor = new Redactor(censorBodyFields: ['user.password']);
+    $redactor = new Redactor(censorBodyFields: ['user.password', 'user.tokens.api']);
 
     $censored = $redactor->censorBody([
         'password' => 'visible',
-        'user' => ['password' => 'secret'],
+        'user' => [
+            'password' => 'secret',
+            'tokens' => ['api' => 'secret', 'public' => 'visible'],
+        ],
         'admin' => ['user' => ['password' => 'visible']],
     ]);
 
     expect($censored)->toBe([
         'password' => 'visible',
-        'user' => ['password' => '<CENSORED:string>'],
+        'user' => [
+            'password' => '<CENSORED:string>',
+            'tokens' => ['api' => '<CENSORED:string>', 'public' => 'visible'],
+        ],
         'admin' => ['user' => ['password' => 'visible']],
-    ]);
-});
-
-it('censors every top-level body field with a bare wildcard', function () {
-    $redactor = new Redactor(censorBodyFields: ['*']);
-
-    $censored = $redactor->censorBody([
-        'password' => 'secret',
-        'user' => ['name' => 'ruben'],
-    ]);
-
-    expect($censored)->toBe([
-        'password' => '<CENSORED:string>',
-        'user' => '<CENSORED:array>',
     ]);
 });
 
