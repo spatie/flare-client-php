@@ -78,13 +78,13 @@ class OpenTelemetryAttributeMapper
         $out = [];
 
         foreach ($attributes as $attribute) {
-            $value = $this->valueToPHP($attribute['value']);
+            $value = $this->valueToPHP($attribute['value'] ?? null);
 
             if ($value === null) {
                 continue;
             }
 
-            $out[$attribute['key']] = $value;
+            $out[$attribute['key'] ?? ''] = $value;
         }
 
         return $out;
@@ -123,8 +123,8 @@ class OpenTelemetryAttributeMapper
         if (array_key_exists('kvlistValue', $value)) {
             $out = [];
 
-            foreach ($value['kvlistValue']['values'] as $item) {
-                $out[$item['key']] = $this->valueToPHP($item['value']);
+            foreach ($value['kvlistValue']['values'] ?? [] as $item) {
+                $out[$item['key'] ?? ''] = $this->valueToPHP($item['value'] ?? null);
             }
 
             return $out;
@@ -133,7 +133,7 @@ class OpenTelemetryAttributeMapper
         if (array_key_exists('arrayValue', $value)) {
             return array_map(
                 fn ($item) => $this->valueToPHP($item),
-                $value['arrayValue']['values']
+                $value['arrayValue']['values'] ?? []
             );
         }
 

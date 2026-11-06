@@ -67,3 +67,34 @@ it('can map attributes back to PHP', function () {
     expect($phpAttributes['object'])->toBe(['value' => 'object']);
     expect($phpAttributes['enum'])->toBe(SpanType::Command->value);
 });
+
+it('can map attributes with the fields proto3 json omits to php', function () {
+    $mapper = new OpenTelemetryAttributeMapper();
+
+    $phpAttributes = $mapper->attributesToPHP([
+        ['key' => 'string', 'value' => ['stringValue' => 'string']],
+        ['key' => 'no.value'],
+        ['value' => ['stringValue' => 'no key']],
+        ['key' => 'empty.array', 'value' => ['arrayValue' => []]],
+        ['key' => 'empty.kvlist', 'value' => ['kvlistValue' => []]],
+        ['key' => 'nested', 'value' => ['kvlistValue' => [
+            'values' => [
+                ['key' => 'empty.array', 'value' => ['arrayValue' => []]],
+                ['key' => 'no.value'],
+                ['value' => ['stringValue' => 'no key']],
+            ],
+        ]]],
+    ]);
+
+    expect($phpAttributes)->toBe([
+        'string' => 'string',
+        '' => 'no key',
+        'empty.array' => [],
+        'empty.kvlist' => [],
+        'nested' => [
+            'empty.array' => [],
+            'no.value' => null,
+            '' => 'no key',
+        ],
+    ]);
+});
