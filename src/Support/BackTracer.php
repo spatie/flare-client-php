@@ -71,9 +71,9 @@ class BackTracer
         };
 
         return [
-            'code.filepath' => $frame->file,
-            'code.lineno' => $frame->lineNumber,
-            'code.function' => $function,
+            'code.file.path' => $frame->file,
+            'code.line.number' => $frame->lineNumber,
+            'code.function.name' => $function,
         ];
     }
 }

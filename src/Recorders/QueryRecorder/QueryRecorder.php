@@ -83,9 +83,9 @@ class QueryRecorder extends SpansRecorder
         return function () use ($attributes, $driverName, $databaseName, $bindings, $sql) {
             $attributes = [
                 'flare.span_type' => SpanType::Query,
-                'db.system' => $driverName,
-                'db.name' => $databaseName,
-                'db.statement' => $sql,
+                'db.system.name' => $driverName,
+                'db.namespace' => $databaseName,
+                'db.query.text' => $sql,
                 'db.sql.bindings' => $bindings,
                 ...$attributes,
             ];
