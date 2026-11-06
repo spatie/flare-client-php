@@ -9,6 +9,7 @@ use Spatie\FlareClient\Enums\RecorderType;
 use Spatie\FlareClient\Recorders\CacheRecorder\CacheRecorder;
 use Spatie\FlareClient\Recorders\CommandRecorder\CommandRecorder;
 use Spatie\FlareClient\Recorders\ContextRecorder\ContextRecorder;
+use Spatie\FlareClient\Recorders\DatabaseConnectionRecorder\DatabaseConnectionRecorder;
 use Spatie\FlareClient\Recorders\ExternalHttpRecorder\ExternalHttpRecorder;
 use Spatie\FlareClient\Recorders\FilesystemRecorder\FilesystemRecorder;
 use Spatie\FlareClient\Recorders\GlowRecorder\GlowRecorder;
@@ -202,6 +203,11 @@ class Flare
     public function query(): QueryRecorder|null
     {
         return $this->recorders->getRecorder(RecorderType::Query->value);
+    }
+
+    public function databaseConnection(): DatabaseConnectionRecorder|null
+    {
+        return $this->recorders->getRecorder(RecorderType::DatabaseConnection->value);
     }
 
     public function redisCommand(): RedisCommandRecorder|null
