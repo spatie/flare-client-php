@@ -19,7 +19,7 @@ class SymfonyResponseAttributesProvider implements ResponseAttributesProvider
         $headers = $this->response->headers->all();
 
         foreach ($headers as $name => $value) {
-            $headers[$name] = implode($value);
+            $headers[$name] = implode(', ', $value);
 
             if (empty($headers[$name])) {
                 unset($headers[$name]);

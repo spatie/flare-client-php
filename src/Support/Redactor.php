@@ -36,8 +36,16 @@ class Redactor
     public function censorHeaders(array $headers): array
     {
         foreach ($headers as $key => $value) {
-            if (in_array($this->normalizeHeaderName($key), $this->censorHeaders)) {
+            $normalizedKey = $this->normalizeHeaderName($key);
+
+            if (in_array($normalizedKey, $this->censorHeaders)) {
                 $headers[$key] = $this->censorValue($value);
+
+                continue;
+            }
+
+            if (in_array($normalizedKey, ['cookie', 'set-cookie']) && is_string($value)) {
+                $headers[$key] = $this->censorCookieHeader($value);
             }
         }
 
@@ -100,6 +108,29 @@ class Redactor
     protected function censorValue(mixed $value): string
     {
         return '<CENSORED:'.get_debug_type($value).'>';
+    }
+
+    protected function censorCookieHeader(string $header): string
+    {
+        if ($this->censorCookieNames === []) {
+            return $header;
+        }
+
+        $censored = preg_replace_callback(
+            '/(^|[;,]\s*)([^=;,\s]+)=([^;,]*)/',
+            function (array $matches): string {
+                $name = $this->normalizeBodyFieldName($matches[2]);
+
+                if (! $this->matchesAnyDepthName($this->censorCookieNames, $name)) {
+                    return $matches[0];
+                }
+
+                return "{$matches[1]}{$matches[2]}=".$this->censorValue($matches[3]);
+            },
+            $header,
+        );
+
+        return $censored ?? $header;
     }
 
     /**

@@ -120,6 +120,34 @@ it('matches body field names case-insensitively', function () {
     expect($censored['API_KEY'])->toBe('<CENSORED:string>');
 });
 
+it('censors every top-level field with a bare wildcard', function () {
+    $redactor = new Redactor(censorBodyFields: ['*']);
+
+    $censored = $redactor->censorBody([
+        'password' => 'secret',
+        'user' => ['name' => 'ruben'],
+    ]);
+
+    expect($censored)->toBe([
+        'password' => '<CENSORED:string>',
+        'user' => '<CENSORED:array>',
+    ]);
+});
+
+it('censors cookie values by name inside the cookie headers', function () {
+    $redactor = new Redactor(censorCookieNames: ['laravel_session', 'remember_*']);
+
+    $censored = $redactor->censorHeaders([
+        'Cookie' => 'laravel_session=secret; remember_web_abc=secret; theme=dark',
+        'Set-Cookie' => 'XSRF-TOKEN=visible; path=/; samesite=lax, laravel_session=secret; expires=Thu, 06 Nov 2026 12:00:00 GMT; path=/; httponly',
+        'X-Other' => 'laravel_session=visible',
+    ]);
+
+    expect($censored['Cookie'])->toBe('laravel_session=<CENSORED:string>; remember_web_abc=<CENSORED:string>; theme=dark');
+    expect($censored['Set-Cookie'])->toBe('XSRF-TOKEN=visible; path=/; samesite=lax, laravel_session=<CENSORED:string>; expires=Thu, 06 Nov 2026 12:00:00 GMT; path=/; httponly');
+    expect($censored['X-Other'])->toBe('laravel_session=visible');
+});
+
 it('encodes the type in the censor placeholder', function () {
     $redactor = new Redactor(censorBodyFields: ['count']);
 
