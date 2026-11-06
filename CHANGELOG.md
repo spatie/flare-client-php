@@ -2,6 +2,118 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 3.6.0 - 2026-11-06
+
+Nested body censoring, cookie censoring by name, cache and database connection events, and a fix for forked processes resending the parent's data.
+
+### Censor body fields without dot notation at any depth (#105)
+
+A body field like `password` was only censored at the top level, so `{"user": {"password": "..."}}` reached Flare as-is. A field name without a dot now matches that key at any depth, so the default `password` and `password_confirmation` fields also cover nested JSON bodies. Dot notation paths like `user.password` keep matching only that exact path, and a bare `*` still censors every top-level field.
+
+Existing installs will see more censoring after upgrading: a configured name like `email` now also hides `address.email` and `items.*.email`. Use a dotted path if you want one exact key.
+
+Thanks @mattiasgeniar.
+
+### Censor cookies by name (#110)
+
+Cookies could only be censored all or nothing. Either Flare got every cookie, or `censorCookies()` dropped them all. You can now censor specific cookies by name, next to the existing header and body field lists:
+
+```php
+FlareConfig::make('api-key')
+    ->censorCookieNames('PHPSESSID', 'remember_*');
+
+```
+Censored cookies keep their key, so you still see they were there. Names match case insensitively, a dot in a cookie name is taken literally, and a segment ending in `*` matches every key with that prefix. Body fields get the prefix wildcard too, for example `censorBodyFields('pass*', 'user.api_*')`.
+
+Thanks @rubenvanassche.
+
+### Censor cookie names inside the `Cookie` and `Set-Cookie` headers (#114)
+
+Cookie names were only censored in the parsed `http.request.cookies` array. When the `Cookie` or `Set-Cookie` headers were removed from `censorHeaders()`, the raw headers still carried the values. The redactor now censors matching `name=value` pairs inside both headers as well.
+
+The Symfony request and response providers also joined multi-value headers without a separator, which glued a Laravel response's two `Set-Cookie` lines into one string. They now join with a comma.
+
+Thanks @rubenvanassche.
+
+### Stop forked child processes from resending the parent's data (#108)
+
+After `pcntl_fork()` the child got a copy of the open trace, the buffered logs and the queued reports, and sent all of it again on exit. Fork three children and Flare received the same spans four times (#99).
+
+A child now behaves like a separate service continuing the parent's trace. It keeps the trace id, uses the span that was open at the fork as its parent, and only sends what it created itself. The new `ForkedProcess` class detects the fork right before anything is buffered or sent, and `Tracer`, `Logger` and `Api` reset their buffers when it fires. `Api`, `Tracer` and `Logger` gained a `ForkedProcess` constructor argument, which only matters if you construct them yourself.
+
+Thanks @rubenvanassche and @tareq-halaby.
+
+### Record failed cache writes and forgets (#97), flushes and tags (#98)
+
+The `CacheRecorder` only recorded successful operations. It now has `recordKeyWriteFailed()` and `recordKeyForgetFailed()` for a store that refuses writes, and `recordFlushed()` and `recordFlushFailed()` for a cache being wiped. `Flush` is part of the default operations, since a flush is rare and high signal.
+
+Every recording method also accepts `array $tags = []`, which lands in a `cache.tags` attribute. A tagged flush only clears part of a store, so without the tags it would look like a full flush. The failover event that #97 introduced was removed again in #115 before this release.
+
+Thanks @rubenvanassche.
+
+### Record database connection spans (#111)
+
+A new `DatabaseConnectionRecorder` records a "Database connection" span around the moment a connection is opened, with the `php_database_connection` span type. Integrations call `recordStart()`, `recordEnd()` and `recordFailed()` around their own connect call. The recorder is registered with the query recorder and follows its `with_traces` setting, and connection spans only show up in traces.
+
+Thanks @rubenvanassche.
+
+### Keep report trimming memory bounded for very large payloads (#102)
+
+`ReportTrimmer::needsToBeTrimmed()` encoded the whole payload with `json_encode` before every trimming strategy. A report with a big request body could push the process past its memory limit while reporting an error, and the report was lost.
+
+The trimmer now first sums the length of all strings in the payload. JSON encoding never makes a string shorter, so when that sum is already over the limit it skips the encode and lets the strategies cut the large strings first. Trimming a payload with a 50 MB string used about 50 MB of extra memory before. It now stays small.
+
+Thanks @AlexVanderbist.
+
+### Rethrow uncaught exceptions when there is no previous exception handler (#106)
+
+When Flare's exception handler was the only one registered, it reported the exception and then swallowed it. PHP never saw it as uncaught, so the request ended with an empty `200`, nothing reached the error log, and `error_get_last()` stayed empty. That broke apps like WordPress, which show their recovery page from a shutdown function.
+
+`handleException()` now rethrows the exception when there is no previous handler, so PHP returns a `500` and logs the error. The exception is still reported only once.
+
+Thanks @AlexVanderbist.
+
+### Add `recordEndFromGlobals` to record request attributes in plain PHP apps (#107)
+
+Plain PHP apps that ended a request with `recordEndFromDefined()` never got the request attributes such as `http.request.method` and `url.full`, so Flare could not group those requests into routes. `recordEndFromGlobals()` is the counterpart of `recordStartFromGlobals()` and reads the request from `$_SERVER` and the response from `http_response_code()` and `headers_list()`.
+
+`PhpResponseAttributesProvider` now falls back to those globals when no status code or headers are passed, so `recordEndFromDefined()` picks them up as well.
+
+Thanks @AlexVanderbist.
+
+### Fix `max_items_with_errors` configuration for view collection (#103)
+
+The view recorder ignored the `max_items_with_errors` option, so an error report could carry every rendered view (#101). `collectViews()` now has a `maxItemsWithErrors` parameter, defaulting to 100 like the other recorders, and forwards it to the recorder.
+
+The new parameter sits before `$extra`. A call that passed the extra options array as the third positional argument must switch to a named argument.
+
+Thanks @Menna-Baligh.
+
+### Handle omitted fields when mapping OpenTelemetry attributes to PHP (#113)
+
+OTLP/JSON leaves out empty and default fields, so a valid client can send an attribute without a `value` or `key`, or an empty list as `{"arrayValue": {}}`. The mapper read those keys directly and threw a `TypeError` or raised an undefined key warning. Those fields now fall back to a default: an attribute without a value is skipped, one without a key is stored under an empty string, and an empty list becomes an empty array.
+
+Thanks @rubenvanassche.
+
+### What's Changed
+
+* Record failed cache writes, forgets and store failovers by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/97
+* Record cache flushes and cache tags by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/98
+* Keep report trimming memory bounded for very large payloads by @AlexVanderbist in https://github.com/spatie/flare-client-php/pull/102
+* Fix max_items_with_errors configuration for view collection by @Menna-Baligh in https://github.com/spatie/flare-client-php/pull/103
+* Censor body fields without dot notation at any depth by @mattiasgeniar in https://github.com/spatie/flare-client-php/pull/105
+* Rethrow uncaught exceptions when there is no previous exception handler by @AlexVanderbist in https://github.com/spatie/flare-client-php/pull/106
+* Add recordEndFromGlobals to record request attributes in plain PHP apps by @AlexVanderbist in https://github.com/spatie/flare-client-php/pull/107
+* Stop forked child processes from resending the parent's data by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/108
+* Censor cookies by name by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/110
+* Record database connection spans by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/111
+* Support PHP 8.6 by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/112
+* Handle omitted fields when mapping OpenTelemetry attributes to PHP by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/113
+* Censor cookie names inside the Cookie and Set-Cookie headers by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/114
+* Drop the cache failover span event by @rubenvanassche in https://github.com/spatie/flare-client-php/pull/115
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/3.5.1...3.6.0
+
 ## 1.11.2 - 2026-11-04
 
 - Strip embedded credentials (for example a GitHub OAuth token from Laravel Forge deployments) from the git remote URL before it is sent to Flare, by @marventhieme in https://github.com/spatie/flare-client-php/pull/100
