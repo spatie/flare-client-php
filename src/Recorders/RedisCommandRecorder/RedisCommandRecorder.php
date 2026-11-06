@@ -67,7 +67,7 @@ class RedisCommandRecorder extends SpansRecorder
         return function () use ($attributes, $serverAddress, $serverPort, $namespace, $parameters, $command) {
             return [
                 'flare.span_type' => SpanType::RedisCommand,
-                'db.system' => 'redis',
+                'db.system.name' => 'redis',
                 'db.namespace' => $namespace,
                 'db.operation.name' => $command,
                 'db.query.parameters' => $parameters, // Not otel technically

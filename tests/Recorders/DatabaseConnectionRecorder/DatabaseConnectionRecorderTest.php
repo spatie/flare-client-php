@@ -37,8 +37,8 @@ it('can trace database connections without adding them to error reports', functi
     expect($span->attributes)
         ->toHaveCount(5)
         ->toHaveKey('flare.span_type', SpanType::DatabaseConnection)
-        ->toHaveKey('db.system', 'mysql')
-        ->toHaveKey('db.name', 'users')
+        ->toHaveKey('db.system.name', 'mysql')
+        ->toHaveKey('db.namespace', 'users')
         ->toHaveKey('laravel.db.connection', 'mysql')
         ->toHaveKey('laravel.db.read', false);
 });

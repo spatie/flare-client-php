@@ -80,9 +80,9 @@ it('can send a trace', function () {
         ->expectType(SpanType::Query)
         ->expectParentId($commandSpan)
         ->expectName('Query - select * from users where id = ?')
-        ->expectAttribute('db.system', 'mysql')
-        ->expectAttribute('db.name', 'flare')
-        ->expectAttribute('db.statement', 'select * from users where id = ?')
+        ->expectAttribute('db.system.name', 'mysql')
+        ->expectAttribute('db.namespace', 'flare')
+        ->expectAttribute('db.query.text', 'select * from users where id = ?')
         ->expectAttribute('db.sql.bindings', [42]);
 });
 

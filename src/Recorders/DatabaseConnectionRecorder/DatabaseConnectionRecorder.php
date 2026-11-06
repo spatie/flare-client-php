@@ -24,8 +24,8 @@ class DatabaseConnectionRecorder extends SpansRecorder
             name: 'Database connection',
             attributes: fn () => array_filter([
                 'flare.span_type' => SpanType::DatabaseConnection,
-                'db.system' => $driverName,
-                'db.name' => $databaseName,
+                'db.system.name' => $driverName,
+                'db.namespace' => $databaseName,
                 ...$attributes,
             ], fn (mixed $value) => $value !== null),
         );
