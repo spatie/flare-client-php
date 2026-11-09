@@ -77,6 +77,42 @@ it('only censors body fields with dot notation at that exact path', function () 
     ]);
 });
 
+it('censors body fields inside dotted keys', function () {
+    $redactor = new Redactor(censorBodyFields: ['password', 'token']);
+
+    $censored = $redactor->censorBody([
+        'form.password' => 'secret',
+        'form.name' => 'ruben',
+        'user.profile.token' => 'secret',
+        'user.profile.locale' => 'nl',
+    ]);
+
+    expect($censored)->toBe([
+        'form.password' => '<CENSORED:string>',
+        'form.name' => 'ruben',
+        'user.profile.token' => '<CENSORED:string>',
+        'user.profile.locale' => 'nl',
+    ]);
+});
+
+it('matches exact body field paths against dotted keys', function () {
+    $redactor = new Redactor(censorBodyFields: ['user.password', 'user.tokens.api']);
+
+    $censored = $redactor->censorBody([
+        'user.password' => 'secret',
+        'admin.password' => 'visible',
+        'user.tokens' => ['api' => 'secret', 'public' => 'visible'],
+        'user' => ['tokens.api' => 'secret', 'tokens.public' => 'visible'],
+    ]);
+
+    expect($censored)->toBe([
+        'user.password' => '<CENSORED:string>',
+        'admin.password' => 'visible',
+        'user.tokens' => ['api' => '<CENSORED:string>', 'public' => 'visible'],
+        'user' => ['tokens.api' => '<CENSORED:string>', 'tokens.public' => 'visible'],
+    ]);
+});
+
 it('supports wildcards in body field paths', function () {
     $redactor = new Redactor(censorBodyFields: ['users.*.email']);
 

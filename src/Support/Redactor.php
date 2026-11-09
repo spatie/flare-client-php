@@ -72,7 +72,7 @@ class Redactor
 
     public function censorCookieValues(array $cookies): array
     {
-        return $this->censor($cookies, $this->censorCookieNames, []);
+        return $this->censor($cookies, $this->censorCookieNames, [], splitKeys: false);
     }
 
     public function shouldCensorClientIps(): bool
@@ -121,7 +121,7 @@ class Redactor
             function (array $matches): string {
                 $name = $this->normalizeBodyFieldName($matches[2]);
 
-                if (! $this->matchesAnyDepthName($this->censorCookieNames, $name)) {
+                if (! $this->matchesAnyDepthName($this->censorCookieNames, [$name])) {
                     return $matches[0];
                 }
 
@@ -134,10 +134,14 @@ class Redactor
     }
 
     /**
+     * A body key can be a dotted path itself, for example `form.password` in a Livewire
+     * update or an HTML form. It is split into segments and matched as if it were nested.
+     * Cookie names are never split, a dot is a regular character there.
+     *
      * @param array<int, string> $anyDepthNames
      * @param array<int, array<int, string>> $exactPaths
      */
-    private function censor(array $data, array $anyDepthNames, array $exactPaths): array
+    private function censor(array $data, array $anyDepthNames, array $exactPaths, bool $splitKeys = true): array
     {
         if ($anyDepthNames === [] && $exactPaths === []) {
             return $data;
@@ -146,8 +150,12 @@ class Redactor
         foreach ($data as $key => $value) {
             $normalizedKey = $this->normalizeBodyFieldName((string) $key);
 
-            $shouldCensor = $this->matchesAnyDepthName($anyDepthNames, $normalizedKey)
-                || $this->matchesEndOfPath($exactPaths, $normalizedKey);
+            $keySegments = $splitKeys
+                ? explode('.', $normalizedKey)
+                : [$normalizedKey];
+
+            $shouldCensor = $this->matchesAnyDepthName($anyDepthNames, $keySegments)
+                || $this->matchesEndOfPath($exactPaths, $keySegments);
 
             if ($shouldCensor) {
                 $data[$key] = $this->censorValue($value);
@@ -159,29 +167,41 @@ class Redactor
                 continue;
             }
 
-            $data[$key] = $this->censor($value, $anyDepthNames, $this->descendPaths($exactPaths, $normalizedKey));
+            $data[$key] = $this->censor($value, $anyDepthNames, $this->descendPaths($exactPaths, $keySegments), $splitKeys);
         }
 
         return $data;
     }
 
-    /** @param array<int, string> $anyDepthNames */
-    private function matchesAnyDepthName(array $anyDepthNames, string $key): bool
+    /**
+     * @param array<int, string> $anyDepthNames
+     * @param array<int, string> $keySegments
+     */
+    private function matchesAnyDepthName(array $anyDepthNames, array $keySegments): bool
     {
         foreach ($anyDepthNames as $name) {
-            if ($this->segmentMatches($name, $key)) {
-                return true;
+            foreach ($keySegments as $keySegment) {
+                if ($this->segmentMatches($name, $keySegment)) {
+                    return true;
+                }
             }
         }
 
         return false;
     }
 
-    /** @param array<int, array<int, string>> $exactPaths */
-    private function matchesEndOfPath(array $exactPaths, string $key): bool
+    /**
+     * @param array<int, array<int, string>> $exactPaths
+     * @param array<int, string> $keySegments
+     */
+    private function matchesEndOfPath(array $exactPaths, array $keySegments): bool
     {
-        foreach ($exactPaths as $segments) {
-            if (count($segments) === 1 && $this->segmentMatches($segments[0], $key)) {
+        foreach ($exactPaths as $pathSegments) {
+            if (count($pathSegments) !== count($keySegments)) {
+                continue;
+            }
+
+            if ($this->segmentsMatch($pathSegments, $keySegments)) {
                 return true;
             }
         }
@@ -191,26 +211,42 @@ class Redactor
 
     /**
      * @param array<int, array<int, string>> $exactPaths
+     * @param array<int, string> $keySegments
      *
      * @return array<int, array<int, string>>
      */
-    private function descendPaths(array $exactPaths, string $key): array
+    private function descendPaths(array $exactPaths, array $keySegments): array
     {
         $descended = [];
 
-        foreach ($exactPaths as $segments) {
-            if (count($segments) === 1) {
+        foreach ($exactPaths as $pathSegments) {
+            if (count($pathSegments) <= count($keySegments)) {
                 continue;
             }
 
-            if (! $this->segmentMatches($segments[0], $key)) {
+            if (! $this->segmentsMatch(array_slice($pathSegments, 0, count($keySegments)), $keySegments)) {
                 continue;
             }
 
-            $descended[] = array_slice($segments, 1);
+            $descended[] = array_slice($pathSegments, count($keySegments));
         }
 
         return $descended;
+    }
+
+    /**
+     * @param array<int, string> $patternSegments
+     * @param array<int, string> $keySegments
+     */
+    private function segmentsMatch(array $patternSegments, array $keySegments): bool
+    {
+        foreach ($patternSegments as $index => $patternSegment) {
+            if (! $this->segmentMatches($patternSegment, $keySegments[$index])) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function segmentMatches(string $segment, string $key): bool
