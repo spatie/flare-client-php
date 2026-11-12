@@ -17,9 +17,9 @@ it('exposes the status code, body size, and headers', function () {
     expect($provider->statusCode())->toBe(201);
     expect($attributes['http.response.status_code'])->toBe(201);
     expect($attributes['http.response.body.size'])->toBe(strlen('Hello world'));
-    expect($attributes['http.response.headers'])
-        ->toHaveKey('content-type', 'text/plain')
-        ->toHaveKey('x-trace-id', 'abc');
+    expect($attributes)
+        ->toHaveKey('http.response.header.content-type', ['text/plain'])
+        ->toHaveKey('http.response.header.x-trace-id', ['abc']);
 });
 
 it('censors response headers via the redactor', function () {
@@ -33,11 +33,9 @@ it('censors response headers via the redactor', function () {
         $response,
     );
 
-    $headers = $provider->toArray()['http.response.headers'];
-
-    expect($headers)
-        ->toHaveKey('set-cookie', '<CENSORED:string>')
-        ->toHaveKey('x-public', 'visible');
+    expect($provider->toArray())
+        ->toHaveKey('http.response.header.set-cookie', ['<CENSORED:string>'])
+        ->toHaveKey('http.response.header.x-public', ['visible']);
 });
 
 it('returns a zero body size for an empty response', function () {

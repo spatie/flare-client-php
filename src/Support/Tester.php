@@ -298,9 +298,9 @@ abstract class Tester
             },
             attributes: [
                 'flare.span_type' => SpanType::Query,
-                'db.system' => 'mysql',
-                'db.name' => 'flare',
-                'db.statement' => 'select * from users where id = ?',
+                'db.system.name' => 'mysql',
+                'db.namespace' => 'flare',
+                'db.query.text' => 'select * from users where id = ?',
                 'db.sql.bindings' => [42],
             ],
             startTime: $time + rand(220_000_000, 240_000_000),

@@ -20,7 +20,7 @@ client.address: 1.2.3.4
 http.request.body.contents:
     get-key-1: get-value-1
     get-key-2: get-value-2
-http.request.headers:
-    host: example.com
+http.request.header.host:
+    - example.com
 http.request.cookies:
     cookie-key-1: cookie-value-1

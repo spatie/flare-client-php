@@ -224,9 +224,9 @@ it('can find origins when tracing events', function () {
     $recorder->record('Hello World');
 
     expect($span->events[0]->attributes)->toHaveKeys([
-        'code.filepath',
-        'code.lineno',
-        'code.function',
+        'code.file.path',
+        'code.line.number',
+        'code.function.name',
     ]);
 });
 
@@ -245,9 +245,9 @@ it('will not find origins when tracing events when find origin is disabled', fun
     $recorder->record('Hello World');
 
     expect($span->events[0]->attributes)->not()->toHaveKeys([
-        'code.filepath',
-        'code.lineno',
-        'code.function',
+        'code.file.path',
+        'code.line.number',
+        'code.function.name',
     ]);
 });
 
@@ -267,9 +267,9 @@ it('is not possible to overwrite the find origin threshold', function () {
     $recorder->record('Hello World');
 
     expect($span->events[0]->attributes)->toHaveKeys([
-        'code.filepath',
-        'code.lineno',
-        'code.function',
+        'code.file.path',
+        'code.line.number',
+        'code.function.name',
     ]);
 });
 
@@ -284,9 +284,9 @@ it('will not find origins when only reporting', function () {
     $recorder->record('Hello World');
 
     expect($recorder->getSpanEvents()[0]->attributes)->not()->toHaveKeys([
-        'code.filepath',
-        'code.lineno',
-        'code.function',
+        'code.file.path',
+        'code.line.number',
+        'code.function.name',
     ]);
 });
 

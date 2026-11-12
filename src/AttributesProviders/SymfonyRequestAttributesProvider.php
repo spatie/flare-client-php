@@ -4,6 +4,7 @@ namespace Spatie\FlareClient\AttributesProviders;
 
 use RuntimeException;
 use Spatie\FlareClient\Contracts\RequestAttributesProvider;
+use Spatie\FlareClient\Support\HttpHeaderAttributes;
 use Spatie\FlareClient\Support\Redactor;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\InputBag;
@@ -176,18 +177,6 @@ class SymfonyRequestAttributesProvider implements RequestAttributesProvider
 
     protected function getHeaders(): array
     {
-        $headers = $this->request->headers->all();
-
-        foreach ($headers as $name => $value) {
-            $headers[$name] = implode(', ', $value);
-
-            if (empty($headers[$name])) {
-                unset($headers[$name]);
-            }
-        }
-
-        return [
-            'http.request.headers' => $this->redactor->censorHeaders($headers),
-        ];
+        return HttpHeaderAttributes::request($this->request->headers->all(), $this->redactor);
     }
 }

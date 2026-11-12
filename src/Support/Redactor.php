@@ -39,17 +39,34 @@ class Redactor
             $normalizedKey = $this->normalizeHeaderName($key);
 
             if (in_array($normalizedKey, $this->censorHeaders)) {
-                $headers[$key] = $this->censorValue($value);
+                $headers[$key] = $this->censorHeaderValue($value);
 
                 continue;
             }
 
-            if (in_array($normalizedKey, ['cookie', 'set-cookie']) && is_string($value)) {
-                $headers[$key] = $this->censorCookieHeader($value);
+            if (in_array($normalizedKey, ['cookie', 'set-cookie'])) {
+                $headers[$key] = is_array($value)
+                    ? array_map(fn (mixed $item) => $this->censorCookieHeaderValue($item), $value)
+                    : $this->censorCookieHeaderValue($value);
             }
         }
 
         return $headers;
+    }
+
+    /** @return string|array<int, string> */
+    protected function censorHeaderValue(mixed $value): string|array
+    {
+        if (is_array($value)) {
+            return [$this->censorValue(implode(', ', $value))];
+        }
+
+        return $this->censorValue($value);
+    }
+
+    protected function censorCookieHeaderValue(mixed $value): mixed
+    {
+        return is_string($value) ? $this->censorCookieHeader($value) : $value;
     }
 
     public function censorBody(array $body): array

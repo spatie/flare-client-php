@@ -50,9 +50,9 @@ it('can trace queries', function () {
 
     expect($span->attributes)
         ->toHaveCount(5)
-        ->toHaveKey('db.system', 'mysql')
-        ->toHaveKey('db.name', 'users')
-        ->toHaveKey('db.statement', 'select * from users where id = ?')
+        ->toHaveKey('db.system.name', 'mysql')
+        ->toHaveKey('db.namespace', 'users')
+        ->toHaveKey('db.query.text', 'select * from users where id = ?')
         ->toHaveKey('db.sql.bindings', ['id' => 1])
         ->toHaveKey('flare.span_type', SpanType::Query);
 });
@@ -98,9 +98,9 @@ it('can report queries without tracing', function () {
 
     expect($span->attributes)
         ->toHaveCount(5)
-        ->toHaveKey('db.system', 'mysql')
-        ->toHaveKey('db.name', 'users')
-        ->toHaveKey('db.statement', 'select * from users where id = ?')
+        ->toHaveKey('db.system.name', 'mysql')
+        ->toHaveKey('db.namespace', 'users')
+        ->toHaveKey('db.query.text', 'select * from users where id = ?')
         ->toHaveKey('db.sql.bindings', ['id' => 1])
         ->toHaveKey('flare.span_type', SpanType::Query);
 });
@@ -151,9 +151,9 @@ it('can find the origin of a query when tracing and a threshold is met', functio
     $span = array_values($flare->tracer->currentTrace())[0];
 
     expect($span->attributes)->toHaveKeys([
-        'code.filepath',
-        'code.lineno',
-        'code.function',
+        'code.file.path',
+        'code.line.number',
+        'code.function.name',
     ]);
 });
 
@@ -182,9 +182,9 @@ it('can find the origin of a query when tracing no threshold is set', function (
     $span = array_values($flare->tracer->currentTrace())[0];
 
     expect($span->attributes)->toHaveKeys([
-        'code.filepath',
-        'code.lineno',
-        'code.function',
+        'code.file.path',
+        'code.line.number',
+        'code.function.name',
     ]);
 });
 
@@ -213,9 +213,9 @@ it('will not find the origin of a query when tracing and a threshold is not met'
     $span = array_values($flare->tracer->currentTrace())[0];
 
     expect($span->attributes)->not()->toHaveKeys([
-        'code.filepath',
-        'code.lineno',
-        'code.function',
+        'code.file.path',
+        'code.line.number',
+        'code.function.name',
     ]);
 });
 
@@ -244,8 +244,8 @@ it('will not find the origin of a query when only reporting', function () {
     $span = $recorder->getSpans()[0];
 
     expect($span->attributes)->not()->toHaveKeys([
-        'code.filepath',
-        'code.lineno',
-        'code.function',
+        'code.file.path',
+        'code.line.number',
+        'code.function.name',
     ]);
 });

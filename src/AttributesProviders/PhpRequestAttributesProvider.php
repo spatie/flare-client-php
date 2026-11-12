@@ -3,6 +3,7 @@
 namespace Spatie\FlareClient\AttributesProviders;
 
 use Spatie\FlareClient\Contracts\RequestAttributesProvider;
+use Spatie\FlareClient\Support\HttpHeaderAttributes;
 use Spatie\FlareClient\Support\Redactor;
 
 class PhpRequestAttributesProvider implements RequestAttributesProvider
@@ -40,12 +41,8 @@ class PhpRequestAttributesProvider implements RequestAttributesProvider
             $payload['client.address'] = $clientIp;
         }
 
-        if (! empty($this->headers)) {
-            $payload['http.request.headers'] = $this->redactor->censorHeaders($this->headers);
-        }
-
         return array_filter(
-            $payload,
+            [...$payload, ...HttpHeaderAttributes::request($this->headers ?? [], $this->redactor)],
             fn ($value) => $value !== null,
         );
     }

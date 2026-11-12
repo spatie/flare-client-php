@@ -24,7 +24,7 @@ it('records a redis command span with OTEL db attributes', function () {
     expect($span->name)->toBe('Redis - GET');
     expect($span->attributes)
         ->toHaveKey('flare.span_type', SpanType::RedisCommand)
-        ->toHaveKey('db.system', 'redis')
+        ->toHaveKey('db.system.name', 'redis')
         ->toHaveKey('db.namespace', 0)
         ->toHaveKey('db.operation.name', 'GET')
         ->toHaveKey('db.query.parameters', ['key:1'])

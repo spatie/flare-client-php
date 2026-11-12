@@ -34,11 +34,8 @@ it('returns minimal attributes from $_SERVER', function () {
         ->toHaveKey('user_agent.original', 'PestRunner/1.0')
         ->toHaveKey('http.request.method', 'POST')
         ->toHaveKey('client.address', '1.2.3.4')
-        ->toHaveKey('http.request.headers');
-
-    expect($attributes['http.request.headers'])
-        ->toHaveKey('User-Agent', 'PestRunner/1.0')
-        ->toHaveKey('Accept', 'application/json');
+        ->toHaveKey('http.request.header.user-agent', ['PestRunner/1.0'])
+        ->toHaveKey('http.request.header.accept', ['application/json']);
 });
 
 it('falls back to HTTP_* keys when getallheaders() output is missing', function () {
@@ -54,12 +51,10 @@ it('falls back to HTTP_* keys when getallheaders() output is missing', function 
         headers: null,
     );
 
-    $headers = $provider->toArray()['http.request.headers'] ?? [];
-
-    expect($headers)->toMatchArray([
-        'host' => 'example.test',
-        'x-custom' => 'value',
-        'content-type' => 'application/json',
+    expect($provider->toArray())->toMatchArray([
+        'http.request.header.host' => ['example.test'],
+        'http.request.header.x-custom' => ['value'],
+        'http.request.header.content-type' => ['application/json'],
     ]);
 });
 
@@ -77,7 +72,7 @@ it('censors the client IP and headers via the redactor', function () {
     $attributes = $provider->toArray();
 
     expect($attributes)->not->toHaveKey('client.address');
-    expect($attributes['http.request.headers'])->toHaveKey('Authorization', '<CENSORED:string>');
+    expect($attributes)->toHaveKey('http.request.header.authorization', ['<CENSORED:string>']);
 });
 
 it('reports method, path, and url through getters', function () {

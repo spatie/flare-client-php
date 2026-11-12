@@ -473,9 +473,9 @@ it('can add queries', function () {
         ->expectStart(1546346096000000000 - TimeHelper::milliseconds(250))
         ->expectEnd(1546346096000000000)
         ->expectAttributesCount(4)
-        ->expectAttribute('db.system', 'mysql')
-        ->expectAttribute('db.name', 'users')
-        ->expectAttribute('db.statement', 'select * from users where id = ?')
+        ->expectAttribute('db.system.name', 'mysql')
+        ->expectAttribute('db.namespace', 'users')
+        ->expectAttribute('db.query.text', 'select * from users where id = ?')
         ->expectAttribute('db.sql.bindings', ['id' => 1]);
 
     $report->expectEvent(1)
@@ -483,9 +483,9 @@ it('can add queries', function () {
         ->expectStart(1546346097000000000 - TimeHelper::milliseconds(125))
         ->expectEnd(1546346097000000000)
         ->expectAttributesCount(4)
-        ->expectAttribute('db.system', 'mysql')
-        ->expectAttribute('db.name', 'users')
-        ->expectAttribute('db.statement', 'select * from users where id = ?')
+        ->expectAttribute('db.system.name', 'mysql')
+        ->expectAttribute('db.namespace', 'users')
+        ->expectAttribute('db.query.text', 'select * from users where id = ?')
         ->expectAttribute('db.sql.bindings', ['id' => 2]);
 });
 

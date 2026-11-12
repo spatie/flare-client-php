@@ -8,6 +8,7 @@ use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\Recorders\SpansRecorder;
 use Spatie\FlareClient\Spans\Span;
 use Spatie\FlareClient\Support\BackTracer;
+use Spatie\FlareClient\Support\HttpHeaderAttributes;
 use Spatie\FlareClient\Support\Redactor;
 use Spatie\FlareClient\Tracer;
 
@@ -51,7 +52,7 @@ class ExternalHttpRecorder extends SpansRecorder
                 'url.query' => $parsedUrl['query'] ?? null,
                 'url.fragment' => $parsedUrl['fragment'] ?? null,
                 'http.request.body.size' => $bodySize,
-                'http.request.headers' => $this->redactor->censorHeaders($headers),
+                ...HttpHeaderAttributes::request($headers, $this->redactor),
                 ...$attributes,
             ],
         );
@@ -68,7 +69,7 @@ class ExternalHttpRecorder extends SpansRecorder
         $attributes = [
             'http.response.status_code' => $responseCode,
             'http.response.body.size' => $responseBodySize,
-            'http.response.headers' => $this->redactor->censorHeaders($responseHeaders),
+            ...HttpHeaderAttributes::response($responseHeaders, $this->redactor),
         ];
 
         if ($errorType !== null) {

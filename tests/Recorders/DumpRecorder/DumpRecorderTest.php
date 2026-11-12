@@ -59,9 +59,9 @@ it('can record dump origins', function () {
     dump('This is a test for the DumpRecorder');
 
     expect($dumpRecorder->getSpanEvents()[0]->attributes)->toHaveKeys([
-        'code.filepath',
-        'code.lineno',
-        'code.function',
+        'code.file.path',
+        'code.line.number',
+        'code.function.name',
     ]);
 });
 
@@ -84,8 +84,8 @@ it('can disable recording dump origins', function () {
     dump('This is a test for the DumpRecorder');
 
     expect($dumpRecorder->getSpanEvents()[0]->attributes)->not()->toHaveKeys([
-        'code.filepath',
-        'code.lineno',
-        'code.function',
+        'code.file.path',
+        'code.line.number',
+        'code.function.name',
     ]);
 });
