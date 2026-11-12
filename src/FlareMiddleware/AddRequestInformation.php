@@ -22,7 +22,7 @@ class AddRequestInformation implements FlareMiddleware
         }
 
         $report->addAttributes(
-            $this->getAttributes()
+            $this->groupHeaders($this->getAttributes())
         );
 
         return $next($report);
@@ -36,5 +36,29 @@ class AddRequestInformation implements FlareMiddleware
     protected function getAttributes(): array
     {
         return (new SymfonyRequestAttributesProvider($this->redactor))->toArray();
+    }
+
+    /**
+     * @param array<string, mixed> $attributes
+     *
+     * @return array<string, mixed>
+     */
+    protected function groupHeaders(array $attributes): array
+    {
+        $headers = [];
+
+        foreach ($attributes as $key => $value) {
+            if (! str_starts_with($key, 'http.request.header.')) {
+                continue;
+            }
+
+            $headers[substr($key, strlen('http.request.header.'))] = implode(', ', $value);
+
+            unset($attributes[$key]);
+        }
+
+        $attributes['http.request.headers'] = $headers;
+
+        return $attributes;
     }
 }

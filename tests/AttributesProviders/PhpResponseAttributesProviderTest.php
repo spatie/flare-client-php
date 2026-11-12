@@ -31,9 +31,9 @@ it('censors response headers via the redactor', function () {
 
     $attributes = $provider->toArray();
 
-    expect($attributes['http.response.headers'])
-        ->toHaveKey('Content-Type', 'application/json')
-        ->toHaveKey('Set-Cookie', '<CENSORED:string>');
+    expect($attributes)
+        ->toHaveKey('http.response.header.content-type', ['application/json'])
+        ->toHaveKey('http.response.header.set-cookie', ['<CENSORED:string>']);
 });
 
 it('emits an empty payload when nothing is set', function () {

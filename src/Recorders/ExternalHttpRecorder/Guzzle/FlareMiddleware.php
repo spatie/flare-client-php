@@ -110,18 +110,9 @@ class FlareMiddleware
         return $response->getBody()->getSize() ?: null;
     }
 
+    /** @return array<string, array<int, string>> */
     protected function getHeaders(MessageInterface $message): array
     {
-        $headers = [];
-
-        foreach ($message->getHeaders() as $name => $values) {
-            $headers[$name] = implode(', ', $values);
-
-            if (empty($headers[$name])) {
-                unset($headers[$name]);
-            }
-        }
-
-        return $headers;
+        return $message->getHeaders();
     }
 }

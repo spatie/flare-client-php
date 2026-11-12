@@ -148,6 +148,22 @@ it('censors cookie values by name inside the cookie headers', function () {
     expect($censored['X-Other'])->toBe('laravel_session=visible');
 });
 
+it('censors headers with multiple values', function () {
+    $redactor = new Redactor(censorHeaders: ['Authorization'], censorCookieNames: ['laravel_session']);
+
+    $censored = $redactor->censorHeaders([
+        'Authorization' => ['Bearer one', 'Bearer two'],
+        'Set-Cookie' => ['laravel_session=secret; path=/', 'theme=dark; path=/'],
+        'Accept' => ['application/json', 'text/html'],
+    ]);
+
+    expect($censored)->toBe([
+        'Authorization' => ['<CENSORED:string>'],
+        'Set-Cookie' => ['laravel_session=<CENSORED:string>; path=/', 'theme=dark; path=/'],
+        'Accept' => ['application/json', 'text/html'],
+    ]);
+});
+
 it('encodes the type in the censor placeholder', function () {
     $redactor = new Redactor(censorBodyFields: ['count']);
 

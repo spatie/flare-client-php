@@ -56,19 +56,17 @@ test('middleware records successful requests and responses', function () {
         ->toHaveKey('url.query', null)
         ->toHaveKey('url.fragment', null)
         ->toHaveKey('http.request.body.size', 13)
-        ->toHaveKey('http.request.headers', [
-            'User-Agent' => Utils::defaultUserAgent(),
-            'Host' => 'example.com',
-            'Accept' => 'application/json',
-            'X-Test-Header' => 'test-value',
-            'Content-Length' => '13',
-        ])
+        ->toHaveKey('http.request.header.user-agent', [Utils::defaultUserAgent()])
+        ->toHaveKey('http.request.header.host', ['example.com'])
+        ->toHaveKey('http.request.header.accept', ['application/json'])
+        ->toHaveKey('http.request.header.x-test-header', ['test-value'])
+        ->toHaveKey('http.request.header.content-length', ['13'])
         ->toHaveKey('http.response.status_code', 200)
         ->toHaveKey('http.response.body.size', 16)
-        ->toHaveKey('http.response.headers', [
-            'Content-Type' => 'application/json',
-            'X-Test_Header' => 'another-value',
-        ]);
+        ->toHaveKey('http.response.header.content-type', ['application/json'])
+        ->toHaveKey('http.response.header.x-test_header', ['another-value'])
+        ->not->toHaveKey('http.request.headers')
+        ->not->toHaveKey('http.response.headers');
 });
 
 test('middleware records HTTP error responses', function () {
@@ -108,15 +106,11 @@ test('middleware records HTTP error responses', function () {
         ->toHaveKey('url.path', '/not-found')
         ->toHaveKey('url.query', null)
         ->toHaveKey('url.fragment', null)
-        ->toHaveKey('http.request.headers', [
-            'User-Agent' => Utils::defaultUserAgent(),
-            'Host' => 'example.com',
-        ])
+        ->toHaveKey('http.request.header.user-agent', [Utils::defaultUserAgent()])
+        ->toHaveKey('http.request.header.host', ['example.com'])
         ->toHaveKey('http.response.status_code', 404)
         ->toHaveKey('http.response.body.size', 21)
-        ->toHaveKey('http.response.headers', [
-            'Content-Type' => 'application/json',
-        ])
+        ->toHaveKey('http.response.header.content-type', ['application/json'])
         ->toHaveKey('error.type', '404');
 
     expect($span->status?->code)->toBe(SpanStatusCode::Error);
@@ -190,18 +184,14 @@ test('middleware correctly formats headers', function () {
         ->toHaveKey('flare.span_type', SpanType::HttpRequest)
         ->toHaveKey('url.full', 'https://example.com')
         ->toHaveKey('http.request.method', 'GET')
-        ->toHaveKey('http.request.headers', [
-            'User-Agent' => Utils::defaultUserAgent(),
-            'Host' => 'example.com',
-            'Accept' => 'application/json, text/html',
-            'X-Test' => 'value1, value2',
-        ])
+        ->toHaveKey('http.request.header.user-agent', [Utils::defaultUserAgent()])
+        ->toHaveKey('http.request.header.host', ['example.com'])
+        ->toHaveKey('http.request.header.accept', ['application/json', 'text/html'])
+        ->toHaveKey('http.request.header.x-test', ['value1', 'value2'])
         ->toHaveKey('http.response.status_code', 200)
-        ->toHaveKey('http.response.headers', [
-            'Content-Type' => 'application/json',
-            'Set-Cookie' => 'cookie1=value1, cookie2=value2',
-            'X-Multiple' => 'value1, value2, value3',
-        ]);
+        ->toHaveKey('http.response.header.content-type', ['application/json'])
+        ->toHaveKey('http.response.header.set-cookie', ['cookie1=value1', 'cookie2=value2'])
+        ->toHaveKey('http.response.header.x-multiple', ['value1', 'value2', 'value3']);
 });
 
 /*

@@ -89,24 +89,22 @@ it('can strip headers', function () {
 
     $attributes = buildRequestAttributesProvider($request)->toArray();
 
-    expect($attributes)->toHaveKey('http.request.headers', [
-        'authorization' => 'Bearer token',
-        'other-header' => 'other',
-        'lower-case-header' => 'lower',
-        'keep' => 'keep',
-    ]);
+    expect($attributes)
+        ->toHaveKey('http.request.header.authorization', ['Bearer token'])
+        ->toHaveKey('http.request.header.other-header', ['other'])
+        ->toHaveKey('http.request.header.lower-case-header', ['lower'])
+        ->toHaveKey('http.request.header.keep', ['keep']);
 
     $attributes = buildRequestAttributesProvider(
         $request,
         new Redactor(censorHeaders: ['AUTHORIZATION', 'other-header', 'lower_case_header'])
     )->toArray();
 
-    expect($attributes)->toHaveKey('http.request.headers', [
-        'authorization' => '<CENSORED:string>',
-        'other-header' => '<CENSORED:string>',
-        'lower-case-header' => '<CENSORED:string>',
-        'keep' => 'keep',
-    ]);
+    expect($attributes)
+        ->toHaveKey('http.request.header.authorization', ['<CENSORED:string>'])
+        ->toHaveKey('http.request.header.other-header', ['<CENSORED:string>'])
+        ->toHaveKey('http.request.header.lower-case-header', ['<CENSORED:string>'])
+        ->toHaveKey('http.request.header.keep', ['keep']);
 });
 
 it('can strip body fields', function () {

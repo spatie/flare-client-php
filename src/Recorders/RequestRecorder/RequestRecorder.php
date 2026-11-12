@@ -153,7 +153,7 @@ class RequestRecorder extends SpansRecorder
         );
     }
 
-    /** @param array<string, string>|null $headers */
+    /** @param array<string, string|array<int, string>>|null $headers */
     public function recordEndFromDefined(
         ?int $statusCode = null,
         ?int $bodySize = null,

@@ -4,11 +4,12 @@ namespace Spatie\FlareClient\AttributesProviders;
 
 use GuzzleHttp\Utils;
 use Spatie\FlareClient\Contracts\ResponseAttributesProvider;
+use Spatie\FlareClient\Support\HttpHeaderAttributes;
 use Spatie\FlareClient\Support\Redactor;
 
 class PhpResponseAttributesProvider implements ResponseAttributesProvider
 {
-    /** @param array<string, string>|null $headers */
+    /** @param array<string, string|array<int, string>>|null $headers */
     public function __construct(
         protected Redactor $redactor,
         protected ?int $statusCode = null,
@@ -31,11 +32,10 @@ class PhpResponseAttributesProvider implements ResponseAttributesProvider
             $payload['http.response.body.size'] = $this->bodySize;
         }
 
-        if (! empty($this->headers)) {
-            $payload['http.response.headers'] = $this->redactor->censorHeaders($this->headers);
-        }
-
-        return $payload;
+        return [
+            ...$payload,
+            ...HttpHeaderAttributes::response($this->headers ?? [], $this->redactor),
+        ];
     }
 
     public function statusCode(): ?int
@@ -50,12 +50,9 @@ class PhpResponseAttributesProvider implements ResponseAttributesProvider
         return is_int($statusCode) ? $statusCode : null;
     }
 
-    /** @return array<string, string> */
+    /** @return array<string, array<int, string>> */
     protected function resolveHeaders(): array
     {
-        return array_map(
-            fn (array $values) => implode(', ', $values),
-            Utils::headersFromLines(headers_list()),
-        );
+        return Utils::headersFromLines(headers_list());
     }
 }
