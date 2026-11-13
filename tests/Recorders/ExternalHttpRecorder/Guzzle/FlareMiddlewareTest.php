@@ -1,6 +1,7 @@
 <?php
 
 use GuzzleHttp\Client;
+use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler\MockHandler;
@@ -8,7 +9,6 @@ use GuzzleHttp\Promise\Promise;
 use GuzzleHttp\Promise\Utils as PromiseUtils;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
-use GuzzleHttp\Utils;
 use Spatie\FlareClient\Enums\SpanStatusCode;
 use Spatie\FlareClient\Enums\SpanType;
 use Spatie\FlareClient\FlareConfig;
@@ -57,7 +57,7 @@ test('middleware records successful requests and responses', function () {
         ->toHaveKey('url.fragment', null)
         ->toHaveKey('http.request.body.size', 13)
         ->toHaveKey('http.request.headers', [
-            'User-Agent' => Utils::defaultUserAgent(),
+            'User-Agent' => 'GuzzleHttp/'.ClientInterface::MAJOR_VERSION,
             'Host' => 'example.com',
             'Accept' => 'application/json',
             'X-Test-Header' => 'test-value',
@@ -109,7 +109,7 @@ test('middleware records HTTP error responses', function () {
         ->toHaveKey('url.query', null)
         ->toHaveKey('url.fragment', null)
         ->toHaveKey('http.request.headers', [
-            'User-Agent' => Utils::defaultUserAgent(),
+            'User-Agent' => 'GuzzleHttp/'.ClientInterface::MAJOR_VERSION,
             'Host' => 'example.com',
         ])
         ->toHaveKey('http.response.status_code', 404)
@@ -191,7 +191,7 @@ test('middleware correctly formats headers', function () {
         ->toHaveKey('url.full', 'https://example.com')
         ->toHaveKey('http.request.method', 'GET')
         ->toHaveKey('http.request.headers', [
-            'User-Agent' => Utils::defaultUserAgent(),
+            'User-Agent' => 'GuzzleHttp/'.ClientInterface::MAJOR_VERSION,
             'Host' => 'example.com',
             'Accept' => 'application/json, text/html',
             'X-Test' => 'value1, value2',
