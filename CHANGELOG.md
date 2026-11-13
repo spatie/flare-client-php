@@ -2,6 +2,14 @@
 
 All notable changes to `flare-client-php` will be documented in this file
 
+## 3.6.1 - 2026-11-13
+
+### What's Changed
+
+* Stop calling Guzzle helpers that 8.5 deprecates by @GrahamCampbell in https://github.com/spatie/flare-client-php/pull/118
+
+**Full Changelog**: https://github.com/spatie/flare-client-php/compare/3.6.0...3.6.1
+
 ## 3.6.0 - 2026-11-06
 
 Nested body censoring, cookie censoring by name, cache and database connection events, and a fix for forked processes resending the parent's data.
@@ -21,6 +29,7 @@ Cookies could only be censored all or nothing. Either Flare got every cookie, or
 ```php
 FlareConfig::make('api-key')
     ->censorCookieNames('PHPSESSID', 'remember_*');
+
 
 ```
 Censored cookies keep their key, so you still see they were there. Names match case insensitively, a dot in a cookie name is taken literally, and a segment ending in `*` matches every key with that prefix. Body fields get the prefix wildcard too, for example `censorBodyFields('pass*', 'user.api_*')`.
